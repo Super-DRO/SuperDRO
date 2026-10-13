@@ -19,13 +19,13 @@ import org.superdro.core.ui.theme.AppTheme
 
 /**
  * Draws the readout screen to PNG files (`core/ui/build/screenshots/readout-*.png`) in light and
- * dark mode at the widths 600 dp, 840 dp, and 1200 dp, in landscape (height = width × 10 / 16)
+ * dark mode at the widths 600 dp, 800 dp, 840 dp, and 1200 dp, in landscape (height = width × 10 / 16)
  * and portrait (height = width × 16 / 10), for a mill and a lathe. The
  * states come from [ReadoutSamples], not from the fake adapter.
  */
 class ReadoutScreenshotTest {
 
-    private val widths = listOf(600, 840, 1200)
+    private val widths = listOf(600, 800, 840, 1200)
 
     @Test
     fun theMillAtEachWidthAndOrientation() {
