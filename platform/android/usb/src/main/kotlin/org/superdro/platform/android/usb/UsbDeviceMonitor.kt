@@ -28,8 +28,9 @@ internal fun UsbManager.serialDevices(prober: SuperDroUsbProber): List<UsbDevice
             serial = serialOf(device),
             permitted = permitted,
             portCount = driver.ports.size,
+            deviceName = device.deviceName,
         )
-    }.sortedWith(compareBy({ info -> info.vendorId }, { info -> info.productId }, { info -> info.serial.orEmpty() }))
+    }.sortedWith(UsbRules.deviceOrder)
 
 /**
  * The USB part of the capability source: the attached USB serial devices and their permission.

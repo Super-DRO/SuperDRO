@@ -69,6 +69,7 @@ enum class ProfileSource {
  * One link that the user can select.
  *
  * @property suggestedName The machine name that step 2 shows first, or null.
+ * @property deviceKey The [DiscoveredAdapter.deviceKey] of the attached device, or null.
  */
 @Immutable
 data class LinkOption(
@@ -77,6 +78,7 @@ data class LinkOption(
     val detail: String? = null,
     val needsPermission: Boolean = false,
     val suggestedName: String? = null,
+    val deviceKey: String? = null,
 )
 
 /**
@@ -188,7 +190,9 @@ class AddDevicePresenter(
                     }
                 }
                 sections to (TransportKind.Tcp in shown)
-            }.collect { (sections, wifi) -> state.update { old -> old.copy(sections = sections, wifiShown = wifi) } }
+            }.collect { (sections, wifi) ->
+                state.update { old -> old.copy(sections = sections, wifiShown = wifi, selected = old.selected?.let { selected -> sameDevice(selected, sections) }) }
+            }
         }
         if (debugAdapter.transportFactory != null) {
             val demoLinks = debugAdapter.demoLinks.map { link ->
@@ -209,10 +213,15 @@ class AddDevicePresenter(
         }
     }
 
-    /** Selects a discovered link or a demo link, and goes to step 2. A USB adapter with no permission asks for it. */
+    /**
+     * Selects a discovered link or a demo link, and goes to step 2. A USB adapter with no permission
+     * asks for it. The request names the attached device of the row.
+     */
     fun selectLink(option: LinkOption) {
         val address = option.address
-        if (option.needsPermission && address is AdapterAddress.UsbSerial) requests.send(ConnectionRequest.RequestUsbPermission(address))
+        if (option.needsPermission && address is AdapterAddress.UsbSerial) {
+            requests.send(ConnectionRequest.RequestUsbPermission(address, option.deviceKey))
+        }
         state.update { old -> old.copy(step = AddDeviceStep.Profile, selected = option, name = option.suggestedName ?: old.name, nameError = null) }
     }
 
@@ -357,5 +366,19 @@ class AddDevicePresenter(
     }
 
     private fun optionOf(adapter: DiscoveredAdapter): LinkOption =
-        LinkOption(adapter.address, adapter.displayName, adapter.detail, adapter.needsPermission)
+        LinkOption(adapter.address, adapter.displayName, adapter.detail, adapter.needsPermission, deviceKey = adapter.deviceKey)
+
+    /**
+     * Gives the row of [sections] for the same attached device and port as [selected], else
+     * [selected]. After the USB permission grant, the row has the serial number in its address, so
+     * the stored link has it too.
+     */
+    private fun sameDevice(selected: LinkOption, sections: List<LinkSection>): LinkOption {
+        val key = selected.deviceKey ?: return selected
+        val port = (selected.address as? AdapterAddress.UsbSerial)?.portIndex
+        return sections.asSequence().flatMap { section -> section.options }.firstOrNull { option ->
+            option.deviceKey == key && option.address.kind == selected.address.kind &&
+                (option.address as? AdapterAddress.UsbSerial)?.portIndex == port
+        } ?: selected
+    }
 }

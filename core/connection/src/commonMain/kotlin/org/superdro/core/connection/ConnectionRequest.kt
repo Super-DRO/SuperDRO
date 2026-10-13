@@ -38,8 +38,12 @@ sealed interface ConnectionRequest {
     /** Open the system Bluetooth settings, so that the user can pair a new adapter. */
     data object OpenBluetoothSettings : ConnectionRequest
 
-    /** Ask for the USB permission of the device at [address]. */
-    data class RequestUsbPermission(val address: AdapterAddress.UsbSerial) : ConnectionRequest
+    /**
+     * Ask for the USB permission of the device at [address]. [deviceKey] is the
+     * [DiscoveredAdapter.deviceKey] of the selected row, or null. With a key, the request goes to
+     * that attached device, also when other devices have the same vendor ID and product ID.
+     */
+    data class RequestUsbPermission(val address: AdapterAddress.UsbSerial, val deviceKey: String? = null) : ConnectionRequest
 
     /**
      * Ask the user to exempt SuperDRO from the battery optimization
