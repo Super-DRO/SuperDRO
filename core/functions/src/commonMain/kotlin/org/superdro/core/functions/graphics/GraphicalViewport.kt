@@ -1,5 +1,7 @@
 package org.superdro.core.functions.graphics
 
+import kotlin.math.abs
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import org.superdro.core.functions.PointUm
@@ -23,6 +25,52 @@ data class ScreenMetrics(val xdpi: Double, val ydpi: Double, val density: Double
 
     /** Gives the pixels of [dp]. */
     fun dpToPx(dp: Double): Double = dp * density
+
+    companion object {
+        /**
+         * The largest ratio between [xdpi] and [ydpi] that [fromReported] keeps. A larger ratio
+         * is a wrong value of the device, because the pixels of a screen are square.
+         */
+        const val MAX_AXIS_RATIO: Double = 1.1
+
+        /**
+         * The largest ratio between the selected dpi and the density class that [fromReported]
+         * keeps. A larger ratio is a wrong value of the device.
+         */
+        const val MAX_CLASS_RATIO: Double = 1.5
+
+        /**
+         * Gives the metrics of the values that the device reports. Some devices report a wrong
+         * [xdpi] or [ydpi]. A wrong value makes a circle into an ellipse on the screen.
+         *
+         * - If the two values agree in [MAX_AXIS_RATIO], the function keeps the two values.
+         * - If not, both axes use the value that is nearer to [densityDpi].
+         * - If that value differs from [densityDpi] by more than [MAX_CLASS_RATIO], or if no
+         *   value is positive, both axes use [densityDpi].
+         *
+         * @param densityDpi The dpi of the density class (Android `DisplayMetrics.densityDpi`).
+         */
+        fun fromReported(xdpi: Double, ydpi: Double, densityDpi: Double, density: Double): ScreenMetrics {
+            val x = xdpi.takeIf(::isUsable)
+            val y = ydpi.takeIf(::isUsable)
+            if (x != null && y != null && max(x, y) / min(x, y) <= MAX_AXIS_RATIO) {
+                return ScreenMetrics(x, y, density)
+            }
+            if (!isUsable(densityDpi)) {
+                val single = x ?: y ?: DEFAULT_DPI
+                return ScreenMetrics(single, single, density)
+            }
+            val nearest = listOfNotNull(x, y).minByOrNull { value -> abs(ln(value / densityDpi)) }
+            val single = nearest?.takeIf { value -> max(value, densityDpi) / min(value, densityDpi) <= MAX_CLASS_RATIO }
+                ?: densityDpi
+            return ScreenMetrics(single, single, density)
+        }
+
+        /** The dpi when the device reports no usable value: the dpi of the mdpi class. */
+        private const val DEFAULT_DPI: Double = 160.0
+
+        private fun isUsable(dpi: Double): Boolean = dpi.isFinite() && dpi > 0.0
+    }
 }
 
 /**
