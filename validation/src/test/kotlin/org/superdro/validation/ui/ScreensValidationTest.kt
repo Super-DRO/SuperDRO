@@ -248,7 +248,7 @@ class ScreensValidationTest {
     @Test
     fun each_entry_opens_in_App_with_no_placeholder() = AppGraph().use { graph ->
         graph.connect("mill", "Mill") { profile -> profile.copy(caliper = profile.caliper.copy(enabled = true)) }
-        graph.connect("lathe", "Lathe", MachineType.Lathe)
+        graph.connect("lathe", "Lathe", MachineType.Lathe, scenario = "commands")
         val ids = runBlocking {
             val tool = assertNotNull(graph.di.direct.instance<ToolRepository>().addTool("mill", Tool(name = "T1", diameterUm = 6_000.0)).valueOrNull())
             val profile = assertNotNull(graph.machines.loadProfile("mill"))
