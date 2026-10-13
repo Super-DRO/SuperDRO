@@ -66,8 +66,12 @@ import org.superdro.core.ui.text.toUiText
  *   texts. A refusal shows through [showMessage], and the old value stays.
  * - One default table: a new profile has the defaults of `MachineProfile.create`.
  * - The writes go through one queue, so two changes of one value stay in their order.
+ * - The presenter needs no tab. With no tab, each change goes only into the store, and a tab
+ *   that opens later reads the stored profile.
  *
  * @param showMessage Shows a text in the snackbar of the frame.
+ * @param tab True when the screen is in the back stack of the tab of the profile (see
+ *   [MachineSettingsUiState.tab]).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MachineSettingsPresenter(
@@ -78,6 +82,7 @@ class MachineSettingsPresenter(
     appSettings: StateFlow<AppSettings>,
     context: PresenterContext,
     private val showMessage: (UiText) -> Unit = {},
+    private val tab: Boolean = true,
 ) : ScopedPresenter(context), MachineSettingsEvents {
 
     private val local = MutableStateFlow(LocalState())
@@ -111,8 +116,9 @@ class MachineSettingsPresenter(
             tachometerPulses = encoder?.resolution,
             linkType = view.linkType ?: current?.adapter?.kind,
             typeChange = question,
+            tab = tab,
         )
-    }.stateIn(scope, SharingStarted.Eagerly, MachineSettingsUiState())
+    }.stateIn(scope, SharingStarted.Eagerly, MachineSettingsUiState(tab = tab))
 
     init {
         scope.launch { for (write in writes) write() }

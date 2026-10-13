@@ -12,12 +12,14 @@ import org.superdro.core.ui.navigation.DeleteProfileRoute
 import org.superdro.core.ui.navigation.GlobalEntryScope
 import org.superdro.core.ui.navigation.MachineProfilesRoute
 import org.superdro.core.ui.navigation.MachineSettingsRoute
+import org.superdro.core.ui.navigation.OfflineMachineSettingsRoute
 import org.superdro.core.ui.presenter.rememberPresenter
 
 /**
  * The entry of the machine profiles screen (global [MachineProfilesRoute], the overflow menu). The
- * delete opens [DeleteProfileRoute]. The machine settings of a
- * profile open in the back stack of its tab, and the global screens close.
+ * delete opens [DeleteProfileRoute]. The machine settings of a profile with a tab open in the back
+ * stack of its tab, and the global screens close. The machine settings of a profile with no tab
+ * open in the global back stack ([OfflineMachineSettingsRoute]).
  */
 @Composable
 fun MachineProfilesEntry(scope: GlobalEntryScope, route: MachineProfilesRoute) {
@@ -41,9 +43,10 @@ fun MachineProfilesEntry(scope: GlobalEntryScope, route: MachineProfilesRoute) {
                 if (tab != null) {
                     tab.push(MachineSettingsRoute)
                     scope.navigator.clear()
+                } else {
+                    scope.navigator.push(OfflineMachineSettingsRoute(id))
                 }
             },
-            hasTab = { id -> scope.tabNavigator(DeviceId(id)) != null },
         ),
         onBack = { scope.navigator.pop(route) },
     )

@@ -150,4 +150,7 @@
     <string name="settings_machine_configuration_commands">Comandos de configuração do adaptador</string>
     <string name="settings_machine_configuration_commands_summary">Ligado: o SuperDRO pode alterar os modos de entrada, reiniciar o adaptador e enviar os comandos de referência. Desligado: ele os recusa.</string>
     <string name="settings_machine_at_once">Cada alteração vale na hora, também para um adaptador conectado.</string>
+    <string name="settings_machine_no_tab">Esta máquina não tem aba. Cada alteração fica salva no perfil. A aba desta máquina usa as alterações quando abrir.</string>
+    <string name="settings_machine_no_adapter_profile">Esta máquina não tem perfil de adaptador. Conecte o adaptador uma vez para criar o perfil dele.</string>
+    <string name="settings_machine_profile_file_no_tab">Abra uma aba desta máquina para exportar ou importar um arquivo de perfil.</string>
 </resources>

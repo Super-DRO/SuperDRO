@@ -53,7 +53,7 @@ class MachineProfilesScreenshotTest {
             scope.testScheduler.advanceUntilIdle()
             val files = renderSettings(name, windows) {
                 val state by presenter.uiState.collectAsState()
-                MachineProfilesScreen(state, presenter, MachineProfilesNavigation(hasTab = { id -> id == ids["Bridgeport"] }), onBack = {})
+                MachineProfilesScreen(state, presenter, MachineProfilesNavigation(), onBack = {})
             }
             assertTrue(files.all { file -> file.length() > 0 })
         }

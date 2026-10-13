@@ -106,20 +106,18 @@ object ProfilesTags {
     fun type(type: MachineType): String = "profile-type:${type.name}"
 }
 
-/** The events of the screen that leave it: the delete question and the machine settings of a tab. */
+/** The events of the screen that leave it: the delete question and the machine settings of a profile. */
 class MachineProfilesNavigation(
     /** Opens the delete question of the profile. */
     val onDelete: (String) -> Unit = {},
-    /** Opens the machine settings of the profile in its tab. */
+    /** Opens the machine settings of the profile: in its tab, or with no tab when the profile has no tab. */
     val onMachineSettings: (String) -> Unit = {},
-    /** True when the profile has a tab, so that its machine settings can open. */
-    val hasTab: (String) -> Boolean = { false },
 )
 
 /**
  * The machine profiles screen. Each row shows
  * the name, the machine type, the unit, and the state "Online", with an action menu: Machine
- * settings (when the profile has a tab), Rename, Copy, Machine type, and Delete. "New profile"
+ * settings, Rename, Copy, Machine type, and Delete. "New profile"
  * opens the create sheet with the machine setup.
  */
 @Composable
@@ -150,7 +148,6 @@ fun MachineProfilesScreen(
                 ProfileRow(
                     row = row,
                     menuOpen = state.menuFor == row.id,
-                    hasTab = navigation.hasTab(row.id),
                     presenter = presenter,
                     navigation = navigation,
                 )
@@ -199,7 +196,6 @@ fun MachineProfilesScreen(
 private fun ProfileRow(
     row: ProfileRowUiState,
     menuOpen: Boolean,
-    hasTab: Boolean,
     presenter: MachineProfilesPresenter,
     navigation: MachineProfilesNavigation,
 ) {
@@ -228,11 +224,9 @@ private fun ProfileRow(
                         onDismissRequest = presenter::closeMenu,
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     ) {
-                        if (hasTab) {
-                            MenuItem(stringResource(Res.string.route_machine_settings), "settings") {
-                                presenter.closeMenu()
-                                navigation.onMachineSettings(row.id)
-                            }
+                        MenuItem(stringResource(Res.string.route_machine_settings), "settings") {
+                            presenter.closeMenu()
+                            navigation.onMachineSettings(row.id)
                         }
                         MenuItem(stringResource(Res.string.settings_profiles_rename), "rename") { presenter.openRename(row.id) }
                         MenuItem(stringResource(Res.string.settings_profiles_copy), "copy") { presenter.openCopy(row.id) }

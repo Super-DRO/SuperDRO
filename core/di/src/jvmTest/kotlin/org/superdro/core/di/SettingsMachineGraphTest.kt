@@ -83,6 +83,22 @@ class SettingsMachineGraphTest {
     }
 
     @Test
+    fun aChangeWithNoTabIsInTheSetupOfALaterSession() = runBlocking {
+        val machines = di.direct.instance<MachineRepository>()
+        val profile = machines.createProfile(MachineProfile.create(name = "Imported")).valueOrNull()!!
+        val presenter = di.direct.instance<MachineSettingsArgs, MachineSettingsPresenter>(arg = MachineSettingsArgs(profile.id, tab = false) {})
+        withTimeout(5_000) { presenter.uiState.first { state -> state.profile != null } }
+        assertEquals(false, presenter.uiState.value.tab)
+        presenter.setPrimaryChannel(AxisId.Z, 'v')
+        withTimeout(5_000) { machines.profile(profile.id).first { stored -> stored?.z?.primary?.channel == 'v' } }
+        presenter.close()
+
+        // A session that starts after the change reads the stored profile.
+        val setup = withTimeout(5_000) { di.direct.instance<DeviceSetupSource>().setup(DeviceId(profile.id)).filterNotNull().first() }
+        assertEquals('v', setup.machine.z.primary.channel)
+    }
+
+    @Test
     fun theGraphGivesEachPresenterOfTheSettingsArea() {
         val direct = di.direct
         listOf(
