@@ -9,12 +9,14 @@
     <string name="frame_cancel">Cancelar</string>
     <string name="frame_machine_message">%1$s: %2$s</string>
     <string name="frame_reconnecting">Reconectando</string>
+    <string name="frame_could_not_connect">Não foi possível conectar. O SuperDRO tenta de novo em segundo plano.</string>
     <string name="frame_tab_description">%1$s, %2$s, %3$s</string>
     <string name="frame_menu_disconnect">Desconectar</string>
     <string name="frame_menu_rename">Renomear</string>
     <string name="frame_state_online">on-line</string>
     <string name="frame_state_offline">off-line</string>
     <string name="frame_state_paused">pausada</string>
+    <string name="frame_remembered_last_cause">Último erro: %1$s</string>
     <string name="frame_remembered_connect">Conectar</string>
     <string name="frame_remembered_pause">Pausar</string>
     <string name="frame_remembered_edit">Editar</string>
