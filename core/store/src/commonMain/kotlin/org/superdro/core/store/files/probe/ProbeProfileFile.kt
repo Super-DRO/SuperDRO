@@ -180,14 +180,26 @@ class ProbeProfileImporter(
         refused(ImportProblem.error(MessageKey.FileFailed, error.message ?: error.toString()), context)
     }
 
-    private fun refused(problem: ImportProblem, context: ProbeImportContext) =
-        ProbeImportPreview(null, null, null, listOf(problem), emptyList(), emptyList(), context, ids)
+    /**
+     * Gives a preview with one file problem and no rows. A file with a known header keeps its
+     * [source], its profile name, and its export time, so that the preview shows the file type.
+     */
+    private fun refused(
+        problem: ImportProblem,
+        context: ProbeImportContext,
+        source: FileSource? = null,
+        fileProfileName: String? = null,
+        exported: String? = null,
+    ) = ProbeImportPreview(source, fileProfileName, exported, listOf(problem), emptyList(), emptyList(), context, ids)
 
     private fun readProfiles(source: FileSource, root: JsonObject, context: ProbeImportContext): ProbeImportPreview {
         val fileProfileName = JsonFiles.text(root["profile"])?.trim()?.takeIf(String::isNotEmpty)
+        val exported = JsonFiles.text(root["exported"])
         val problems = mutableListOf<ImportProblem>()
         val items = JsonFiles.array(root["profiles"])
-        if (items == null || items.isEmpty()) return refused(ImportProblem.error(MessageKey.ProbeNoProfiles), context)
+        if (items == null || items.isEmpty()) {
+            return refused(ImportProblem.error(MessageKey.ProbeNoProfiles), context, source, fileProfileName, exported)
+        }
         if (fileProfileName != null && fileProfileName != context.profileName) {
             problems += ImportProblem.warning(MessageKey.ProbeOtherProfile, fileProfileName, context.profileName)
         }
@@ -202,7 +214,7 @@ class ProbeProfileImporter(
             add(0, ImportOperation.AddAsNew)
             if (rows.none { row -> row.problems.any { problem -> problem.message.key == MessageKey.ProbeUnknownType } }) add(ImportOperation.ReplaceAll)
         }
-        return ProbeImportPreview(source, fileProfileName, JsonFiles.text(root["exported"]), problems, rows, operations, context, ids)
+        return ProbeImportPreview(source, fileProfileName, exported, problems, rows, operations, context, ids)
     }
 
     private fun readTdprb(row: Int, item: JsonObject, context: ProbeImportContext): ProbeRow {
