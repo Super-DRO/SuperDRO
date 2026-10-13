@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the connection sessions. The file values/strings_connection.xml has the same names. -->
+<resources>
+    <string name="connection_restart_failed_title">Échec du redémarrage</string>
+    <string name="connection_restart_failed">Impossible de redémarrer l’adaptateur. Éteignez puis rallumez l’adaptateur.</string>
+    <string name="connection_identity_differs">L’adaptateur de cette liaison n’est pas l’adaptateur de ce profil de machine.</string>
+    <string name="connection_adapter_restarted">L’adaptateur a redémarré. Les origines machine et les cartes d’erreur peuvent nécessiter une nouvelle référence.</string>
+</resources>

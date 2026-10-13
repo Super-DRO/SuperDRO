@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the app frame. The file values/strings_app.xml has the same names. -->
+<resources>
+    <string name="app_name">SuperDRO</string>
+    <string name="app_no_machine_online">Keine Maschine ist online</string>
+    <string name="app_add_machine">Maschine hinzufügen</string>
+    <string name="app_settings">Einstellungen</string>
+    <string name="app_more_options">Weitere Optionen</string>
+    <string name="app_menu_about">Über</string>
+    <string name="app_menu_logs">Protokolle</string>
+    <string name="app_menu_machine_profiles">Maschinenprofile</string>
+    <string name="app_menu_remembered_machines">Gespeicherte Maschinen</string>
+    <string name="app_menu_adapters">Adapter</string>
+    <string name="app_menu_probe_library">Tasterbibliothek</string>
+    <string name="app_menu_data_output">Datenausgabe</string>
+    <string name="app_menu_disconnect_all">Alle trennen</string>
+    <string name="app_status_connected">Verbunden</string>
+    <string name="app_status_connecting">Verbindung wird hergestellt</string>
+    <string name="app_status_awaiting_data">Warte auf Daten</string>
+    <string name="app_status_no_data">Keine Daten</string>
+    <string name="app_status_reconnecting">Neue Verbindung (%1$d)</string>
+    <string name="app_status_waiting_for_device">Warte auf das Gerät</string>
+    <string name="app_status_failed">Fehlgeschlagen</string>
+    <string name="app_status_offline">Offline</string>
+    <string name="app_cause_bluetooth_off">Bluetooth aus</string>
+    <string name="app_cause_unplugged">Nicht angeschlossen</string>
+    <string name="app_cause_no_network">Kein Netzwerk</string>
+    <string name="app_cause_permission_missing">Berechtigung erforderlich</string>
+    <string name="app_cause_connect_failed">Verbindung fehlgeschlagen</string>
+    <string name="app_cause_link_lost">Verbindung verloren</string>
+    <string name="app_could_not_restore_link">Die Verbindung konnte nicht wiederhergestellt werden</string>
+    <string name="app_link_bluetooth">Bluetooth</string>
+    <string name="app_link_usb">USB</string>
+    <string name="app_link_wifi">WLAN</string>
+    <string name="app_link_demo">Demo</string>
+    <plurals name="app_remembered_machines">
+        <item quantity="one">%1$d gespeicherte Maschine</item>
+        <item quantity="other">%1$d gespeicherte Maschinen</item>
+    </plurals>
+</resources>

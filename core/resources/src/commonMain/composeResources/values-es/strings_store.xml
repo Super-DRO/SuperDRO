@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the store rules: the refusals of core:store (StoreRefusal) and the tool question of a profile delete. -->
+<resources>
+    <string name="store_profile_name_blank">El nombre del perfil no puede estar vacío.</string>
+    <string name="store_profile_name_exists">Ya existe un perfil con este nombre.</string>
+    <string name="store_workspace_name_blank">El nombre del espacio de trabajo no puede estar vacío.</string>
+    <string name="store_workspace_name_exists">Ya existe un espacio de trabajo con este nombre.</string>
+    <string name="store_last_workspace">No se puede eliminar el último espacio de trabajo.</string>
+    <string name="store_adapter_alias_blank">El nombre del adaptador no puede estar vacío.</string>
+    <string name="store_adapter_alias_too_long">El nombre de un adaptador puede tener un máximo de 40 caracteres.</string>
+    <string name="store_adapter_alias_exists">Ya existe un adaptador con este nombre.</string>
+    <string name="store_standard_tip_read_only">Una punta estándar no se puede cambiar.</string>
+    <string name="store_not_found">El elemento no está en el almacenamiento.</string>
+    <string name="store_delete_profile_tools_question">¿Eliminar también las herramientas de este perfil?</string>
+</resources>

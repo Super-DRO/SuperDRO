@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The about screen: the version, the notices, and the changes. -->
+<resources>
+    <string name="settings_about_version">Versión %1$s</string>
+    <string name="settings_about_version_code">Código de versión %1$d</string>
+    <string name="settings_about_group_version">Versión y cambios</string>
+    <string name="settings_about_group_help">Ayuda</string>
+    <string name="settings_about_group_licenses">Licencias</string>
+    <string name="settings_about_summary">Una lectura digital para máquinas herramienta. SuperDRO es compatible con los adaptadores TouchDRO.</string>
+    <string name="settings_about_app_license">SuperDRO usa la licencia Apache 2.0. No envía datos a ningún servidor.</string>
+    <string name="settings_about_what_changed">Novedades</string>
+    <string name="settings_about_new">Nuevo</string>
+    <string name="settings_about_updated">SuperDRO se actualizó a la versión %1$s.</string>
+    <string name="settings_about_mark_read">Marcar como leído</string>
+    <string name="settings_about_change_tabs">Una pestaña para cada máquina. Se pueden conectar muchas máquinas a la vez.</string>
+    <string name="settings_about_change_background">Los enlaces siguen abiertos en segundo plano, también con la pantalla apagada.</string>
+    <string name="settings_about_change_links">Adaptadores Bluetooth, USB y Wi-Fi.</string>
+    <string name="settings_about_change_undo">Deshacer para cada cambio de un desplazamiento.</string>
+    <string name="settings_about_change_settings">Perfiles de máquina, ajustes de la app, asignación de teclas, registros y ayuda en la app.</string>
+    <string name="settings_about_change_languages">Todos los textos en inglés, español, francés, alemán, portugués y neerlandés.</string>
+    <string name="settings_about_help_intro">Textos de ayuda breves para las pantallas principales.</string>
+    <string name="settings_about_licenses_intro">SuperDRO contiene estos componentes. Toque un componente para leer su licencia.</string>
+    <string name="settings_about_notice_libraries">Bibliotecas</string>
+    <string name="settings_about_notice_native">Bibliotecas nativas</string>
+    <string name="settings_about_notice_fonts">Fuentes</string>
+    <string name="settings_about_notice_icons">Iconos</string>
+    <string name="settings_about_all_notices">Todos los avisos como texto</string>
+    <string name="settings_about_source">Fuente: %1$s</string>
+    <string name="settings_about_license_loading">El texto de la licencia se está cargando.</string>
+    <string name="settings_about_license_missing">El texto de la licencia no está disponible.</string>
+    <string name="settings_about_help_pick">Seleccione un tema. Su texto se muestra aquí.</string>
+    <string name="settings_about_license_pick">Seleccione un aviso. El texto de su licencia se muestra aquí.</string>
+    <string name="settings_about_back_to_list">Volver a la lista</string>
+</resources>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the function strip and the global buttons. The file values/strings_function_strip.xml has the same names. -->
+<resources>
+    <string name="strip_zero_set">Nullen</string>
+    <string name="strip_mode">Modus</string>
+    <string name="strip_units">Einheiten</string>
+    <string name="strip_mode_absolute">Abs.</string>
+    <string name="strip_mode_incremental">Ink.</string>
+    <string name="strip_mixed">Gemischt</string>
+    <string name="strip_units_inch">Zoll</string>
+    <string name="strip_units_mm">Millimeter (mm)</string>
+    <string name="strip_active">Aktiv</string>
+    <string name="strip_functions">Funktionen</string>
+    <string name="strip_radius">Radius (R)</string>
+    <string name="strip_diameter">Durchmesser</string>
+    <string name="strip_lathe_tool_offset">Werkzeugkorrektur</string>
+    <string name="strip_z_reference">Z-Referenz</string>
+    <string name="strip_radius_compensation">Radiuskorr.</string>
+    <string name="strip_height_compensation">Höhenkorr.</string>
+    <string name="strip_edge_finder">Kantentaster</string>
+    <string name="strip_hole_circle">Lochkreis</string>
+    <string name="strip_arbitrary_hole_circle">Freier Lochkreis</string>
+    <string name="strip_arc_cut">Bogen</string>
+    <string name="strip_hole_grid">Lochraster</string>
+    <string name="strip_equidistant_array">Gleichabstand</string>
+    <string name="strip_dimension_measure">Maß</string>
+    <string name="strip_angle_measure">Winkel</string>
+    <string name="strip_graphical_view">Grafik</string>
+    <string name="strip_thread_setup">Gewinde</string>
+    <string name="strip_compound">Oberschlitten</string>
+    <string name="strip_head_tilt">Kopfneigung</string>
+    <string name="strip_rotate_part">Teil drehen</string>
+    <string name="strip_align_axes">Achsen ausrichten</string>
+    <string name="strip_instrument">Instrument (Ref.)</string>
+</resources>

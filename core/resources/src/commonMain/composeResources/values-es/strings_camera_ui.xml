@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the camera screens of core:ui. -->
+<resources>
+    <string name="camera_ui_status_off">Vídeo apagado</string>
+    <string name="camera_ui_status_starting">El vídeo se inicia</string>
+    <string name="camera_ui_status_on">Vídeo encendido</string>
+    <string name="camera_ui_status_detail">Vídeo encendido: %1$d × %2$d, %3$s fps</string>
+    <string name="camera_ui_status_detail_no_fps">Vídeo encendido: %1$d × %2$d</string>
+    <string name="camera_ui_play">Iniciar el vídeo</string>
+    <string name="camera_ui_stop">Detener el vídeo</string>
+    <string name="camera_ui_crosshairs">Cruz</string>
+    <string name="camera_ui_show_crosshairs">Mostrar la cruz</string>
+    <string name="camera_ui_dim">Media opacidad</string>
+    <string name="camera_ui_view_lock">Fijar la vista a la cruz</string>
+    <string name="camera_ui_scale_known">Distancia conocida</string>
+    <string name="camera_ui_scale_move">Movimiento de la máquina</string>
+    <string name="camera_ui_rotation">Rotación de la imagen %1$s°</string>
+    <string name="camera_ui_distance_mm">Distancia entre los dos puntos (mm)</string>
+    <string name="camera_ui_distance_in">Distancia entre los dos puntos (in)</string>
+    <string name="camera_ui_needs_video">Inicie primero el vídeo.</string>
+    <string name="camera_ui_point_title">Punto en la cruz</string>
+    <string name="camera_ui_no_camera_probe">Ningún perfil de palpador es del tipo Cámara o microscopio. Añada uno en la biblioteca de palpadores.</string>
+    <string name="camera_ui_chip_description">Abrir la pantalla de la cámara</string>
+    <string name="camera_ui_progress">Progreso de la prueba</string>
+    <string name="camera_ui_loading">Leyendo la cámara…</string>
+    <string name="camera_ui_mode_good">Vídeo correcto</string>
+    <string name="camera_ui_mode_bad">Sin vídeo</string>
+    <string name="camera_ui_calibrating">Escala de la imagen: toque el vídeo</string>
+</resources>

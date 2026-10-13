@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the calibration wizard of an adapter input. The check texts and the edge names are in strings_readout_core.xml. -->
+<resources>
+    <string name="calibration_title">Calibrar %1$s</string>
+    <string name="calibration_axis">Eixo %1$s</string>
+    <string name="calibration_no_axis">Nenhum eixo usa esta entrada</string>
+    <string name="calibration_procedure_linear">Calibração linear com um bloco padrão</string>
+    <string name="calibration_procedure_angular">Calibração angular com 5 voltas</string>
+    <string name="calibration_live_count">Contagem atual</string>
+    <string name="calibration_block_title">Tamanho do bloco de calibração</string>
+    <string name="calibration_block_text">Digite o tamanho real do bloco padrão. Se você tocar as duas faces externas com um localizador de bordas, some o diâmetro da ponta.</string>
+    <string name="calibration_block_size">Tamanho do bloco</string>
+    <string name="calibration_unit">Unidade</string>
+    <string name="calibration_unit_mm">mm</string>
+    <string name="calibration_unit_inch">pol</string>
+    <string name="calibration_continue">Continuar</string>
+    <string name="calibration_retry">Tentar novamente</string>
+    <string name="calibration_apply">Aplicar</string>
+    <string name="calibration_discard">Descartar</string>
+    <string name="calibration_first_edge_title">Primeira borda</string>
+    <string name="calibration_second_edge_title">Segunda borda</string>
+    <string name="calibration_edge_text">Mova o eixo até a borda %1$s do bloco. Depois toque em Continuar.</string>
+    <string name="calibration_first_position_title">Primeira posição</string>
+    <string name="calibration_first_position_text">Gire o eixo para a posição 0°. Depois toque em Continuar.</string>
+    <string name="calibration_second_position_title">Segunda posição</string>
+    <string name="calibration_second_position_text">Gire o eixo no sentido horário exatamente 5 voltas completas. Depois toque em Continuar.</string>
+    <string name="calibration_sampling_title">Leitura da entrada</string>
+    <string name="calibration_sampling_text">Não mova o eixo. O aplicativo lê a entrada por até 15 segundos.</string>
+    <string name="calibration_sampling_progress">%1$d s de %2$d s, %3$d leituras</string>
+    <string name="calibration_progress_description">Progresso da leitura: %1$d de %2$d segundos</string>
+    <string name="calibration_result_title">Resultado da calibração</string>
+    <string name="calibration_result_linear">Resolução: %1$s contagens por polegada (%2$s µm por contagem)</string>
+    <string name="calibration_result_angular">Resolução: %1$s contagens por volta (%2$s° por contagem)</string>
+    <string name="calibration_result_direction_normal">Sentido: normal. A contagem aumenta da primeira para a segunda posição.</string>
+    <string name="calibration_result_direction_reversed">Sentido: invertido. A contagem diminui da primeira para a segunda posição. Aplicar define o sentido inverso.</string>
+    <string name="calibration_result_apply_note">Aplicar grava a resolução, o sentido e o estado Calibrado nas configurações do encoder de %1$s. Descartar não grava nada.</string>
+    <string name="calibration_saved">A calibração de %1$s foi salva.</string>
+    <string name="calibration_save_failed">A calibração não foi salva. O perfil do adaptador não está no armazenamento.</string>
+    <string name="calibration_block_required_detail">Digite um tamanho de bloco maior que 0.</string>
+    <string name="calibration_block_too_small_text">Um bloco mais longo dá um resultado mais preciso. Use um bloco com %1$s de comprimento. Toque em Continuar para usar este bloco.</string>
+    <string name="calibration_no_reading_detail">O aplicativo não recebeu nenhuma leitura de %1$s. Verifique se a entrada está conectada e se o modo dela envia contagens.</string>
+    <string name="calibration_too_few_detail">O aplicativo recebeu %1$d leituras de %2$s. Ele precisa de %3$d ou mais. Toque em Tentar novamente para ler a entrada de novo.</string>
+    <string name="calibration_jitter_detail">As leituras mudaram %1$s contagens enquanto o eixo não se movia. Mantenha o eixo parado e toque em Tentar novamente.</string>
+    <string name="calibration_too_close_detail">As duas posições estão a menos de %1$d contagens uma da outra. Mova o eixo para a segunda posição e toque em Tentar novamente.</string>
+    <string name="calibration_link_lost">Conexão interrompida</string>
+    <string name="calibration_link_lost_detail">A conexão com o adaptador parou durante a leitura. Aguarde a conexão e toque em Tentar novamente.</string>
+    <string name="calibration_no_adapter">Este perfil de máquina não tem perfil de adaptador. Conecte o adaptador e crie primeiro o perfil do adaptador.</string>
+    <string name="calibration_tach_input">A entrada do tacômetro não tem calibração. Ajuste os pulsos por volta nos detalhes do adaptador.</string>
+    <string name="calibration_disabled_input">O tipo desta entrada é Desativado. Selecione primeiro Linear ou Angular nas configurações do encoder.</string>
+</resources>

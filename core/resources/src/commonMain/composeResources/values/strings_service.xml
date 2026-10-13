@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the connection service: the notification, the start at boot, the battery optimization request, and the background warning. -->
+<resources>
+    <string name="service_channel_name">Connections</string>
+    <string name="service_disconnect_all">Disconnect all</string>
+    <plurals name="service_title_online">
+        <item quantity="one">%1$d machine online</item>
+        <item quantity="other">%1$d machines online</item>
+    </plurals>
+    <string name="service_title_none_online">No machine is online</string>
+    <plurals name="service_offline_remembered">
+        <item quantity="one">%1$d remembered machine offline</item>
+        <item quantity="other">%1$d remembered machines offline</item>
+    </plurals>
+    <string name="service_device_line">%1$s: %2$s (%3$s)</string>
+    <string name="service_boot_open_app">Open SuperDRO to connect your machines</string>
+    <string name="service_battery_title">Battery optimization</string>
+    <string name="service_battery_reason">SuperDRO keeps the links to your machines open while the screen is off.</string>
+    <string name="service_battery_continue">Continue</string>
+    <string name="service_battery_not_now">Not now</string>
+    <string name="service_background_warning">The links can stop while SuperDRO is in the background.</string>
+</resources>

@@ -1,0 +1,153 @@
+-- The adapter profiles, their encoder profiles, and the error maps and backlash maps.
+-- An adapter delete removes its encoder profiles and
+-- their maps. A machine profile that refers to a deleted adapter keeps no reference.
+--
+-- `input` is the lowercase input letter: x y z w u v t. A map point has whole counts.
+-- `map_kind` is `Error` or `Backlash`. `seq` keeps the order of the map list.
+-- `error_map_comments_json` keeps the comment lines of the error map (its provenance) as a JSON
+-- list. Schema version 2 adds it (migration 1.sqm).
+
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.time.Instant;
+import org.superdro.core.model.BacklashMode;
+import org.superdro.core.model.EncoderKind;
+import org.superdro.core.model.EncoderType;
+import org.superdro.core.model.IdentitySource;
+import org.superdro.core.model.ProbeContactType;
+
+CREATE TABLE adapter_profile (
+    id TEXT NOT NULL PRIMARY KEY,
+    alias TEXT NOT NULL UNIQUE,
+    model TEXT,
+    identity TEXT,
+    identity_source TEXT AS IdentitySource,
+    legacy INTEGER AS Boolean NOT NULL DEFAULT 0,
+    last_link_json TEXT,
+    declared_inputs_json TEXT NOT NULL DEFAULT '[]',
+    probe_contact_type TEXT AS ProbeContactType NOT NULL,
+    probe_debounce_ms INTEGER NOT NULL DEFAULT 200,
+    last_seen_on TEXT AS Instant,
+    created_on TEXT AS Instant NOT NULL
+);
+
+CREATE INDEX adapter_profile_identity ON adapter_profile(identity, identity_source);
+
+CREATE TABLE encoder_profile (
+    adapter_profile_id TEXT NOT NULL REFERENCES adapter_profile(id) ON DELETE CASCADE,
+    input TEXT NOT NULL,
+    label TEXT,
+    type TEXT AS EncoderType NOT NULL,
+    kind TEXT AS EncoderKind NOT NULL,
+    resolution REAL NOT NULL,
+    counts_per_screw_rev REAL,
+    reversed INTEGER AS Boolean NOT NULL DEFAULT 0,
+    spike_filter INTEGER AS Boolean NOT NULL DEFAULT 0,
+    backlash_mode TEXT AS BacklashMode NOT NULL,
+    backlash_counts INTEGER NOT NULL DEFAULT 0,
+    error_map_cyclic INTEGER AS Boolean NOT NULL DEFAULT 1,
+    calibration_json TEXT NOT NULL,
+    error_map_comments_json TEXT NOT NULL DEFAULT '[]',
+    PRIMARY KEY (adapter_profile_id, input)
+);
+
+CREATE TABLE encoder_map_point (
+    adapter_profile_id TEXT NOT NULL,
+    input TEXT NOT NULL,
+    map_kind TEXT NOT NULL,
+    seq INTEGER AS Int NOT NULL,
+    position_counts INTEGER NOT NULL,
+    value_counts INTEGER NOT NULL,
+    PRIMARY KEY (adapter_profile_id, input, map_kind, seq),
+    FOREIGN KEY (adapter_profile_id, input)
+        REFERENCES encoder_profile(adapter_profile_id, input) ON DELETE CASCADE
+);
+
+selectAll:
+SELECT * FROM adapter_profile ORDER BY alias COLLATE NOCASE, id;
+
+selectById:
+SELECT * FROM adapter_profile WHERE id = ?;
+
+selectByIdentity:
+SELECT * FROM adapter_profile WHERE identity = ? AND identity_source = ? ORDER BY created_on, id;
+
+selectAliases:
+SELECT id, alias FROM adapter_profile;
+
+upsert:
+INSERT INTO adapter_profile (
+    id, alias, model, identity, identity_source, legacy, last_link_json, declared_inputs_json,
+    probe_contact_type, probe_debounce_ms, last_seen_on, created_on
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (id) DO UPDATE SET
+    alias = excluded.alias,
+    model = excluded.model,
+    identity = excluded.identity,
+    identity_source = excluded.identity_source,
+    legacy = excluded.legacy,
+    last_link_json = excluded.last_link_json,
+    declared_inputs_json = excluded.declared_inputs_json,
+    probe_contact_type = excluded.probe_contact_type,
+    probe_debounce_ms = excluded.probe_debounce_ms,
+    last_seen_on = excluded.last_seen_on;
+
+setLastSeen:
+UPDATE adapter_profile SET last_seen_on = :lastSeenOn WHERE id = :id;
+
+existsById:
+SELECT count(*) FROM adapter_profile WHERE id = ?;
+
+deleteById:
+DELETE FROM adapter_profile WHERE id = ?;
+
+selectEncoders:
+SELECT * FROM encoder_profile WHERE adapter_profile_id = ? ORDER BY input;
+
+selectAllEncoders:
+SELECT * FROM encoder_profile ORDER BY adapter_profile_id, input;
+
+upsertEncoder:
+INSERT INTO encoder_profile (
+    adapter_profile_id, input, label, type, kind, resolution, counts_per_screw_rev, reversed,
+    spike_filter, backlash_mode, backlash_counts, error_map_cyclic, calibration_json, error_map_comments_json
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (adapter_profile_id, input) DO UPDATE SET
+    label = excluded.label,
+    type = excluded.type,
+    kind = excluded.kind,
+    resolution = excluded.resolution,
+    counts_per_screw_rev = excluded.counts_per_screw_rev,
+    reversed = excluded.reversed,
+    spike_filter = excluded.spike_filter,
+    backlash_mode = excluded.backlash_mode,
+    backlash_counts = excluded.backlash_counts,
+    error_map_cyclic = excluded.error_map_cyclic,
+    calibration_json = excluded.calibration_json,
+    error_map_comments_json = excluded.error_map_comments_json;
+
+deleteEncodersNotIn:
+DELETE FROM encoder_profile WHERE adapter_profile_id = :adapterProfileId AND input NOT IN :inputs;
+
+deleteAllEncoders:
+DELETE FROM encoder_profile WHERE adapter_profile_id = ?;
+
+selectMapPoints:
+SELECT position_counts, value_counts FROM encoder_map_point
+WHERE adapter_profile_id = ? AND input = ? AND map_kind = ?
+ORDER BY seq;
+
+selectAllMapPoints:
+SELECT input, map_kind, position_counts, value_counts FROM encoder_map_point
+WHERE adapter_profile_id = ?
+ORDER BY input, map_kind, seq;
+
+countMapPoints:
+SELECT count(*) FROM encoder_map_point WHERE adapter_profile_id = ? AND input = ? AND map_kind = ?;
+
+insertMapPoint:
+INSERT INTO encoder_map_point (adapter_profile_id, input, map_kind, seq, position_counts, value_counts)
+VALUES (?, ?, ?, ?, ?, ?);
+
+deleteMap:
+DELETE FROM encoder_map_point WHERE adapter_profile_id = ? AND input = ? AND map_kind = ?;

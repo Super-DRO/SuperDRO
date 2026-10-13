@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the drawing area. The file values/strings_drawing.xml has the same names. -->
+<resources>
+    <string name="drawing_not_a_drawing">Dit bestand is geen tekening die SuperDRO kan openen.</string>
+    <string name="drawing_too_large">Deze tekening is te groot voor SuperDRO (meer dan 2 MB).</string>
+    <string name="drawing_no_shapes">SuperDRO heeft in deze tekening geen lijnen, bogen of curven gevonden om te importeren.</string>
+    <string name="drawing_reading">Tekening wordt gelezen…</string>
+    <string name="drawing_converting">Tekening wordt geconverteerd…</string>
+    <string name="drawing_not_imported_title">Tekening niet geïmporteerd</string>
+    <string name="drawing_not_imported_message">SuperDRO kon deze tekening niet importeren.</string>
+    <string name="drawing_technical_details">Technische details</string>
+    <string name="drawing_problems_explanation">Het bestand heeft problemen die het importeren verhinderen. Er is niets gewijzigd. Als u het bestand niet kunt bewerken, deel deze lijst dan met degene die het heeft gemaakt.</string>
+    <string name="drawing_done">Gereed</string>
+    <string name="drawing_layer_unnamed">Laag %1$d</string>
+    <string name="drawing_delete_title">Tekening verwijderen?</string>
+    <string name="drawing_delete_message">Hiermee wordt de tekening uit de werkruimte verwijderd. U hebt het bestand opnieuw nodig om het opnieuw te importeren, en u moet de tekening opnieuw plaatsen. Subnulpunten die ervan zijn gemaakt, blijven behouden.</string>
+    <string name="drawing_delete_shape_title">Geometrie verwijderen?</string>
+    <string name="drawing_delete_shape_message">Weet u zeker dat u deze %1$s wilt verwijderen?</string>
+    <string name="drawing_export_button">Exporteren naar DXF-bestand</string>
+    <string name="drawing_export_title">Exporteren naar DXF</string>
+    <string name="drawing_export_save_title">DXF opslaan</string>
+    <string name="drawing_export_no_workspace">Er is geen open werkruimte om te exporteren.</string>
+    <string name="drawing_export_hidden_layers">Verborgen lagen opnemen</string>
+    <string name="drawing_tool_geometry_title_import">Snijgeometrie importeren</string>
+    <string name="drawing_tool_geometry_title">Snijgeometrie</string>
+    <string name="drawing_tool_geometry_attach">Koppelen</string>
+    <string name="drawing_tool_geometry_drawn_in">Getekend in</string>
+    <string name="drawing_tool_geometry_not_defined">Niet gedefinieerd</string>
+    <string name="drawing_tool_geometry_import">Snijgeometrie uit een bestand importeren</string>
+    <string name="drawing_tool_geometry_remove">Snijgeometrie verwijderen</string>
+    <string name="drawing_tool_geometry_size">%1$s × %2$s</string>
+    <string name="drawing_tool_geometry_too_many_items">Deze tekening bevat veel te veel om een gereedschap te zijn. Het is mogelijk een tekening van het werkstuk in plaats van de snijplaat.</string>
+    <string name="drawing_tool_geometry_unlikely_size">De afmeting hieronder lijkt niet op die van een snijgereedschap. Controleer in welke eenheden de tekening is gemaakt.</string>
+    <string name="drawing_tool_geometry_not_closed">De omtrek is niet gesloten, dus het gereedschap wordt als lijntekening getoond in plaats van als volle vorm.</string>
+    <string name="drawing_tool_geometry_open_segments">Een deel van deze omtrek sluit niet aan. Dat deel van het gereedschap ontbreekt in de volle vorm.</string>
+    <string name="drawing_tool_geometry_origin_off_edge">De oorsprong lijkt niet op de snijkant te liggen. De X- en Z-offsets worden vanaf de oorsprong gemeten.</string>
+    <string name="drawing_tool_geometry_no_units">De tekening geeft niet aan welke eenheden ze gebruikt — controleer de afmeting hieronder.</string>
+    <string name="drawing_tool_geometry_unreadable">Deze tekening kon niet worden gelezen. Probeer haar opnieuw te importeren.</string>
+</resources>

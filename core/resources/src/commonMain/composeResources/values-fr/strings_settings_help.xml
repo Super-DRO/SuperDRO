@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The in-app help texts of the main screens. SuperDRO writes these texts. -->
+<resources>
+    <string name="settings_help_readout_title">Affichage</string>
+    <string name="settings_help_readout_text">L'affichage montre une ligne pour chaque axe activé. Touchez une valeur pour la régler avec le pavé numérique. Touchez l'étiquette d'un axe pour voir ses détails. Chaque modification d'un décalage affiche Annuler pendant 10 secondes. La barre d'état en haut montre les unités, le mode, l'outil, la sous-origine et l'état de la liaison.</string>
+    <string name="settings_help_add_machine_title">Ajouter une machine</string>
+    <string name="settings_help_add_machine_text">Touchez + pour ajouter une machine. Sélectionnez d'abord l'adaptateur : un adaptateur Bluetooth appairé, un adaptateur USB ou un adaptateur Wi-Fi avec son hôte et son port. Sélectionnez ensuite un nouveau profil, une copie ou un profil enregistré, et donnez un nom à la machine. SuperDRO mémorise la machine et s'y connecte.</string>
+    <string name="settings_help_machine_settings_title">Réglages de la machine</string>
+    <string name="settings_help_machine_settings_text">Les réglages de la machine appartiennent au profil de cet onglet. Chaque modification s'applique tout de suite, même quand l'adaptateur est connecté. Les groupes contiennent l'affichage, les boutons de fonction, les axes, le tachymètre, le palpeur et la liaison de l'adaptateur.</string>
+    <string name="settings_help_inputs_title">Axes et entrées</string>
+    <string name="settings_help_inputs_text">Chaque axe lit une lettre d'entrée de l'adaptateur : x, y, z, w, u ou v. Une entrée secondaire ajoute une deuxième règle à l'axe, par exemple une règle de fourreau. Les deux entrées d'un axe ne peuvent pas utiliser la même lettre. La résolution et le filtre d'une entrée sont dans les réglages du codeur de l'adaptateur.</string>
+    <string name="settings_help_tachometer_title">Tachymètre</string>
+    <string name="settings_help_tachometer_text">Le tachymètre affiche la vitesse de la broche. En mode Capteur de tr/min, l'entrée t de l'adaptateur donne la vitesse, et les impulsions par tour s'appliquent. En mode Préréglage, vous sélectionnez une vitesse dans la liste. En mode Saisie directe, vous tapez la vitesse.</string>
+    <string name="settings_help_adapter_link_title">Liaison de l'adaptateur</string>
+    <string name="settings_help_adapter_link_text">La liaison de l'adaptateur d'un profil est une adresse Bluetooth, un appareil USB avec son débit, ou un hôte et un port Wi-Fi. La communication bidirectionnelle permet à SuperDRO d'envoyer des requêtes et des commandes à l'adaptateur. Les commandes de configuration de l'adaptateur changent les modes d'entrée de l'adaptateur. Activez-les seulement quand vous en avez besoin.</string>
+    <string name="settings_help_app_settings_title">Réglages</string>
+    <string name="settings_help_app_settings_text">Les réglages de l'app s'appliquent à toutes les machines : le thème, les grands boutons, les sons, le plein écran et le verrouillage de veille. Les boutons de type de liaison masquent un type de liaison dans la feuille Ajouter une machine. L'optimisation de la batterie d'Android peut arrêter les liaisons en arrière-plan.</string>
+    <string name="settings_help_machine_profiles_title">Profils de machine</string>
+    <string name="settings_help_machine_profiles_text">Un profil de machine garde les réglages, les outils et les espaces de travail d'une machine. Vous pouvez créer, copier, renommer et supprimer un profil. Chaque nom de profil doit être unique. Une copie contient les réglages et les outils, mais pas les espaces de travail.</string>
+    <string name="settings_help_machine_type_title">Type de machine</string>
+    <string name="settings_help_machine_type_text">Vous pouvez changer le type de machine d'un profil. Avant le changement, SuperDRO montre les données qui ne conviennent pas au nouveau type, par exemple des outils de tour sur une fraiseuse. SuperDRO convertit ce qu'il peut. Il archive ou supprime le reste, selon votre choix.</string>
+    <string name="settings_help_key_mapping_title">Affectation des touches</string>
+    <string name="settings_help_key_mapping_text">Les touches d'un clavier, d'un pavé numérique, d'une pédale ou d'une télécommande peuvent lancer des actions dans l'onglet sélectionné. Sélectionnez une action, puis appuyez sur la touche. L'affectation par défaut utilise le pavé numérique et les touches de page.</string>
+    <string name="settings_help_logs_title">Journaux</string>
+    <string name="settings_help_logs_text">L'écran des journaux montre les messages de l'app et de chaque session de machine. Sélectionnez une machine pour voir seulement ses messages. Exporter envoie les lignes à une autre app. L'enregistrement du flux d'octets est une option de débogage. Il garde les octets reçus d'une session pour une analyse.</string>
+</resources>

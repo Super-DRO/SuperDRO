@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder. The file values/strings_edge_finder.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="edge_finder_spread_warning">Avertissement : l\u0027écart maximal entre les échantillons est de %1$s %2$s</string>
+    <string name="edge_finder_probe_triggered">Le palpeur est déclenché. Éloignez le palpeur de la pièce.</string>
+    <string name="edge_finder_long_press_to_clear">Appuyez longuement sur ce bouton pour effacer la valeur actuelle</string>
+    <string name="edge_finder_no_axis_moving">Aucun axe ne bougeait au déclenchement du palpeur.</string>
+    <string name="edge_finder_one_axis_at_a_time">Déplacez un seul axe à la fois</string>
+    <string name="edge_finder_z_not_supported">Le palpage sur l\u0027axe Z n\u0027est pas encore pris en charge</string>
+    <string name="edge_finder_change_in_direction">Changement de direction détecté pendant l\u0027échantillonnage du palpeur</string>
+    <string name="edge_finder_position_unknown">La position de l\u0027axe au déclenchement est inconnue. Réessayez.</string>
+</resources>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of core:readout. The file values/strings_readout_core.xml has the same names. -->
+<resources>
+    <string name="readout_core_settings_same_prefix">Las entradas primaria y secundaria no pueden usar el mismo prefijo</string>
+    <string name="readout_core_settings_one_axis_required">Debe haber al menos un eje de salida activado</string>
+    <string name="readout_core_settings_sample_count_range">El número de muestras del buscador de bordes debe ser un número entre 1 y 10 (inclusive)</string>
+    <string name="readout_core_calibration_secondary_disabled">Entrada secundaria desactivada</string>
+    <string name="readout_core_calibration_prefix_missing">Falta el prefijo de entrada</string>
+    <string name="readout_core_calibration_block_required">Se requiere el tamaño del bloque</string>
+    <string name="readout_core_calibration_block_too_small">Bloque demasiado pequeño</string>
+    <string name="readout_core_calibration_block_too_small_detail">al menos 50.000 mm / 2.0000 in</string>
+    <string name="readout_core_calibration_no_reading">No se recibió ninguna lectura</string>
+    <string name="readout_core_calibration_sample_too_small">Muestra de lecturas demasiado pequeña</string>
+    <string name="readout_core_calibration_jitter">Se detectó una fluctuación excesiva</string>
+    <string name="readout_core_calibration_too_close">Lecturas demasiado cercanas</string>
+    <string name="readout_core_edge_left">izquierdo</string>
+    <string name="readout_core_edge_right">derecho</string>
+    <string name="readout_core_edge_front">frontal</string>
+    <string name="readout_core_edge_back">trasero</string>
+    <string name="readout_core_edge_bottom">inferior</string>
+    <string name="readout_core_edge_top">superior</string>
+    <string name="readout_core_edge_first">primer</string>
+    <string name="readout_core_edge_second">segundo</string>
+    <string name="readout_core_tach_cant_set">No se pueden ajustar las RPM</string>
+    <string name="readout_core_state_error">Fallo</string>
+    <string name="readout_core_state_no_input">Sin entrada</string>
+    <string name="readout_core_map_too_many_points">El mapa tiene más de %1$d puntos.</string>
+    <string name="readout_core_map_malformed_line">La línea %1$d no es un punto válido.</string>
+    <string name="readout_core_map_no_points">El mapa no tiene puntos.</string>
+    <string name="readout_core_map_duplicate_position">La posición %1$d aparece más de una vez.</string>
+    <string name="readout_core_map_reversal">La posición corregida retrocede entre las posiciones %1$d y %2$d.</string>
+    <string name="readout_core_map_dead_band">La posición corregida no se mueve entre las posiciones %1$d y %2$d.</string>
+    <string name="readout_core_map_negative_backlash">La holgura en la posición %1$d es negativa (%2$d).</string>
+    <string name="readout_core_map_backlash_exceeds_turn">La holgura en la posición %1$d (%2$d) no es menor que una vuelta del husillo (%3$d cuentas).</string>
+    <string name="readout_core_profile_backlash_map_not_allowed">Un mapa de holgura solo está disponible para un encoder de husillo.</string>
+</resources>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The common strings of the machine functions area: the buttons, the units, the preview, and the blocker of new sub-datums. -->
+<resources>
+    <string name="fn_create">Erstellen</string>
+    <string name="fn_apply">Anwenden</string>
+    <string name="fn_cancel">Abbrechen</string>
+    <string name="fn_close">Schließen</string>
+    <string name="fn_save">Speichern</string>
+    <string name="fn_delete">Löschen</string>
+    <string name="fn_edit">Bearbeiten</string>
+    <string name="fn_add">Hinzufügen</string>
+    <string name="fn_clear">Löschen</string>
+    <string name="fn_undo">Rückgängig</string>
+    <string name="fn_more">Mehr</string>
+    <string name="fn_unit_mm">mm</string>
+    <string name="fn_unit_inch">in</string>
+    <string name="fn_unit_cd">Einheit von %1$s</string>
+    <string name="fn_preview_title">Vorschau</string>
+    <string name="fn_preview_empty">Keine Punkte. Füllen Sie die Felder aus.</string>
+    <string name="fn_preview_count">%1$d Punkte</string>
+    <string name="fn_preview_cd">Vorschau von %1$d Punkten</string>
+    <string name="fn_error_title">Fehler</string>
+    <string name="fn_not_available_title">Zurzeit nicht verfügbar</string>
+    <string name="fn_blocked_message">Neue Sub-Datums sind nicht möglich, während %1$s aktiv ist.</string>
+    <string name="fn_blocker_thread">das Gewindeschneiden</string>
+    <string name="fn_blocker_no_workspace">kein Arbeitsbereich</string>
+    <string name="fn_value_not_number">Der Wert von %1$s ist keine Zahl</string>
+    <string name="fn_axis_value">%1$s: %2$s</string>
+    <string name="fn_route_step_and_repeat">Schritt und Wiederholung</string>
+    <string name="fn_route_workspace_commands">Arbeitsbereich-Befehle</string>
+    <string name="fn_route_add_point">Sub-Datum hinzufügen</string>
+    <string name="fn_route_sub_datum_command">Sub-Datum-Befehl</string>
+</resources>

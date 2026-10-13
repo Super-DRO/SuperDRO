@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the Z reference and of the tool height setter. The file values/strings_z_reference.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="z_reference_error_setter_height">Die Höhe des Werkzeugeinstellgeräts muss eine positive Zahl sein</string>
+    <string name="z_reference_error_z_not_enabled">Die Z-Anzeige muss aktiviert sein</string>
+    <string name="z_reference_error_not_connected">Der Adapter muss verbunden sein</string>
+    <string name="z_reference_error_z_position_unknown">Die Z-Position im Moment des Kontakts konnte nicht gelesen werden. Versuchen Sie es erneut.</string>
+    <string name="z_reference_title">Z-Referenz setzen</string>
+</resources>

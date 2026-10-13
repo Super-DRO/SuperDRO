@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the store rules: the refusals of core:store (StoreRefusal) and the tool question of a profile delete. -->
+<resources>
+    <string name="store_profile_name_blank">O nome do perfil não pode ficar em branco.</string>
+    <string name="store_profile_name_exists">Já existe um perfil com este nome.</string>
+    <string name="store_workspace_name_blank">O nome do espaço de trabalho não pode ficar em branco.</string>
+    <string name="store_workspace_name_exists">Já existe um espaço de trabalho com este nome.</string>
+    <string name="store_last_workspace">O último espaço de trabalho não pode ser excluído.</string>
+    <string name="store_adapter_alias_blank">O nome do adaptador não pode ficar em branco.</string>
+    <string name="store_adapter_alias_too_long">O nome de um adaptador pode ter no máximo 40 caracteres.</string>
+    <string name="store_adapter_alias_exists">Já existe um adaptador com este nome.</string>
+    <string name="store_standard_tip_read_only">Uma ponta padrão não pode ser alterada.</string>
+    <string name="store_not_found">O item não está no armazenamento.</string>
+    <string name="store_delete_profile_tools_question">Excluir também as ferramentas deste perfil?</string>
+</resources>

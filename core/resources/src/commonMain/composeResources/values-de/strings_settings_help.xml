@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The in-app help texts of the main screens. SuperDRO writes these texts. -->
+<resources>
+    <string name="settings_help_readout_title">Anzeige</string>
+    <string name="settings_help_readout_text">Die Anzeige zeigt eine Zeile für jede aktivierte Achse. Tippen Sie auf einen Wert, um ihn mit der Zifferntastatur einzugeben. Tippen Sie auf die Bezeichnung einer Achse, um ihre Details zu sehen. Jede Änderung eines Versatzes zeigt 10 Sekunden lang Rückgängig. Die Statusleiste oben zeigt die Einheiten, den Modus, das Werkzeug, den Unternullpunkt und den Verbindungsstatus.</string>
+    <string name="settings_help_add_machine_title">Maschine hinzufügen</string>
+    <string name="settings_help_add_machine_text">Tippen Sie auf +, um eine Maschine hinzuzufügen. Wählen Sie zuerst den Adapter: einen gekoppelten Bluetooth-Adapter, einen USB-Adapter oder einen WLAN-Adapter mit Host und Port. Wählen Sie dann ein neues Profil, eine Kopie oder ein gespeichertes Profil, und geben Sie der Maschine einen Namen. SuperDRO merkt sich die Maschine und verbindet sich mit ihr.</string>
+    <string name="settings_help_machine_settings_title">Maschineneinstellungen</string>
+    <string name="settings_help_machine_settings_text">Die Maschineneinstellungen gehören zum Profil dieses Tabs. Jede Änderung gilt sofort, auch bei verbundenem Adapter. Die Gruppen enthalten die Anzeige, die Funktionstasten, die Achsen, den Drehzahlmesser, den Taster und die Adapterverbindung.</string>
+    <string name="settings_help_inputs_title">Achsen und Eingänge</string>
+    <string name="settings_help_inputs_text">Jede Achse liest einen Eingangsbuchstaben des Adapters: x, y, z, w, u oder v. Ein Zweiteingang fügt der Achse einen zweiten Maßstab hinzu, zum Beispiel einen Pinolenmaßstab. Die zwei Eingänge einer Achse können nicht denselben Buchstaben verwenden. Die Auflösung und der Filter eines Eingangs sind in den Gebereinstellungen des Adapters.</string>
+    <string name="settings_help_tachometer_title">Drehzahlmesser</string>
+    <string name="settings_help_tachometer_text">Der Drehzahlmesser zeigt die Spindeldrehzahl. Im Modus Drehzahlsensor liefert der Adaptereingang t die Drehzahl, und die Impulse pro Umdrehung gelten. Im Modus Voreinstellung wählen Sie eine Drehzahl aus der Liste. Im Modus Direkteingabe tippen Sie die Drehzahl ein.</string>
+    <string name="settings_help_adapter_link_title">Adapterverbindung</string>
+    <string name="settings_help_adapter_link_text">Die Adapterverbindung eines Profils ist eine Bluetooth-Adresse, ein USB-Gerät mit seiner Baudrate oder ein WLAN-Host mit Port. Die Zweiwegkommunikation lässt SuperDRO Abfragen und Befehle an den Adapter senden. Die Adapterkonfigurationsbefehle ändern die Eingangsmodi des Adapters. Schalten Sie sie nur ein, wenn Sie sie brauchen.</string>
+    <string name="settings_help_app_settings_title">Einstellungen</string>
+    <string name="settings_help_app_settings_text">Die App-Einstellungen gelten für alle Maschinen: das Design, die großen Tasten, die Töne, der Vollbildmodus und die Wachsperre. Die Schalter der Verbindungsarten blenden eine Verbindungsart im Blatt Maschine hinzufügen aus. Die Akkuoptimierung von Android kann die Verbindungen im Hintergrund stoppen.</string>
+    <string name="settings_help_machine_profiles_title">Maschinenprofile</string>
+    <string name="settings_help_machine_profiles_text">Ein Maschinenprofil speichert die Einstellungen, die Werkzeuge und die Arbeitsbereiche einer Maschine. Sie können ein Profil anlegen, kopieren, umbenennen und löschen. Jeder Profilname muss eindeutig sein. Eine Kopie enthält die Einstellungen und die Werkzeuge, aber nicht die Arbeitsbereiche.</string>
+    <string name="settings_help_machine_type_title">Maschinentyp</string>
+    <string name="settings_help_machine_type_text">Sie können den Maschinentyp eines Profils ändern. Vor der Änderung zeigt SuperDRO die Daten, die nicht zum neuen Typ passen, zum Beispiel Drehwerkzeuge an einer Fräsmaschine. SuperDRO wandelt um, was möglich ist. Den Rest archiviert oder löscht es, wie Sie es wählen.</string>
+    <string name="settings_help_key_mapping_title">Tastenbelegung</string>
+    <string name="settings_help_key_mapping_text">Die Tasten einer Tastatur, eines Ziffernblocks, eines Fußschalters oder einer Fernbedienung können Aktionen im ausgewählten Tab starten. Wählen Sie eine Aktion und drücken Sie dann die Taste. Die Standardbelegung verwendet den Ziffernblock und die Bildtasten.</string>
+    <string name="settings_help_logs_title">Protokolle</string>
+    <string name="settings_help_logs_text">Der Protokollbildschirm zeigt die Meldungen der App und jeder Maschinensitzung. Wählen Sie eine Maschine, um nur ihre Meldungen zu sehen. Exportieren sendet die Zeilen an eine andere App. Die Aufzeichnung des Bytestroms ist eine Debug-Option. Sie speichert die empfangenen Bytes einer Sitzung für eine Analyse.</string>
+</resources>

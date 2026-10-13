@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window background before Compose draws: the surface of the dark scheme. -->
+    <color name="window_background">#1E252D</color>
+</resources>

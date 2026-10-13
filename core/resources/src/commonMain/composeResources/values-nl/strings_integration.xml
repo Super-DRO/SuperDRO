@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the integration of the UI areas. -->
+<resources>
+    <string name="integration_tool_geometry_defined">Gedefinieerd</string>
+    <string name="integration_tool_geometry_open">Snijgeometrie</string>
+    <string name="integration_tool_geometry_save_first">Sla eerst het gereedschap op. Voeg daarna de snijgeometrie toe.</string>
+    <string name="integration_settings_profile_file_summary">Exporteer dit profiel naar een bestand of importeer een profielbestand.</string>
+    <string name="integration_calibration_adapter_missing">Het adapterprofiel van dit machineprofiel ontbreekt. Verbind de adapter of selecteer een adapterprofiel in het scherm Adapters.</string>
+    <string name="integration_calibration_no_axis">Geen as heeft een kalibratie nodig.</string>
+    <string name="integration_calibration_opening">De kalibratie van de asingang wordt geopend…</string>
+    <string name="integration_add_device_rfcomm_hint">Koppel de adapter op Linux eerst aan een seriële poort, bijvoorbeeld: sudo rfcomm bind 0 &lt;MAC-adres&gt;. Selecteer daarna de poort /dev/rfcomm0.</string>
+</resources>

@@ -1,0 +1,17 @@
+# The version of the composite plugin is a digest of these files (buildLogicVersion() in
+# settings.gradle.kts). Git on Windows checks out text files with CRLF by default. That
+# changes the digest, and the build then finds no plugin in composite/m2. Keep these files
+# at LF on every computer.
+#
+# Do not use a rule for all files here. The two gradlew.bat files are in the repository
+# with CRLF, so such a rule makes the tree dirty, and a dirty tree gets a -dev version.
+/composite/build.gradle.kts text eol=lf
+/composite/gradle.properties text eol=lf
+/composite/settings.gradle.kts text eol=lf
+/composite/src/main/** text eol=lf
+
+# Font files are binary data. Do not let Git change their bytes.
+*.ttf binary
+
+# The schema file of SQLDelight (core/store/src/commonMain/sqldelight/databases/1.db) is binary.
+*.db binary

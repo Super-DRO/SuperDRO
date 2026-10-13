@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The change of the machine type with the warning and the confirmation list. -->
+<resources>
+    <string name="settings_type_title">Changer le type de machine ?</string>
+    <string name="settings_type_from_to">%1$s : le type de machine passe de %2$s à %3$s.</string>
+    <string name="settings_type_warning">Certaines données ne conviennent pas au nouveau type de machine.</string>
+    <string name="settings_type_all_fits">Toutes les données conviennent au nouveau type de machine.</string>
+    <string name="settings_type_mismatch_title">Données qui ne conviennent pas</string>
+    <string name="settings_type_mismatch_tools">Outils de l'autre type de machine : %1$d</string>
+    <string name="settings_type_mismatch_sub_datums">Sous-origines avec une coordonnée Y : %1$d</string>
+    <string name="settings_type_mismatch_guides">Guides sur l'axe Y : %1$d</string>
+    <string name="settings_type_mismatch_machine_datums">Origines machine avec une coordonnée Y : %1$d</string>
+    <string name="settings_type_mismatch_threads">Filetages de tour : %1$d</string>
+    <string name="settings_type_conversion_title">Modifications faites par SuperDRO</string>
+    <string name="settings_type_conversion_mill_tools">Les outils de fraiseuse restent. Les deux types de fraiseuse les utilisent.</string>
+    <string name="settings_type_conversion_plane">Le plan de chaque espace de travail change.</string>
+    <string name="settings_type_conversion_diameter">Le mode diamètre de X de chaque espace de travail change.</string>
+    <string name="settings_type_conversion_mode">Le mode mesure passe au mode usinage.</string>
+    <string name="settings_type_conversion_angle">La convention d'angle des motifs change.</string>
+    <string name="settings_type_conversion_restore">Les données archivées qui conviennent au nouveau type reviennent.</string>
+    <string name="settings_type_archive">Archiver</string>
+    <string name="settings_type_archive_summary">Garder les données masquées. Un retour les affiche de nouveau.</string>
+    <string name="settings_type_delete">Supprimer</string>
+    <string name="settings_type_delete_summary">Supprimer les données définitivement.</string>
+    <string name="settings_type_confirm">Changer le type</string>
+    <string name="settings_type_done">Le type de machine de %1$s est maintenant %2$s.</string>
+</resources>

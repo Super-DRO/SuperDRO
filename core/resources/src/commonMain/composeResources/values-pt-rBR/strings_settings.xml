@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The common texts of the settings screens. -->
+<resources>
+    <string name="settings_help">Ajuda</string>
+    <string name="settings_close">Fechar</string>
+    <string name="settings_cancel">Cancelar</string>
+    <string name="settings_not_set">Não definido</string>
+    <string name="settings_undo">Desfazer</string>
+    <string name="settings_delete">Excluir</string>
+    <string name="settings_help_of">Ajuda: %1$s</string>
+</resources>

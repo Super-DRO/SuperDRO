@@ -1,0 +1,4 @@
+name,description,metric,internal,x_offset,z_offset
+OD Turning,CCMT insert,no,no,0.0000,0.0000
+Boring Bar,3/8 bar,no,yes,-0.1250,0.3750
+Parting,,no,no,0.0150,-0.0400

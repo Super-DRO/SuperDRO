@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the add-device sheet and of the machine setup. The file values/strings_add_device.xml has the same names. -->
+<resources>
+    <string name="add_device_step_link">Sélectionnez une liaison</string>
+    <string name="add_device_step_profile">Profil de la machine</string>
+    <string name="add_device_pair_new">Associer un nouvel adaptateur</string>
+    <string name="add_device_grant_permission">Accorder l'autorisation</string>
+    <string name="add_device_bluetooth_permission">SuperDRO a besoin de l'autorisation Bluetooth pour afficher les adaptateurs associés.</string>
+    <string name="add_device_bluetooth_off">Le Bluetooth est désactivé.</string>
+    <string name="add_device_turn_on_bluetooth">Activer le Bluetooth</string>
+    <string name="add_device_no_paired">Aucun adaptateur n'est associé. Associez l'adaptateur dans les réglages du système.</string>
+    <string name="add_device_no_usb">Aucun adaptateur USB n'est branché.</string>
+    <string name="add_device_usb_permission">Nécessite l'autorisation USB</string>
+    <string name="add_device_wifi_host">Nom d'hôte ou adresse IP</string>
+    <string name="add_device_wifi_port">Port réseau</string>
+    <string name="add_device_wifi_use">Utiliser cette adresse</string>
+    <string name="add_device_error_host_blank">Saisissez le nom d'hôte ou l'adresse IP.</string>
+    <string name="add_device_error_host_not_valid">Ce n'est pas un nom d'hôte, une adresse IPv4 ou une adresse IPv6 valide.</string>
+    <string name="add_device_error_port">Le port doit être un nombre de 1 à 65535.</string>
+    <string name="add_device_error_select_profile">Sélectionnez un profil.</string>
+    <string name="add_device_source_new">Nouvelle machine</string>
+    <string name="add_device_source_copy">Copie d'un profil</string>
+    <string name="add_device_source_stored">Profil enregistré</string>
+    <string name="add_device_no_profiles">Aucun profil n'est enregistré.</string>
+    <string name="add_device_name">Nom de la machine</string>
+    <string name="add_device_machine_type">Type de machine</string>
+    <string name="add_device_type_vertical_mill">Fraiseuse verticale</string>
+    <string name="add_device_type_lathe">Tour</string>
+    <string name="add_device_type_horizontal_mill">Fraiseuse horizontale</string>
+    <string name="add_device_units">Unités</string>
+    <string name="add_device_units_inch">Pouces</string>
+    <string name="add_device_units_mm">Millimètres</string>
+    <string name="add_device_inputs">Entrées</string>
+    <string name="add_device_input_x">Entrée X</string>
+    <string name="add_device_input_y">Entrée Y</string>
+    <string name="add_device_input_z">Entrée Z</string>
+    <string name="add_device_input_cross_slide">Entrée du chariot transversal</string>
+    <string name="add_device_input_carriage">Entrée du traînard</string>
+    <string name="add_device_input_quill">Règle du fourreau</string>
+    <string name="add_device_input_auxiliary">Affichage auxiliaire</string>
+    <string name="add_device_auxiliary_type">L'affichage auxiliaire mesure</string>
+    <string name="add_device_aux_tailstock">Contre-pointe</string>
+    <string name="add_device_aux_compound">Chariot orientable</string>
+    <string name="add_device_aux_other">Autre</string>
+    <string name="add_device_tachometer">Tachymètre</string>
+    <string name="add_device_conflicts_title">Vérifiez les entrées</string>
+    <string name="add_device_conflict_twice">L'entrée %1$s est ajoutée deux fois à %2$s. La valeur double.</string>
+    <string name="add_device_conflict_shared">L'entrée %1$s est utilisée par %2$s. Ces axes affichent la même valeur.</string>
+    <string name="add_device_conflict_angular">L'entrée %1$s est utilisée par %2$s. Un axe linéaire et l'axe angulaire ne peuvent pas partager une résolution, donc l'un d'eux lit mal.</string>
+    <string name="add_device_conflict_compound">Le chariot orientable utilise l'entrée %1$s, que X ou Z utilise aussi. La projection du chariot orientable reste désactivée.</string>
+    <string name="add_device_conflict_head_tilt">Le fourreau utilise l'entrée %1$s, que X, Y ou Z utilise aussi. La projection de l'inclinaison de la tête reste désactivée.</string>
+    <string name="add_device_setup_note">La configuration ne fixe aucune résolution. Étalonnez chaque entrée après la première connexion.</string>
+    <string name="add_device_connect">Connecter</string>
+</resources>

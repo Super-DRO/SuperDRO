@@ -1,0 +1,4 @@
+-- The SQLite version of the driver. A debug build and the instrumented test read it and stop
+-- when it is lower than 3.38.0.
+sqliteVersion:
+SELECT sqlite_version();

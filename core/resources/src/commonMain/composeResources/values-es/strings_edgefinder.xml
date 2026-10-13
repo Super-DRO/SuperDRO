@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder screen and of the automatic Z reference. -->
+<resources>
+    <string name="edgefinder_title">Indicar pieza</string>
+    <string name="edgefinder_edge_left">Izquierda</string>
+    <string name="edgefinder_edge_right">Derecha</string>
+    <string name="edgefinder_edge_near">Cerca</string>
+    <string name="edgefinder_edge_far">Lejos</string>
+    <string name="edgefinder_edge_description">Borde %1$s: %2$s</string>
+    <string name="edgefinder_state_unknown">Sin fijar</string>
+    <string name="edgefinder_state_scanning">Esperando contacto</string>
+    <string name="edgefinder_state_located">Localizado</string>
+    <string name="edgefinder_auto">AUTO</string>
+    <string name="edgefinder_auto_description">Buscador de bordes automático</string>
+    <string name="edgefinder_on">Activado</string>
+    <string name="edgefinder_off">Desactivado</string>
+    <string name="edgefinder_camera_center">Usar el punto bajo la cruz</string>
+    <string name="edgefinder_camera_center_clear">Borrar el centro</string>
+    <string name="edgefinder_axis_title">Eje %1$s</string>
+    <string name="edgefinder_external">Exterior</string>
+    <string name="edgefinder_internal">Interior</string>
+    <string name="edgefinder_center">Centro</string>
+    <string name="edgefinder_origin">Origen</string>
+    <string name="edgefinder_absolute">Absoluto</string>
+    <string name="edgefinder_incremental">Incremental</string>
+    <string name="edgefinder_set_origin">Fijar origen</string>
+    <string name="edgefinder_add_sub_datum">Añadir subdatum</string>
+    <string name="edgefinder_add_sub_datum_hint">Pulsación larga: añadir y mantener los bordes</string>
+    <string name="edgefinder_cancel">Cancelar</string>
+    <string name="edgefinder_z_position">Posición Z</string>
+    <string name="edgefinder_z_arm">Armar</string>
+    <string name="edgefinder_z_arm_description">Armar la sonda para capturar la posición Z</string>
+    <string name="edgefinder_armed">Armado</string>
+    <string name="edgefinder_sync">Sincronizar</string>
+    <string name="edgefinder_not_connected">SuperDRO no está conectado. No se pueden capturar posiciones hasta que se vuelva a conectar.</string>
+    <string name="edgefinder_probe">Sonda</string>
+    <string name="edgefinder_no_probe">Ninguna sonda seleccionada</string>
+    <string name="edgefinder_no_probe_hint">Elija el instrumento con el que mide esta función</string>
+    <string name="edgefinder_new_probe">Nuevo perfil…</string>
+    <string name="edgefinder_probe_type_touch">Sonda de contacto</string>
+    <string name="edgefinder_probe_type_edge">Buscador de bordes 2D</string>
+    <string name="edgefinder_probe_type_setter">Presetter de altura</string>
+    <string name="edgefinder_probe_type_camera">Cámara</string>
+    <string name="edgefinder_undo_origin">Origen fijado</string>
+    <string name="edgefinder_sub_datum_added">%1$s añadido</string>
+    <string name="edgefinder_zauto_title">Referencia Z automática</string>
+    <string name="edgefinder_zauto_button">Auto</string>
+    <string name="edgefinder_zauto_armed">Armado: toque el presetter con la herramienta</string>
+    <string name="edgefinder_zauto_setter_height">Altura del presetter: %1$s %2$s</string>
+    <string name="edgefinder_zauto_profile">Sonda de referencia Z</string>
+    <string name="edgefinder_zauto_undo">Referencia Z fijada</string>
+    <string name="edgefinder_zauto_no_port">La sonda seleccionada no tiene entrada de disparo.</string>
+</resources>

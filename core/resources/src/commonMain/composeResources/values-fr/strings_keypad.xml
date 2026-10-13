@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the keypad sheet, the divisions keypad, and the preset sheet. The file values/strings_keypad.xml has the same names. -->
+<resources>
+    <string name="keypad_title">Régler %1$s</string>
+    <string name="keypad_mode_absolute">Absolu</string>
+    <string name="keypad_mode_incremental">Incrémental</string>
+    <string name="keypad_current">Actuel : %1$s %2$s</string>
+    <string name="keypad_result">Résultat : %1$s %2$s</string>
+    <string name="keypad_expression">Valeur ou expression</string>
+    <string name="keypad_set">Régler</string>
+    <string name="keypad_clear">Effacer</string>
+    <string name="keypad_backspace">Effacer le dernier caractère</string>
+    <string name="keypad_relative_add">Ajouter à la valeur actuelle</string>
+    <string name="keypad_relative_subtract">Soustraire de la valeur actuelle</string>
+    <string name="keypad_divisions_title">Divisions par tour</string>
+    <string name="keypad_divisions_invalid">Saisissez un nombre entier de 1 ou plus.</string>
+    <string name="keypad_presets_title">Choisissez la vitesse</string>
+</resources>

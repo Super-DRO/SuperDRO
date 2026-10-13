@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the data output screen. The file values/strings_dataoutput_screen.xml has the same names. -->
+<resources>
+    <string name="dataoutput_machine">Machine</string>
+    <string name="dataoutput_no_machine">Ajoutez d’abord une machine. Chaque machine a sa propre sortie de données.</string>
+    <string name="dataoutput_save">Enregistrer</string>
+    <string name="dataoutput_saved">Les réglages de la sortie de données sont enregistrés.</string>
+    <string name="dataoutput_save_failed">Les réglages n’ont pas été enregistrés.</string>
+    <string name="dataoutput_unsaved">Les modifications ne sont pas enregistrées.</string>
+    <string name="dataoutput_discard">Annuler les modifications</string>
+    <string name="dataoutput_correct_first">Corrigez d’abord les problèmes des réglages.</string>
+
+    <string name="dataoutput_section_status">État</string>
+    <string name="dataoutput_section_network">Réseau</string>
+    <string name="dataoutput_section_mqtt">Courtier MQTT</string>
+    <string name="dataoutput_section_format">Format des enregistrements</string>
+    <string name="dataoutput_status_line">Sortie de données : %1$s</string>
+    <string name="dataoutput_addresses">Adresses</string>
+    <string name="dataoutput_no_address">Aucune adresse</string>
+    <string name="dataoutput_clients">Clients</string>
+    <string name="dataoutput_security_tls">TLS vers le courtier</string>
+    <string name="dataoutput_security_no_tls">Pas de TLS vers le courtier</string>
+    <string name="dataoutput_records">Enregistrements : %1$d</string>
+    <string name="dataoutput_sent_failed">Envoyés : %1$d. Échecs : %2$d.</string>
+    <string name="dataoutput_last_error">Dernier problème : %1$s</string>
+    <string name="dataoutput_details">Afficher le diagnostic</string>
+    <string name="dataoutput_details_hide">Masquer le diagnostic</string>
+    <string name="dataoutput_status_title">Sortie de données</string>
+
+    <string name="dataoutput_block_off">La sortie est désactivée. Aucun socket serveur n’est ouvert.</string>
+    <string name="dataoutput_block_offline">La machine est hors ligne. La sortie démarre quand la machine est en ligne.</string>
+    <string name="dataoutput_block_not_requested">Sélectionnez Démarrer pour envoyer les valeurs.</string>
+    <string name="dataoutput_block_plain">Confirmez l’avertissement du mode texte en clair.</string>
+    <string name="dataoutput_block_mqtt_tls">Confirmez l’avertissement de la liaison au courtier sans TLS.</string>
+    <string name="dataoutput_block_invalid">Les réglages ont des problèmes. Corrigez-les et enregistrez.</string>
+
+    <string name="dataoutput_age_seconds">%1$d s</string>
+    <string name="dataoutput_age_minutes">%1$d min</string>
+    <string name="dataoutput_age_hours">%1$d h</string>
+    <string name="dataoutput_no_detail">aucun détail</string>
+
+    <string name="dataoutput_interface_addresses">%1$s : %2$s</string>
+    <string name="dataoutput_interface_no_address">%1$s : aucune adresse pour le moment</string>
+    <string name="dataoutput_always_on_needs_switch">Toujours active est disponible après l’activation de la sortie.</string>
+    <string name="dataoutput_mqtt_json_only">Le client MQTT envoie des enregistrements JSON.</string>
+    <string name="dataoutput_mqtt_client_id_hint">Vide : superdro et l’ID de la machine</string>
+    <string name="dataoutput_mqtt_machine_hint">Vide : le nom de la machine</string>
+    <string name="dataoutput_psk_copied">La clé est copiée. Collez-la dans le programme client.</string>
+    <string name="dataoutput_psk_help">Donnez ce texte à chaque programme client. Le texte est l’identité, deux-points et la clé.</string>
+    <string name="dataoutput_psk_new_title">Créer une nouvelle clé ?</string>
+    <string name="dataoutput_psk_new_done">Une nouvelle clé est utilisée. Les clients avec l’ancienne clé ne reçoivent aucun enregistrement.</string>
+    <string name="dataoutput_psk_none">La sortie crée une clé à son premier démarrage.</string>
+    <string name="dataoutput_secret_error">Le stockage sécurisé des clés a signalé une erreur. Réessayez.</string>
+    <string name="dataoutput_testing">Test de la connexion…</string>
+
+    <string name="dataoutput_port_range">Le port doit être compris entre 1024 et 65535.</string>
+    <string name="dataoutput_port_conflict">La sortie de %1$s utilise le port %2$d. Sélectionnez un autre port.</string>
+    <string name="dataoutput_interval_range">L’intervalle doit être compris entre 50 et 5000 ms.</string>
+    <string name="dataoutput_rate_range">La fréquence maximale doit être comprise entre 1 et 20 Hz.</string>
+    <string name="dataoutput_broker_host_problem">Saisissez le nom d’hôte ou l’adresse du courtier.</string>
+    <string name="dataoutput_broker_port_range">Le port du courtier doit être compris entre 1 et 65535.</string>
+    <string name="dataoutput_client_id_length">L’ID client peut avoir 64 caractères au maximum.</string>
+    <string name="dataoutput_machine_name_problem">Le nom de la machine dans le sujet doit avoir de 1 à 64 caractères, sans / + ni #.</string>
+    <string name="dataoutput_label_topic_character">Une étiquette de sujet ne peut pas contenir le caractère %1$s.</string>
+    <string name="dataoutput_label_too_long">Une étiquette peut avoir 32 caractères au maximum.</string>
+    <string name="dataoutput_field_list">La liste des champs n’est pas complète.</string>
+    <string name="dataoutput_field_send">Envoyer %1$s</string>
+
+    <string name="dataoutput_chip">Sortie : %1$s</string>
+    <string name="dataoutput_chip_description">Sortie de données : %1$s. Touchez pour démarrer ou arrêter. Appui long pour les réglages.</string>
+    <string name="dataoutput_chip_always_description">Sortie de données : %1$s. Touchez pour le diagnostic. Appui long pour les réglages.</string>
+</resources>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The USB device filter of MainActivity. It has all IDs of the table of section
+    5.2.2. Android starts the app when the user attaches one of these devices, and the user can give
+    the USB permission in the same dialog. UsbDeviceTable in this module has the same IDs; the unit test
+    UsbDeviceFilterXmlTest compares the two. The values are decimal; the comments give the hex values.
+-->
+<resources>
+    <!-- CDC-ACM: vendor 0x2341 (Arduino) -->
+    <usb-device vendor-id="9025" product-id="1" /> <!-- 0x2341/0x0001 -->
+    <usb-device vendor-id="9025" product-id="67" /> <!-- 0x2341/0x0043 -->
+    <usb-device vendor-id="9025" product-id="16" /> <!-- 0x2341/0x0010 -->
+    <usb-device vendor-id="9025" product-id="66" /> <!-- 0x2341/0x0042 -->
+    <usb-device vendor-id="9025" product-id="59" /> <!-- 0x2341/0x003B -->
+    <usb-device vendor-id="9025" product-id="68" /> <!-- 0x2341/0x0044 -->
+    <usb-device vendor-id="9025" product-id="63" /> <!-- 0x2341/0x003F -->
+    <usb-device vendor-id="9025" product-id="32822" /> <!-- 0x2341/0x8036 -->
+    <usb-device vendor-id="9025" product-id="32823" /> <!-- 0x2341/0x8037 -->
+    <!-- CDC-ACM: vendor 0x16C0 -->
+    <usb-device vendor-id="5824" product-id="1155" /> <!-- 0x16C0/0x0483 -->
+    <!-- CDC-ACM: vendor 0x03EB (Atmel) -->
+    <usb-device vendor-id="1003" product-id="8260" /> <!-- 0x03EB/0x2044 -->
+    <!-- CDC-ACM: vendor 0x1EAF (Leaflabs) -->
+    <usb-device vendor-id="7855" product-id="4" /> <!-- 0x1EAF/0x0004 -->
+    <!-- CDC-ACM: vendor 0x0D28 (ARM mbed) -->
+    <usb-device vendor-id="3368" product-id="516" /> <!-- 0x0D28/0x0204 -->
+    <!-- CDC-ACM: vendor 0x0483 (ST) -->
+    <usb-device vendor-id="1155" product-id="22336" /> <!-- 0x0483/0x5740 -->
+    <!-- CDC-ACM: vendor 0x2E8A (Raspberry Pi) -->
+    <usb-device vendor-id="11914" product-id="5" /> <!-- 0x2E8A/0x0005 -->
+    <usb-device vendor-id="11914" product-id="10" /> <!-- 0x2E8A/0x000A -->
+    <!-- CDC-ACM: vendor 0x1A86 (WCH), CH9102 in CDC mode -->
+    <usb-device vendor-id="6790" product-id="21972" /> <!-- 0x1A86/0x55D4 -->
+    <!-- CP210x: vendor 0x10C4 -->
+    <usb-device vendor-id="4292" product-id="60000" /> <!-- 0x10C4/0xEA60 -->
+    <usb-device vendor-id="4292" product-id="60016" /> <!-- 0x10C4/0xEA70 -->
+    <usb-device vendor-id="4292" product-id="60017" /> <!-- 0x10C4/0xEA71 -->
+    <!-- FTDI: vendor 0x0403 -->
+    <usb-device vendor-id="1027" product-id="24577" /> <!-- 0x0403/0x6001 -->
+    <usb-device vendor-id="1027" product-id="24596" /> <!-- 0x0403/0x6014 -->
+    <usb-device vendor-id="1027" product-id="24592" /> <!-- 0x0403/0x6010 -->
+    <usb-device vendor-id="1027" product-id="24593" /> <!-- 0x0403/0x6011 -->
+    <usb-device vendor-id="1027" product-id="24597" /> <!-- 0x0403/0x6015 -->
+    <!-- PL2303: vendor 0x067B -->
+    <usb-device vendor-id="1659" product-id="8963" /> <!-- 0x067B/0x2303 -->
+    <usb-device vendor-id="1659" product-id="9123" /> <!-- 0x067B/0x23A3 -->
+    <usb-device vendor-id="1659" product-id="9139" /> <!-- 0x067B/0x23B3 -->
+    <usb-device vendor-id="1659" product-id="9155" /> <!-- 0x067B/0x23C3 -->
+    <usb-device vendor-id="1659" product-id="9171" /> <!-- 0x067B/0x23D3 -->
+    <usb-device vendor-id="1659" product-id="9187" /> <!-- 0x067B/0x23E3 -->
+    <usb-device vendor-id="1659" product-id="9203" /> <!-- 0x067B/0x23F3 -->
+    <!-- CH34x: vendor 0x1A86 (WCH), CH340 and CH341 -->
+    <usb-device vendor-id="6790" product-id="29987" /> <!-- 0x1A86/0x7523 -->
+    <usb-device vendor-id="6790" product-id="21795" /> <!-- 0x1A86/0x5523 -->
+</resources>

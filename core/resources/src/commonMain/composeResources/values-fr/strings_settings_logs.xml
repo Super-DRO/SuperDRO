@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The log screen and the record of the byte stream. -->
+<resources>
+    <string name="settings_logs_empty">Aucune ligne de journal</string>
+    <string name="settings_logs_tab_lines">Lignes du journal</string>
+    <string name="settings_logs_tab_record">Enregistrement du flux d'octets</string>
+    <string name="settings_logs_filter_all">Tout</string>
+    <string name="settings_logs_filter_app">Application</string>
+    <string name="settings_logs_filter_description">Afficher les lignes de %1$s</string>
+    <string name="settings_logs_export">Exporter</string>
+    <string name="settings_logs_clear">Effacer</string>
+    <string name="settings_logs_level_debug">Débogage</string>
+    <string name="settings_logs_level_info">Information</string>
+    <string name="settings_logs_level_warning">Avertissement</string>
+    <string name="settings_logs_level_error">Erreur</string>
+    <string name="settings_logs_line_count">Lignes : %1$d</string>
+    <string name="settings_logs_note">L'application garde les lignes les plus récentes de chaque machine seulement pendant son fonctionnement.</string>
+    <string name="settings_logs_exported">Le fichier est prêt à être partagé.</string>
+    <string name="settings_logs_no_share">Aucune application ne peut recevoir le fichier.</string>
+    <string name="settings_logs_record_title">Enregistrer le flux d'octets</string>
+    <string name="settings_logs_record_note">Une option de débogage. La session écrit chaque bloc reçu avec son heure d'arrivée dans un fichier. L'enregistrement commence avec une nouvelle liaison : l'interrupteur ferme la liaison et l'ouvre de nouveau.</string>
+    <string name="settings_logs_record_paused">La machine est en pause. Connectez-la d'abord.</string>
+    <string name="settings_logs_record_no_session">Aucune machine n'a de session.</string>
+    <string name="settings_logs_records_title">Liaisons enregistrées</string>
+    <string name="settings_logs_records_empty">Aucune liaison enregistrée</string>
+    <string name="settings_logs_record_link">%1$s, liaison %2$d</string>
+    <string name="settings_logs_record_detail">Début %1$s. Octets : %2$d. Blocs : %3$d.</string>
+    <string name="settings_logs_record_open">Enregistrement</string>
+    <string name="settings_logs_record_closed">Fermé</string>
+    <string name="settings_logs_record_truncated">La copie dans l'application s'arrête à %1$d octets. Le fichier de l'application contient le flux complet.</string>
+    <string name="settings_logs_export_record_description">Exporter %1$s</string>
+</resources>

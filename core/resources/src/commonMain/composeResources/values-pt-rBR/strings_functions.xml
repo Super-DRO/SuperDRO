@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The common strings of the machine functions area: the buttons, the units, the preview, and the blocker of new sub-datums. -->
+<resources>
+    <string name="fn_create">Criar</string>
+    <string name="fn_apply">Aplicar</string>
+    <string name="fn_cancel">Cancelar</string>
+    <string name="fn_close">Fechar</string>
+    <string name="fn_save">Salvar</string>
+    <string name="fn_delete">Excluir</string>
+    <string name="fn_edit">Editar</string>
+    <string name="fn_add">Adicionar</string>
+    <string name="fn_clear">Limpar</string>
+    <string name="fn_undo">Desfazer</string>
+    <string name="fn_more">Mais</string>
+    <string name="fn_unit_mm">mm</string>
+    <string name="fn_unit_inch">pol</string>
+    <string name="fn_unit_cd">Unidade de %1$s</string>
+    <string name="fn_preview_title">Pré-visualização</string>
+    <string name="fn_preview_empty">Nenhum ponto para mostrar. Preencha os campos.</string>
+    <string name="fn_preview_count">%1$d pontos</string>
+    <string name="fn_preview_cd">Pré-visualização de %1$d pontos</string>
+    <string name="fn_error_title">Erro</string>
+    <string name="fn_not_available_title">Indisponível agora</string>
+    <string name="fn_blocked_message">Não é possível adicionar novos sub-datums enquanto %1$s está ativo.</string>
+    <string name="fn_blocker_thread">o rosqueamento</string>
+    <string name="fn_blocker_no_workspace">nenhum espaço de trabalho</string>
+    <string name="fn_value_not_number">O valor de %1$s não pôde ser convertido em número</string>
+    <string name="fn_axis_value">%1$s: %2$s</string>
+    <string name="fn_route_step_and_repeat">Passo e repetição</string>
+    <string name="fn_route_workspace_commands">Comandos do espaço de trabalho</string>
+    <string name="fn_route_add_point">Adicionar sub-datum</string>
+    <string name="fn_route_sub_datum_command">Comando de sub-datum</string>
+</resources>

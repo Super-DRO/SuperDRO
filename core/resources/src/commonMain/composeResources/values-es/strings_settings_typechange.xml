@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The change of the machine type with the warning and the confirmation list. -->
+<resources>
+    <string name="settings_type_title">¿Cambiar el tipo de máquina?</string>
+    <string name="settings_type_from_to">%1$s: el tipo de máquina cambia de %2$s a %3$s.</string>
+    <string name="settings_type_warning">Algunos datos no son válidos para el nuevo tipo de máquina.</string>
+    <string name="settings_type_all_fits">Todos los datos son válidos para el nuevo tipo de máquina.</string>
+    <string name="settings_type_mismatch_title">Datos que no son válidos</string>
+    <string name="settings_type_mismatch_tools">Herramientas del otro tipo de máquina: %1$d</string>
+    <string name="settings_type_mismatch_sub_datums">Subdatos con una coordenada Y: %1$d</string>
+    <string name="settings_type_mismatch_guides">Guías en el eje Y: %1$d</string>
+    <string name="settings_type_mismatch_machine_datums">Orígenes de máquina con una coordenada Y: %1$d</string>
+    <string name="settings_type_mismatch_threads">Roscas de torno: %1$d</string>
+    <string name="settings_type_conversion_title">Cambios que hace SuperDRO</string>
+    <string name="settings_type_conversion_mill_tools">Las herramientas de fresadora se mantienen. Los dos tipos de fresadora las usan.</string>
+    <string name="settings_type_conversion_plane">El plano de cada espacio de trabajo cambia.</string>
+    <string name="settings_type_conversion_diameter">El modo de diámetro de X de cada espacio de trabajo cambia.</string>
+    <string name="settings_type_conversion_mode">El modo de medición cambia al modo de corte.</string>
+    <string name="settings_type_conversion_angle">La convención del ángulo de los patrones cambia.</string>
+    <string name="settings_type_conversion_restore">Los datos archivados válidos para el nuevo tipo vuelven.</string>
+    <string name="settings_type_archive">Archivar</string>
+    <string name="settings_type_archive_summary">Guardar los datos ocultos. Un cambio de vuelta los muestra otra vez.</string>
+    <string name="settings_type_delete">Eliminar</string>
+    <string name="settings_type_delete_summary">Eliminar los datos para siempre.</string>
+    <string name="settings_type_confirm">Cambiar tipo</string>
+    <string name="settings_type_done">El tipo de máquina de %1$s es ahora %2$s.</string>
+</resources>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The common strings of the machine functions area: the buttons, the units, the preview, and the blocker of new sub-datums. -->
+<resources>
+    <string name="fn_create">Maken</string>
+    <string name="fn_apply">Toepassen</string>
+    <string name="fn_cancel">Annuleren</string>
+    <string name="fn_close">Sluiten</string>
+    <string name="fn_save">Opslaan</string>
+    <string name="fn_delete">Verwijderen</string>
+    <string name="fn_edit">Bewerken</string>
+    <string name="fn_add">Toevoegen</string>
+    <string name="fn_clear">Wissen</string>
+    <string name="fn_undo">Ongedaan maken</string>
+    <string name="fn_more">Meer</string>
+    <string name="fn_unit_mm">mm</string>
+    <string name="fn_unit_inch">in</string>
+    <string name="fn_unit_cd">Eenheid van %1$s</string>
+    <string name="fn_preview_title">Voorbeeld</string>
+    <string name="fn_preview_empty">Geen punten om te tonen. Vul de velden in.</string>
+    <string name="fn_preview_count">%1$d punten</string>
+    <string name="fn_preview_cd">Voorbeeld van %1$d punten</string>
+    <string name="fn_error_title">Fout</string>
+    <string name="fn_not_available_title">Nu niet beschikbaar</string>
+    <string name="fn_blocked_message">Nieuwe sub-datums zijn niet mogelijk zolang %1$s actief is.</string>
+    <string name="fn_blocker_thread">het draadsnijden</string>
+    <string name="fn_blocker_no_workspace">geen werkruimte</string>
+    <string name="fn_value_not_number">De waarde van %1$s is geen getal</string>
+    <string name="fn_axis_value">%1$s: %2$s</string>
+    <string name="fn_route_step_and_repeat">Stap en herhaal</string>
+    <string name="fn_route_workspace_commands">Werkruimteopdrachten</string>
+    <string name="fn_route_add_point">Sub-datum toevoegen</string>
+    <string name="fn_route_sub_datum_command">Sub-datumopdracht</string>
+</resources>

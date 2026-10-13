@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of core:readout. The file values/strings_readout_core.xml has the same names. -->
+<resources>
+    <string name="readout_core_settings_same_prefix">Primär- und Sekundäreingang können nicht dasselbe Präfix verwenden</string>
+    <string name="readout_core_settings_one_axis_required">Mindestens eine Ausgabeachse muss aktiviert sein</string>
+    <string name="readout_core_settings_sample_count_range">Die Anzahl der Kantentaster-Messungen muss eine Zahl zwischen 1 und 10 (einschließlich) sein</string>
+    <string name="readout_core_calibration_secondary_disabled">Sekundäreingang deaktiviert</string>
+    <string name="readout_core_calibration_prefix_missing">Eingangspräfix fehlt</string>
+    <string name="readout_core_calibration_block_required">Blockgröße erforderlich</string>
+    <string name="readout_core_calibration_block_too_small">Block zu klein</string>
+    <string name="readout_core_calibration_block_too_small_detail">mindestens 50.000 mm / 2.0000 in</string>
+    <string name="readout_core_calibration_no_reading">Kein Messwert empfangen</string>
+    <string name="readout_core_calibration_sample_too_small">Messprobe zu klein</string>
+    <string name="readout_core_calibration_jitter">Zu starkes Schwanken erkannt</string>
+    <string name="readout_core_calibration_too_close">Messwerte zu nah beieinander</string>
+    <string name="readout_core_edge_left">linke</string>
+    <string name="readout_core_edge_right">rechte</string>
+    <string name="readout_core_edge_front">vordere</string>
+    <string name="readout_core_edge_back">hintere</string>
+    <string name="readout_core_edge_bottom">untere</string>
+    <string name="readout_core_edge_top">obere</string>
+    <string name="readout_core_edge_first">erste</string>
+    <string name="readout_core_edge_second">zweite</string>
+    <string name="readout_core_tach_cant_set">Drehzahl kann nicht gesetzt werden</string>
+    <string name="readout_core_state_error">Fehler</string>
+    <string name="readout_core_state_no_input">Kein Eingang</string>
+    <string name="readout_core_map_too_many_points">Die Tabelle hat mehr als %1$d Punkte.</string>
+    <string name="readout_core_map_malformed_line">Zeile %1$d ist kein gültiger Punkt.</string>
+    <string name="readout_core_map_no_points">Die Tabelle hat keine Punkte.</string>
+    <string name="readout_core_map_duplicate_position">Position %1$d kommt mehr als einmal vor.</string>
+    <string name="readout_core_map_reversal">Die korrigierte Position geht zwischen den Positionen %1$d und %2$d zurück.</string>
+    <string name="readout_core_map_dead_band">Die korrigierte Position bewegt sich zwischen den Positionen %1$d und %2$d nicht.</string>
+    <string name="readout_core_map_negative_backlash">Das Umkehrspiel an Position %1$d ist negativ (%2$d).</string>
+    <string name="readout_core_map_backlash_exceeds_turn">Das Umkehrspiel an Position %1$d (%2$d) ist nicht kleiner als eine Spindelumdrehung (%3$d Schritte).</string>
+    <string name="readout_core_profile_backlash_map_not_allowed">Eine Umkehrspieltabelle gibt es nur für einen Spindelgeber.</string>
+</resources>

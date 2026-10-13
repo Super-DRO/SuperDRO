@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the add-device sheet and of the machine setup. The file values/strings_add_device.xml has the same names. -->
+<resources>
+    <string name="add_device_step_link">Seleccione una conexión</string>
+    <string name="add_device_step_profile">Perfil de la máquina</string>
+    <string name="add_device_pair_new">Emparejar adaptador nuevo</string>
+    <string name="add_device_grant_permission">Conceder permiso</string>
+    <string name="add_device_bluetooth_permission">SuperDRO necesita el permiso de Bluetooth para mostrar los adaptadores emparejados.</string>
+    <string name="add_device_bluetooth_off">El Bluetooth está desactivado.</string>
+    <string name="add_device_turn_on_bluetooth">Activar Bluetooth</string>
+    <string name="add_device_no_paired">No hay adaptadores emparejados. Empareje el adaptador en los ajustes del sistema.</string>
+    <string name="add_device_no_usb">No hay ningún adaptador USB conectado.</string>
+    <string name="add_device_usb_permission">Necesita el permiso USB</string>
+    <string name="add_device_wifi_host">Nombre de host o dirección IP</string>
+    <string name="add_device_wifi_port">Puerto</string>
+    <string name="add_device_wifi_use">Usar esta dirección</string>
+    <string name="add_device_error_host_blank">Escriba el nombre de host o la dirección IP.</string>
+    <string name="add_device_error_host_not_valid">No es un nombre de host, una dirección IPv4 ni una dirección IPv6 válidos.</string>
+    <string name="add_device_error_port">El puerto debe ser un número de 1 a 65535.</string>
+    <string name="add_device_error_select_profile">Seleccione un perfil.</string>
+    <string name="add_device_source_new">Máquina nueva</string>
+    <string name="add_device_source_copy">Copia de un perfil</string>
+    <string name="add_device_source_stored">Perfil guardado</string>
+    <string name="add_device_no_profiles">No hay perfiles guardados.</string>
+    <string name="add_device_name">Nombre de la máquina</string>
+    <string name="add_device_machine_type">Tipo de máquina</string>
+    <string name="add_device_type_vertical_mill">Fresadora vertical</string>
+    <string name="add_device_type_lathe">Torno</string>
+    <string name="add_device_type_horizontal_mill">Fresadora horizontal</string>
+    <string name="add_device_units">Unidades</string>
+    <string name="add_device_units_inch">Pulgadas</string>
+    <string name="add_device_units_mm">Milímetros</string>
+    <string name="add_device_inputs">Entradas</string>
+    <string name="add_device_input_x">Entrada X</string>
+    <string name="add_device_input_y">Entrada Y</string>
+    <string name="add_device_input_z">Entrada Z</string>
+    <string name="add_device_input_cross_slide">Entrada del carro transversal</string>
+    <string name="add_device_input_carriage">Entrada del carro principal</string>
+    <string name="add_device_input_quill">Regla de la pínola</string>
+    <string name="add_device_input_auxiliary">Lectura auxiliar</string>
+    <string name="add_device_auxiliary_type">La lectura auxiliar mide</string>
+    <string name="add_device_aux_tailstock">Contrapunto</string>
+    <string name="add_device_aux_compound">Carro orientable</string>
+    <string name="add_device_aux_other">Otro</string>
+    <string name="add_device_tachometer">Tacómetro</string>
+    <string name="add_device_conflicts_title">Revise las entradas</string>
+    <string name="add_device_conflict_twice">La entrada %1$s se suma dos veces a %2$s. El valor se duplica.</string>
+    <string name="add_device_conflict_shared">La entrada %1$s la usan %2$s. Estos ejes muestran el mismo valor.</string>
+    <string name="add_device_conflict_angular">La entrada %1$s la usan %2$s. Un eje lineal y el eje angular no pueden compartir una resolución, así que uno de ellos lee mal.</string>
+    <string name="add_device_conflict_compound">El carro orientable usa la entrada %1$s, que también usa X o Z. La proyección del carro orientable queda desactivada.</string>
+    <string name="add_device_conflict_head_tilt">La pínola usa la entrada %1$s, que también usa X, Y o Z. La proyección de inclinación del cabezal queda desactivada.</string>
+    <string name="add_device_setup_note">La configuración no fija ninguna resolución. Calibre cada entrada después de la primera conexión.</string>
+    <string name="add_device_connect">Conectar</string>
+</resources>

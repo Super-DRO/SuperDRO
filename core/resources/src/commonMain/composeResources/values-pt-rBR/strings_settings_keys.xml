@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The key mapping screen. -->
+<resources>
+    <string name="settings_keys_press">Pressione uma tecla</string>
+    <string name="settings_keys_press_hint">Pressione a tecla no teclado, no teclado numérico, no pedal ou no controle remoto. Escape cancela.</string>
+    <string name="settings_keys_intro">As teclas de um teclado, um teclado numérico, um pedal ou um controle remoto iniciam uma ação na aba selecionada.</string>
+    <string name="settings_keys_section_map">Mapa de teclas</string>
+    <string name="settings_keys_default_active">O mapa de teclas padrão está em uso.</string>
+    <string name="settings_keys_custom_active">Seu próprio mapa de teclas está em uso.</string>
+    <string name="settings_keys_empty">O mapa de teclas não tem teclas.</string>
+    <string name="settings_keys_add">Adicionar uma tecla</string>
+    <string name="settings_keys_reset">Restaurar o padrão</string>
+    <string name="settings_keys_reset_done">O mapa de teclas padrão voltou.</string>
+    <string name="settings_keys_remove">Remover %1$s</string>
+    <string name="settings_keys_change">Alterar a tecla de %1$s</string>
+    <string name="settings_keys_removed">Tecla %1$s removida</string>
+    <string name="settings_keys_added">Tecla %1$s: %2$s</string>
+    <string name="settings_keys_replaced">A tecla %1$s tinha a ação %2$s. Sua ação agora é %3$s.</string>
+    <string name="settings_keys_code">Código de tecla %1$d</string>
+    <string name="settings_keys_add_title">Adicionar uma tecla</string>
+    <string name="settings_keys_action">Ação</string>
+    <string name="settings_keys_axis">Eixo</string>
+    <string name="settings_keys_next">Avançar</string>
+    <string name="settings_keys_axis_angular">eixo angular</string>
+    <string name="settings_keys_action_zero">Zerar %1$s</string>
+    <string name="settings_keys_action_set">Definir %1$s</string>
+    <string name="settings_keys_action_keypad">Teclado de %1$s</string>
+    <string name="settings_keys_action_hold">Reter %1$s</string>
+    <string name="settings_keys_action_half">Metade de %1$s</string>
+    <string name="settings_keys_action_zero_all">Zerar todos os eixos</string>
+    <string name="settings_keys_action_mode">ABS ou INC</string>
+    <string name="settings_keys_action_units">Unidades (polegada ou mm)</string>
+    <string name="settings_keys_action_next_point">Próximo ponto</string>
+    <string name="settings_keys_action_previous_point">Ponto anterior</string>
+    <string name="settings_keys_pick_zero">Zerar um eixo</string>
+    <string name="settings_keys_pick_set">Definir um eixo</string>
+    <string name="settings_keys_pick_keypad">Abrir o teclado</string>
+    <string name="settings_keys_pick_hold">Reter um eixo</string>
+    <string name="settings_keys_pick_half">Metade de um eixo</string>
+    <string name="settings_keys_point_active">O ponto %1$s está ativo</string>
+    <string name="settings_keys_no_points">Este espaço de trabalho não tem pontos.</string>
+    <string name="settings_keys_note_device">Uma tecla funciona em cada dispositivo. A ação vai para a aba selecionada.</string>
+</resources>

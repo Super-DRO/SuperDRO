@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the data output screen and of its status chip (core:ui package dataoutput). -->
+<resources>
+    <string name="dataoutput_machine">Machine</string>
+    <string name="dataoutput_no_machine">Add a machine first. Each machine has its own data output.</string>
+    <string name="dataoutput_save">Save</string>
+    <string name="dataoutput_saved">The data output settings are saved.</string>
+    <string name="dataoutput_save_failed">The settings were not saved.</string>
+    <string name="dataoutput_unsaved">The changes are not saved.</string>
+    <string name="dataoutput_discard">Discard the changes</string>
+    <string name="dataoutput_correct_first">Correct the problems of the settings first.</string>
+
+    <string name="dataoutput_section_status">Status</string>
+    <string name="dataoutput_section_network">Network</string>
+    <string name="dataoutput_section_mqtt">MQTT broker</string>
+    <string name="dataoutput_section_format">Record format</string>
+    <string name="dataoutput_status_line">Data output: %1$s</string>
+    <string name="dataoutput_addresses">Addresses</string>
+    <string name="dataoutput_no_address">No address</string>
+    <string name="dataoutput_clients">Clients</string>
+    <string name="dataoutput_security_tls">TLS to the broker</string>
+    <string name="dataoutput_security_no_tls">No TLS to the broker</string>
+    <string name="dataoutput_records">Records: %1$d</string>
+    <string name="dataoutput_sent_failed">Sent: %1$d. Failed: %2$d.</string>
+    <string name="dataoutput_last_error">Last problem: %1$s</string>
+    <string name="dataoutput_details">Show the diagnostics</string>
+    <string name="dataoutput_details_hide">Hide the diagnostics</string>
+    <string name="dataoutput_status_title">Data output</string>
+
+    <string name="dataoutput_block_off">The output is off. No server socket is open.</string>
+    <string name="dataoutput_block_offline">The machine is offline. The output starts when the machine is online.</string>
+    <string name="dataoutput_block_not_requested">Select Start to send the values.</string>
+    <string name="dataoutput_block_plain">Confirm the warning of the plain text mode.</string>
+    <string name="dataoutput_block_mqtt_tls">Confirm the warning of the broker link without TLS.</string>
+    <string name="dataoutput_block_invalid">The settings have problems. Correct them and save.</string>
+
+    <string name="dataoutput_age_seconds">%1$d s</string>
+    <string name="dataoutput_age_minutes">%1$d min</string>
+    <string name="dataoutput_age_hours">%1$d h</string>
+    <string name="dataoutput_no_detail">no detail</string>
+
+    <string name="dataoutput_interface_addresses">%1$s: %2$s</string>
+    <string name="dataoutput_interface_no_address">%1$s: no address now</string>
+    <string name="dataoutput_always_on_needs_switch">Always on is available after you turn on the output.</string>
+    <string name="dataoutput_mqtt_json_only">The MQTT client sends JSON records.</string>
+    <string name="dataoutput_mqtt_client_id_hint">Empty: superdro and the machine ID</string>
+    <string name="dataoutput_mqtt_machine_hint">Empty: the machine name</string>
+    <string name="dataoutput_psk_copied">The key is copied. Paste it into the client program.</string>
+    <string name="dataoutput_psk_help">Give this text to each client program. The text is the identity, a colon, and the key.</string>
+    <string name="dataoutput_psk_new_title">Make a new key?</string>
+    <string name="dataoutput_psk_new_done">A new key is in use. The clients with the old key get no records.</string>
+    <string name="dataoutput_psk_none">The output makes a key at its first start.</string>
+    <string name="dataoutput_secret_error">The secure key store gave an error. Try again.</string>
+    <string name="dataoutput_testing">Testing the connection…</string>
+
+    <string name="dataoutput_port_range">The port must be 1024 to 65535.</string>
+    <string name="dataoutput_port_conflict">The output of %1$s uses port %2$d. Select a different port.</string>
+    <string name="dataoutput_interval_range">The interval must be 50 to 5000 ms.</string>
+    <string name="dataoutput_rate_range">The maximum rate must be 1 to 20 Hz.</string>
+    <string name="dataoutput_broker_host_problem">Type the host name or the address of the broker.</string>
+    <string name="dataoutput_broker_port_range">The broker port must be 1 to 65535.</string>
+    <string name="dataoutput_client_id_length">The client ID can have a maximum of 64 characters.</string>
+    <string name="dataoutput_machine_name_problem">The machine name in the topic must have 1 to 64 characters and no / + or #.</string>
+    <string name="dataoutput_label_topic_character">A topic label cannot contain the character %1$s.</string>
+    <string name="dataoutput_label_too_long">A label can have a maximum of 32 characters.</string>
+    <string name="dataoutput_field_list">The field list is not complete.</string>
+    <string name="dataoutput_field_send">Send %1$s</string>
+
+    <string name="dataoutput_chip">Output: %1$s</string>
+    <string name="dataoutput_chip_description">Data output: %1$s. Tap to start or stop. Touch and hold for the settings.</string>
+    <string name="dataoutput_chip_always_description">Data output: %1$s. Tap for the diagnostics. Touch and hold for the settings.</string>
+</resources>

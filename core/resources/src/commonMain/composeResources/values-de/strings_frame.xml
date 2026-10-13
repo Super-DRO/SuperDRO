@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the app frame: the navigation, the tabs, the add-device sheet, and the remembered machines. The file values/strings_frame.xml has the same names. -->
+<resources>
+    <string name="frame_under_construction">Dieser Bildschirm ist im Aufbau.</string>
+    <string name="frame_function_under_construction">Diese Funktion ist im Aufbau.</string>
+    <string name="frame_back">Zurück</string>
+    <string name="frame_close">Schließen</string>
+    <string name="frame_done">Fertig</string>
+    <string name="frame_cancel">Abbrechen</string>
+    <string name="frame_machine_message">%1$s: %2$s</string>
+    <string name="frame_reconnecting">Verbindung wird wiederhergestellt</string>
+    <string name="frame_tab_description">%1$s, %2$s, %3$s</string>
+    <string name="frame_menu_disconnect">Trennen</string>
+    <string name="frame_menu_rename">Umbenennen</string>
+    <string name="frame_state_online">verbunden</string>
+    <string name="frame_state_offline">getrennt</string>
+    <string name="frame_state_paused">pausiert</string>
+    <string name="frame_remembered_connect">Verbinden</string>
+    <string name="frame_remembered_pause">Pausieren</string>
+    <string name="frame_remembered_edit">Bearbeiten</string>
+    <string name="frame_remembered_remove">Entfernen</string>
+    <string name="frame_remove_title">%1$s entfernen?</string>
+    <string name="frame_remove_text">Die Verbindung endet, und die Maschine verlässt die gespeicherten Maschinen. Das Maschinenprofil bleibt in den Maschinenprofilen.</string>
+    <string name="frame_no_link">Keine Verbindung</string>
+    <string name="frame_no_remembered">Keine Maschine ist gespeichert.</string>
+    <string name="frame_rename_name">Maschinenname</string>
+    <string name="frame_save">Speichern</string>
+    <string name="frame_edit_link">Verbindung</string>
+</resources>

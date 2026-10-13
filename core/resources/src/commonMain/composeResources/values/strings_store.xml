@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the store rules: the refusals of core:store (StoreRefusal) and the tool question of a profile delete. -->
+<resources>
+    <string name="store_profile_name_blank">Profile name can't be blank.</string>
+    <string name="store_profile_name_exists">A profile with this name already exists.</string>
+    <string name="store_workspace_name_blank">Workspace name can't be blank.</string>
+    <string name="store_workspace_name_exists">A workspace with this name already exists.</string>
+    <string name="store_last_workspace">The last workspace can't be deleted.</string>
+    <string name="store_adapter_alias_blank">Adapter name can't be blank.</string>
+    <string name="store_adapter_alias_too_long">An adapter name can have a maximum of 40 characters.</string>
+    <string name="store_adapter_alias_exists">An adapter with this name already exists.</string>
+    <string name="store_standard_tip_read_only">A standard tip can't be changed.</string>
+    <string name="store_not_found">The item is not in the store.</string>
+    <string name="store_delete_profile_tools_question">Delete the tools of this profile too?</string>
+</resources>

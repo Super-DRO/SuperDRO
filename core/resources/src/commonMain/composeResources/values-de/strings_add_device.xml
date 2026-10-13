@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the add-device sheet and of the machine setup. The file values/strings_add_device.xml has the same names. -->
+<resources>
+    <string name="add_device_step_link">Verbindung auswählen</string>
+    <string name="add_device_step_profile">Maschinenprofil</string>
+    <string name="add_device_pair_new">Neuen Adapter koppeln</string>
+    <string name="add_device_grant_permission">Berechtigung erteilen</string>
+    <string name="add_device_bluetooth_permission">SuperDRO braucht die Bluetooth-Berechtigung, um die gekoppelten Adapter anzuzeigen.</string>
+    <string name="add_device_bluetooth_off">Bluetooth ist aus.</string>
+    <string name="add_device_turn_on_bluetooth">Bluetooth einschalten</string>
+    <string name="add_device_no_paired">Kein Adapter ist gekoppelt. Koppeln Sie den Adapter in den Systemeinstellungen.</string>
+    <string name="add_device_no_usb">Kein USB-Adapter ist angeschlossen.</string>
+    <string name="add_device_usb_permission">Braucht die USB-Berechtigung</string>
+    <string name="add_device_wifi_host">Hostname oder IP-Adresse</string>
+    <string name="add_device_wifi_port">Port-Nummer</string>
+    <string name="add_device_wifi_use">Diese Adresse verwenden</string>
+    <string name="add_device_error_host_blank">Geben Sie den Hostnamen oder die IP-Adresse ein.</string>
+    <string name="add_device_error_host_not_valid">Das ist kein gültiger Hostname, keine gültige IPv4-Adresse und keine gültige IPv6-Adresse.</string>
+    <string name="add_device_error_port">Der Port muss eine Zahl von 1 bis 65535 sein.</string>
+    <string name="add_device_error_select_profile">Wählen Sie ein Profil aus.</string>
+    <string name="add_device_source_new">Neue Maschine</string>
+    <string name="add_device_source_copy">Kopie eines Profils</string>
+    <string name="add_device_source_stored">Gespeichertes Profil</string>
+    <string name="add_device_no_profiles">Kein Profil ist gespeichert.</string>
+    <string name="add_device_name">Maschinenname</string>
+    <string name="add_device_machine_type">Maschinentyp</string>
+    <string name="add_device_type_vertical_mill">Senkrechtfräsmaschine</string>
+    <string name="add_device_type_lathe">Drehmaschine</string>
+    <string name="add_device_type_horizontal_mill">Waagerechtfräsmaschine</string>
+    <string name="add_device_units">Einheiten</string>
+    <string name="add_device_units_inch">Zoll</string>
+    <string name="add_device_units_mm">Millimeter</string>
+    <string name="add_device_inputs">Eingänge</string>
+    <string name="add_device_input_x">Eingang X</string>
+    <string name="add_device_input_y">Eingang Y</string>
+    <string name="add_device_input_z">Eingang Z</string>
+    <string name="add_device_input_cross_slide">Eingang Planschlitten</string>
+    <string name="add_device_input_carriage">Eingang Bettschlitten</string>
+    <string name="add_device_input_quill">Pinolenmaßstab</string>
+    <string name="add_device_input_auxiliary">Zusatzanzeige</string>
+    <string name="add_device_auxiliary_type">Die Zusatzanzeige misst</string>
+    <string name="add_device_aux_tailstock">Reitstock</string>
+    <string name="add_device_aux_compound">Oberschlitten</string>
+    <string name="add_device_aux_other">Anderes</string>
+    <string name="add_device_tachometer">Drehzahlmesser</string>
+    <string name="add_device_conflicts_title">Prüfen Sie die Eingänge</string>
+    <string name="add_device_conflict_twice">Eingang %1$s wird zweimal zu %2$s addiert. Der Wert verdoppelt sich.</string>
+    <string name="add_device_conflict_shared">Eingang %1$s wird von %2$s verwendet. Diese Achsen zeigen denselben Wert.</string>
+    <string name="add_device_conflict_angular">Eingang %1$s wird von %2$s verwendet. Eine Linearachse und die Winkelachse können keine Auflösung teilen, daher zeigt eine von ihnen falsch an.</string>
+    <string name="add_device_conflict_compound">Der Oberschlitten verwendet Eingang %1$s, den auch X oder Z verwendet. Die Oberschlitten-Projektion bleibt aus.</string>
+    <string name="add_device_conflict_head_tilt">Die Pinole verwendet Eingang %1$s, den auch X, Y oder Z verwendet. Die Kopfneigungs-Projektion bleibt aus.</string>
+    <string name="add_device_setup_note">Die Einrichtung legt keine Auflösung fest. Kalibrieren Sie jeden Eingang nach der ersten Verbindung.</string>
+    <string name="add_device_connect">Verbinden</string>
+</resources>

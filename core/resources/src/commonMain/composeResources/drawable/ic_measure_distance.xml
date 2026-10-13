@@ -1,0 +1,23 @@
+<!-- The SuperDRO icon of the measurement function Point-to-Point Distance. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M5,9a3,3 0,1 1,0 6a3,3 0,1 1,0 -6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M19,9a3,3 0,1 1,0 6a3,3 0,1 1,0 -6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M7,11h10v2H7z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M2,17h2v4H2zM20,17h2v4h-2zM3,18h18v2H3z" />
+</vector>

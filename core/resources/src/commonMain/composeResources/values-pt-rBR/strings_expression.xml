@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The error texts of the expression evaluator. The file values/strings_expression.xml has the same names. -->
+<resources>
+    <string name="expression_error_invalid_token">Símbolo inválido \u0027%1$s\u0027</string>
+    <string name="expression_error_invalid_number">Número inválido \u0027%1$s\u0027</string>
+    <string name="expression_error_undefined_function">Função não definida \u0027%1$s\u0027</string>
+    <string name="expression_error_undefined_variable">Variável não definida \u0027%1$s\u0027</string>
+    <string name="expression_error_invalid_assignment_target">Destino de atribuição inválido</string>
+    <string name="expression_error_expected_paren_after_arguments">Esperado \u0027)\u0027 após os argumentos da função</string>
+    <string name="expression_error_expected_paren_after_expression">Esperado \u0027)\u0027 após a expressão</string>
+    <string name="expression_error_expected_expression">Esperada uma expressão</string>
+    <string name="expression_error_expected_expression_after">Esperada uma expressão após \u0027%1$s\u0027</string>
+    <string name="expression_error_expected_end">Esperado o fim da expressão</string>
+    <string name="expression_error_requires_one">%1$s requer um argumento</string>
+    <string name="expression_error_requires_at_least_one">%1$s requer pelo menos um argumento</string>
+    <string name="expression_error_requires_one_or_two">%1$s requer um ou dois argumentos</string>
+    <string name="expression_error_requires_three">%1$s requer três argumentos</string>
+    <string name="expression_error_division_by_zero">Divisão por zero</string>
+    <string name="expression_error_negative_base_fractional_exponent">Potência fracionária de um número negativo</string>
+    <string name="expression_error_out_of_range">Valor fora do intervalo</string>
+    <string name="expression_error_too_complex">Expressão muito complexa</string>
+</resources>

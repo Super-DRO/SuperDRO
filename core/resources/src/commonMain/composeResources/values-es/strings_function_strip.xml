@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the function strip and the global buttons. The file values/strings_function_strip.xml has the same names. -->
+<resources>
+    <string name="strip_zero_set">Fijar cero</string>
+    <string name="strip_mode">Modo</string>
+    <string name="strip_units">Unidades</string>
+    <string name="strip_mode_absolute">Abs.</string>
+    <string name="strip_mode_incremental">Inc.</string>
+    <string name="strip_mixed">Mixto</string>
+    <string name="strip_units_inch">Pulgadas</string>
+    <string name="strip_units_mm">Milímetros</string>
+    <string name="strip_active">Activo</string>
+    <string name="strip_functions">Funciones</string>
+    <string name="strip_radius">Radio</string>
+    <string name="strip_diameter">Diámetro</string>
+    <string name="strip_lathe_tool_offset">Corrector</string>
+    <string name="strip_z_reference">Referencia Z</string>
+    <string name="strip_radius_compensation">Comp. radio</string>
+    <string name="strip_height_compensation">Comp. altura</string>
+    <string name="strip_edge_finder">Buscabordes</string>
+    <string name="strip_hole_circle">Círculo</string>
+    <string name="strip_arbitrary_hole_circle">Círculo libre</string>
+    <string name="strip_arc_cut">Arco</string>
+    <string name="strip_hole_grid">Cuadrícula</string>
+    <string name="strip_equidistant_array">Equidistante</string>
+    <string name="strip_dimension_measure">Cota</string>
+    <string name="strip_angle_measure">Ángulo</string>
+    <string name="strip_graphical_view">Gráfico</string>
+    <string name="strip_thread_setup">Rosca</string>
+    <string name="strip_compound">Carro orient.</string>
+    <string name="strip_head_tilt">Inclinación</string>
+    <string name="strip_rotate_part">Girar pieza</string>
+    <string name="strip_align_axes">Alinear ejes</string>
+    <string name="strip_instrument">Instrumento</string>
+</resources>

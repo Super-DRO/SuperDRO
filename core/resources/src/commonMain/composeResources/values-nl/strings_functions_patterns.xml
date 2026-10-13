@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the pattern screens with the point preview: the hole circle, the arbitrary hole circle, the hole grid, the step and repeat, the equidistant array, and the arc cut. -->
+<resources>
+    <string name="fnp_plane">Projectievlak</string>
+    <string name="fnp_source">Positiebron</string>
+    <string name="fnp_source_current">Huidig</string>
+    <string name="fnp_source_zero">Nul</string>
+    <string name="fnp_source_custom">Eigen</string>
+    <string name="fnp_reference">Positiereferentie</string>
+    <string name="fnp_reference_center">Midden</string>
+    <string name="fnp_reference_first_hole">Eerste gat</string>
+    <string name="fnp_reference_radius_center">Middelpunt van de radius</string>
+    <string name="fnp_reference_start_of_cut">Begin van de snede</string>
+    <string name="fnp_position_center">Positie van het midden</string>
+    <string name="fnp_position_first_hole">Positie van het eerste gat</string>
+    <string name="fnp_position_start_of_cut">Positie van het begin van de snede</string>
+    <string name="fnp_sub_datum">Sub-datum</string>
+    <string name="fnp_sub_datum_select">Selecteren</string>
+    <string name="fnp_axis_switch_cd">%1$s gebruiken</string>
+    <string name="fnp_axis_diameter">%1$s (diameter)</string>
+    <string name="fnp_cut_type">Type snede</string>
+    <string name="fnp_cut_internal">Binnen</string>
+    <string name="fnp_cut_external">Buiten</string>
+    <string name="fnp_angle_reference">Hoekreferentie</string>
+    <string name="fnp_angle_center">Midden</string>
+    <string name="fnp_angle_tangent">Raaklijn</string>
+    <string name="fnp_add_angle">Hoek toevoegen</string>
+    <string name="fnp_remove_angle_cd">Hoek %1$s° verwijderen</string>
+    <string name="fnp_angles_title">Gathoeken</string>
+    <string name="fnp_angles_empty">Nog geen hoeken. Voeg twee of meer hoeken toe.</string>
+    <string name="fnp_angle_item">%1$d. %2$s°</string>
+    <string name="fnp_points_title">Punten</string>
+    <string name="fnp_points_more">Nog %1$d punten</string>
+    <string name="fnp_column_name">Naam</string>
+    <string name="fnp_created">%1$d sub-datums gemaakt.</string>
+    <string name="fnp_start_title">Beginpositie</string>
+    <string name="fnp_end_title">Eindpositie</string>
+    <string name="fnp_step_sources">Te herhalen sub-datums: %1$d</string>
+    <string name="fnp_no_points">De invoer geeft geen punten.</string>
+    <string name="fnp_prefix_default">Leeg: %1$s</string>
+    <string name="fnp_degree">°</string>
+</resources>

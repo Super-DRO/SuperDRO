@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of core:readout. The file values/strings_readout_core.xml has the same names. -->
+<resources>
+    <string name="readout_core_settings_same_prefix">Primaire en secundaire ingang kunnen niet hetzelfde prefix gebruiken</string>
+    <string name="readout_core_settings_one_axis_required">Er moet minstens één uitvoeras ingeschakeld zijn</string>
+    <string name="readout_core_settings_sample_count_range">Het aantal metingen van de kantentaster moet een getal tussen 1 en 10 (inclusief) zijn</string>
+    <string name="readout_core_calibration_secondary_disabled">Secundaire ingang uitgeschakeld</string>
+    <string name="readout_core_calibration_prefix_missing">Ingangsprefix ontbreekt</string>
+    <string name="readout_core_calibration_block_required">Blokmaat vereist</string>
+    <string name="readout_core_calibration_block_too_small">Blok te klein</string>
+    <string name="readout_core_calibration_block_too_small_detail">minstens 50.000 mm / 2.0000 in</string>
+    <string name="readout_core_calibration_no_reading">Geen meting ontvangen</string>
+    <string name="readout_core_calibration_sample_too_small">Meetsteekproef te klein</string>
+    <string name="readout_core_calibration_jitter">Te veel schommeling gedetecteerd</string>
+    <string name="readout_core_calibration_too_close">Metingen te dicht bij elkaar</string>
+    <string name="readout_core_edge_left">linker</string>
+    <string name="readout_core_edge_right">rechter</string>
+    <string name="readout_core_edge_front">voorste</string>
+    <string name="readout_core_edge_back">achterste</string>
+    <string name="readout_core_edge_bottom">onderste</string>
+    <string name="readout_core_edge_top">bovenste</string>
+    <string name="readout_core_edge_first">eerste</string>
+    <string name="readout_core_edge_second">tweede</string>
+    <string name="readout_core_tach_cant_set">Toerental kan niet worden ingesteld</string>
+    <string name="readout_core_state_error">Fout</string>
+    <string name="readout_core_state_no_input">Geen ingang</string>
+    <string name="readout_core_map_too_many_points">De tabel heeft meer dan %1$d punten.</string>
+    <string name="readout_core_map_malformed_line">Regel %1$d is geen geldig punt.</string>
+    <string name="readout_core_map_no_points">De tabel heeft geen punten.</string>
+    <string name="readout_core_map_duplicate_position">Positie %1$d komt meer dan één keer voor.</string>
+    <string name="readout_core_map_reversal">De gecorrigeerde positie gaat terug tussen de posities %1$d en %2$d.</string>
+    <string name="readout_core_map_dead_band">De gecorrigeerde positie beweegt niet tussen de posities %1$d en %2$d.</string>
+    <string name="readout_core_map_negative_backlash">De speling op positie %1$d is negatief (%2$d).</string>
+    <string name="readout_core_map_backlash_exceeds_turn">De speling op positie %1$d (%2$d) is niet kleiner dan één spindelomwenteling (%3$d tellingen).</string>
+    <string name="readout_core_profile_backlash_map_not_allowed">Een spelingstabel is alleen beschikbaar voor een spindelencoder.</string>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The change of the machine type with the warning and the confirmation list. -->
+<resources>
+    <string name="settings_type_title">Change the machine type?</string>
+    <string name="settings_type_from_to">%1$s: the machine type changes from %2$s to %3$s.</string>
+    <string name="settings_type_warning">Some data does not fit the new machine type.</string>
+    <string name="settings_type_all_fits">All data fits the new machine type.</string>
+    <string name="settings_type_mismatch_title">Data that does not fit</string>
+    <string name="settings_type_mismatch_tools">Tools of the other machine kind: %1$d</string>
+    <string name="settings_type_mismatch_sub_datums">Sub-datums with a Y coordinate: %1$d</string>
+    <string name="settings_type_mismatch_guides">Guides on the Y axis: %1$d</string>
+    <string name="settings_type_mismatch_machine_datums">Machine datums with a Y coordinate: %1$d</string>
+    <string name="settings_type_mismatch_threads">Lathe threads: %1$d</string>
+    <string name="settings_type_conversion_title">Changes that SuperDRO makes</string>
+    <string name="settings_type_conversion_mill_tools">The mill tools stay. Both mill types use them.</string>
+    <string name="settings_type_conversion_plane">The plane of each workspace changes.</string>
+    <string name="settings_type_conversion_diameter">The X diameter mode of each workspace changes.</string>
+    <string name="settings_type_conversion_mode">The measurement mode changes to the cutting mode.</string>
+    <string name="settings_type_conversion_angle">The pattern angle convention changes.</string>
+    <string name="settings_type_conversion_restore">Archived data that fits the new type comes back.</string>
+    <string name="settings_type_archive">Archive</string>
+    <string name="settings_type_archive_summary">Keep the data hidden. A change back shows it again.</string>
+    <string name="settings_type_delete">Delete</string>
+    <string name="settings_type_delete_summary">Delete the data for good.</string>
+    <string name="settings_type_confirm">Change type</string>
+    <string name="settings_type_done">The machine type of %1$s is now %2$s.</string>
+</resources>

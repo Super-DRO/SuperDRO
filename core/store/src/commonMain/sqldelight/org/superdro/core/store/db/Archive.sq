@@ -1,0 +1,33 @@
+-- The archive of a machine type change.
+--
+-- A change of the machine type keeps the data that does not fit the new type here, and the
+-- profile does not show it. A later change to a type that fits again puts the data back.
+-- `kind` is Tool, SubDatum, SubDatumY, Guide, MachineDatum, MachineDatumY, or ThreadSpec.
+-- `machine_type` is the type of the profile at the time of the archive. `item_json` is the
+-- typed item as it was before the change.
+
+import kotlin.time.Instant;
+import org.superdro.core.model.MachineType;
+
+CREATE TABLE archived_item (
+    id TEXT NOT NULL PRIMARY KEY,
+    profile_id TEXT NOT NULL REFERENCES machine_profile(id) ON DELETE CASCADE,
+    workspace_id TEXT REFERENCES workspace(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    machine_type TEXT AS MachineType NOT NULL,
+    item_json TEXT NOT NULL,
+    archived_on TEXT AS Instant NOT NULL
+);
+
+CREATE INDEX archived_item_profile ON archived_item(profile_id);
+
+selectForProfile:
+SELECT * FROM archived_item WHERE profile_id = ? ORDER BY archived_on, rowid;
+
+insert:
+INSERT INTO archived_item (id, profile_id, workspace_id, kind, item_id, machine_type, item_json, archived_on)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM archived_item WHERE id = ?;

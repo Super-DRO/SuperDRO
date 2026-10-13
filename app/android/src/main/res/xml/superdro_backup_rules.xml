@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The backup rules for API 30 and lower. secrets.json holds values that a key of the Android
+  Keystore encrypts. The key does not go with a backup, so a restored file cannot open. corrupt/
+  holds the copies of a damaged database, and streams/ the recorded byte streams of the debug
+  option. The data extraction rules of API 31 and higher have the same items.
+-->
+<full-backup-content>
+    <exclude domain="file" path="secrets.json" />
+    <exclude domain="file" path="corrupt/" />
+    <exclude domain="file" path="streams/" />
+</full-backup-content>

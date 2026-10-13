@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The in-app help texts of the main screens. SuperDRO writes these texts. -->
+<resources>
+    <string name="settings_help_readout_title">Readout</string>
+    <string name="settings_help_readout_text">The readout shows one row for each enabled axis. Tap a value to set it with the keypad. Tap the label of an axis to see its details. Each change of an offset shows Undo for 10 seconds. The status strip at the top shows the units, the mode, the tool, the sub-datum, and the link state.</string>
+    <string name="settings_help_add_machine_title">Add machine</string>
+    <string name="settings_help_add_machine_text">Tap + to add a machine. First select the adapter: a paired Bluetooth adapter, a USB adapter, or a Wi-Fi adapter with its host and port. Then select a new profile, a copy, or a stored profile, and give the machine a name. SuperDRO remembers the machine and connects to it.</string>
+    <string name="settings_help_machine_settings_title">Machine settings</string>
+    <string name="settings_help_machine_settings_text">The machine settings belong to the profile of this tab. Each change applies at once, also while the adapter is connected. The groups contain the display, the function buttons, the axes, the tachometer, the probe, and the adapter link.</string>
+    <string name="settings_help_inputs_title">Axes and inputs</string>
+    <string name="settings_help_inputs_text">Each axis reads one input letter of the adapter: x, y, z, w, u, or v. A secondary input adds a second scale to the axis, for example a quill scale. The two inputs of one axis cannot use the same letter. The resolution and the filter of an input are in the encoder settings of the adapter.</string>
+    <string name="settings_help_tachometer_title">Tachometer</string>
+    <string name="settings_help_tachometer_text">The tachometer shows the spindle speed. In the mode RPM sensor, the adapter input t gives the speed, and the pulses per revolution apply. In the mode Preset, you select a speed from the preset list. In the mode Direct entry, you type the speed.</string>
+    <string name="settings_help_adapter_link_title">Adapter link</string>
+    <string name="settings_help_adapter_link_text">The adapter link of a profile is a Bluetooth address, a USB device with its baud rate, or a Wi-Fi host and port. Two-way communication lets SuperDRO send queries and commands to the adapter. The adapter configuration commands change the input modes of the adapter. Turn them on only when you need them.</string>
+    <string name="settings_help_app_settings_title">Settings</string>
+    <string name="settings_help_app_settings_text">The app settings apply to all machines: the theme, the large buttons, the sounds, the full screen, and the wake lock. The link type switches hide a link type in the add-machine sheet. The battery optimization of Android can stop the links in the background.</string>
+    <string name="settings_help_machine_profiles_title">Machine profiles</string>
+    <string name="settings_help_machine_profiles_text">A machine profile keeps the settings, the tools, and the workspaces of one machine. You can make, copy, rename, and delete a profile. Each profile name must be unique. A copy contains the settings and the tools, but not the workspaces.</string>
+    <string name="settings_help_machine_type_title">Machine type</string>
+    <string name="settings_help_machine_type_text">You can change the machine type of a profile. Before the change, SuperDRO shows the data that does not fit the new type, for example lathe tools on a mill. SuperDRO converts what it can. It archives or deletes the rest, as you select.</string>
+    <string name="settings_help_key_mapping_title">Key mapping</string>
+    <string name="settings_help_key_mapping_text">The keys of a keyboard, a numeric keypad, a foot pedal, or a remote can start actions in the selected tab. Select an action, then press the key. The default map uses the numeric keypad and the page keys.</string>
+    <string name="settings_help_logs_title">Logs</string>
+    <string name="settings_help_logs_text">The log screen shows the messages of the app and of each machine session. Select a machine to see only its messages. Export sends the lines to a different app. The record of the byte stream is a debug option. It keeps the received bytes of a session for an analysis.</string>
+</resources>

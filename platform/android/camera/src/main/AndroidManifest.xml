@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The camera module. The manifest merger puts these items into the
+  app. The attach trampoline CameraAttachActivity is an item of the app manifest (app:android),
+  in the process ":usbattach".
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- A UVC camera needs CAMERA on Android 9 and higher. The app also asks for it before IMAGE_CAPTURE. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- CAMERA must not make the app need a built-in camera. -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.external"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+
+    <application>
+        <!-- The camera service in its own process. Only the app binds to it. -->
+        <service
+            android:name=".CameraService"
+            android:exported="false"
+            android:process=":camera" />
+    </application>
+
+</manifest>

@@ -1,0 +1,29 @@
+Changes of SuperDRO to libuvc 0.0.8
+
+Each change has the comment "SuperDRO change" in the source.
+
+1. A time limit on each control transfer (SuperDRO defect rule D146).
+   - libuvc 0.0.8 gives the time-out 0 (no limit) to each call of
+     libusb_control_transfer. A camera that does not answer then blocks the
+     thread for all time.
+   - Each call now gives uvc_control_timeout_ms (src/init.c). The value is 0
+     until the program calls the new function uvc_set_control_timeout()
+     (include/libuvc/libuvc.h). SuperDRO sets 5000 ms.
+   - Files: src/ctrl.c, src/ctrl-gen.c, src/stream.c, src/init.c,
+     include/libuvc/libuvc.h, include/libuvc/libuvc_internal.h.
+
+2. The UVC 1.5 H.264 format (D146).
+   - libuvc 0.0.8 does not read the descriptors VS_FORMAT_H264 (0x13) and
+     VS_FRAME_H264 (0x14). A UVC 1.5 H.264 camera then has no H.264 mode.
+   - src/device.c reads these descriptors (tables 3-1 and 3-2 of the UVC 1.5
+     H.264 payload specification). The format gets the GUID of the
+     frame-based H.264 format, so the stream code gives
+     UVC_FRAME_FORMAT_H264. A short or unusable block is ignored.
+   - include/libuvc/libuvc.h has the three new subtype values.
+
+3. The UVC 1.5 fields of the stream control block.
+   - A UVC 1.5 block has 48 bytes. libuvc 0.0.8 sends the bytes 34 to 47 as
+     zeros and does not keep them after a GET.
+   - uvc_stream_ctrl_t has the new field bUvc15Fields[14]. src/stream.c keeps
+     the bytes of a GET and sends them again in a SET, so that the device
+     gets its own values back.

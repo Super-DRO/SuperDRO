@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder screen and of the automatic Z reference. -->
+<resources>
+    <string name="edgefinder_title">Indiquer la pièce</string>
+    <string name="edgefinder_edge_left">Gauche</string>
+    <string name="edgefinder_edge_right">Droite</string>
+    <string name="edgefinder_edge_near">Avant</string>
+    <string name="edgefinder_edge_far">Arrière</string>
+    <string name="edgefinder_edge_description">Bord %1$s : %2$s</string>
+    <string name="edgefinder_state_unknown">Non défini</string>
+    <string name="edgefinder_state_scanning">Attente du contact</string>
+    <string name="edgefinder_state_located">Trouvé</string>
+    <string name="edgefinder_auto">AUTO</string>
+    <string name="edgefinder_auto_description">Palpeur de bords automatique</string>
+    <string name="edgefinder_on">Activé</string>
+    <string name="edgefinder_off">Désactivé</string>
+    <string name="edgefinder_camera_center">Utiliser le point sous le réticule</string>
+    <string name="edgefinder_camera_center_clear">Effacer le centre</string>
+    <string name="edgefinder_axis_title">Axe %1$s</string>
+    <string name="edgefinder_external">Extérieur</string>
+    <string name="edgefinder_internal">Intérieur</string>
+    <string name="edgefinder_center">Centre</string>
+    <string name="edgefinder_origin">Origine</string>
+    <string name="edgefinder_absolute">Absolu</string>
+    <string name="edgefinder_incremental">Incrémental</string>
+    <string name="edgefinder_set_origin">Définir l’origine</string>
+    <string name="edgefinder_add_sub_datum">Ajouter un sous-repère</string>
+    <string name="edgefinder_add_sub_datum_hint">Appui long : ajouter et garder les bords</string>
+    <string name="edgefinder_cancel">Annuler</string>
+    <string name="edgefinder_z_position">Position Z</string>
+    <string name="edgefinder_z_arm">Armer</string>
+    <string name="edgefinder_z_arm_description">Armer le palpeur pour capturer la position Z</string>
+    <string name="edgefinder_armed">Armé</string>
+    <string name="edgefinder_sync">Synchroniser</string>
+    <string name="edgefinder_not_connected">SuperDRO n’est pas connecté. Les positions ne peuvent pas être capturées avant la reconnexion.</string>
+    <string name="edgefinder_probe">Palpeur</string>
+    <string name="edgefinder_no_probe">Aucun palpeur choisi</string>
+    <string name="edgefinder_no_probe_hint">Choisissez l’instrument de mesure de cette fonction</string>
+    <string name="edgefinder_new_probe">Nouveau profil…</string>
+    <string name="edgefinder_probe_type_touch">Palpeur</string>
+    <string name="edgefinder_probe_type_edge">Palpeur de bords 2D</string>
+    <string name="edgefinder_probe_type_setter">Palpeur de hauteur d’outil</string>
+    <string name="edgefinder_probe_type_camera">Caméra</string>
+    <string name="edgefinder_undo_origin">Origine définie</string>
+    <string name="edgefinder_sub_datum_added">%1$s ajouté</string>
+    <string name="edgefinder_zauto_title">Référence Z automatique</string>
+    <string name="edgefinder_zauto_button">Auto</string>
+    <string name="edgefinder_zauto_armed">Armé : touchez le palpeur avec l’outil</string>
+    <string name="edgefinder_zauto_setter_height">Hauteur du palpeur : %1$s %2$s</string>
+    <string name="edgefinder_zauto_profile">Palpeur de référence Z</string>
+    <string name="edgefinder_zauto_undo">Référence Z définie</string>
+    <string name="edgefinder_zauto_no_port">Le palpeur choisi n’a pas d’entrée de déclenchement.</string>
+</resources>

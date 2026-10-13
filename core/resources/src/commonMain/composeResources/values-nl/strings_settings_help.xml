@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The in-app help texts of the main screens. SuperDRO writes these texts. -->
+<resources>
+    <string name="settings_help_readout_title">Uitlezing</string>
+    <string name="settings_help_readout_text">De uitlezing toont één rij voor elke ingeschakelde as. Tik op een waarde om die met het toetsenblok in te stellen. Tik op het label van een as om de details te zien. Elke wijziging van een offset toont 10 seconden lang Ongedaan maken. De statusbalk bovenaan toont de eenheden, de modus, het gereedschap, het subnulpunt en de verbindingsstatus.</string>
+    <string name="settings_help_add_machine_title">Machine toevoegen</string>
+    <string name="settings_help_add_machine_text">Tik op + om een machine toe te voegen. Selecteer eerst de adapter: een gekoppelde Bluetooth-adapter, een USB-adapter of een wifi-adapter met host en poort. Selecteer daarna een nieuw profiel, een kopie of een opgeslagen profiel, en geef de machine een naam. SuperDRO onthoudt de machine en maakt verbinding.</string>
+    <string name="settings_help_machine_settings_title">Machine-instellingen</string>
+    <string name="settings_help_machine_settings_text">De machine-instellingen horen bij het profiel van dit tabblad. Elke wijziging geldt meteen, ook als de adapter verbonden is. De groepen bevatten de weergave, de functieknoppen, de assen, de toerenteller, de taster en de adapterverbinding.</string>
+    <string name="settings_help_inputs_title">Assen en ingangen</string>
+    <string name="settings_help_inputs_text">Elke as leest één ingangsletter van de adapter: x, y, z, w, u of v. Een tweede ingang voegt een tweede liniaal aan de as toe, bijvoorbeeld een pinolelineaal. De twee ingangen van één as kunnen niet dezelfde letter gebruiken. De resolutie en het filter van een ingang staan in de encoderinstellingen van de adapter.</string>
+    <string name="settings_help_tachometer_title">Toerenteller</string>
+    <string name="settings_help_tachometer_text">De toerenteller toont het spiltoerental. In de modus Toerentalsensor geeft ingang t van de adapter het toerental, en de pulsen per omwenteling gelden. In de modus Voorinstelling selecteert u een toerental uit de lijst. In de modus Directe invoer typt u het toerental.</string>
+    <string name="settings_help_adapter_link_title">Adapterverbinding</string>
+    <string name="settings_help_adapter_link_text">De adapterverbinding van een profiel is een Bluetooth-adres, een USB-apparaat met zijn baudrate, of een wifi-host en poort. Tweerichtingscommunicatie laat SuperDRO vragen en opdrachten naar de adapter sturen. De configuratieopdrachten van de adapter wijzigen de ingangsmodi van de adapter. Zet ze alleen aan als u ze nodig hebt.</string>
+    <string name="settings_help_app_settings_title">Instellingen</string>
+    <string name="settings_help_app_settings_text">De app-instellingen gelden voor alle machines: het thema, de grote knoppen, de geluiden, het volledig scherm en de wakelock. De schakelaars voor het verbindingstype verbergen een verbindingstype in het blad Machine toevoegen. De batterijoptimalisatie van Android kan de verbindingen op de achtergrond stoppen.</string>
+    <string name="settings_help_machine_profiles_title">Machineprofielen</string>
+    <string name="settings_help_machine_profiles_text">Een machineprofiel bewaart de instellingen, de gereedschappen en de werkruimten van één machine. U kunt een profiel maken, kopiëren, hernoemen en verwijderen. Elke profielnaam moet uniek zijn. Een kopie bevat de instellingen en de gereedschappen, maar niet de werkruimten.</string>
+    <string name="settings_help_machine_type_title">Machinetype</string>
+    <string name="settings_help_machine_type_text">U kunt het machinetype van een profiel wijzigen. Vóór de wijziging toont SuperDRO de gegevens die niet bij het nieuwe type passen, bijvoorbeeld draaibankgereedschap op een freesmachine. SuperDRO zet om wat het kan. De rest archiveert of verwijdert het, zoals u kiest.</string>
+    <string name="settings_help_key_mapping_title">Toetstoewijzing</string>
+    <string name="settings_help_key_mapping_text">De toetsen van een toetsenbord, een numeriek toetsenblok, een voetpedaal of een afstandsbediening kunnen acties in het geselecteerde tabblad starten. Selecteer een actie en druk daarna op de toets. De standaardtoewijzing gebruikt het numerieke toetsenblok en de paginatoetsen.</string>
+    <string name="settings_help_logs_title">Logboeken</string>
+    <string name="settings_help_logs_text">Het logscherm toont de meldingen van de app en van elke machinesessie. Selecteer een machine om alleen haar meldingen te zien. Exporteren stuurt de regels naar een andere app. De opname van de bytestroom is een debugoptie. Ze bewaart de ontvangen bytes van een sessie voor een analyse.</string>
+</resources>

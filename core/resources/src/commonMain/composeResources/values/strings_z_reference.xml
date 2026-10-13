@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the Z reference and of the tool height setter.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="z_reference_error_setter_height">Tool setter height must be a positive number</string>
+    <string name="z_reference_error_z_not_enabled">Z readout must be enabled</string>
+    <string name="z_reference_error_not_connected">The adapter must be connected</string>
+    <string name="z_reference_error_z_position_unknown">Could not read the Z position at the moment of contact. Try again.</string>
+    <string name="z_reference_title">Set Z Reference</string>
+</resources>

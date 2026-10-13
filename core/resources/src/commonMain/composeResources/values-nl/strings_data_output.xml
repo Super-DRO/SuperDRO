@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the data output. The file values/strings_data_output.xml has the same names. -->
+<resources>
+    <string name="data_output_title">Gegevensuitvoer</string>
+    <string name="data_output_enable">Live-waarden naar het netwerk sturen</string>
+    <string name="data_output_start">Gegevensuitvoer starten</string>
+    <string name="data_output_stop">Gegevensuitvoer stoppen</string>
+
+    <string name="data_output_security">Beveiligingsmodus</string>
+    <string name="data_output_security_psk">Versleuteld (PSK)</string>
+    <string name="data_output_security_plain">Platte tekst (compatibel met TouchDRO)</string>
+    <string name="data_output_warning_trusted">Alleen op vertrouwde netwerken gebruiken</string>
+    <string name="data_output_warning_plain">De modus platte tekst heeft geen versleuteling en geen toegangscontrole. Elk apparaat dat de tablet bereikt, kan de machineposities lezen.</string>
+    <string name="data_output_warning_mqtt_no_tls">Een brokerverbinding zonder TLS is niet versleuteld. Elk apparaat op het netwerkpad kan de machineposities en het brokerwachtwoord lezen.</string>
+    <string name="data_output_warning_confirm">Deze modus gebruiken</string>
+    <string name="data_output_warning_cancel">Annuleren</string>
+
+    <string name="data_output_psk_key">Sleutel</string>
+    <string name="data_output_psk_copy">Sleutel kopiëren</string>
+    <string name="data_output_psk_new">Nieuwe sleutel maken</string>
+    <string name="data_output_psk_new_warning">Een nieuwe sleutel vervangt de oude sleutel. Geef elke client de nieuwe sleutel.</string>
+    <string name="data_output_psk_caution">Houd de sleutel geheim. Elk apparaat met de sleutel kan de machineposities lezen.</string>
+
+    <string name="data_output_interface">Netwerkinterface</string>
+    <string name="data_output_interface_wifi">Wifi</string>
+    <string name="data_output_interface_localhost">Alleen deze tablet (localhost)</string>
+    <string name="data_output_interface_vpn">VPN</string>
+    <string name="data_output_interface_usb_ethernet">USB-ethernet</string>
+    <string name="data_output_interface_all">Alle interfaces</string>
+    <string name="data_output_warning_all_interfaces">Met alle interfaces kan elk netwerk van de tablet de server bereiken. Gebruik dit alleen als het nodig is.</string>
+    <string name="data_output_port">Poort</string>
+
+    <string name="data_output_transport">Transport</string>
+    <string name="data_output_transport_tcp">TCP-server</string>
+    <string name="data_output_transport_mqtt">MQTT-client</string>
+    <string name="data_output_activation">Activering</string>
+    <string name="data_output_activation_on_demand">Op verzoek (chip in de statusbalk)</string>
+    <string name="data_output_activation_always">Altijd aan</string>
+
+    <string name="data_output_mqtt_host">Brokerhost</string>
+    <string name="data_output_mqtt_port">Brokerpoort</string>
+    <string name="data_output_mqtt_tls">TLS gebruiken</string>
+    <string name="data_output_mqtt_username">Gebruikersnaam</string>
+    <string name="data_output_mqtt_password">Wachtwoord</string>
+    <string name="data_output_mqtt_client_id">Client-ID</string>
+    <string name="data_output_mqtt_machine">Machinenaam in het onderwerp</string>
+    <string name="data_output_mqtt_layout">Onderwerpen</string>
+    <string name="data_output_mqtt_layout_json">Eén JSON-record op superdro/%1$s</string>
+    <string name="data_output_mqtt_layout_fields">Eén onderwerp per veld op superdro/%1$s/…</string>
+
+    <string name="data_output_format">Indeling</string>
+    <string name="data_output_format_delimited">Met scheidingsteken</string>
+    <string name="data_output_format_json">JSON</string>
+    <string name="data_output_delimiter">Scheidingsteken</string>
+    <string name="data_output_delimiter_tab">Tab</string>
+    <string name="data_output_labels">Veldlabels opnemen</string>
+    <string name="data_output_timestamp">Tijdstempel</string>
+    <string name="data_output_timestamp_iso">ISO 8601 (UTC)</string>
+    <string name="data_output_timestamp_epoch">Unix-tijd (ms)</string>
+    <string name="data_output_distance_unit">Lengte-eenheid</string>
+    <string name="data_output_unit_inch">Inch</string>
+    <string name="data_output_unit_mil">Mil (0,001 in)</string>
+    <string name="data_output_unit_millimeter">Millimeter</string>
+    <string name="data_output_unit_micron">Micrometer</string>
+    <string name="data_output_unit_meter">Meter</string>
+    <string name="data_output_angle_unit">Hoekeenheid</string>
+    <string name="data_output_unit_degrees">Decimale graden</string>
+    <string name="data_output_unit_dms">Graden, minuten, seconden</string>
+    <string name="data_output_unit_radians">Radialen</string>
+    <string name="data_output_precision">Decimalen</string>
+
+    <string name="data_output_cadence">Wanneer versturen</string>
+    <string name="data_output_cadence_interval">Vast interval</string>
+    <string name="data_output_cadence_change">Bij wijziging</string>
+    <string name="data_output_cadence_change_interval">Bij wijziging en per interval</string>
+    <string name="data_output_interval">Interval (ms)</string>
+    <string name="data_output_max_rate">Maximale frequentie (Hz)</string>
+
+    <string name="data_output_fields">Velden</string>
+    <string name="data_output_field_label">Label</string>
+    <string name="data_output_field_x_absolute">X absoluut</string>
+    <string name="data_output_field_x_incremental">X incrementeel</string>
+    <string name="data_output_field_x_feed_rate">Voeding X</string>
+    <string name="data_output_field_y_absolute">Y absoluut</string>
+    <string name="data_output_field_y_incremental">Y incrementeel</string>
+    <string name="data_output_field_y_feed_rate">Voeding Y</string>
+    <string name="data_output_field_z_absolute">Z absoluut</string>
+    <string name="data_output_field_z_incremental">Z incrementeel</string>
+    <string name="data_output_field_z_feed_rate">Voeding Z</string>
+    <string name="data_output_field_angular_absolute">Hoek absoluut</string>
+    <string name="data_output_field_angular_incremental">Hoek incrementeel</string>
+    <string name="data_output_field_angular_feed_rate">Hoekvoeding</string>
+    <string name="data_output_field_spindle_rpm">Spiltoerental (tpm)</string>
+    <string name="data_output_field_surface_speed">Snijsnelheid</string>
+    <string name="data_output_field_probe_1">Taster 1</string>
+    <string name="data_output_field_probe_2">Taster 2</string>
+    <string name="data_output_field_probe_1_trigger_x">Taster 1: activering X</string>
+    <string name="data_output_field_probe_1_trigger_y">Taster 1: activering Y</string>
+    <string name="data_output_field_probe_1_trigger_z">Taster 1: activering Z</string>
+    <string name="data_output_field_probe_1_trigger_dir_x">Taster 1: nadering X</string>
+    <string name="data_output_field_probe_1_trigger_dir_y">Taster 1: nadering Y</string>
+    <string name="data_output_field_probe_1_trigger_dir_z">Taster 1: nadering Z</string>
+    <string name="data_output_field_probe_1_trigger_time">Taster 1: tijd van activering</string>
+    <string name="data_output_field_probe_1_trigger_seq">Taster 1: aantal activeringen</string>
+    <string name="data_output_field_probe_1_trigger_feed">Taster 1: naderingsvoeding</string>
+
+    <string name="data_output_status_stopped">Gestopt</string>
+    <string name="data_output_status_starting">Starten</string>
+    <string name="data_output_status_ready">Wacht op clients</string>
+    <string name="data_output_status_sending">Verzenden</string>
+    <string name="data_output_status_warning">Probleem</string>
+    <string name="data_output_listening">Luistert op %1$s</string>
+    <plurals name="data_output_clients">
+        <item quantity="one">%1$d client</item>
+        <item quantity="other">%1$d clients</item>
+    </plurals>
+    <string name="data_output_broker">MQTT-broker %1$s</string>
+    <string name="data_output_not_running">De uitvoer is niet actief.</string>
+
+    <string name="data_output_diagnostics_title">Probleem met de gegevensuitvoer</string>
+    <string name="data_output_problem">Probleem: %1$s (%2$s geleden)</string>
+    <string name="data_output_last_success">Laatste record afgeleverd %1$s geleden</string>
+    <string name="data_output_no_delivery">Sinds de start is er geen record afgeleverd.</string>
+    <string name="data_output_counts">%1$d verzonden, %2$d mislukt (%3$d procent van de recente records mislukt)</string>
+
+    <string name="data_output_error_bind">Kan niet luisteren op %1$s: %2$s</string>
+    <string name="data_output_error_accept">De server is gestopt: %1$s. Een nieuwe server start over 5 s.</string>
+    <string name="data_output_error_no_address">De gekozen interface heeft geen adres.</string>
+    <string name="data_output_error_port_taken">De uitvoer van een andere machine gebruikt poort %1$d.</string>
+    <string name="data_output_error_handshake">De client %1$s gaf niet de juiste sleutel.</string>
+    <string name="data_output_error_write">Schrijven naar de client %1$s is mislukt: %2$s</string>
+    <string name="data_output_error_broker">Kan de broker %1$s niet bereiken: %2$s</string>
+    <string name="data_output_error_auth">De broker %1$s weigerde de gebruikersnaam of het wachtwoord.</string>
+    <string name="data_output_error_tls">De TLS-handshake met de broker %1$s is mislukt: %2$s</string>
+    <string name="data_output_error_lost">De verbinding met de broker %1$s is gestopt: %2$s</string>
+    <string name="data_output_error_publish">Publiceren bij de broker %1$s is mislukt: %2$s</string>
+
+    <string name="data_output_test">Verbinding testen</string>
+    <string name="data_output_test_port_free">Poort %1$d is vrij. Clients kunnen verbinden met %2$s.</string>
+    <string name="data_output_test_port_busy">Poort %1$d is niet vrij op %2$s: %3$s</string>
+    <string name="data_output_test_running">De uitvoer is actief op %1$s. Clients: %2$d.</string>
+    <string name="data_output_test_broker_ok">De broker %1$s heeft de verbinding geaccepteerd.</string>
+
+    <string name="data_output_label_length">Een label moet 1 tot 32 tekens hebben.</string>
+    <string name="data_output_label_duplicate">Meer dan één actief veld heeft het label %1$s.</string>
+    <string name="data_output_label_character">Een label mag het teken %1$s niet bevatten.</string>
+    <string name="data_output_label_reserved">De labels timestamp en sequence zijn niet beschikbaar.</string>
+</resources>

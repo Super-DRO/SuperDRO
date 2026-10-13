@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The manifest of the app. It declares each permission of the app. The library modules declare
+  their components (the connection service, the boot receiver, the camera service). The
+  tools:node items keep only the permissions of this file: the BlueFalcon engine declares more.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- The SPP link. No location permission: the app does not scan for Bluetooth Classic. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30"
+        tools:node="replace" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30"
+        tools:node="replace" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        tools:node="replace" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:node="replace"
+        tools:targetApi="s" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADVERTISE"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        tools:node="remove" />
+
+    <!-- The connection service. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- The connectedDevice prerequisite of a TCP-only machine. A normal permission. -->
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+
+    <!-- The Wi-Fi TCP link and the data output. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+
+    <!-- The UVC camera, and IMAGE_CAPTURE for the reference image. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Not required, so that the fake adapter operates on an emulator. -->
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+    <!-- CAMERA must not make the app need a built-in camera. platform:android:camera declares the same. -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
+
+    <application
+        android:name=".SuperDroApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/superdro_data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
+        android:fullBackupContent="@xml/superdro_backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SuperDRO"
+        tools:targetApi="s">
+        <!--
+          singleTop: the app has one activity. A second instance would run a second collector of
+          the request bus. A launcher tap, a notification tap, or a USB attach on a running app
+          goes to onNewIntent.
+
+          USB_DEVICE_ATTACHED: Android opens the app when the user attaches a
+          known adapter, and the user gives the USB permission in the same dialog. No separate
+          process. No USB_PERMISSION permission: Android has no such permission.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/superdro_usb_device_filter" />
+        </activity>
+
+        <!--
+          The attach trampoline of the UVC cameras. It runs in the process :usbattach,
+          where the application skips its start-up, and closes at once.
+        -->
+        <activity
+            android:name="org.superdro.platform.android.camera.CameraAttachActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:process=":usbattach"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/superdro_camera_device_filter" />
+        </activity>
+
+        <!-- The photo of the reference image and the share sheet. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/superdro_file_paths" />
+        </provider>
+    </application>
+
+</manifest>

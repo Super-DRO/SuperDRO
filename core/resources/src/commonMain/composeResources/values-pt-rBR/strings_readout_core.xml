@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of core:readout. The file values/strings_readout_core.xml has the same names. -->
+<resources>
+    <string name="readout_core_settings_same_prefix">As entradas primária e secundária não podem usar o mesmo prefixo</string>
+    <string name="readout_core_settings_one_axis_required">Pelo menos um eixo de saída deve estar ativado</string>
+    <string name="readout_core_settings_sample_count_range">O número de amostras do localizador de arestas deve ser um número entre 1 e 10 (inclusive)</string>
+    <string name="readout_core_calibration_secondary_disabled">Entrada secundária desativada</string>
+    <string name="readout_core_calibration_prefix_missing">Prefixo de entrada ausente</string>
+    <string name="readout_core_calibration_block_required">Tamanho do bloco obrigatório</string>
+    <string name="readout_core_calibration_block_too_small">Bloco muito pequeno</string>
+    <string name="readout_core_calibration_block_too_small_detail">pelo menos 50.000 mm / 2.0000 in</string>
+    <string name="readout_core_calibration_no_reading">Nenhuma leitura recebida</string>
+    <string name="readout_core_calibration_sample_too_small">Amostra de leituras muito pequena</string>
+    <string name="readout_core_calibration_jitter">Oscilação excessiva detectada</string>
+    <string name="readout_core_calibration_too_close">Leituras muito próximas</string>
+    <string name="readout_core_edge_left">esquerda</string>
+    <string name="readout_core_edge_right">direita</string>
+    <string name="readout_core_edge_front">dianteira</string>
+    <string name="readout_core_edge_back">traseira</string>
+    <string name="readout_core_edge_bottom">de baixo</string>
+    <string name="readout_core_edge_top">de cima</string>
+    <string name="readout_core_edge_first">primeira</string>
+    <string name="readout_core_edge_second">segunda</string>
+    <string name="readout_core_tach_cant_set">Não é possível definir a RPM</string>
+    <string name="readout_core_state_error">Erro</string>
+    <string name="readout_core_state_no_input">Sem entrada</string>
+    <string name="readout_core_map_too_many_points">O mapa tem mais de %1$d pontos.</string>
+    <string name="readout_core_map_malformed_line">A linha %1$d não é um ponto válido.</string>
+    <string name="readout_core_map_no_points">O mapa não tem pontos.</string>
+    <string name="readout_core_map_duplicate_position">A posição %1$d aparece mais de uma vez.</string>
+    <string name="readout_core_map_reversal">A posição corrigida retrocede entre as posições %1$d e %2$d.</string>
+    <string name="readout_core_map_dead_band">A posição corrigida não se move entre as posições %1$d e %2$d.</string>
+    <string name="readout_core_map_negative_backlash">A folga na posição %1$d é negativa (%2$d).</string>
+    <string name="readout_core_map_backlash_exceeds_turn">A folga na posição %1$d (%2$d) não é menor que uma volta do fuso (%3$d contagens).</string>
+    <string name="readout_core_profile_backlash_map_not_allowed">Um mapa de folga só está disponível para um encoder de fuso.</string>
+</resources>

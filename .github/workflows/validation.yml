@@ -1,0 +1,111 @@
+name: Validate
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, reopened, synchronize ]
+  # A push to main runs the same matrix and writes the Gradle caches. A pull request job reads
+  # the newest entry of its own job and matrix values.
+  push:
+    branches: [ main ]
+
+# A new push to a pull request cancels the older run of that pull request. A run on main is not
+# cancelled, because it writes the caches that the pull request jobs read.
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Each job gets only the token scopes that it needs.
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # setup-gradle writes a comment on a pull request when a job fails.
+      pull-requests: write
+    strategy:
+      # A failure of one target does not cancel the other target.
+      fail-fast: false
+      matrix:
+        # There is no root `build` task and no unqualified `check`. A project's `build` runs only
+        # its own `check`, so each verification task that CI needs is named here.
+        #
+        #   android  the debug and release APKs of both apps, a compile check of the Baseline
+        #            Profile generator and of the instrumented tests, and `lint`.
+        #   jvm      the JVM unit tests of all common modules (with the PNG render of App()),
+        #            the traceability tests of :validation, the localization check, and the
+        #            migration check of the database.
+        include:
+          - target: android
+            tasks: ":app:android:assembleDebug :app:android:assembleRelease :app:android:baseline:compileBenchmarkReleaseKotlin :app:android:compileDebugAndroidTestKotlin :app:adapter-probe:assembleDebug :app:adapter-probe:assembleRelease :platform:android:store:compileDebugAndroidTestKotlin lint"
+          - target: jvm
+            tasks: "jvmTest :validation:test :core:resources:localizationCheck :core:store:verifySqlDelightMigration"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          # The build runs third-party Gradle plugins. Do not keep the token in .git/config.
+          persist-credentials: false
+
+      # The JetBrains JDK: gradle/gradle-daemon-jvm.properties makes the Gradle daemon run on a
+      # JetBrains JDK 21.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: 'jetbrains'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        if: matrix.target == 'android'
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+          # The default package list of the action asks for the old package 'tools', which the
+          # SDK repository does not have. AGP installs the platform 37 and the build tools.
+          packages: 'platform-tools'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          # Only a run on main writes the caches. A pull request run reads them.
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          add-job-summary-as-pr-comment: 'on-failure'
+
+      # composite is a separate Gradle build. No root task gets to it, so its tests run here.
+      # They guard the localization rules, the version rules, and the parity of the two copies
+      # of buildLogicVersion(). --no-daemon: the composite build has different JVM arguments.
+      - name: Test build logic (composite)
+        if: matrix.target == 'jvm'
+        run: ./gradlew -p composite test --no-daemon --stacktrace -Dorg.gradle.console=plain
+
+      - name: Build ${{ matrix.target }}
+        run: ./gradlew ${{ matrix.tasks }} --stacktrace -Dorg.gradle.console=plain
+
+      # The PNG files of the App() render, so that a reviewer can see the UI of the change.
+      - name: Upload the screenshots
+        if: matrix.target == 'jvm' && always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: core/ui/build/screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # The console gives only the name of a failed test. The reports hold the message.
+      - name: Upload the test and lint reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-${{ matrix.target }}
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
+            **/build/reports/lint-results-*
+            **/build/reports/localization/
+            composite/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 14

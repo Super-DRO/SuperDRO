@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The change of the machine type with the warning and the confirmation list. -->
+<resources>
+    <string name="settings_type_title">Maschinentyp ändern?</string>
+    <string name="settings_type_from_to">%1$s: Der Maschinentyp ändert sich von %2$s zu %3$s.</string>
+    <string name="settings_type_warning">Einige Daten passen nicht zum neuen Maschinentyp.</string>
+    <string name="settings_type_all_fits">Alle Daten passen zum neuen Maschinentyp.</string>
+    <string name="settings_type_mismatch_title">Daten, die nicht passen</string>
+    <string name="settings_type_mismatch_tools">Werkzeuge der anderen Maschinenart: %1$d</string>
+    <string name="settings_type_mismatch_sub_datums">Unternullpunkte mit einer Y-Koordinate: %1$d</string>
+    <string name="settings_type_mismatch_guides">Hilfslinien auf der Y-Achse: %1$d</string>
+    <string name="settings_type_mismatch_machine_datums">Maschinennullpunkte mit einer Y-Koordinate: %1$d</string>
+    <string name="settings_type_mismatch_threads">Drehgewinde: %1$d</string>
+    <string name="settings_type_conversion_title">Änderungen durch SuperDRO</string>
+    <string name="settings_type_conversion_mill_tools">Die Fräswerkzeuge bleiben. Beide Fräsmaschinentypen verwenden sie.</string>
+    <string name="settings_type_conversion_plane">Die Ebene jedes Arbeitsbereichs ändert sich.</string>
+    <string name="settings_type_conversion_diameter">Der X-Durchmessermodus jedes Arbeitsbereichs ändert sich.</string>
+    <string name="settings_type_conversion_mode">Der Messmodus wechselt in den Bearbeitungsmodus.</string>
+    <string name="settings_type_conversion_angle">Die Winkelkonvention der Muster ändert sich.</string>
+    <string name="settings_type_conversion_restore">Archivierte Daten, die zum neuen Typ passen, kommen zurück.</string>
+    <string name="settings_type_archive">Archivieren</string>
+    <string name="settings_type_archive_summary">Die Daten verborgen behalten. Ein Wechsel zurück zeigt sie wieder.</string>
+    <string name="settings_type_delete">Löschen</string>
+    <string name="settings_type_delete_summary">Die Daten endgültig löschen.</string>
+    <string name="settings_type_confirm">Typ ändern</string>
+    <string name="settings_type_done">Der Maschinentyp von %1$s ist jetzt %2$s.</string>
+</resources>

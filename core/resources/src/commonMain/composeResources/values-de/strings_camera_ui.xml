@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the camera screens of core:ui. -->
+<resources>
+    <string name="camera_ui_status_off">Video aus</string>
+    <string name="camera_ui_status_starting">Das Video startet</string>
+    <string name="camera_ui_status_on">Video an</string>
+    <string name="camera_ui_status_detail">Video an: %1$d × %2$d, %3$s B/s</string>
+    <string name="camera_ui_status_detail_no_fps">Video an: %1$d × %2$d</string>
+    <string name="camera_ui_play">Video starten</string>
+    <string name="camera_ui_stop">Video stoppen</string>
+    <string name="camera_ui_crosshairs">Fadenkreuz</string>
+    <string name="camera_ui_show_crosshairs">Fadenkreuz zeigen</string>
+    <string name="camera_ui_dim">Halbe Deckkraft</string>
+    <string name="camera_ui_view_lock">Ansicht am Fadenkreuz fixieren</string>
+    <string name="camera_ui_scale_known">Bekannter Abstand</string>
+    <string name="camera_ui_scale_move">Maschinenbewegung</string>
+    <string name="camera_ui_rotation">Bilddrehung %1$s°</string>
+    <string name="camera_ui_distance_mm">Abstand zwischen den zwei Punkten (mm)</string>
+    <string name="camera_ui_distance_in">Abstand zwischen den zwei Punkten (Zoll)</string>
+    <string name="camera_ui_needs_video">Starten Sie zuerst das Video.</string>
+    <string name="camera_ui_point_title">Punkt am Fadenkreuz</string>
+    <string name="camera_ui_no_camera_probe">Kein Tasterprofil hat den Typ Kamera oder Mikroskop. Fügen Sie eines in der Tasterbibliothek hinzu.</string>
+    <string name="camera_ui_chip_description">Kamerabildschirm öffnen</string>
+    <string name="camera_ui_progress">Testfortschritt</string>
+    <string name="camera_ui_loading">Die Kamera wird gelesen…</string>
+    <string name="camera_ui_mode_good">Video in Ordnung</string>
+    <string name="camera_ui_mode_bad">Kein Video</string>
+    <string name="camera_ui_calibrating">Bildmaßstab: Tippen Sie auf das Video</string>
+</resources>

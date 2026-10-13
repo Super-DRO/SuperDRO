@@ -1,0 +1,143 @@
+# The version catalog of SuperDRO. The versions come from SnapshotPB where SnapshotPB has the
+# library.
+# The Android SDK levels are not here: composite gives them (org.superdro.composite.util.AndroidSdk).
+
+[versions]
+agp = "9.1.1"
+android-baseline = "1.5.0-alpha05"
+androidx-activity = "1.13.0"
+# sqlite-android 0.14.0 needs androidx.core 1.19.0 (its POM). SnapshotPB has 1.18.0.
+androidx-core = "1.19.0"
+androidx-lifecycle = "2.10.0"
+androidx-navigation3 = "1.1.0-rc01"
+androidx-test-runner = "1.7.0"
+androidx-testExt = "1.3.0"
+androidx-uiautomator = "2.3.0"
+arbor = "3.0.136"
+bignum = "0.3.10"
+blue-falcon = "3.7.14"
+# The TLS 1.3 PSK library of the data output. The jdk15to18
+# jars are not multi-release jars and have no META-INF/LICENSE.md, so the APK packaging gets no
+# duplicate files.
+bouncycastle = "1.86"
+# The CMake of the Android SDK for the native camera code (platform:android:camera).
+cmake = "3.31.6"
+compose-multiplatform = "1.10.3"
+kodein = "7.31.0"
+kotlin = "2.3.20"
+# SQLDelight 2.4.1 and Ktor 3.6.0 need kotlinx-coroutines 1.11.0 (their POM files). SnapshotPB has 1.10.2.
+kotlinx-coroutines = "1.11.0"
+kotlinx-datetime = "0.7.1"
+kotlinx-io = "0.9.0"
+kotlinx-serialization = "1.11.0"
+# The serial ports of the desktop app (platform:desktop:serial). Dual license LGPL 3 and Apache 2.0;
+# SuperDRO uses the Apache 2.0.
+jserialcomm = "2.11.4"
+ktor = "3.6.0"
+material3 = "1.10.0-alpha05"
+material3-adaptive = "1.3.0-alpha02"
+# The MQTT broker of the data output tests (jvmTest only).
+moquette = "0.17"
+# The NDK of the native camera code (platform:android:camera): libusb, libuvc, and the JNI layer.
+ndk = "29.0.14206865"
+# The MQTT client of the data output. Dual license EPL 2.0 and EDL 1.0; SuperDRO uses the EDL.
+paho-mqtt = "1.2.5"
+sqldelight = "2.4.1"
+# Change sqlite-android and sqlite-jdbc together, to the same SQLite version.
+sqlite-android = "0.14.0"
+sqlite-jdbc = "3.53.4.0"
+usb-serial = "3.11.0"
+
+[libraries]
+androidx-navigationevent-compose = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version = "1.0.1" }
+# Android
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+androidx-benchmark = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "android-baseline" }
+androidx-core = { module = "androidx.core:core", version.ref = "androidx-core" }
+androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "androidx-navigation3" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
+androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidx-uiautomator" }
+androidx-testExt-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-testExt" }
+
+# Compose
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
+compose-material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "material3-adaptive" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
+compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
+# The Compose UI tests of core:ui (jvmTest only): runComposeUiTest.
+compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "compose-multiplatform" }
+
+# Build logic (composite, compileOnly)
+android-gradle-api = { module = "com.android.tools.build:gradle-api", version.ref = "agp" }
+
+# Kotlin
+kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-io = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-json-io = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-io", version.ref = "kotlinx-serialization" }
+
+# Storage
+sqldelight-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
+sqldelight-dialect = { module = "app.cash.sqldelight:sqlite-3-38-dialect", version.ref = "sqldelight" }
+sqldelight-jdbc = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" }
+sqlite-android = { module = "com.osmerion.sqlite.android:sqlite-android", version.ref = "sqlite-android" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
+
+# Links
+blue-falcon = { module = "dev.bluefalcon:blue-falcon-core", version.ref = "blue-falcon" }
+# The Android engine of BlueFalcon. Only platform:android:di uses it.
+blue-falcon-engine-android = { module = "dev.bluefalcon:blue-falcon-engine-android", version.ref = "blue-falcon" }
+ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
+usb-serial = { module = "com.github.mik3y:usb-serial-for-android", version.ref = "usb-serial" }
+# The SPP and USB serial links of the desktop app through the serial ports of the operating system.
+jserialcomm = { module = "com.fazecast:jSerialComm", version.ref = "jserialcomm" }
+
+# Data output
+bouncycastle-tls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "bouncycastle" }
+moquette-broker = { module = "io.moquette:moquette-broker", version.ref = "moquette" }
+paho-mqtt = { module = "org.eclipse.paho:org.eclipse.paho.client.mqttv3", version.ref = "paho-mqtt" }
+
+# Other
+arbor = { module = "com.toxicbakery.logging:arbor", version.ref = "arbor" }
+arbor-android = { module = "com.toxicbakery.logging:arbor-android", version.ref = "arbor" }
+bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
+
+# Kodein
+kodein = { module = "org.kodein.di:kodein-di", version.ref = "kodein" }
+kodein-compose = { module = "org.kodein.di:kodein-di-framework-compose", version.ref = "kodein" }
+kodein-compose-runtime = { module = "org.kodein.di:kodein-di-framework-compose-runtime", version.ref = "kodein" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidBaseline = { id = "androidx.baselineprofile", version.ref = "android-baseline" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+# Without a version, on purpose. `com.android.test` is in the same artifact as
+# `com.android.application` and `com.android.library`. Thus it is on the build script class path
+# when :app:android:baseline asks for it. A version here makes Gradle stop the build: "the plugin
+# is already on the classpath with an unknown version, so compatibility cannot be checked".
+androidTest = { id = "com.android.test" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+# The version here is a placeholder. settings.gradle.kts replaces it with a digest of
+# composite/src, so the coordinate resolves only when composite/m2 holds the current build
+# logic. Run `./gradlew -p composite clean test publish` after a change in composite/.
+composite = { id = "composite", version = "1.0" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }

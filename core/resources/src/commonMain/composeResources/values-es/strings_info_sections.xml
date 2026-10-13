@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The sections that the user opens and closes in a screen: help, details, and reports. -->
+<resources>
+    <string name="info_section_open">Abierto</string>
+    <string name="info_section_closed">Cerrado</string>
+</resources>

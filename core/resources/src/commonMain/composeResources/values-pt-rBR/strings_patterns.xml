@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the hole patterns and of the arc cut. The file values/strings_patterns.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="pattern_error_header">Não foi possível concluir a operação. Corrija os erros abaixo:</string>
+    <string name="pattern_error_value_required">É necessário um valor para %1$s</string>
+    <string name="pattern_error_value_too_small">O valor de %1$s é muito pequeno</string>
+    <string name="pattern_error_value_too_large">O valor de %1$s é muito grande</string>
+    <string name="pattern_error_text_too_short">%1$s deve ter pelo menos 3 caracteres.</string>
+    <string name="pattern_error_text_too_long">%1$s não pode ter mais de 16 caracteres.</string>
+    <string name="pattern_error_two_angles">São necessários pelo menos dois ângulos de furo.</string>
+    <string name="pattern_error_repeat_too_small">O valor de %1$s ou de %2$s deve ser maior que 1</string>
+    <string name="pattern_error_hole_count_not_valid">Informe um número de furos válido.</string>
+    <string name="pattern_error_hole_count_too_small">O número de furos não pode ser menor que 3.</string>
+    <string name="pattern_error_start_not_valid">Informe um número válido para a posição inicial de %1$s.</string>
+    <string name="pattern_error_end_not_valid">Informe um número válido para a posição final de %1$s.</string>
+    <string name="arc_error_cutter_too_large">O diâmetro da fresa é muito grande para este ângulo de varredura.</string>
+    <string name="arc_error_stepover_too_large">O passo lateral é muito grande para este ângulo de varredura.</string>
+    <string name="arc_error_cutter_too_large_for_radius">O diâmetro da fresa é muito grande para um corte interno deste raio.</string>
+    <string name="pattern_title_hole_circle">Círculo de furos</string>
+    <string name="pattern_title_hole_circle_lathe">Matriz circular de pontos</string>
+    <string name="pattern_title_arbitrary_hole_circle">Círculo de furos livre</string>
+    <string name="pattern_title_hole_grid">Grade de furos</string>
+    <string name="pattern_title_hole_grid_lathe">Matriz linear de pontos</string>
+    <string name="pattern_title_step_and_repeat">Passo e repetição de %1$d sub-referências</string>
+    <string name="pattern_title_step_and_repeat_workspace">Passo e repetição da área de trabalho</string>
+    <string name="pattern_title_equidistant">Matriz de furos equidistantes</string>
+    <string name="pattern_title_equidistant_lathe">Matriz de pontos equidistantes</string>
+    <string name="arc_title">Corte de raio/arco</string>
+    <string name="pattern_label_prefix">Prefixo da sub-referência</string>
+    <string name="pattern_label_circle_radius">Raio do círculo</string>
+    <string name="pattern_label_hole_count">Número de furos</string>
+    <string name="pattern_label_start_angle">Ângulo inicial</string>
+    <string name="pattern_label_sweep_angle">Ângulo de varredura</string>
+    <string name="pattern_label_hole_angle">Ângulo do furo</string>
+    <string name="pattern_label_repeat_x">Repetição X</string>
+    <string name="pattern_label_repeat_y">Repetição Y</string>
+    <string name="pattern_label_repeat_z">Repetição Z</string>
+    <string name="pattern_label_step_x">Passo X</string>
+    <string name="pattern_label_step_y">Passo Y</string>
+    <string name="pattern_label_step_z">Passo Z</string>
+    <string name="pattern_label_grid_angle">Ângulo</string>
+    <string name="pattern_label_number_of_holes">Quantidade de furos</string>
+    <string name="pattern_label_start_x">Posição inicial X</string>
+    <string name="pattern_label_start_y">Posição inicial Y</string>
+    <string name="pattern_label_start_z">Posição inicial Z</string>
+    <string name="pattern_label_end_x">Posição final X</string>
+    <string name="pattern_label_end_y">Posição final Y</string>
+    <string name="pattern_label_end_z">Posição final Z</string>
+    <string name="arc_label_radius">Raio</string>
+    <string name="arc_label_cutter_diameter">Diâmetro da fresa</string>
+    <string name="arc_label_stepover">Passo lateral</string>
+</resources>

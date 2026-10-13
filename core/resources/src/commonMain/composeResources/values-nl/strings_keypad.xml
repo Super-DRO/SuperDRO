@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the keypad sheet, the divisions keypad, and the preset sheet. The file values/strings_keypad.xml has the same names. -->
+<resources>
+    <string name="keypad_title">%1$s instellen</string>
+    <string name="keypad_mode_absolute">Absoluut</string>
+    <string name="keypad_mode_incremental">Incrementeel</string>
+    <string name="keypad_current">Huidig: %1$s %2$s</string>
+    <string name="keypad_result">Resultaat: %1$s %2$s</string>
+    <string name="keypad_expression">Waarde of uitdrukking</string>
+    <string name="keypad_set">Instellen</string>
+    <string name="keypad_clear">Wissen</string>
+    <string name="keypad_backspace">Laatste teken wissen</string>
+    <string name="keypad_relative_add">Optellen bij de huidige waarde</string>
+    <string name="keypad_relative_subtract">Aftrekken van de huidige waarde</string>
+    <string name="keypad_divisions_title">Verdelingen per omwenteling</string>
+    <string name="keypad_divisions_invalid">Voer een geheel getal van 1 of meer in.</string>
+    <string name="keypad_presets_title">Kies het toerental</string>
+</resources>

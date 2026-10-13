@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the function strip and the global buttons. -->
+<resources>
+    <string name="strip_zero_set">Zero set</string>
+    <string name="strip_mode">Mode</string>
+    <string name="strip_units">Units</string>
+    <string name="strip_mode_absolute">ABS</string>
+    <string name="strip_mode_incremental">INC</string>
+    <string name="strip_mixed">Mixed</string>
+    <string name="strip_units_inch">Inch</string>
+    <string name="strip_units_mm">Millimeter</string>
+    <string name="strip_active">Active</string>
+    <string name="strip_functions">Functions</string>
+    <string name="strip_radius">Radius</string>
+    <string name="strip_diameter">Diameter</string>
+    <string name="strip_lathe_tool_offset">Tool offset</string>
+    <string name="strip_z_reference">Z reference</string>
+    <string name="strip_radius_compensation">Radius comp.</string>
+    <string name="strip_height_compensation">Height comp.</string>
+    <string name="strip_edge_finder">Edge finder</string>
+    <string name="strip_hole_circle">Hole circle</string>
+    <string name="strip_arbitrary_hole_circle">Free circle</string>
+    <string name="strip_arc_cut">Arc cut</string>
+    <string name="strip_hole_grid">Hole grid</string>
+    <string name="strip_equidistant_array">Equidistant</string>
+    <string name="strip_dimension_measure">Dimension</string>
+    <string name="strip_angle_measure">Angle</string>
+    <string name="strip_graphical_view">Graphics</string>
+    <string name="strip_thread_setup">Thread</string>
+    <string name="strip_compound">Compound</string>
+    <string name="strip_head_tilt">Head tilt</string>
+    <string name="strip_rotate_part">Rotate part</string>
+    <string name="strip_align_axes">Align axes</string>
+    <string name="strip_instrument">Instrument</string>
+</resources>

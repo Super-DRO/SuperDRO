@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The change of the machine type with the warning and the confirmation list. -->
+<resources>
+    <string name="settings_type_title">Machinetype wijzigen?</string>
+    <string name="settings_type_from_to">%1$s: het machinetype verandert van %2$s naar %3$s.</string>
+    <string name="settings_type_warning">Sommige gegevens passen niet bij het nieuwe machinetype.</string>
+    <string name="settings_type_all_fits">Alle gegevens passen bij het nieuwe machinetype.</string>
+    <string name="settings_type_mismatch_title">Gegevens die niet passen</string>
+    <string name="settings_type_mismatch_tools">Gereedschappen van het andere machinesoort: %1$d</string>
+    <string name="settings_type_mismatch_sub_datums">Subnulpunten met een Y-coördinaat: %1$d</string>
+    <string name="settings_type_mismatch_guides">Hulplijnen op de Y-as: %1$d</string>
+    <string name="settings_type_mismatch_machine_datums">Machinenulpunten met een Y-coördinaat: %1$d</string>
+    <string name="settings_type_mismatch_threads">Draaibankschroefdraden: %1$d</string>
+    <string name="settings_type_conversion_title">Wijzigingen die SuperDRO maakt</string>
+    <string name="settings_type_conversion_mill_tools">De freesgereedschappen blijven. Beide freesmachinetypes gebruiken ze.</string>
+    <string name="settings_type_conversion_plane">Het vlak van elke werkruimte verandert.</string>
+    <string name="settings_type_conversion_diameter">De X-diametermodus van elke werkruimte verandert.</string>
+    <string name="settings_type_conversion_mode">De meetmodus verandert in de bewerkingsmodus.</string>
+    <string name="settings_type_conversion_angle">De hoekconventie van de patronen verandert.</string>
+    <string name="settings_type_conversion_restore">Gearchiveerde gegevens die bij het nieuwe type passen, komen terug.</string>
+    <string name="settings_type_archive">Archiveren</string>
+    <string name="settings_type_archive_summary">De gegevens verborgen houden. Een wijziging terug toont ze weer.</string>
+    <string name="settings_type_delete">Verwijderen</string>
+    <string name="settings_type_delete_summary">De gegevens definitief verwijderen.</string>
+    <string name="settings_type_confirm">Type wijzigen</string>
+    <string name="settings_type_done">Het machinetype van %1$s is nu %2$s.</string>
+</resources>

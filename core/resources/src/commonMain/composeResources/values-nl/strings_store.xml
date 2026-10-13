@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the store rules: the refusals of core:store (StoreRefusal) and the tool question of a profile delete. -->
+<resources>
+    <string name="store_profile_name_blank">De profielnaam mag niet leeg zijn.</string>
+    <string name="store_profile_name_exists">Er bestaat al een profiel met deze naam.</string>
+    <string name="store_workspace_name_blank">De naam van de werkruimte mag niet leeg zijn.</string>
+    <string name="store_workspace_name_exists">Er bestaat al een werkruimte met deze naam.</string>
+    <string name="store_last_workspace">De laatste werkruimte kan niet worden verwijderd.</string>
+    <string name="store_adapter_alias_blank">De adapternaam mag niet leeg zijn.</string>
+    <string name="store_adapter_alias_too_long">Een adapternaam mag maximaal 40 tekens hebben.</string>
+    <string name="store_adapter_alias_exists">Er bestaat al een adapter met deze naam.</string>
+    <string name="store_standard_tip_read_only">Een standaardtip kan niet worden gewijzigd.</string>
+    <string name="store_not_found">Het item staat niet in de opslag.</string>
+    <string name="store_delete_profile_tools_question">Ook de gereedschappen van dit profiel verwijderen?</string>
+</resources>

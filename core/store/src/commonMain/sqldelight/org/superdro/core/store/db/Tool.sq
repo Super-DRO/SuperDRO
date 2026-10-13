@@ -1,0 +1,78 @@
+-- The tools of a profile library and of the shared library.
+-- `profile_id` NULL is the shared library. Lengths are µm. A profile delete removes the tools
+-- of its library; the repository first moves them to the shared library when the user keeps
+-- them.
+
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.time.Instant;
+import org.superdro.core.model.ToolKind;
+
+CREATE TABLE tool (
+    id TEXT NOT NULL PRIMARY KEY,
+    profile_id TEXT REFERENCES machine_profile(id) ON DELETE CASCADE,
+    kind TEXT AS ToolKind NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    metric INTEGER AS Boolean NOT NULL DEFAULT 0,
+    diameter_um REAL NOT NULL DEFAULT 0,
+    tooth_count INTEGER AS Int NOT NULL DEFAULT 0,
+    z_offset_um REAL NOT NULL DEFAULT 0,
+    x_offset_um REAL NOT NULL DEFAULT 0,
+    internal INTEGER AS Boolean NOT NULL DEFAULT 0,
+    geometry_json TEXT,
+    created_on TEXT AS Instant NOT NULL,
+    updated_on TEXT AS Instant NOT NULL
+);
+
+CREATE INDEX tool_profile_kind ON tool(profile_id, kind);
+
+-- The library that a profile uses: its own tools, or the shared library when the switch is on.
+-- The kind filter gives the mill tools to both mill types. The query reads the profile
+-- row, so a change of the switch gives a new result at once.
+selectLibraryForProfile:
+SELECT tool.* FROM tool
+JOIN machine_profile ON machine_profile.id = :profileId
+WHERE tool.kind = (CASE machine_profile.machine_type WHEN 'Lathe' THEN 'Lathe' ELSE 'Mill' END)
+  AND (
+    (machine_profile.use_shared_tools = 1 AND tool.profile_id IS NULL)
+    OR (machine_profile.use_shared_tools = 0 AND tool.profile_id = machine_profile.id)
+  )
+ORDER BY tool.name COLLATE NOCASE, tool.id;
+
+selectForProfile:
+SELECT * FROM tool WHERE profile_id = ? ORDER BY name COLLATE NOCASE, id;
+
+selectShared:
+SELECT * FROM tool WHERE profile_id IS NULL AND kind = ? ORDER BY name COLLATE NOCASE, id;
+
+selectById:
+SELECT * FROM tool WHERE id = ?;
+
+insert:
+INSERT INTO tool (
+    id, profile_id, kind, name, description, metric, diameter_um, tooth_count, z_offset_um,
+    x_offset_um, internal, geometry_json, created_on, updated_on
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- An update does not change the library of the tool.
+update:
+UPDATE tool SET
+    kind = :kind,
+    name = :name,
+    description = :description,
+    metric = :metric,
+    diameter_um = :diameterUm,
+    tooth_count = :toothCount,
+    z_offset_um = :zOffsetUm,
+    x_offset_um = :xOffsetUm,
+    internal = :internal,
+    geometry_json = :geometryJson,
+    updated_on = :updatedOn
+WHERE id = :id;
+
+moveProfileToolsToShared:
+UPDATE tool SET profile_id = NULL WHERE profile_id = ?;
+
+deleteById:
+DELETE FROM tool WHERE id = ?;

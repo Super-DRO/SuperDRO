@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of core:readout. The file values/strings_readout_core.xml has the same names. -->
+<resources>
+    <string name="readout_core_settings_same_prefix">Les entrées principale et secondaire ne peuvent pas utiliser le même préfixe</string>
+    <string name="readout_core_settings_one_axis_required">Au moins un axe de sortie doit être activé</string>
+    <string name="readout_core_settings_sample_count_range">Le nombre d’échantillons du palpeur d’arête doit être un nombre entre 1 et 10 (inclus)</string>
+    <string name="readout_core_calibration_secondary_disabled">Entrée secondaire désactivée</string>
+    <string name="readout_core_calibration_prefix_missing">Préfixe d’entrée manquant</string>
+    <string name="readout_core_calibration_block_required">Taille du bloc requise</string>
+    <string name="readout_core_calibration_block_too_small">Bloc trop petit</string>
+    <string name="readout_core_calibration_block_too_small_detail">au moins 50.000 mm / 2.0000 in</string>
+    <string name="readout_core_calibration_no_reading">Aucune lecture reçue</string>
+    <string name="readout_core_calibration_sample_too_small">Échantillon de lectures trop petit</string>
+    <string name="readout_core_calibration_jitter">Fluctuation excessive détectée</string>
+    <string name="readout_core_calibration_too_close">Lectures trop proches</string>
+    <string name="readout_core_edge_left">gauche</string>
+    <string name="readout_core_edge_right">droit</string>
+    <string name="readout_core_edge_front">avant</string>
+    <string name="readout_core_edge_back">arrière</string>
+    <string name="readout_core_edge_bottom">inférieur</string>
+    <string name="readout_core_edge_top">supérieur</string>
+    <string name="readout_core_edge_first">premier</string>
+    <string name="readout_core_edge_second">deuxième</string>
+    <string name="readout_core_tach_cant_set">Impossible de régler le régime</string>
+    <string name="readout_core_state_error">Erreur</string>
+    <string name="readout_core_state_no_input">Aucune entrée</string>
+    <string name="readout_core_map_too_many_points">La table a plus de %1$d points.</string>
+    <string name="readout_core_map_malformed_line">La ligne %1$d n’est pas un point valide.</string>
+    <string name="readout_core_map_no_points">La table n’a aucun point.</string>
+    <string name="readout_core_map_duplicate_position">La position %1$d apparaît plus d’une fois.</string>
+    <string name="readout_core_map_reversal">La position corrigée recule entre les positions %1$d et %2$d.</string>
+    <string name="readout_core_map_dead_band">La position corrigée ne bouge pas entre les positions %1$d et %2$d.</string>
+    <string name="readout_core_map_negative_backlash">Le jeu à la position %1$d est négatif (%2$d).</string>
+    <string name="readout_core_map_backlash_exceeds_turn">Le jeu à la position %1$d (%2$d) n’est pas inférieur à un tour de vis (%3$d impulsions).</string>
+    <string name="readout_core_profile_backlash_map_not_allowed">Une table de jeu n’est disponible que pour un codeur de vis-mère.</string>
+</resources>

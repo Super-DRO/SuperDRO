@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the app frame: the navigation, the tabs, the add-device sheet, and the remembered machines. The file values/strings_frame.xml has the same names. -->
+<resources>
+    <string name="frame_under_construction">Dit scherm is in aanbouw.</string>
+    <string name="frame_function_under_construction">Deze functie is in aanbouw.</string>
+    <string name="frame_back">Terug</string>
+    <string name="frame_close">Sluiten</string>
+    <string name="frame_done">Klaar</string>
+    <string name="frame_cancel">Annuleren</string>
+    <string name="frame_machine_message">%1$s: %2$s</string>
+    <string name="frame_reconnecting">Opnieuw verbinden</string>
+    <string name="frame_tab_description">%1$s, %2$s, %3$s</string>
+    <string name="frame_menu_disconnect">Verbinding verbreken</string>
+    <string name="frame_menu_rename">Hernoemen</string>
+    <string name="frame_state_online">verbonden</string>
+    <string name="frame_state_offline">niet verbonden</string>
+    <string name="frame_state_paused">gepauzeerd</string>
+    <string name="frame_remembered_connect">Verbinden</string>
+    <string name="frame_remembered_pause">Pauzeren</string>
+    <string name="frame_remembered_edit">Bewerken</string>
+    <string name="frame_remembered_remove">Verwijderen</string>
+    <string name="frame_remove_title">%1$s verwijderen?</string>
+    <string name="frame_remove_text">De verbinding stopt en de machine verlaat de opgeslagen machines. Het machineprofiel blijft in de machineprofielen.</string>
+    <string name="frame_no_link">Geen verbinding</string>
+    <string name="frame_no_remembered">Er is geen machine opgeslagen.</string>
+    <string name="frame_rename_name">Machinenaam</string>
+    <string name="frame_save">Opslaan</string>
+    <string name="frame_edit_link">Verbinding</string>
+</resources>

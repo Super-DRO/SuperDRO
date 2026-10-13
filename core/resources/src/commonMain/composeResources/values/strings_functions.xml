@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The common strings of the machine functions area: the buttons, the units, the preview, and the blocker of new sub-datums. -->
+<resources>
+    <string name="fn_create">Create</string>
+    <string name="fn_apply">Apply</string>
+    <string name="fn_cancel">Cancel</string>
+    <string name="fn_close">Close</string>
+    <string name="fn_save">Save</string>
+    <string name="fn_delete">Delete</string>
+    <string name="fn_edit">Edit</string>
+    <string name="fn_add">Add</string>
+    <string name="fn_clear">Clear</string>
+    <string name="fn_undo">Undo</string>
+    <string name="fn_more">More</string>
+    <string name="fn_unit_mm">mm</string>
+    <string name="fn_unit_inch">in</string>
+    <string name="fn_unit_cd">Unit of %1$s</string>
+    <string name="fn_preview_title">Preview</string>
+    <string name="fn_preview_empty">No points to show. Fill in the fields.</string>
+    <string name="fn_preview_count">%1$d points</string>
+    <string name="fn_preview_cd">Preview of %1$d points</string>
+    <string name="fn_error_title">Error</string>
+    <string name="fn_not_available_title">Not Available Right Now</string>
+    <string name="fn_blocked_message">New sub-datums cannot be added while %1$s is active.</string>
+    <string name="fn_blocker_thread">thread cutting</string>
+    <string name="fn_blocker_no_workspace">no workspace</string>
+    <string name="fn_value_not_number">%1$s value could not be converted to a number</string>
+    <string name="fn_axis_value">%1$s: %2$s</string>
+    <string name="fn_route_step_and_repeat">Step and Repeat</string>
+    <string name="fn_route_workspace_commands">Workspace Commands</string>
+    <string name="fn_route_add_point">Add Sub-Datum</string>
+    <string name="fn_route_sub_datum_command">Sub-Datum Command</string>
+</resources>

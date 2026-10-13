@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The error texts of the expression evaluator. Each name agrees
+     with ExpressionError.key in core:readout (package org.superdro.core.readout.expression).
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="expression_error_invalid_token">Invalid token \u0027%1$s\u0027</string>
+    <string name="expression_error_invalid_number">Invalid number \u0027%1$s\u0027</string>
+    <string name="expression_error_undefined_function">Undefined function \u0027%1$s\u0027</string>
+    <string name="expression_error_undefined_variable">Undefined variable \u0027%1$s\u0027</string>
+    <string name="expression_error_invalid_assignment_target">Invalid assignment target</string>
+    <string name="expression_error_expected_paren_after_arguments">Expected \u0027)\u0027 after function arguments</string>
+    <string name="expression_error_expected_paren_after_expression">Expected \u0027)\u0027 after expression</string>
+    <string name="expression_error_expected_expression">Expected expression</string>
+    <string name="expression_error_expected_expression_after">Expected expression after \u0027%1$s\u0027</string>
+    <string name="expression_error_expected_end">Expected end of expression</string>
+    <string name="expression_error_requires_one">%1$s requires one argument</string>
+    <string name="expression_error_requires_at_least_one">%1$s requires at least one argument</string>
+    <string name="expression_error_requires_one_or_two">%1$s requires either one or two arguments</string>
+    <string name="expression_error_requires_three">%1$s requires three arguments</string>
+    <string name="expression_error_division_by_zero">Division by zero</string>
+    <string name="expression_error_negative_base_fractional_exponent">Fractional power of a negative number</string>
+    <string name="expression_error_out_of_range">Value is out of range</string>
+    <string name="expression_error_too_complex">Expression is too complex</string>
+</resources>

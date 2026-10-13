@@ -1,0 +1,109 @@
+-- The workspaces and their axis states.
+--
+-- A workspace belongs to one machine profile. A profile delete removes its workspaces, and a
+-- workspace delete removes its axis states, sub-datums, guides, threads, drawing, and inspection
+-- log. The name is unique in the profile. The repository also refuses a name
+-- that differs only in the letter case.
+--
+-- `state_json` holds the typed workspace state: the active tool and sub-datum, the tool values,
+-- the proximity target, the graphical switches, the plane, the part rotation, the axis
+-- alignment, and the armed thread. The reference image has its own column, because a
+-- workspace transform changes its matrix and the transform undo copy must see that change.
+
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.time.Instant;
+import org.superdro.core.model.AxisId;
+
+CREATE TABLE workspace (
+    id TEXT NOT NULL PRIMARY KEY,
+    profile_id TEXT NOT NULL REFERENCES machine_profile(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    last_ordinal INTEGER AS Int NOT NULL DEFAULT 0,
+    state_json TEXT NOT NULL,
+    reference_image_json TEXT,
+    created_on TEXT AS Instant NOT NULL,
+    updated_on TEXT AS Instant NOT NULL,
+    UNIQUE (profile_id, name)
+);
+
+-- One row for each axis: a zero or a set is one write of one row.
+CREATE TABLE axis_state (
+    workspace_id TEXT NOT NULL REFERENCES workspace(id) ON DELETE CASCADE,
+    axis TEXT AS AxisId NOT NULL,
+    absolute_offset REAL NOT NULL DEFAULT 0,
+    incremental_offset REAL NOT NULL DEFAULT 0,
+    relative INTEGER AS Boolean NOT NULL DEFAULT 0,
+    tool_offset REAL NOT NULL DEFAULT 0,
+    tool_offset_active INTEGER AS Boolean NOT NULL DEFAULT 0,
+    metric INTEGER AS Boolean,
+    diameter_mode INTEGER AS Boolean NOT NULL DEFAULT 0,
+    division_units INTEGER AS Boolean NOT NULL DEFAULT 0,
+    divisions_per_rev INTEGER AS Int,
+    surface_speed_mode INTEGER AS Boolean NOT NULL DEFAULT 0,
+    PRIMARY KEY (workspace_id, axis)
+);
+
+selectForProfile:
+SELECT * FROM workspace WHERE profile_id = ? ORDER BY rowid;
+
+selectById:
+SELECT * FROM workspace WHERE id = ?;
+
+selectNamesForProfile:
+SELECT id, name FROM workspace WHERE profile_id = ?;
+
+selectImagesForProfile:
+SELECT reference_image_json FROM workspace WHERE profile_id = ? AND reference_image_json IS NOT NULL;
+
+countForProfile:
+SELECT count(*) FROM workspace WHERE profile_id = ?;
+
+insert:
+INSERT INTO workspace (
+    id, profile_id, name, last_ordinal, state_json, reference_image_json, created_on, updated_on
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+updateState:
+UPDATE workspace SET state_json = :stateJson, updated_on = :updatedOn WHERE id = :id;
+
+updateReferenceImage:
+UPDATE workspace SET reference_image_json = :referenceImageJson, updated_on = :updatedOn WHERE id = :id;
+
+updateLastOrdinal:
+UPDATE workspace SET last_ordinal = :lastOrdinal, updated_on = :updatedOn WHERE id = :id;
+
+rename:
+UPDATE workspace SET name = :name, updated_on = :updatedOn WHERE id = :id;
+
+deleteById:
+DELETE FROM workspace WHERE id = ?;
+
+selectAxisStates:
+SELECT * FROM axis_state WHERE workspace_id = ?;
+
+selectAxisStatesForProfile:
+SELECT axis_state.* FROM axis_state
+JOIN workspace ON workspace.id = axis_state.workspace_id
+WHERE workspace.profile_id = ?;
+
+-- An update, not a replace, so that the trigger of a translate undo copy sees the change.
+upsertAxisState:
+INSERT INTO axis_state (
+    workspace_id, axis, absolute_offset, incremental_offset, relative, tool_offset,
+    tool_offset_active, metric, diameter_mode, division_units, divisions_per_rev, surface_speed_mode
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (workspace_id, axis) DO UPDATE SET
+    absolute_offset = excluded.absolute_offset,
+    incremental_offset = excluded.incremental_offset,
+    relative = excluded.relative,
+    tool_offset = excluded.tool_offset,
+    tool_offset_active = excluded.tool_offset_active,
+    metric = excluded.metric,
+    diameter_mode = excluded.diameter_mode,
+    division_units = excluded.division_units,
+    divisions_per_rev = excluded.divisions_per_rev,
+    surface_speed_mode = excluded.surface_speed_mode;
+
+setAbsoluteOffset:
+UPDATE axis_state SET absolute_offset = :absoluteOffset WHERE workspace_id = :workspaceId AND axis = :axis;

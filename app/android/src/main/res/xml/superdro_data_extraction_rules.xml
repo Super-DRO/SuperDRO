@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The backup rules for API 31 and higher. See superdro_backup_rules.xml for the reasons. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="secrets.json" />
+        <exclude domain="file" path="corrupt/" />
+        <exclude domain="file" path="streams/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="secrets.json" />
+        <exclude domain="file" path="corrupt/" />
+        <exclude domain="file" path="streams/" />
+    </device-transfer>
+</data-extraction-rules>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The attach filter of TT2: a USB device with the video class 14 and the subclass 1
+  (video control). Android compares the class with the device class and with the class of each
+  interface, so a UVC camera with the device class 0xEF (miscellaneous) matches too.
+-->
+<resources>
+    <usb-device class="14" subclass="1" />
+</resources>

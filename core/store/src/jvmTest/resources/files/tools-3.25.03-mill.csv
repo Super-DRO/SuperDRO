@@ -1,0 +1,4 @@
+name,description,metric,diameter,tooth_count,z_offset
+1/4 End Mill,2 flute HSS,no,0.2500,2,1.2500
+1/2 End Mill,"4 flute, carbide",no,0.5000,4,0.8750
+6 mm Drill,,yes,6.000,2,-12.500

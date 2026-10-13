@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the integration of the UI areas. -->
+<resources>
+    <string name="integration_tool_geometry_defined">Définie</string>
+    <string name="integration_tool_geometry_open">Géométrie de coupe</string>
+    <string name="integration_tool_geometry_save_first">Enregistrez d'abord l'outil. Ajoutez ensuite la géométrie de coupe.</string>
+    <string name="integration_settings_profile_file_summary">Exportez ce profil dans un fichier ou importez un fichier de profil.</string>
+    <string name="integration_calibration_adapter_missing">Le profil d'adaptateur de ce profil de machine est absent. Connectez l'adaptateur ou sélectionnez un profil d'adaptateur dans l'écran Adaptateurs.</string>
+    <string name="integration_calibration_no_axis">Aucun axe n'a besoin d'un étalonnage.</string>
+    <string name="integration_calibration_opening">Ouverture de l'étalonnage de l'entrée de l'axe…</string>
+    <string name="integration_add_device_rfcomm_hint">Sous Linux, liez d'abord l'adaptateur à un port série, par exemple : sudo rfcomm bind 0 &lt;adresse MAC&gt;. Puis sélectionnez le port /dev/rfcomm0.</string>
+</resources>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the calibration wizard of an adapter input. The check texts and the edge names are in strings_readout_core.xml. -->
+<resources>
+    <string name="calibration_title">%1$s kalibreren</string>
+    <string name="calibration_axis">As %1$s</string>
+    <string name="calibration_no_axis">Geen as gebruikt deze ingang</string>
+    <string name="calibration_procedure_linear">Lineaire kalibratie met een eindmaat</string>
+    <string name="calibration_procedure_angular">Hoekkalibratie met 5 omwentelingen</string>
+    <string name="calibration_live_count">Huidige telling</string>
+    <string name="calibration_block_title">Maat van het kalibratieblok</string>
+    <string name="calibration_block_text">Typ de echte maat van de eindmaat. Als u de twee buitenvlakken met een kantentaster aanraakt, tel dan de diameter van de taststift erbij op.</string>
+    <string name="calibration_block_size">Blokmaat</string>
+    <string name="calibration_unit">Eenheid</string>
+    <string name="calibration_unit_mm">mm</string>
+    <string name="calibration_unit_inch">inch</string>
+    <string name="calibration_continue">Doorgaan</string>
+    <string name="calibration_retry">Opnieuw</string>
+    <string name="calibration_apply">Toepassen</string>
+    <string name="calibration_discard">Verwerpen</string>
+    <string name="calibration_first_edge_title">Eerste kant</string>
+    <string name="calibration_second_edge_title">Tweede kant</string>
+    <string name="calibration_edge_text">Beweeg de as naar de kant %1$s van het blok. Druk daarna op Doorgaan.</string>
+    <string name="calibration_first_position_title">Eerste positie</string>
+    <string name="calibration_first_position_text">Draai de as naar de positie 0°. Druk daarna op Doorgaan.</string>
+    <string name="calibration_second_position_title">Tweede positie</string>
+    <string name="calibration_second_position_text">Draai de as met de klok mee precies 5 volle omwentelingen. Druk daarna op Doorgaan.</string>
+    <string name="calibration_sampling_title">De ingang wordt gelezen</string>
+    <string name="calibration_sampling_text">Beweeg de as niet. De app leest de ingang maximaal 15 seconden.</string>
+    <string name="calibration_sampling_progress">%1$d s van %2$d s, %3$d metingen</string>
+    <string name="calibration_progress_description">Voortgang van het lezen: %1$d van %2$d seconden</string>
+    <string name="calibration_result_title">Resultaat van de kalibratie</string>
+    <string name="calibration_result_linear">Resolutie: %1$s tellingen per inch (%2$s µm per telling)</string>
+    <string name="calibration_result_angular">Resolutie: %1$s tellingen per omwenteling (%2$s° per telling)</string>
+    <string name="calibration_result_direction_normal">Richting: normaal. De telling stijgt van de eerste naar de tweede positie.</string>
+    <string name="calibration_result_direction_reversed">Richting: omgekeerd. De telling daalt van de eerste naar de tweede positie. Toepassen stelt de omgekeerde richting in.</string>
+    <string name="calibration_result_apply_note">Toepassen schrijft de resolutie, de richting en de status Gekalibreerd naar de encoderinstellingen van %1$s. Verwerpen schrijft niets.</string>
+    <string name="calibration_saved">De kalibratie van %1$s is opgeslagen.</string>
+    <string name="calibration_save_failed">De kalibratie is niet opgeslagen. Het adapterprofiel staat niet in de opslag.</string>
+    <string name="calibration_block_required_detail">Typ een blokmaat die groter is dan 0.</string>
+    <string name="calibration_block_too_small_text">Een langer blok geeft een nauwkeuriger resultaat. Gebruik een blok van %1$s lang. Druk op Doorgaan om dit blok te gebruiken.</string>
+    <string name="calibration_no_reading_detail">De app kreeg geen meting van %1$s. Controleer dat de ingang is aangesloten en dat de modus tellingen stuurt.</string>
+    <string name="calibration_too_few_detail">De app kreeg %1$d metingen van %2$s. Er zijn er %3$d of meer nodig. Druk op Opnieuw om de ingang opnieuw te lezen.</string>
+    <string name="calibration_jitter_detail">De metingen veranderden %1$s tellingen terwijl de as niet bewoog. Houd de as stil en druk op Opnieuw.</string>
+    <string name="calibration_too_close_detail">De twee posities liggen minder dan %1$d tellingen uit elkaar. Beweeg de as naar de tweede positie en druk daarna op Opnieuw.</string>
+    <string name="calibration_link_lost">Verbinding gestopt</string>
+    <string name="calibration_link_lost_detail">De verbinding met de adapter stopte tijdens het lezen. Wacht op de verbinding en druk daarna op Opnieuw.</string>
+    <string name="calibration_no_adapter">Dit machineprofiel heeft geen adapterprofiel. Verbind de adapter en maak eerst het adapterprofiel.</string>
+    <string name="calibration_tach_input">De ingang van de toerenteller heeft geen kalibratie. Stel de pulsen per omwenteling in bij de adapterdetails.</string>
+    <string name="calibration_disabled_input">Het soort van deze ingang is Uitgeschakeld. Kies eerst Lineair of Hoek in de encoderinstellingen.</string>
+</resources>

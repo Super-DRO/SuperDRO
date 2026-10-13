@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder. The file values/strings_edge_finder.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="edge_finder_spread_warning">Waarschuwing: de maximale spreiding tussen de metingen is %1$s %2$s</string>
+    <string name="edge_finder_probe_triggered">De taster is geactiveerd. Beweeg de taster weg van het werkstuk.</string>
+    <string name="edge_finder_long_press_to_clear">Houd deze knop ingedrukt om de huidige waarde te wissen</string>
+    <string name="edge_finder_no_axis_moving">Er bewoog geen as toen de taster werd geactiveerd.</string>
+    <string name="edge_finder_one_axis_at_a_time">Beweeg één as tegelijk</string>
+    <string name="edge_finder_z_not_supported">Tasten op de Z-as wordt nog niet ondersteund</string>
+    <string name="edge_finder_change_in_direction">Richtingswijziging gedetecteerd tijdens het tasten</string>
+    <string name="edge_finder_position_unknown">De aspositie bij het activeren is onbekend. Probeer het opnieuw.</string>
+</resources>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The machine profiles screen. -->
+<resources>
+    <string name="settings_profiles_new">Novo perfil</string>
+    <string name="settings_profiles_empty">Ainda não há perfil de máquina. Use Novo perfil para criar um.</string>
+    <string name="settings_profiles_online">On-line</string>
+    <string name="settings_profiles_offline">Sem aba</string>
+    <string name="settings_profiles_summary">%1$s · %2$s</string>
+    <string name="settings_profiles_copy">Copiar</string>
+    <string name="settings_profiles_rename">Renomear</string>
+    <string name="settings_profiles_change_type">Tipo de máquina</string>
+    <string name="settings_profiles_actions">Ações de %1$s</string>
+    <string name="settings_profiles_create_title">Novo perfil de máquina</string>
+    <string name="settings_profiles_name">Nome do perfil</string>
+    <string name="settings_profiles_create">Criar</string>
+    <string name="settings_profiles_copy_title">Copiar %1$s</string>
+    <string name="settings_profiles_copy_note">A cópia recebe as configurações e as ferramentas. Ela não recebe espaços de trabalho nem ligação de adaptador.</string>
+    <string name="settings_profiles_rename_title">Renomear %1$s</string>
+    <string name="settings_profiles_save">Salvar</string>
+    <string name="settings_profiles_type_title">Tipo de máquina de %1$s</string>
+    <string name="settings_profiles_type_continue">Continuar</string>
+    <string name="settings_profiles_delete_title">Excluir %1$s?</string>
+    <string name="settings_profiles_delete_text">Os espaços de trabalho, os subdatums, as origens de máquina e os registros deste perfil são excluídos. A aba da máquina fecha.</string>
+    <string name="settings_profiles_delete_tools">Excluir as ferramentas</string>
+    <string name="settings_profiles_keep_tools">Manter as ferramentas</string>
+    <string name="settings_profiles_keep_tools_note">As ferramentas mantidas vão para a biblioteca de ferramentas compartilhada.</string>
+    <string name="settings_profiles_created">%1$s foi criado.</string>
+    <string name="settings_profiles_copied">%1$s foi criado como cópia de %2$s.</string>
+    <string name="settings_profiles_renamed">O perfil agora é %1$s.</string>
+    <string name="settings_profiles_deleted">%1$s foi excluído.</string>
+    <plurals name="settings_profiles_tool_count">
+        <item quantity="one">Este perfil tem %1$d ferramenta.</item>
+        <item quantity="other">Este perfil tem %1$d ferramentas.</item>
+    </plurals>
+</resources>

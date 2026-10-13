@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the drawing area. The file values/strings_drawing.xml has the same names. -->
+<resources>
+    <string name="drawing_not_a_drawing">Este archivo no es un dibujo que SuperDRO pueda abrir.</string>
+    <string name="drawing_too_large">Este dibujo es demasiado grande para SuperDRO (más de 2 MB).</string>
+    <string name="drawing_no_shapes">SuperDRO no encontró líneas, arcos ni curvas para importar en este dibujo.</string>
+    <string name="drawing_reading">Leyendo el dibujo…</string>
+    <string name="drawing_converting">Convirtiendo el dibujo…</string>
+    <string name="drawing_not_imported_title">Dibujo no importado</string>
+    <string name="drawing_not_imported_message">SuperDRO no pudo importar este dibujo.</string>
+    <string name="drawing_technical_details">Detalles técnicos</string>
+    <string name="drawing_problems_explanation">El archivo tiene problemas que impiden importarlo. No se cambió nada. Si no puede editar el archivo, comparta esta lista con quien lo creó.</string>
+    <string name="drawing_done">Listo</string>
+    <string name="drawing_layer_unnamed">Capa %1$d</string>
+    <string name="drawing_delete_title">¿Eliminar el dibujo?</string>
+    <string name="drawing_delete_message">Esto quita el dibujo del espacio de trabajo. Necesitará el archivo para importarlo de nuevo y tendrá que colocarlo otra vez. Los subdatos creados a partir de él se conservan.</string>
+    <string name="drawing_delete_shape_title">¿Eliminar la geometría?</string>
+    <string name="drawing_delete_shape_message">¿Seguro que desea quitar este %1$s?</string>
+    <string name="drawing_export_button">Exportar a archivo DXF</string>
+    <string name="drawing_export_title">Exportar a DXF</string>
+    <string name="drawing_export_save_title">Guardar DXF</string>
+    <string name="drawing_export_no_workspace">No hay ningún espacio de trabajo abierto para exportar.</string>
+    <string name="drawing_export_hidden_layers">Incluir capas ocultas</string>
+    <string name="drawing_tool_geometry_title_import">Importar la geometría de la cuchilla</string>
+    <string name="drawing_tool_geometry_title">Geometría de la cuchilla</string>
+    <string name="drawing_tool_geometry_attach">Adjuntar</string>
+    <string name="drawing_tool_geometry_drawn_in">Dibujado en</string>
+    <string name="drawing_tool_geometry_not_defined">No definida</string>
+    <string name="drawing_tool_geometry_import">Importar la geometría de la cuchilla desde un archivo</string>
+    <string name="drawing_tool_geometry_remove">Quitar la geometría de la cuchilla</string>
+    <string name="drawing_tool_geometry_size">%1$s × %2$s</string>
+    <string name="drawing_tool_geometry_too_many_items">Este dibujo contiene demasiado para ser una herramienta. Puede ser un dibujo de la pieza y no de la cuchilla.</string>
+    <string name="drawing_tool_geometry_unlikely_size">El tamaño de abajo no parece el de una herramienta de corte. Compruebe en qué unidades se hizo el dibujo.</string>
+    <string name="drawing_tool_geometry_not_closed">El contorno no está cerrado, por lo que la herramienta se mostrará como un dibujo de líneas en lugar de una forma sólida.</string>
+    <string name="drawing_tool_geometry_open_segments">Parte de este contorno no se une. A la forma sólida le falta esa parte de la herramienta.</string>
+    <string name="drawing_tool_geometry_origin_off_edge">El origen no parece estar en el filo de corte. Los desplazamientos X y Z se miden desde él.</string>
+    <string name="drawing_tool_geometry_no_units">El dibujo no indica qué unidades usa; compruebe el tamaño de abajo.</string>
+    <string name="drawing_tool_geometry_unreadable">No se pudo leer este dibujo. Intente importarlo de nuevo.</string>
+</resources>

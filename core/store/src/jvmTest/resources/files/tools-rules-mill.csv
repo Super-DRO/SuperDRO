@@ -1,0 +1,7 @@
+name,description,metric,diameter,tooth_count,z_offset
+Drill A,,no,0.25,2.0,0
+Drill A,,no,0.25,2,0
+Drill B,,maybe,0.25,2,0
+Drill C,,no,0,2,0
+Drill D,,no,0.25,2.5,0
+,,no,0.25,2,0

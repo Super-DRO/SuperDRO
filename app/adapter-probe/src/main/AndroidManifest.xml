@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The adapter probe app.
+
+  Permissions:
+  - Bluetooth SPP: BLUETOOTH_CONNECT on API 31 and higher; BLUETOOTH and
+    BLUETOOTH_ADMIN on API 30 and lower.
+  - Wi-Fi TCP: INTERNET for the adapter link only, and ACCESS_LOCAL_NETWORK (TT1 asks
+    for it where Android has it). platform:android:network adds ACCESS_NETWORK_STATE. The app has
+    no other network function.
+  - The foreground service of the type connectedDevice: FOREGROUND_SERVICE and
+    FOREGROUND_SERVICE_CONNECTED_DEVICE. On API 34 and higher, this type also needs one permission
+    of a list; CHANGE_NETWORK_STATE is the install-time permission of that list, so the service can
+    start also when the user refused the Bluetooth permission (a USB or TCP test).
+  - POST_NOTIFICATIONS for the notification of the service (API 33 and higher).
+  - WAKE_LOCK is not necessary: the screen stays on during a test.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".ProbeApplication"
+        android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/probe_app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SuperDROProbe">
+        <activity
+            android:name=".ProbeActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- TT2: the invisible attach activity of the UVC cameras. -->
+        <activity
+            android:name=".CameraAttachActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/probe_video_device_filter" />
+        </activity>
+
+        <!-- Holds the link while a test runs. -->
+        <service
+            android:name=".ProbeService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <!-- The ZIP of the report and the logs for the share sheet. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/probe_files" />
+        </provider>
+    </application>
+
+</manifest>

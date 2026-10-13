@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The change of the machine type with the warning and the confirmation list. -->
+<resources>
+    <string name="settings_type_title">Alterar o tipo de máquina?</string>
+    <string name="settings_type_from_to">%1$s: o tipo de máquina muda de %2$s para %3$s.</string>
+    <string name="settings_type_warning">Alguns dados não servem para o novo tipo de máquina.</string>
+    <string name="settings_type_all_fits">Todos os dados servem para o novo tipo de máquina.</string>
+    <string name="settings_type_mismatch_title">Dados que não servem</string>
+    <string name="settings_type_mismatch_tools">Ferramentas do outro tipo de máquina: %1$d</string>
+    <string name="settings_type_mismatch_sub_datums">Subdatums com uma coordenada Y: %1$d</string>
+    <string name="settings_type_mismatch_guides">Guias no eixo Y: %1$d</string>
+    <string name="settings_type_mismatch_machine_datums">Origens de máquina com uma coordenada Y: %1$d</string>
+    <string name="settings_type_mismatch_threads">Roscas de torno: %1$d</string>
+    <string name="settings_type_conversion_title">Alterações que o SuperDRO faz</string>
+    <string name="settings_type_conversion_mill_tools">As ferramentas de fresadora ficam. Os dois tipos de fresadora as usam.</string>
+    <string name="settings_type_conversion_plane">O plano de cada espaço de trabalho muda.</string>
+    <string name="settings_type_conversion_diameter">O modo de diâmetro de X de cada espaço de trabalho muda.</string>
+    <string name="settings_type_conversion_mode">O modo de medição muda para o modo de corte.</string>
+    <string name="settings_type_conversion_angle">A convenção de ângulo dos padrões muda.</string>
+    <string name="settings_type_conversion_restore">Os dados arquivados que servem para o novo tipo voltam.</string>
+    <string name="settings_type_archive">Arquivar</string>
+    <string name="settings_type_archive_summary">Manter os dados ocultos. Uma volta os mostra de novo.</string>
+    <string name="settings_type_delete">Excluir</string>
+    <string name="settings_type_delete_summary">Excluir os dados para sempre.</string>
+    <string name="settings_type_confirm">Alterar tipo</string>
+    <string name="settings_type_done">O tipo de máquina de %1$s agora é %2$s.</string>
+</resources>

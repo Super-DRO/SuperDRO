@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder screen and of the automatic Z reference. -->
+<resources>
+    <string name="edgefinder_title">Werkstück antasten</string>
+    <string name="edgefinder_edge_left">Links</string>
+    <string name="edgefinder_edge_right">Rechts</string>
+    <string name="edgefinder_edge_near">Vorne</string>
+    <string name="edgefinder_edge_far">Hinten</string>
+    <string name="edgefinder_edge_description">Kante %1$s: %2$s</string>
+    <string name="edgefinder_state_unknown">Nicht gesetzt</string>
+    <string name="edgefinder_state_scanning">Warte auf Kontakt</string>
+    <string name="edgefinder_state_located">Gefunden</string>
+    <string name="edgefinder_auto">AUTO</string>
+    <string name="edgefinder_auto_description">Automatischer Kantentaster</string>
+    <string name="edgefinder_on">Ein</string>
+    <string name="edgefinder_off">Aus</string>
+    <string name="edgefinder_camera_center">Punkt unter dem Fadenkreuz verwenden</string>
+    <string name="edgefinder_camera_center_clear">Mitte löschen</string>
+    <string name="edgefinder_axis_title">Achse %1$s</string>
+    <string name="edgefinder_external">Außen</string>
+    <string name="edgefinder_internal">Innen</string>
+    <string name="edgefinder_center">Mitte</string>
+    <string name="edgefinder_origin">Nullpunkt</string>
+    <string name="edgefinder_absolute">Absolut</string>
+    <string name="edgefinder_incremental">Inkrementell</string>
+    <string name="edgefinder_set_origin">Nullpunkt setzen</string>
+    <string name="edgefinder_add_sub_datum">Unterbezugspunkt hinzufügen</string>
+    <string name="edgefinder_add_sub_datum_hint">Langes Drücken: hinzufügen und Kanten behalten</string>
+    <string name="edgefinder_cancel">Abbrechen</string>
+    <string name="edgefinder_z_position">Z-Position</string>
+    <string name="edgefinder_z_arm">Scharf schalten</string>
+    <string name="edgefinder_z_arm_description">Taster scharf schalten, um die Z-Position zu erfassen</string>
+    <string name="edgefinder_armed">Scharf</string>
+    <string name="edgefinder_sync">Übernehmen</string>
+    <string name="edgefinder_not_connected">SuperDRO ist nicht verbunden. Positionen können erst nach dem erneuten Verbinden erfasst werden.</string>
+    <string name="edgefinder_probe">Taster</string>
+    <string name="edgefinder_no_probe">Kein Taster gewählt</string>
+    <string name="edgefinder_no_probe_hint">Wählen Sie das Messinstrument dieser Funktion</string>
+    <string name="edgefinder_new_probe">Neues Profil…</string>
+    <string name="edgefinder_probe_type_touch">Messtaster</string>
+    <string name="edgefinder_probe_type_edge">2D-Kantentaster</string>
+    <string name="edgefinder_probe_type_setter">Werkzeuglängentaster</string>
+    <string name="edgefinder_probe_type_camera">Kamera</string>
+    <string name="edgefinder_undo_origin">Nullpunkt gesetzt</string>
+    <string name="edgefinder_sub_datum_added">%1$s hinzugefügt</string>
+    <string name="edgefinder_zauto_title">Automatische Z-Referenz</string>
+    <string name="edgefinder_zauto_button">Auto</string>
+    <string name="edgefinder_zauto_armed">Scharf: den Taster mit dem Werkzeug berühren</string>
+    <string name="edgefinder_zauto_setter_height">Tasterhöhe: %1$s %2$s</string>
+    <string name="edgefinder_zauto_profile">Z-Referenztaster</string>
+    <string name="edgefinder_zauto_undo">Z-Referenz gesetzt</string>
+    <string name="edgefinder_zauto_no_port">Der gewählte Taster hat keinen Schalteingang.</string>
+</resources>

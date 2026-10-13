@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the add-device sheet and of the machine setup. The file values/strings_add_device.xml has the same names. -->
+<resources>
+    <string name="add_device_step_link">Kies een verbinding</string>
+    <string name="add_device_step_profile">Machineprofiel</string>
+    <string name="add_device_pair_new">Nieuwe adapter koppelen</string>
+    <string name="add_device_grant_permission">Toestemming geven</string>
+    <string name="add_device_bluetooth_permission">SuperDRO heeft de Bluetooth-toestemming nodig om de gekoppelde adapters te tonen.</string>
+    <string name="add_device_bluetooth_off">Bluetooth staat uit.</string>
+    <string name="add_device_turn_on_bluetooth">Bluetooth inschakelen</string>
+    <string name="add_device_no_paired">Er is geen adapter gekoppeld. Koppel de adapter in de systeeminstellingen.</string>
+    <string name="add_device_no_usb">Er is geen USB-adapter aangesloten.</string>
+    <string name="add_device_usb_permission">Heeft USB-toestemming nodig</string>
+    <string name="add_device_wifi_host">Hostnaam of IP-adres</string>
+    <string name="add_device_wifi_port">Poortnummer</string>
+    <string name="add_device_wifi_use">Dit adres gebruiken</string>
+    <string name="add_device_error_host_blank">Typ de hostnaam of het IP-adres.</string>
+    <string name="add_device_error_host_not_valid">Dit is geen geldige hostnaam, IPv4-adres of IPv6-adres.</string>
+    <string name="add_device_error_port">De poort moet een getal van 1 tot 65535 zijn.</string>
+    <string name="add_device_error_select_profile">Kies een profiel.</string>
+    <string name="add_device_source_new">Nieuwe machine</string>
+    <string name="add_device_source_copy">Kopie van een profiel</string>
+    <string name="add_device_source_stored">Opgeslagen profiel</string>
+    <string name="add_device_no_profiles">Er is geen profiel opgeslagen.</string>
+    <string name="add_device_name">Machinenaam</string>
+    <string name="add_device_machine_type">Machinetype</string>
+    <string name="add_device_type_vertical_mill">Verticale freesmachine</string>
+    <string name="add_device_type_lathe">Draaibank</string>
+    <string name="add_device_type_horizontal_mill">Horizontale freesmachine</string>
+    <string name="add_device_units">Eenheden</string>
+    <string name="add_device_units_inch">Duim</string>
+    <string name="add_device_units_mm">Millimeters (mm)</string>
+    <string name="add_device_inputs">Ingangen</string>
+    <string name="add_device_input_x">Ingang X</string>
+    <string name="add_device_input_y">Ingang Y</string>
+    <string name="add_device_input_z">Ingang Z</string>
+    <string name="add_device_input_cross_slide">Ingang dwarsslede</string>
+    <string name="add_device_input_carriage">Ingang langsslede</string>
+    <string name="add_device_input_quill">Pinoliniaal</string>
+    <string name="add_device_input_auxiliary">Extra uitlezing</string>
+    <string name="add_device_auxiliary_type">De extra uitlezing meet</string>
+    <string name="add_device_aux_tailstock">Losse kop</string>
+    <string name="add_device_aux_compound">Bovensupport</string>
+    <string name="add_device_aux_other">Anders</string>
+    <string name="add_device_tachometer">Toerenteller</string>
+    <string name="add_device_conflicts_title">Controleer de ingangen</string>
+    <string name="add_device_conflict_twice">Ingang %1$s wordt twee keer bij %2$s opgeteld. De waarde verdubbelt.</string>
+    <string name="add_device_conflict_shared">Ingang %1$s wordt gebruikt door %2$s. Deze assen tonen dezelfde waarde.</string>
+    <string name="add_device_conflict_angular">Ingang %1$s wordt gebruikt door %2$s. Een lineaire as en de hoekas kunnen geen resolutie delen, dus een van beide leest verkeerd.</string>
+    <string name="add_device_conflict_compound">Het bovensupport gebruikt ingang %1$s, die X of Z ook gebruikt. De projectie van het bovensupport blijft uit.</string>
+    <string name="add_device_conflict_head_tilt">De pinol gebruikt ingang %1$s, die X, Y of Z ook gebruikt. De projectie van de kopkanteling blijft uit.</string>
+    <string name="add_device_setup_note">De instelling legt geen resolutie vast. Kalibreer elke ingang na de eerste verbinding.</string>
+    <string name="add_device_connect">Verbinden</string>
+</resources>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The machine profiles screen. -->
+<resources>
+    <string name="settings_profiles_new">Neues Profil</string>
+    <string name="settings_profiles_empty">Noch kein Maschinenprofil. Erstellen Sie eines mit Neues Profil.</string>
+    <string name="settings_profiles_online">Online</string>
+    <string name="settings_profiles_offline">Kein Tab</string>
+    <string name="settings_profiles_summary">%1$s · %2$s</string>
+    <string name="settings_profiles_copy">Kopieren</string>
+    <string name="settings_profiles_rename">Umbenennen</string>
+    <string name="settings_profiles_change_type">Maschinentyp</string>
+    <string name="settings_profiles_actions">Aktionen für %1$s</string>
+    <string name="settings_profiles_create_title">Neues Maschinenprofil</string>
+    <string name="settings_profiles_name">Profilname</string>
+    <string name="settings_profiles_create">Erstellen</string>
+    <string name="settings_profiles_copy_title">%1$s kopieren</string>
+    <string name="settings_profiles_copy_note">Die Kopie erhält die Einstellungen und die Werkzeuge. Sie erhält keine Arbeitsbereiche und keine Adapterverbindung.</string>
+    <string name="settings_profiles_rename_title">%1$s umbenennen</string>
+    <string name="settings_profiles_save">Speichern</string>
+    <string name="settings_profiles_type_title">Maschinentyp von %1$s</string>
+    <string name="settings_profiles_type_continue">Weiter</string>
+    <string name="settings_profiles_delete_title">%1$s löschen?</string>
+    <string name="settings_profiles_delete_text">Die Arbeitsbereiche, die Unternullpunkte, die Maschinennullpunkte und die Protokolle dieses Profils werden gelöscht. Der Tab der Maschine schließt sich.</string>
+    <string name="settings_profiles_delete_tools">Werkzeuge löschen</string>
+    <string name="settings_profiles_keep_tools">Werkzeuge behalten</string>
+    <string name="settings_profiles_keep_tools_note">Behaltene Werkzeuge kommen in die gemeinsame Werkzeugbibliothek.</string>
+    <string name="settings_profiles_created">%1$s ist erstellt.</string>
+    <string name="settings_profiles_copied">%1$s ist als Kopie von %2$s erstellt.</string>
+    <string name="settings_profiles_renamed">Das Profil heißt jetzt %1$s.</string>
+    <string name="settings_profiles_deleted">%1$s ist gelöscht.</string>
+    <plurals name="settings_profiles_tool_count">
+        <item quantity="one">Dieses Profil hat %1$d Werkzeug.</item>
+        <item quantity="other">Dieses Profil hat %1$d Werkzeuge.</item>
+    </plurals>
+</resources>

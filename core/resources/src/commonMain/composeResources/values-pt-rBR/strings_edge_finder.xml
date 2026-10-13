@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder. The file values/strings_edge_finder.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="edge_finder_spread_warning">Aviso: a dispersão máxima entre as amostras é %1$s %2$s</string>
+    <string name="edge_finder_probe_triggered">A sonda está acionada. Afaste a sonda da peça.</string>
+    <string name="edge_finder_long_press_to_clear">Mantenha este botão pressionado para apagar o valor atual</string>
+    <string name="edge_finder_no_axis_moving">Nenhum eixo estava em movimento quando a sonda foi acionada.</string>
+    <string name="edge_finder_one_axis_at_a_time">Mova um eixo de cada vez</string>
+    <string name="edge_finder_z_not_supported">A apalpação no eixo Z ainda não é compatível</string>
+    <string name="edge_finder_change_in_direction">Mudança de direção detectada durante a amostragem da sonda</string>
+    <string name="edge_finder_position_unknown">A posição do eixo no acionamento é desconhecida. Tente novamente.</string>
+</resources>

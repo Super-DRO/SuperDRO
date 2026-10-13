@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="edge_finder_spread_warning">Warning: maximum spread between the samples is %1$s %2$s</string>
+    <string name="edge_finder_probe_triggered">Probe is in triggered state. Please move the probe away from the workpiece.</string>
+    <string name="edge_finder_long_press_to_clear">Long press this button to clear current value</string>
+    <string name="edge_finder_no_axis_moving">No axis was moving when the probe triggered.</string>
+    <string name="edge_finder_one_axis_at_a_time">Please move one axis at a time</string>
+    <string name="edge_finder_z_not_supported">Z axis probing is not supported yet</string>
+    <string name="edge_finder_change_in_direction">Change in direction detected during probe sampling</string>
+    <string name="edge_finder_position_unknown">The axis position at the trigger is unknown. Try again.</string>
+</resources>

@@ -1,0 +1,81 @@
+, SPIWP:0xee
+clk_drv:0ÿets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:2, clock div:2
+secure boot v2 enabled
+secure boot verification succeeded
+load:0x3fff00c0 len:0x2820
+load:0x40078000 len:0x5ca4
+load:0x40080400 len:0x4
+load:0x40080404 len:0xc78
+entry 0x400805a4
+[0;32mI (461) cpu_start: Multicore app[0m
+[0;32mI (469) cpu_start: Pro cpu start user code[0m
+[0;32mI (469) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (469) cpu_start: Application information:[0m
+[0;32mI (472) cpu_start: Project name:     touchdro-quad-32[0m
+[0;32mI (478) cpu_start: App version:      147a5e8[0m
+[0;32mI (483) cpu_start: Compile time:     Feb 17 2026 15:02:35[0m
+[0;32mI (489) cpu_start: ELF file SHA256:  8be2a74f777b3968...[0m
+[0;32mI (495) cpu_start: ESP-IDF:          v5.2[0m
+[0;32mI (500) cpu_start: Min chip rev:     v3.0[0m
+[0;32mI (505) cpu_start: Max chip rev:     v3.99 [0m
+[0;32mI (509) cpu_start: Chip rev:         v3.1[0m
+[0;32mI (514) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (521) heap_init: At 3FFAFF10 len 000000F0 (0 KiB): DRAM[0m
+[0;32mI (527) heap_init: At 3FFB6388 len 00001C78 (7 KiB): DRAM[0m
+[0;32mI (534) heap_init: At 3FFB9A20 len 00004108 (16 KiB): DRAM[0m
+[0;32mI (540) heap_init: At 3FFCB768 len 00014898 (82 KiB): DRAM[0m
+[0;32mI (546) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM[0m
+[0;32mI (552) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM[0m
+[0;32mI (559) heap_init: At 4009F128 len 00000ED8 (3 KiB): IRAM[0m
+[0;32mI (566) spi_flash: detected chip: generic[0m
+[0;32mI (569) spi_flash: flash io: dio[0m
+[0;33mW (573) spi_flash: Detected size(8192k) larger than the size in the binary image header(4096k). Using the size in the binary image header.[0m
+[0;32mI (587) flash_encrypt: Flash encryption mode is RELEASE[0m
+[0;33mW (593) i2c: This driver is an old driver, please migrate your application code to adapt `driver/i2c_master.h`[0m
+[0;32mI (603) nvs_sec_provider: NVS Encryption - Registering Flash encryption-based scheme...[0m
+[0;32mI (613) coexist: coex firmware version: 77cd7f8[0m
+[0;32mI (618) main_task: Started on CPU0[0m
+[0;32mI (622) main_task: Calling app_main()[0m
+[0;32mI (1686) : Self test passed[0m
+[0;33mW (2168) OTA: Running partition type 0 subtype 0 (offset 0x00020000)[0m
+[0;32mI (2168) OTA: Running firmware version: 147a5e8[0m
+[0;32mI (2172) OTA: NVS_OTA_RUNNING_VERSION not found, trying legacy key[0m
+[0;32mI (2178) OTA: NVS OTA version key: ESP_ERR_NVS_NOT_FOUND[0m
+[0;33mW (2198) OTA: Error (ESP_ERR_NVS_NOT_FOUND) while starting OTA task![0m
+[0;33mW (2198) : Starting TouchDRO in normal mode.[0m
+[0;32mI (3198) uart: queue free spaces: 16[0m
+[0;32mI (3198) TX: init_readout_trasmitter called[0m
+[0;32mI (3198) TX: Bluetooth init called[0m
+[0;32mI (3206) BTDM_INIT: BT controller compile version [a38dc5c][0m
+[0;32mI (3208) BTDM_INIT: Bluetooth MAC: d4:e9:f4:6b:4e:be[0m
+[0;32mI (3214) phy_init: phy_version 4791,2c4672b,Dec 20 2023,16:06:06[0m
+[0;32mI (3868) TX: Starting ReadoutTransmitter task[0m
+[0;32mI (3872) TX: Started[0m
+[0;33mW (3946) Encoder: Setting axis x to quadrature mode.[0m
+[0;33mW (3946) Encoder: Setting axis y to quadrature mode.[0m
+[0;33mW (3948) Encoder: Setting axis z to quadrature mode.[0m
+[0;33mW (3952) Encoder: Setting axis w to quadrature mode.[0m
+[0;32mI (4020) Main: Pro board init[0m
+[0;32mI (4046) Probe: Probe pin mode is set to 0[0m
+[0;32mI (4058) Ref: setup_reference called[0m
+[0;32mI (4092) Readout: Started[0m
+
+@dc7;x0;y0;z0;w0;t0;
+@11d6;x0;y0;z0;w0;t0;
+@15e6;x0;y0;z0;w0;t0;
+@19f6;x0;y0;z0;w0;t0;
+@1e06;x0;y0;z0;w0;t0;
+@2216;x0;y0;z0;w0;t0;
+@2626;x0;y0;z0;w0;t0;$320;
+@2a36;x0;y0;z0;w0;t0;
+@2e46;x0;y0;z0;w0;t0;
+@3256;x0;y0;z0;w0;t0;
+@3666;x0;y0;z0;w0;t0;
+@3a76;x0;y0;z0;w0;t0;
+@3e86;x0;y0;z0;w0;t0;
+@4296;x0;y0;z0;w0;t0;

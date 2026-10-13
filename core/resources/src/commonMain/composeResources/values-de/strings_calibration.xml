@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the calibration wizard of an adapter input. The check texts and the edge names are in strings_readout_core.xml. -->
+<resources>
+    <string name="calibration_title">%1$s kalibrieren</string>
+    <string name="calibration_axis">Achse %1$s</string>
+    <string name="calibration_no_axis">Keine Achse verwendet diesen Eingang</string>
+    <string name="calibration_procedure_linear">Lineare Kalibrierung mit einem Endmaß</string>
+    <string name="calibration_procedure_angular">Winkelkalibrierung mit 5 Umdrehungen</string>
+    <string name="calibration_live_count">Aktuelle Zählung</string>
+    <string name="calibration_block_title">Größe des Kalibrierblocks</string>
+    <string name="calibration_block_text">Geben Sie die wahre Größe des Endmaßes ein. Wenn Sie die zwei Außenflächen mit einem Kantentaster antasten, addieren Sie den Durchmesser des Tastkopfs.</string>
+    <string name="calibration_block_size">Blockgröße</string>
+    <string name="calibration_unit">Einheit</string>
+    <string name="calibration_unit_mm">mm</string>
+    <string name="calibration_unit_inch">Zoll</string>
+    <string name="calibration_continue">Weiter</string>
+    <string name="calibration_retry">Wiederholen</string>
+    <string name="calibration_apply">Übernehmen</string>
+    <string name="calibration_discard">Verwerfen</string>
+    <string name="calibration_first_edge_title">Erste Kante</string>
+    <string name="calibration_second_edge_title">Zweite Kante</string>
+    <string name="calibration_edge_text">Fahren Sie die Achse an die Kante %1$s des Blocks. Drücken Sie dann Weiter.</string>
+    <string name="calibration_first_position_title">Erste Position</string>
+    <string name="calibration_first_position_text">Drehen Sie die Achse auf die Position 0°. Drücken Sie dann Weiter.</string>
+    <string name="calibration_second_position_title">Zweite Position</string>
+    <string name="calibration_second_position_text">Drehen Sie die Achse im Uhrzeigersinn um genau 5 volle Umdrehungen. Drücken Sie dann Weiter.</string>
+    <string name="calibration_sampling_title">Eingang wird gelesen</string>
+    <string name="calibration_sampling_text">Bewegen Sie die Achse nicht. Die App liest den Eingang bis zu 15 Sekunden.</string>
+    <string name="calibration_sampling_progress">%1$d s von %2$d s, %3$d Messwerte</string>
+    <string name="calibration_progress_description">Fortschritt des Lesens: %1$d von %2$d Sekunden</string>
+    <string name="calibration_result_title">Ergebnis der Kalibrierung</string>
+    <string name="calibration_result_linear">Auflösung: %1$s Zählungen pro Zoll (%2$s µm pro Zählung)</string>
+    <string name="calibration_result_angular">Auflösung: %1$s Zählungen pro Umdrehung (%2$s° pro Zählung)</string>
+    <string name="calibration_result_direction_normal">Richtung: normal. Die Zählung steigt von der ersten zur zweiten Position.</string>
+    <string name="calibration_result_direction_reversed">Richtung: umgekehrt. Die Zählung sinkt von der ersten zur zweiten Position. Übernehmen stellt die umgekehrte Richtung ein.</string>
+    <string name="calibration_result_apply_note">Übernehmen schreibt die Auflösung, die Richtung und den Status Kalibriert in die Encoder-Einstellungen von %1$s. Verwerfen schreibt nichts.</string>
+    <string name="calibration_saved">Die Kalibrierung von %1$s ist gespeichert.</string>
+    <string name="calibration_save_failed">Die Kalibrierung ist nicht gespeichert. Das Adapterprofil ist nicht im Speicher.</string>
+    <string name="calibration_block_required_detail">Geben Sie eine Blockgröße größer als 0 ein.</string>
+    <string name="calibration_block_too_small_text">Ein längerer Block gibt ein genaueres Ergebnis. Verwenden Sie einen Block, der %1$s lang ist. Drücken Sie Weiter, um diesen Block zu verwenden.</string>
+    <string name="calibration_no_reading_detail">Die App hat keinen Messwert von %1$s erhalten. Prüfen Sie, dass der Eingang angeschlossen ist und dass sein Modus Zählungen sendet.</string>
+    <string name="calibration_too_few_detail">Die App hat %1$d Messwerte von %2$s erhalten. Sie braucht %3$d oder mehr. Drücken Sie Wiederholen, um den Eingang erneut zu lesen.</string>
+    <string name="calibration_jitter_detail">Die Messwerte änderten sich um %1$s Zählungen, obwohl die Achse still stand. Halten Sie die Achse still und drücken Sie Wiederholen.</string>
+    <string name="calibration_too_close_detail">Die zwei Positionen liegen weniger als %1$d Zählungen auseinander. Fahren Sie die Achse an die zweite Position und drücken Sie dann Wiederholen.</string>
+    <string name="calibration_link_lost">Verbindung unterbrochen</string>
+    <string name="calibration_link_lost_detail">Die Verbindung zum Adapter wurde während des Lesens unterbrochen. Warten Sie auf die Verbindung und drücken Sie dann Wiederholen.</string>
+    <string name="calibration_no_adapter">Dieses Maschinenprofil hat kein Adapterprofil. Verbinden Sie den Adapter und erstellen Sie zuerst sein Adapterprofil.</string>
+    <string name="calibration_tach_input">Der Drehzahleingang hat keine Kalibrierung. Stellen Sie seine Impulse pro Umdrehung in den Adapterdetails ein.</string>
+    <string name="calibration_disabled_input">Die Art dieses Eingangs ist Deaktiviert. Wählen Sie zuerst Linear oder Winkel in den Encoder-Einstellungen.</string>
+</resources>

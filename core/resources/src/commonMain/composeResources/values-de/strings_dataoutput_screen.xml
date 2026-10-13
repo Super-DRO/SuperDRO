@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the data output screen. The file values/strings_dataoutput_screen.xml has the same names. -->
+<resources>
+    <string name="dataoutput_machine">Maschine</string>
+    <string name="dataoutput_no_machine">Fügen Sie zuerst eine Maschine hinzu. Jede Maschine hat ihre eigene Datenausgabe.</string>
+    <string name="dataoutput_save">Speichern</string>
+    <string name="dataoutput_saved">Die Einstellungen der Datenausgabe sind gespeichert.</string>
+    <string name="dataoutput_save_failed">Die Einstellungen wurden nicht gespeichert.</string>
+    <string name="dataoutput_unsaved">Die Änderungen sind nicht gespeichert.</string>
+    <string name="dataoutput_discard">Änderungen verwerfen</string>
+    <string name="dataoutput_correct_first">Korrigieren Sie zuerst die Probleme der Einstellungen.</string>
+
+    <string name="dataoutput_section_status">Status</string>
+    <string name="dataoutput_section_network">Netzwerk</string>
+    <string name="dataoutput_section_mqtt">MQTT-Broker</string>
+    <string name="dataoutput_section_format">Datensatzformat</string>
+    <string name="dataoutput_status_line">Datenausgabe: %1$s</string>
+    <string name="dataoutput_addresses">Adressen</string>
+    <string name="dataoutput_no_address">Keine Adresse</string>
+    <string name="dataoutput_clients">Clients</string>
+    <string name="dataoutput_security_tls">TLS zum Broker</string>
+    <string name="dataoutput_security_no_tls">Kein TLS zum Broker</string>
+    <string name="dataoutput_records">Datensätze: %1$d</string>
+    <string name="dataoutput_sent_failed">Gesendet: %1$d. Fehlgeschlagen: %2$d.</string>
+    <string name="dataoutput_last_error">Letztes Problem: %1$s</string>
+    <string name="dataoutput_details">Diagnose anzeigen</string>
+    <string name="dataoutput_details_hide">Diagnose ausblenden</string>
+    <string name="dataoutput_status_title">Datenausgabe</string>
+
+    <string name="dataoutput_block_off">Die Ausgabe ist aus. Kein Server-Socket ist offen.</string>
+    <string name="dataoutput_block_offline">Die Maschine ist offline. Die Ausgabe startet, wenn die Maschine online ist.</string>
+    <string name="dataoutput_block_not_requested">Wählen Sie Starten, um die Werte zu senden.</string>
+    <string name="dataoutput_block_plain">Bestätigen Sie die Warnung des Klartextmodus.</string>
+    <string name="dataoutput_block_mqtt_tls">Bestätigen Sie die Warnung der Broker-Verbindung ohne TLS.</string>
+    <string name="dataoutput_block_invalid">Die Einstellungen haben Probleme. Korrigieren und speichern Sie sie.</string>
+
+    <string name="dataoutput_age_seconds">%1$d s</string>
+    <string name="dataoutput_age_minutes">%1$d min</string>
+    <string name="dataoutput_age_hours">%1$d h</string>
+    <string name="dataoutput_no_detail">keine Details</string>
+
+    <string name="dataoutput_interface_addresses">%1$s: %2$s</string>
+    <string name="dataoutput_interface_no_address">%1$s: zurzeit keine Adresse</string>
+    <string name="dataoutput_always_on_needs_switch">Immer an ist verfügbar, nachdem Sie die Ausgabe einschalten.</string>
+    <string name="dataoutput_mqtt_json_only">Der MQTT-Client sendet JSON-Datensätze.</string>
+    <string name="dataoutput_mqtt_client_id_hint">Leer: superdro und die Maschinen-ID</string>
+    <string name="dataoutput_mqtt_machine_hint">Leer: der Maschinenname</string>
+    <string name="dataoutput_psk_copied">Der Schlüssel ist kopiert. Fügen Sie ihn in das Client-Programm ein.</string>
+    <string name="dataoutput_psk_help">Geben Sie diesen Text jedem Client-Programm. Der Text ist die Identität, ein Doppelpunkt und der Schlüssel.</string>
+    <string name="dataoutput_psk_new_title">Neuen Schlüssel erstellen?</string>
+    <string name="dataoutput_psk_new_done">Ein neuer Schlüssel ist aktiv. Clients mit dem alten Schlüssel erhalten keine Datensätze.</string>
+    <string name="dataoutput_psk_none">Die Ausgabe erstellt beim ersten Start einen Schlüssel.</string>
+    <string name="dataoutput_secret_error">Der sichere Schlüsselspeicher meldet einen Fehler. Versuchen Sie es erneut.</string>
+    <string name="dataoutput_testing">Die Verbindung wird getestet…</string>
+
+    <string name="dataoutput_port_range">Der Port muss 1024 bis 65535 sein.</string>
+    <string name="dataoutput_port_conflict">Die Ausgabe von %1$s verwendet Port %2$d. Wählen Sie einen anderen Port.</string>
+    <string name="dataoutput_interval_range">Das Intervall muss 50 bis 5000 ms sein.</string>
+    <string name="dataoutput_rate_range">Die maximale Rate muss 1 bis 20 Hz sein.</string>
+    <string name="dataoutput_broker_host_problem">Geben Sie den Hostnamen oder die Adresse des Brokers ein.</string>
+    <string name="dataoutput_broker_port_range">Der Broker-Port muss 1 bis 65535 sein.</string>
+    <string name="dataoutput_client_id_length">Die Client-ID kann höchstens 64 Zeichen haben.</string>
+    <string name="dataoutput_machine_name_problem">Der Maschinenname im Topic muss 1 bis 64 Zeichen haben und darf kein / + oder # enthalten.</string>
+    <string name="dataoutput_label_topic_character">Eine Topic-Bezeichnung darf das Zeichen %1$s nicht enthalten.</string>
+    <string name="dataoutput_label_too_long">Eine Bezeichnung kann höchstens 32 Zeichen haben.</string>
+    <string name="dataoutput_field_list">Die Feldliste ist nicht vollständig.</string>
+    <string name="dataoutput_field_send">%1$s senden</string>
+
+    <string name="dataoutput_chip">Ausgabe: %1$s</string>
+    <string name="dataoutput_chip_description">Datenausgabe: %1$s. Tippen zum Starten oder Beenden. Gedrückt halten für die Einstellungen.</string>
+    <string name="dataoutput_chip_always_description">Datenausgabe: %1$s. Tippen für die Diagnose. Gedrückt halten für die Einstellungen.</string>
+</resources>

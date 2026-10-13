@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The about screen: the version, the notices, and the changes. -->
+<resources>
+    <string name="settings_about_version">Version %1$s</string>
+    <string name="settings_about_version_code">Version code %1$d</string>
+    <string name="settings_about_group_version">Version and changes</string>
+    <string name="settings_about_group_help">Help</string>
+    <string name="settings_about_group_licenses">Licenses</string>
+    <string name="settings_about_summary">A digital readout for machine tools. SuperDRO is compatible with the TouchDRO adapters.</string>
+    <string name="settings_about_app_license">SuperDRO uses the Apache License 2.0. It sends no data to a server.</string>
+    <string name="settings_about_what_changed">What changed</string>
+    <string name="settings_about_new">New</string>
+    <string name="settings_about_updated">SuperDRO was updated to version %1$s.</string>
+    <string name="settings_about_mark_read">Mark as read</string>
+    <string name="settings_about_change_tabs">One tab for each machine. Many machines can be connected at the same time.</string>
+    <string name="settings_about_change_background">The links stay open in the background, also with the screen off.</string>
+    <string name="settings_about_change_links">Bluetooth, USB, and Wi-Fi adapters.</string>
+    <string name="settings_about_change_undo">Undo for each change of an offset.</string>
+    <string name="settings_about_change_settings">Machine profiles, app settings, key mapping, logs, and in-app help.</string>
+    <string name="settings_about_change_languages">All texts in English, Spanish, French, German, Portuguese, and Dutch.</string>
+    <string name="settings_about_help_intro">Short help texts for the main screens.</string>
+    <string name="settings_about_licenses_intro">SuperDRO contains these components. Tap a component to read its license.</string>
+    <string name="settings_about_notice_libraries">Libraries</string>
+    <string name="settings_about_notice_native">Native libraries</string>
+    <string name="settings_about_notice_fonts">Fonts</string>
+    <string name="settings_about_notice_icons">Icons</string>
+    <string name="settings_about_all_notices">All notices as text</string>
+    <string name="settings_about_source">Source: %1$s</string>
+    <string name="settings_about_license_loading">The license text loads.</string>
+    <string name="settings_about_license_missing">The license text is not available.</string>
+    <string name="settings_about_help_pick">Select a topic. Its text shows here.</string>
+    <string name="settings_about_license_pick">Select a notice. Its license text shows here.</string>
+    <string name="settings_about_back_to_list">Back to the list</string>
+</resources>

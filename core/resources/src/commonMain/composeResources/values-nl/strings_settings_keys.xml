@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The key mapping screen. -->
+<resources>
+    <string name="settings_keys_press">Druk op een toets</string>
+    <string name="settings_keys_press_hint">Druk op de toets van het toetsenbord, het numerieke toetsenblok, het voetpedaal of de afstandsbediening. Escape annuleert.</string>
+    <string name="settings_keys_intro">De toetsen van een toetsenbord, een numeriek toetsenblok, een voetpedaal of een afstandsbediening starten een actie in het geselecteerde tabblad.</string>
+    <string name="settings_keys_section_map">Toetsenkaart</string>
+    <string name="settings_keys_default_active">De standaardtoetsenkaart is in gebruik.</string>
+    <string name="settings_keys_custom_active">Uw eigen toetsenkaart is in gebruik.</string>
+    <string name="settings_keys_empty">De toetsenkaart heeft geen toetsen.</string>
+    <string name="settings_keys_add">Toets toevoegen</string>
+    <string name="settings_keys_reset">Standaard herstellen</string>
+    <string name="settings_keys_reset_done">De standaardtoetsenkaart is terug.</string>
+    <string name="settings_keys_remove">%1$s verwijderen</string>
+    <string name="settings_keys_change">De toets van %1$s wijzigen</string>
+    <string name="settings_keys_removed">Toets %1$s verwijderd</string>
+    <string name="settings_keys_added">Toets %1$s: %2$s</string>
+    <string name="settings_keys_replaced">Toets %1$s had de actie %2$s. De actie is nu %3$s.</string>
+    <string name="settings_keys_code">Toetscode %1$d</string>
+    <string name="settings_keys_add_title">Toets toevoegen</string>
+    <string name="settings_keys_action">Actie</string>
+    <string name="settings_keys_axis">As</string>
+    <string name="settings_keys_next">Volgende</string>
+    <string name="settings_keys_axis_angular">hoekas</string>
+    <string name="settings_keys_action_zero">%1$s op nul</string>
+    <string name="settings_keys_action_set">%1$s instellen</string>
+    <string name="settings_keys_action_keypad">Toetsenblok van %1$s</string>
+    <string name="settings_keys_action_hold">%1$s vasthouden</string>
+    <string name="settings_keys_action_half">Helft van %1$s</string>
+    <string name="settings_keys_action_zero_all">Alle assen op nul</string>
+    <string name="settings_keys_action_mode">ABS of INC</string>
+    <string name="settings_keys_action_units">Eenheden (inch of mm)</string>
+    <string name="settings_keys_action_next_point">Volgend punt</string>
+    <string name="settings_keys_action_previous_point">Vorig punt</string>
+    <string name="settings_keys_pick_zero">Een as op nul</string>
+    <string name="settings_keys_pick_set">Een as instellen</string>
+    <string name="settings_keys_pick_keypad">Het toetsenblok openen</string>
+    <string name="settings_keys_pick_hold">Een as vasthouden</string>
+    <string name="settings_keys_pick_half">Helft van een as</string>
+    <string name="settings_keys_point_active">Punt %1$s is actief</string>
+    <string name="settings_keys_no_points">Deze werkruimte heeft geen punten.</string>
+    <string name="settings_keys_note_device">Een toets werkt op elk apparaat. De actie gaat naar het geselecteerde tabblad.</string>
+</resources>

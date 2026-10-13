@@ -1,0 +1,68 @@
+-- The machine profiles.
+--
+-- The columns hold the values that a query or a rule reads: the unique name, the machine type,
+-- the units, the library switch, the adapter link, and the active workspace. The other settings
+-- are in the typed JSON text `config_json` (the MachineProfile JSON without the workspaces, the
+-- tools, and the machine datums). Each field of that JSON has a default, so old data loads.
+--
+-- WARNING: Do not use the SQL math functions (for example acosh, radians) or percentile in a .sq
+-- file. The JVM SQLite has them and the Android SQLite does not.
+
+import kotlin.Boolean;
+import kotlin.time.Instant;
+import org.superdro.core.model.MachineType;
+
+CREATE TABLE machine_profile (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    machine_type TEXT AS MachineType NOT NULL,
+    metric_default INTEGER AS Boolean NOT NULL DEFAULT 0,
+    use_shared_tools INTEGER AS Boolean NOT NULL DEFAULT 0,
+    adapter_profile_id TEXT REFERENCES adapter_profile(id) ON DELETE SET NULL,
+    active_workspace_id TEXT,
+    config_json TEXT NOT NULL,
+    created_on TEXT AS Instant NOT NULL,
+    updated_on TEXT AS Instant NOT NULL
+);
+
+selectAll:
+SELECT * FROM machine_profile ORDER BY name COLLATE NOCASE, id;
+
+selectById:
+SELECT * FROM machine_profile WHERE id = ?;
+
+selectNames:
+SELECT id, name FROM machine_profile;
+
+insert:
+INSERT INTO machine_profile (
+    id, name, machine_type, metric_default, use_shared_tools, adapter_profile_id,
+    active_workspace_id, config_json, created_on, updated_on
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+update:
+UPDATE machine_profile SET
+    name = :name,
+    machine_type = :machineType,
+    metric_default = :metricDefault,
+    use_shared_tools = :useSharedTools,
+    adapter_profile_id = :adapterProfileId,
+    active_workspace_id = :activeWorkspaceId,
+    config_json = :configJson,
+    updated_on = :updatedOn
+WHERE id = :id;
+
+rename:
+UPDATE machine_profile SET name = :name, updated_on = :updatedOn WHERE id = :id;
+
+setActiveWorkspace:
+UPDATE machine_profile SET active_workspace_id = :workspaceId, updated_on = :updatedOn WHERE id = :id;
+
+setUseSharedTools:
+UPDATE machine_profile SET use_shared_tools = :useSharedTools, updated_on = :updatedOn WHERE id = :id;
+
+deleteById:
+DELETE FROM machine_profile WHERE id = ?;
+
+count:
+SELECT count(*) FROM machine_profile;

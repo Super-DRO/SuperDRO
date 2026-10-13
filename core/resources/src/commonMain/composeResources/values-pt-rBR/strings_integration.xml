@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the integration of the UI areas. -->
+<resources>
+    <string name="integration_tool_geometry_defined">Definida</string>
+    <string name="integration_tool_geometry_open">Geometria de corte</string>
+    <string name="integration_tool_geometry_save_first">Salve a ferramenta primeiro. Depois adicione a geometria de corte.</string>
+    <string name="integration_settings_profile_file_summary">Exporte este perfil para um arquivo ou importe um arquivo de perfil.</string>
+    <string name="integration_calibration_adapter_missing">O perfil de adaptador deste perfil de máquina está ausente. Conecte o adaptador ou selecione um perfil de adaptador na tela Adaptadores.</string>
+    <string name="integration_calibration_no_axis">Nenhum eixo precisa de calibração.</string>
+    <string name="integration_calibration_opening">Abrindo a calibração da entrada do eixo…</string>
+    <string name="integration_add_device_rfcomm_hint">No Linux, vincule primeiro o adaptador a uma porta serial, por exemplo: sudo rfcomm bind 0 &lt;endereço MAC&gt;. Depois selecione a porta /dev/rfcomm0.</string>
+</resources>

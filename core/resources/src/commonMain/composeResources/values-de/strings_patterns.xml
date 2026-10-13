@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the hole patterns and of the arc cut. The file values/strings_patterns.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="pattern_error_header">Der Vorgang konnte nicht abgeschlossen werden. Beheben Sie die folgenden Fehler:</string>
+    <string name="pattern_error_value_required">Für %1$s ist ein Wert erforderlich</string>
+    <string name="pattern_error_value_too_small">Der Wert für %1$s ist zu klein</string>
+    <string name="pattern_error_value_too_large">Der Wert für %1$s ist zu groß</string>
+    <string name="pattern_error_text_too_short">%1$s muss mindestens 3 Zeichen lang sein.</string>
+    <string name="pattern_error_text_too_long">%1$s darf nicht länger als 16 Zeichen sein.</string>
+    <string name="pattern_error_two_angles">Mindestens zwei Lochwinkel sind erforderlich.</string>
+    <string name="pattern_error_repeat_too_small">Der Wert für %1$s oder %2$s muss größer als 1 sein</string>
+    <string name="pattern_error_hole_count_not_valid">Geben Sie eine gültige Lochanzahl ein.</string>
+    <string name="pattern_error_hole_count_too_small">Die Lochanzahl darf nicht kleiner als 3 sein.</string>
+    <string name="pattern_error_start_not_valid">Geben Sie eine gültige Zahl für die Startposition %1$s ein.</string>
+    <string name="pattern_error_end_not_valid">Geben Sie eine gültige Zahl für die Endposition %1$s ein.</string>
+    <string name="arc_error_cutter_too_large">Der Fräserdurchmesser ist für diesen Überstreichwinkel zu groß.</string>
+    <string name="arc_error_stepover_too_large">Die Zustellung ist für diesen Überstreichwinkel zu groß.</string>
+    <string name="arc_error_cutter_too_large_for_radius">Der Fräserdurchmesser ist für einen Innenschnitt mit diesem Radius zu groß.</string>
+    <string name="pattern_title_hole_circle">Lochkreis</string>
+    <string name="pattern_title_hole_circle_lathe">Kreisförmige Punktanordnung</string>
+    <string name="pattern_title_arbitrary_hole_circle">Freier Lochkreis</string>
+    <string name="pattern_title_hole_grid">Lochraster</string>
+    <string name="pattern_title_hole_grid_lathe">Lineare Punktanordnung</string>
+    <string name="pattern_title_step_and_repeat">%1$d Unterbezugspunkte schrittweise wiederholen</string>
+    <string name="pattern_title_step_and_repeat_workspace">Arbeitsbereich schrittweise wiederholen</string>
+    <string name="pattern_title_equidistant">Äquidistante Lochreihe</string>
+    <string name="pattern_title_equidistant_lathe">Äquidistante Punktreihe</string>
+    <string name="arc_title">Radius-/Bogenfräsen</string>
+    <string name="pattern_label_prefix">Präfix des Unterbezugspunkts</string>
+    <string name="pattern_label_circle_radius">Kreisradius</string>
+    <string name="pattern_label_hole_count">Lochanzahl</string>
+    <string name="pattern_label_start_angle">Startwinkel</string>
+    <string name="pattern_label_sweep_angle">Überstreichwinkel</string>
+    <string name="pattern_label_hole_angle">Lochwinkel</string>
+    <string name="pattern_label_repeat_x">Wiederholung X</string>
+    <string name="pattern_label_repeat_y">Wiederholung Y</string>
+    <string name="pattern_label_repeat_z">Wiederholung Z</string>
+    <string name="pattern_label_step_x">Schritt X</string>
+    <string name="pattern_label_step_y">Schritt Y</string>
+    <string name="pattern_label_step_z">Schritt Z</string>
+    <string name="pattern_label_grid_angle">Winkel</string>
+    <string name="pattern_label_number_of_holes">Anzahl der Löcher</string>
+    <string name="pattern_label_start_x">Startposition X</string>
+    <string name="pattern_label_start_y">Startposition Y</string>
+    <string name="pattern_label_start_z">Startposition Z</string>
+    <string name="pattern_label_end_x">Endposition X</string>
+    <string name="pattern_label_end_y">Endposition Y</string>
+    <string name="pattern_label_end_z">Endposition Z</string>
+    <string name="arc_label_radius">Bogenradius</string>
+    <string name="arc_label_cutter_diameter">Fräserdurchmesser</string>
+    <string name="arc_label_stepover">Zustellung</string>
+</resources>

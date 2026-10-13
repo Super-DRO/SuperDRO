@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the data output screen. The file values/strings_dataoutput_screen.xml has the same names. -->
+<resources>
+    <string name="dataoutput_machine">Machine</string>
+    <string name="dataoutput_no_machine">Voeg eerst een machine toe. Elke machine heeft een eigen data-uitvoer.</string>
+    <string name="dataoutput_save">Opslaan</string>
+    <string name="dataoutput_saved">De instellingen van de data-uitvoer zijn opgeslagen.</string>
+    <string name="dataoutput_save_failed">De instellingen zijn niet opgeslagen.</string>
+    <string name="dataoutput_unsaved">De wijzigingen zijn niet opgeslagen.</string>
+    <string name="dataoutput_discard">Wijzigingen verwerpen</string>
+    <string name="dataoutput_correct_first">Los eerst de problemen van de instellingen op.</string>
+
+    <string name="dataoutput_section_status">Status</string>
+    <string name="dataoutput_section_network">Netwerk</string>
+    <string name="dataoutput_section_mqtt">MQTT-broker</string>
+    <string name="dataoutput_section_format">Recordformaat</string>
+    <string name="dataoutput_status_line">Data-uitvoer: %1$s</string>
+    <string name="dataoutput_addresses">Adressen</string>
+    <string name="dataoutput_no_address">Geen adres</string>
+    <string name="dataoutput_clients">Clients</string>
+    <string name="dataoutput_security_tls">TLS naar de broker</string>
+    <string name="dataoutput_security_no_tls">Geen TLS naar de broker</string>
+    <string name="dataoutput_records">Records: %1$d</string>
+    <string name="dataoutput_sent_failed">Verzonden: %1$d. Mislukt: %2$d.</string>
+    <string name="dataoutput_last_error">Laatste probleem: %1$s</string>
+    <string name="dataoutput_details">Diagnose tonen</string>
+    <string name="dataoutput_details_hide">Diagnose verbergen</string>
+    <string name="dataoutput_status_title">Data-uitvoer</string>
+
+    <string name="dataoutput_block_off">De uitvoer staat uit. Er is geen serversocket open.</string>
+    <string name="dataoutput_block_offline">De machine is offline. De uitvoer start als de machine online is.</string>
+    <string name="dataoutput_block_not_requested">Selecteer Starten om de waarden te verzenden.</string>
+    <string name="dataoutput_block_plain">Bevestig de waarschuwing van de modus zonder versleuteling.</string>
+    <string name="dataoutput_block_mqtt_tls">Bevestig de waarschuwing van de brokerverbinding zonder TLS.</string>
+    <string name="dataoutput_block_invalid">De instellingen hebben problemen. Los ze op en sla op.</string>
+
+    <string name="dataoutput_age_seconds">%1$d s</string>
+    <string name="dataoutput_age_minutes">%1$d min</string>
+    <string name="dataoutput_age_hours">%1$d u</string>
+    <string name="dataoutput_no_detail">geen details</string>
+
+    <string name="dataoutput_interface_addresses">%1$s: %2$s</string>
+    <string name="dataoutput_interface_no_address">%1$s: nu geen adres</string>
+    <string name="dataoutput_always_on_needs_switch">Altijd aan is beschikbaar nadat u de uitvoer aanzet.</string>
+    <string name="dataoutput_mqtt_json_only">De MQTT-client verzendt JSON-records.</string>
+    <string name="dataoutput_mqtt_client_id_hint">Leeg: superdro en de machine-ID</string>
+    <string name="dataoutput_mqtt_machine_hint">Leeg: de machinenaam</string>
+    <string name="dataoutput_psk_copied">De sleutel is gekopieerd. Plak hem in het clientprogramma.</string>
+    <string name="dataoutput_psk_help">Geef deze tekst aan elk clientprogramma. De tekst is de identiteit, een dubbele punt en de sleutel.</string>
+    <string name="dataoutput_psk_new_title">Een nieuwe sleutel maken?</string>
+    <string name="dataoutput_psk_new_done">Een nieuwe sleutel is in gebruik. Clients met de oude sleutel krijgen geen records.</string>
+    <string name="dataoutput_psk_none">De uitvoer maakt een sleutel bij de eerste start.</string>
+    <string name="dataoutput_secret_error">De beveiligde sleutelopslag gaf een fout. Probeer het opnieuw.</string>
+    <string name="dataoutput_testing">De verbinding wordt getest…</string>
+
+    <string name="dataoutput_port_range">De poort moet 1024 tot 65535 zijn.</string>
+    <string name="dataoutput_port_conflict">De uitvoer van %1$s gebruikt poort %2$d. Selecteer een andere poort.</string>
+    <string name="dataoutput_interval_range">Het interval moet 50 tot 5000 ms zijn.</string>
+    <string name="dataoutput_rate_range">De maximale frequentie moet 1 tot 20 Hz zijn.</string>
+    <string name="dataoutput_broker_host_problem">Typ de hostnaam of het adres van de broker.</string>
+    <string name="dataoutput_broker_port_range">De brokerpoort moet 1 tot 65535 zijn.</string>
+    <string name="dataoutput_client_id_length">De client-ID kan maximaal 64 tekens hebben.</string>
+    <string name="dataoutput_machine_name_problem">De machinenaam in het topic moet 1 tot 64 tekens hebben, zonder / + of #.</string>
+    <string name="dataoutput_label_topic_character">Een topiclabel kan het teken %1$s niet bevatten.</string>
+    <string name="dataoutput_label_too_long">Een label kan maximaal 32 tekens hebben.</string>
+    <string name="dataoutput_field_list">De veldenlijst is niet volledig.</string>
+    <string name="dataoutput_field_send">%1$s verzenden</string>
+
+    <string name="dataoutput_chip">Uitvoer: %1$s</string>
+    <string name="dataoutput_chip_description">Data-uitvoer: %1$s. Tik om te starten of te stoppen. Houd ingedrukt voor de instellingen.</string>
+    <string name="dataoutput_chip_always_description">Data-uitvoer: %1$s. Tik voor de diagnose. Houd ingedrukt voor de instellingen.</string>
+</resources>

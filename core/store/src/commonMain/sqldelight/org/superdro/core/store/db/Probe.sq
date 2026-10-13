@@ -1,0 +1,93 @@
+-- The probe profiles. `profile_id` NULL is a profile
+-- for all machine profiles. A machine profile delete removes its own probe profiles,
+-- and the profiles for all machine profiles stay. Lengths are µm.
+--
+-- The schema adds the six standard tips: 2D edge finders for all machine profiles with
+-- no trigger port. The user cannot change a standard tip. A delete removes it for all machine
+-- profiles, and it does not come back.
+
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.time.Instant;
+import org.superdro.core.model.ProbeType;
+
+CREATE TABLE probe_profile (
+    id TEXT NOT NULL PRIMARY KEY,
+    profile_id TEXT REFERENCES machine_profile(id) ON DELETE CASCADE,
+    type TEXT AS ProbeType NOT NULL,
+    name TEXT NOT NULL,
+    port TEXT,
+    stylus_diameter_um REAL NOT NULL DEFAULT 0,
+    effective_diameter_um REAL,
+    x_offset_um REAL NOT NULL DEFAULT 0,
+    y_offset_um REAL NOT NULL DEFAULT 0,
+    z_offset_um REAL NOT NULL DEFAULT 0,
+    metric INTEGER AS Boolean NOT NULL DEFAULT 1,
+    sample_count INTEGER AS Int NOT NULL DEFAULT 1,
+    spread_limit_um REAL,
+    calibration_residual_um REAL,
+    calibrated_on TEXT AS Instant,
+    calibration_session TEXT,
+    session_digest TEXT,
+    standard_tip INTEGER AS Boolean NOT NULL DEFAULT 0,
+    last_used_on TEXT AS Instant
+);
+
+CREATE INDEX probe_profile_profile ON probe_profile(profile_id);
+
+INSERT INTO probe_profile (id, profile_id, type, name, port, stylus_diameter_um, metric, spread_limit_um, standard_tip)
+VALUES
+    ('6f3d2a10-5c1e-4b7a-9d01-000000000001', NULL, 'EdgeFinder2D', 'Edge finder 0.100"', NULL, 2540.0, 0, NULL, 1),
+    ('6f3d2a10-5c1e-4b7a-9d01-000000000002', NULL, 'EdgeFinder2D', 'Edge finder 0.200"', NULL, 5080.0, 0, NULL, 1),
+    ('6f3d2a10-5c1e-4b7a-9d01-000000000003', NULL, 'EdgeFinder2D', 'Edge finder 0.500"', NULL, 12700.0, 0, NULL, 1),
+    ('6f3d2a10-5c1e-4b7a-9d01-000000000004', NULL, 'EdgeFinder2D', 'Edge finder 4 mm', NULL, 4000.0, 1, NULL, 1),
+    ('6f3d2a10-5c1e-4b7a-9d01-000000000005', NULL, 'EdgeFinder2D', 'Edge finder 6 mm', NULL, 6000.0, 1, NULL, 1),
+    ('6f3d2a10-5c1e-4b7a-9d01-000000000006', NULL, 'EdgeFinder2D', 'Edge finder 10 mm', NULL, 10000.0, 1, NULL, 1);
+
+-- The probe library of a machine profile: its own profiles first, then the profiles for all
+-- machine profiles, each part by name.
+selectForProfile:
+SELECT * FROM probe_profile
+WHERE profile_id = ? OR profile_id IS NULL
+ORDER BY profile_id IS NULL, name COLLATE NOCASE, id;
+
+selectShared:
+SELECT * FROM probe_profile WHERE profile_id IS NULL ORDER BY name COLLATE NOCASE, id;
+
+selectStandardTips:
+SELECT * FROM probe_profile WHERE standard_tip = 1 ORDER BY metric, stylus_diameter_um;
+
+selectById:
+SELECT * FROM probe_profile WHERE id = ?;
+
+upsert:
+INSERT INTO probe_profile (
+    id, profile_id, type, name, port, stylus_diameter_um, effective_diameter_um, x_offset_um,
+    y_offset_um, z_offset_um, metric, sample_count, spread_limit_um, calibration_residual_um,
+    calibrated_on, calibration_session, session_digest, standard_tip, last_used_on
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (id) DO UPDATE SET
+    profile_id = excluded.profile_id,
+    type = excluded.type,
+    name = excluded.name,
+    port = excluded.port,
+    stylus_diameter_um = excluded.stylus_diameter_um,
+    effective_diameter_um = excluded.effective_diameter_um,
+    x_offset_um = excluded.x_offset_um,
+    y_offset_um = excluded.y_offset_um,
+    z_offset_um = excluded.z_offset_um,
+    metric = excluded.metric,
+    sample_count = excluded.sample_count,
+    spread_limit_um = excluded.spread_limit_um,
+    calibration_residual_um = excluded.calibration_residual_um,
+    calibrated_on = excluded.calibrated_on,
+    calibration_session = excluded.calibration_session,
+    session_digest = excluded.session_digest,
+    standard_tip = excluded.standard_tip,
+    last_used_on = excluded.last_used_on;
+
+setLastUsed:
+UPDATE probe_profile SET last_used_on = :lastUsedOn WHERE id = :id;
+
+deleteById:
+DELETE FROM probe_profile WHERE id = ?;

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder. The file values/strings_edge_finder.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="edge_finder_spread_warning">Warnung: Die maximale Streuung zwischen den Messungen beträgt %1$s %2$s</string>
+    <string name="edge_finder_probe_triggered">Der Taster ist ausgelöst. Bewegen Sie den Taster vom Werkstück weg.</string>
+    <string name="edge_finder_long_press_to_clear">Halten Sie diese Taste gedrückt, um den aktuellen Wert zu löschen</string>
+    <string name="edge_finder_no_axis_moving">Beim Auslösen des Tasters bewegte sich keine Achse.</string>
+    <string name="edge_finder_one_axis_at_a_time">Bewegen Sie jeweils nur eine Achse</string>
+    <string name="edge_finder_z_not_supported">Antasten in der Z-Achse wird noch nicht unterstützt</string>
+    <string name="edge_finder_change_in_direction">Richtungsänderung während der Tastermessung erkannt</string>
+    <string name="edge_finder_position_unknown">Die Achsposition beim Auslösen ist unbekannt. Versuchen Sie es erneut.</string>
+</resources>

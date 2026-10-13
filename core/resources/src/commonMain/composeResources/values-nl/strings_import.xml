@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the import preview, the report screen, and the profile file screen. -->
+<resources>
+    <string name="import_title">Importvoorbeeld</string>
+    <string name="import_reading">Bestand wordt gelezen…</string>
+    <string name="import_writing">Importeren…</string>
+    <string name="import_kind_tools">CSV-bestand met gereedschap</string>
+    <string name="import_kind_sub_datums">CSV-bestand met sub-datums</string>
+    <string name="import_kind_profile">SuperDRO-profielbestand</string>
+    <string name="import_kind_tdset">TouchDRO-instellingenbestand (.tdset)</string>
+    <string name="import_provenance">%1$s-bestand van profiel ‘%2$s’, geëxporteerd %3$s</string>
+    <string name="import_provenance_time">%1$s-bestand, geëxporteerd %2$s</string>
+    <string name="import_operation">Importbewerking</string>
+    <string name="import_op_update_matching">Overeenkomende records bijwerken en de andere rijen toevoegen</string>
+    <string name="import_op_add_as_new">Elke rij als nieuw record toevoegen</string>
+    <string name="import_op_add_new_only">Alleen de punten toevoegen die er niet zijn</string>
+    <string name="import_op_merge_matching">Alle rijen toevoegen en de aanwezige punten bijwerken</string>
+    <string name="import_op_replace_all">Alle records verwijderen en dan elke rij toevoegen</string>
+    <string name="import_units">De eenheid van de getallen in het bestand</string>
+    <string name="import_target">Importeren in</string>
+    <string name="import_target_new">Een nieuw profiel</string>
+    <string name="import_target_this">Dit profiel</string>
+    <string name="import_name">Profielnaam</string>
+    <string name="import_tab_import">Te importeren (%1$d)</string>
+    <string name="import_tab_skipped">Overgeslagen (%1$d)</string>
+    <string name="import_tab_warnings">Waarschuwingen (%1$d)</string>
+    <string name="import_nothing">Geen rijen.</string>
+    <string name="import_button">Importeren (%1$d)</string>
+    <string name="import_action_add">Toevoegen</string>
+    <string name="import_action_update">Bijwerken</string>
+    <string name="import_action_unchanged">Geen wijziging</string>
+    <string name="import_action_already_here">Al aanwezig</string>
+    <string name="import_action_not_in_file">Niet in het bestand</string>
+    <string name="import_action_skip">Overslaan</string>
+    <string name="import_row_problem">%1$s: %2$s</string>
+    <string name="import_row_point">X %1$s • Y %2$s • Z %3$s %4$s</string>
+    <string name="import_row_guide">Hulplijn %1$s = %2$s %3$s</string>
+    <string name="import_row_setting">%1$s → %2$s</string>
+    <string name="import_row_setting_new">%1$s</string>
+    <string name="import_value_none">—</string>
+    <string name="import_profile_created">Profiel %1$s is gemaakt. Geïmporteerde instellingen: %2$d.</string>
+    <string name="import_profile_updated">Geïmporteerde instellingen: %1$d. Profiel: %2$s.</string>
+    <string name="import_probe_profile_name">Geïmporteerde kanttaster</string>
+    <string name="import_report_empty">Geen rapport.</string>
+    <string name="import_report_share">Rapport delen</string>
+    <string name="import_report_share_failed">Het deelmenu is niet geopend.</string>
+    <string name="import_profile_title">Profielbestand</string>
+    <string name="import_profile_export_title">De instellingen van %1$s exporteren</string>
+    <string name="import_profile_export_text">Het bestand bevat alle instellingen van dit machineprofiel. Het bevat geen werkruimten, verschuivingen, gereedschap, machinedatums of apparaatidentiteit.</string>
+    <string name="import_profile_export">Profielbestand exporteren</string>
+    <string name="import_profile_exported">Geëxporteerd: %1$s</string>
+    <string name="import_profile_export_failed">De export is niet voltooid.</string>
+    <string name="import_profile_import_title">Instellingen importeren</string>
+    <string name="import_profile_import_text">Importeer een SuperDRO-profielbestand of een TouchDRO-instellingenbestand (.tdset). Een voorbeeld toont elke instelling vóór de import. U kiest de naam van het profiel.</string>
+    <string name="import_profile_import">Een bestand importeren</string>
+</resources>

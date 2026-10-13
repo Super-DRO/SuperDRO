@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The log screen and the record of the byte stream. -->
+<resources>
+    <string name="settings_logs_empty">Keine Protokollzeilen</string>
+    <string name="settings_logs_tab_lines">Protokollzeilen</string>
+    <string name="settings_logs_tab_record">Aufzeichnung des Bytestroms</string>
+    <string name="settings_logs_filter_all">Alle</string>
+    <string name="settings_logs_filter_app">Anwendung</string>
+    <string name="settings_logs_filter_description">Die Zeilen von %1$s zeigen</string>
+    <string name="settings_logs_export">Exportieren</string>
+    <string name="settings_logs_clear">Leeren</string>
+    <string name="settings_logs_level_debug">Debug-Meldung</string>
+    <string name="settings_logs_level_info">Information</string>
+    <string name="settings_logs_level_warning">Warnung</string>
+    <string name="settings_logs_level_error">Fehler</string>
+    <string name="settings_logs_line_count">Zeilen: %1$d</string>
+    <string name="settings_logs_note">Die Anwendung behält die neuesten Zeilen jeder Maschine nur während sie läuft.</string>
+    <string name="settings_logs_exported">Die Datei ist zum Teilen bereit.</string>
+    <string name="settings_logs_no_share">Keine Anwendung kann die Datei empfangen.</string>
+    <string name="settings_logs_record_title">Den Bytestrom aufzeichnen</string>
+    <string name="settings_logs_record_note">Eine Debug-Option. Die Sitzung schreibt jeden empfangenen Block mit seiner Ankunftszeit in eine Datei. Die Aufzeichnung beginnt mit einer neuen Verbindung: Der Schalter schließt die Verbindung und öffnet sie wieder.</string>
+    <string name="settings_logs_record_paused">Die Maschine ist pausiert. Verbinden Sie sie zuerst.</string>
+    <string name="settings_logs_record_no_session">Keine Maschine hat eine Sitzung.</string>
+    <string name="settings_logs_records_title">Aufgezeichnete Verbindungen</string>
+    <string name="settings_logs_records_empty">Keine aufgezeichnete Verbindung</string>
+    <string name="settings_logs_record_link">%1$s, Verbindung %2$d</string>
+    <string name="settings_logs_record_detail">Start %1$s. Bytes: %2$d. Blöcke: %3$d.</string>
+    <string name="settings_logs_record_open">Aufnahme läuft</string>
+    <string name="settings_logs_record_closed">Geschlossen</string>
+    <string name="settings_logs_record_truncated">Die Kopie in der Anwendung endet bei %1$d Bytes. Die Datei der Anwendung hat den vollständigen Strom.</string>
+    <string name="settings_logs_export_record_description">%1$s exportieren</string>
+</resources>

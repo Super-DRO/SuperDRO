@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The machine profiles screen. -->
+<resources>
+    <string name="settings_profiles_new">New profile</string>
+    <string name="settings_profiles_empty">No machine profile yet. Use New profile to make one.</string>
+    <string name="settings_profiles_online">Online</string>
+    <string name="settings_profiles_offline">No tab</string>
+    <string name="settings_profiles_summary">%1$s · %2$s</string>
+    <string name="settings_profiles_copy">Copy</string>
+    <string name="settings_profiles_rename">Rename</string>
+    <string name="settings_profiles_change_type">Machine type</string>
+    <string name="settings_profiles_actions">Actions of %1$s</string>
+    <string name="settings_profiles_create_title">New machine profile</string>
+    <string name="settings_profiles_name">Profile name</string>
+    <string name="settings_profiles_create">Create</string>
+    <string name="settings_profiles_copy_title">Copy %1$s</string>
+    <string name="settings_profiles_copy_note">The copy gets the settings and the tools. It gets no workspaces and no adapter link.</string>
+    <string name="settings_profiles_rename_title">Rename %1$s</string>
+    <string name="settings_profiles_save">Save</string>
+    <string name="settings_profiles_type_title">Machine type of %1$s</string>
+    <string name="settings_profiles_type_continue">Continue</string>
+    <string name="settings_profiles_delete_title">Delete %1$s?</string>
+    <string name="settings_profiles_delete_text">The workspaces, the sub-datums, the machine datums, and the logs of this profile go away. The tab of the machine closes.</string>
+    <string name="settings_profiles_delete_tools">Delete the tools</string>
+    <string name="settings_profiles_keep_tools">Keep the tools</string>
+    <string name="settings_profiles_keep_tools_note">Kept tools go to the shared tool library.</string>
+    <string name="settings_profiles_created">%1$s is created.</string>
+    <string name="settings_profiles_copied">%1$s is created as a copy of %2$s.</string>
+    <string name="settings_profiles_renamed">The profile is now %1$s.</string>
+    <string name="settings_profiles_deleted">%1$s is deleted.</string>
+    <plurals name="settings_profiles_tool_count">
+        <item quantity="one">This profile has %1$d tool.</item>
+        <item quantity="other">This profile has %1$d tools.</item>
+    </plurals>
+</resources>

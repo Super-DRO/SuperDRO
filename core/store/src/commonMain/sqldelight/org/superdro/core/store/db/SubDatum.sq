@@ -1,0 +1,126 @@
+-- The sub-datums, their tags, and the guides of a workspace.
+--
+-- X, Y, Z are µm and A is arc seconds; a coordinate is NULL when the point does not have it. A
+-- stored lathe X is a radius. The list order is the order of the inserts (rowid).
+--
+-- SuperDRO keeps all tags of a sub-datum. `position` keeps the order of the tag list.
+
+import kotlin.Int;
+import kotlin.time.Instant;
+import org.superdro.core.model.AxisId;
+import org.superdro.core.model.SubDatumGroupKind;
+
+CREATE TABLE sub_datum (
+    id TEXT NOT NULL PRIMARY KEY,
+    workspace_id TEXT NOT NULL REFERENCES workspace(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    x_um REAL,
+    y_um REAL,
+    z_um REAL,
+    a_arcsec REAL,
+    group_id INTEGER,
+    group_kind TEXT AS SubDatumGroupKind,
+    group_ref TEXT,
+    created_on TEXT AS Instant NOT NULL,
+    updated_on TEXT AS Instant NOT NULL
+);
+
+CREATE INDEX sub_datum_workspace ON sub_datum(workspace_id);
+
+CREATE TABLE sub_datum_tag (
+    sub_datum_id TEXT NOT NULL REFERENCES sub_datum(id) ON DELETE CASCADE,
+    position INTEGER AS Int NOT NULL,
+    tag TEXT NOT NULL,
+    PRIMARY KEY (sub_datum_id, tag)
+);
+
+CREATE INDEX sub_datum_tag_tag ON sub_datum_tag(tag);
+
+-- A guide is its own entity, not a sub-datum with one coordinate.
+CREATE TABLE guide (
+    id TEXT NOT NULL PRIMARY KEY,
+    workspace_id TEXT NOT NULL REFERENCES workspace(id) ON DELETE CASCADE,
+    axis TEXT AS AxisId NOT NULL,
+    value_um REAL NOT NULL,
+    created_on TEXT AS Instant NOT NULL
+);
+
+CREATE INDEX guide_workspace ON guide(workspace_id);
+
+-- One query for the points and their tags, so that a flow sees a change of each table.
+selectForWorkspace:
+SELECT
+    sub_datum.id, sub_datum.workspace_id, sub_datum.name, sub_datum.note,
+    sub_datum.x_um, sub_datum.y_um, sub_datum.z_um, sub_datum.a_arcsec,
+    sub_datum.group_id, sub_datum.group_kind, sub_datum.group_ref,
+    sub_datum.created_on, sub_datum.updated_on,
+    sub_datum_tag.tag
+FROM sub_datum
+LEFT JOIN sub_datum_tag ON sub_datum_tag.sub_datum_id = sub_datum.id
+WHERE sub_datum.workspace_id = ?
+ORDER BY sub_datum.rowid, sub_datum_tag.position;
+
+selectById:
+SELECT * FROM sub_datum WHERE id = ?;
+
+selectRowsForWorkspace:
+SELECT * FROM sub_datum WHERE workspace_id = ? ORDER BY rowid;
+
+selectTags:
+SELECT tag FROM sub_datum_tag WHERE sub_datum_id = ? ORDER BY position;
+
+countForWorkspace:
+SELECT count(*) FROM sub_datum WHERE workspace_id = ?;
+
+upsert:
+INSERT INTO sub_datum (
+    id, workspace_id, name, note, x_um, y_um, z_um, a_arcsec, group_id, group_kind, group_ref,
+    created_on, updated_on
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (id) DO UPDATE SET
+    workspace_id = excluded.workspace_id,
+    name = excluded.name,
+    note = excluded.note,
+    x_um = excluded.x_um,
+    y_um = excluded.y_um,
+    z_um = excluded.z_um,
+    a_arcsec = excluded.a_arcsec,
+    group_id = excluded.group_id,
+    group_kind = excluded.group_kind,
+    group_ref = excluded.group_ref,
+    updated_on = excluded.updated_on;
+
+setY:
+UPDATE sub_datum SET y_um = :yUm, updated_on = :updatedOn WHERE id = :id;
+
+deleteById:
+DELETE FROM sub_datum WHERE id = ?;
+
+deleteForWorkspace:
+DELETE FROM sub_datum WHERE workspace_id = ?;
+
+deleteTags:
+DELETE FROM sub_datum_tag WHERE sub_datum_id = ?;
+
+insertTag:
+INSERT OR REPLACE INTO sub_datum_tag (sub_datum_id, position, tag) VALUES (?, ?, ?);
+
+selectGuides:
+SELECT * FROM guide WHERE workspace_id = ? ORDER BY rowid;
+
+selectGuideById:
+SELECT * FROM guide WHERE id = ?;
+
+upsertGuide:
+INSERT INTO guide (id, workspace_id, axis, value_um, created_on) VALUES (?, ?, ?, ?, ?)
+ON CONFLICT (id) DO UPDATE SET
+    workspace_id = excluded.workspace_id,
+    axis = excluded.axis,
+    value_um = excluded.value_um;
+
+deleteGuide:
+DELETE FROM guide WHERE id = ?;
+
+deleteGuidesForWorkspace:
+DELETE FROM guide WHERE workspace_id = ?;

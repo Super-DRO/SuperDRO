@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The machine profiles screen. -->
+<resources>
+    <string name="settings_profiles_new">Nuevo perfil</string>
+    <string name="settings_profiles_empty">Aún no hay perfiles de máquina. Use Nuevo perfil para crear uno.</string>
+    <string name="settings_profiles_online">En línea</string>
+    <string name="settings_profiles_offline">Sin pestaña</string>
+    <string name="settings_profiles_summary">%1$s · %2$s</string>
+    <string name="settings_profiles_copy">Copiar</string>
+    <string name="settings_profiles_rename">Renombrar</string>
+    <string name="settings_profiles_change_type">Tipo de máquina</string>
+    <string name="settings_profiles_actions">Acciones de %1$s</string>
+    <string name="settings_profiles_create_title">Nuevo perfil de máquina</string>
+    <string name="settings_profiles_name">Nombre del perfil</string>
+    <string name="settings_profiles_create">Crear</string>
+    <string name="settings_profiles_copy_title">Copiar %1$s</string>
+    <string name="settings_profiles_copy_note">La copia recibe los ajustes y las herramientas. No recibe espacios de trabajo ni enlace de adaptador.</string>
+    <string name="settings_profiles_rename_title">Renombrar %1$s</string>
+    <string name="settings_profiles_save">Guardar</string>
+    <string name="settings_profiles_type_title">Tipo de máquina de %1$s</string>
+    <string name="settings_profiles_type_continue">Continuar</string>
+    <string name="settings_profiles_delete_title">¿Eliminar %1$s?</string>
+    <string name="settings_profiles_delete_text">Los espacios de trabajo, los subdatos, los orígenes de máquina y los registros de este perfil se eliminan. La pestaña de la máquina se cierra.</string>
+    <string name="settings_profiles_delete_tools">Eliminar las herramientas</string>
+    <string name="settings_profiles_keep_tools">Conservar las herramientas</string>
+    <string name="settings_profiles_keep_tools_note">Las herramientas conservadas pasan a la biblioteca compartida de herramientas.</string>
+    <string name="settings_profiles_created">%1$s está creado.</string>
+    <string name="settings_profiles_copied">%1$s está creado como copia de %2$s.</string>
+    <string name="settings_profiles_renamed">El perfil ahora es %1$s.</string>
+    <string name="settings_profiles_deleted">%1$s está eliminado.</string>
+    <plurals name="settings_profiles_tool_count">
+        <item quantity="one">Este perfil tiene %1$d herramienta.</item>
+        <item quantity="other">Este perfil tiene %1$d herramientas.</item>
+    </plurals>
+</resources>

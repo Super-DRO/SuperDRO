@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The about screen: the version, the notices, and the changes. -->
+<resources>
+    <string name="settings_about_version">Versie %1$s</string>
+    <string name="settings_about_version_code">Versiecode %1$d</string>
+    <string name="settings_about_group_version">Versie en wijzigingen</string>
+    <string name="settings_about_group_help">Hulp</string>
+    <string name="settings_about_group_licenses">Licenties</string>
+    <string name="settings_about_summary">Een digitale uitlezing voor werktuigmachines. SuperDRO is compatibel met de TouchDRO-adapters.</string>
+    <string name="settings_about_app_license">SuperDRO gebruikt de Apache-licentie 2.0. Het stuurt geen gegevens naar een server.</string>
+    <string name="settings_about_what_changed">Wat is er nieuw</string>
+    <string name="settings_about_new">Nieuw</string>
+    <string name="settings_about_updated">SuperDRO is bijgewerkt naar versie %1$s.</string>
+    <string name="settings_about_mark_read">Markeren als gelezen</string>
+    <string name="settings_about_change_tabs">Eén tabblad voor elke machine. Veel machines kunnen tegelijk verbonden zijn.</string>
+    <string name="settings_about_change_background">De verbindingen blijven open op de achtergrond, ook met het scherm uit.</string>
+    <string name="settings_about_change_links">Bluetooth-, USB- en wifi-adapters.</string>
+    <string name="settings_about_change_undo">Ongedaan maken voor elke wijziging van een offset.</string>
+    <string name="settings_about_change_settings">Machineprofielen, app-instellingen, toetstoewijzing, logboeken en hulp in de app.</string>
+    <string name="settings_about_change_languages">Alle teksten in het Engels, Spaans, Frans, Duits, Portugees en Nederlands.</string>
+    <string name="settings_about_help_intro">Korte hulpteksten voor de hoofdschermen.</string>
+    <string name="settings_about_licenses_intro">SuperDRO bevat deze onderdelen. Tik op een onderdeel om de licentie te lezen.</string>
+    <string name="settings_about_notice_libraries">Bibliotheken</string>
+    <string name="settings_about_notice_native">Native bibliotheken</string>
+    <string name="settings_about_notice_fonts">Lettertypen</string>
+    <string name="settings_about_notice_icons">Pictogrammen</string>
+    <string name="settings_about_all_notices">Alle vermeldingen als tekst</string>
+    <string name="settings_about_source">Bron: %1$s</string>
+    <string name="settings_about_license_loading">De licentietekst wordt geladen.</string>
+    <string name="settings_about_license_missing">De licentietekst is niet beschikbaar.</string>
+    <string name="settings_about_help_pick">Kies een onderwerp. De tekst verschijnt hier.</string>
+    <string name="settings_about_license_pick">Kies een vermelding. De licentietekst verschijnt hier.</string>
+    <string name="settings_about_back_to_list">Terug naar de lijst</string>
+</resources>

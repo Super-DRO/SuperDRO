@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The log screen and the record of the byte stream. -->
+<resources>
+    <string name="settings_logs_empty">No hay líneas de registro</string>
+    <string name="settings_logs_tab_lines">Líneas de registro</string>
+    <string name="settings_logs_tab_record">Grabación del flujo de bytes</string>
+    <string name="settings_logs_filter_all">Todo</string>
+    <string name="settings_logs_filter_app">Aplicación</string>
+    <string name="settings_logs_filter_description">Mostrar las líneas de %1$s</string>
+    <string name="settings_logs_export">Exportar</string>
+    <string name="settings_logs_clear">Borrar</string>
+    <string name="settings_logs_level_debug">Depuración</string>
+    <string name="settings_logs_level_info">Información</string>
+    <string name="settings_logs_level_warning">Advertencia</string>
+    <string name="settings_logs_level_error">Error</string>
+    <string name="settings_logs_line_count">Líneas: %1$d</string>
+    <string name="settings_logs_note">La aplicación guarda las líneas más nuevas de cada máquina solo mientras funciona.</string>
+    <string name="settings_logs_exported">El archivo está listo para compartir.</string>
+    <string name="settings_logs_no_share">Ninguna aplicación puede recibir el archivo.</string>
+    <string name="settings_logs_record_title">Grabar el flujo de bytes</string>
+    <string name="settings_logs_record_note">Una opción de depuración. La sesión escribe cada bloque recibido con su hora de llegada en un archivo. La grabación empieza con un enlace nuevo: el interruptor cierra el enlace y lo abre otra vez.</string>
+    <string name="settings_logs_record_paused">La máquina está en pausa. Conéctela primero.</string>
+    <string name="settings_logs_record_no_session">Ninguna máquina tiene una sesión.</string>
+    <string name="settings_logs_records_title">Enlaces grabados</string>
+    <string name="settings_logs_records_empty">No hay enlaces grabados</string>
+    <string name="settings_logs_record_link">%1$s, enlace %2$d</string>
+    <string name="settings_logs_record_detail">Inicio %1$s. Bytes: %2$d. Bloques: %3$d.</string>
+    <string name="settings_logs_record_open">Grabando</string>
+    <string name="settings_logs_record_closed">Cerrado</string>
+    <string name="settings_logs_record_truncated">La copia en la aplicación se detiene en %1$d bytes. El archivo de la aplicación tiene el flujo completo.</string>
+    <string name="settings_logs_export_record_description">Exportar %1$s</string>
+</resources>

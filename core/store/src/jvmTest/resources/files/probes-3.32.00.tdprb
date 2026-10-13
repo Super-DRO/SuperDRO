@@ -1,0 +1,61 @@
+{
+  "touchdro": "probe-profiles",
+  "format": 1,
+  "app": "3.32.00, Build 2026-09-20",
+  "exported": "2026-10-11 14:05:33",
+  "device": "6f1c2a9e-0d4b-4c1e-9a77-1b2c3d4e5f60",
+  "profile-id": 1,
+  "profile": "Bridgeport",
+  "excluded": "adapter settings, machine profile settings, sub-datums, tools, the built-in standard tips",
+  "profiles": [
+    {
+      "id": 7,
+      "type": "TOUCH_PROBE",
+      "name": "Touch probe 2 mm",
+      "input": "p",
+      "stylus-diameter": 1987.4,
+      "x-offset": 0,
+      "y-offset": 0,
+      "z-offset": 0,
+      "metric": true,
+      "effective-diameter": 1987.4,
+      "calibration-residual": 1.1,
+      "calibrated-on": "2026-10-11 13:58:02",
+      "sample-count": 3,
+      "max-spread": 20,
+      "calibration-session": "{\"format\":1,\"profile\":7,\"complete\":true}",
+      "session-digest": "808DACA4E7B2E877C758C45EDEF3353AC37DA862FF17237072BC5E18D4BD3657"
+    },
+    {
+      "id": 9,
+      "type": "TOOL_HEIGHT_SETTER",
+      "name": "Tool setter 50.00 mm",
+      "z-offset": 50000,
+      "x-offset": 7,
+      "metric": true
+    },
+    {
+      "id": 10,
+      "type": "LASER",
+      "name": "Laser"
+    },
+    {
+      "id": 11,
+      "type": "edge_finder_2d",
+      "name": "Edge finder r",
+      "input": "r",
+      "stylus-diameter": "5080",
+      "z-offset": 5,
+      "metric": "no",
+      "calibration-session": "{}"
+    },
+    {
+      "id": 12,
+      "type": "TOUCH_PROBE",
+      "input": "s",
+      "calibration-session": "{\"a\":1}",
+      "session-digest": "00",
+      "sample-count": 11
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+-- The drawing of a workspace. A workspace has 0 or 1 drawing.
+-- All coordinates are integer nm. A workspace delete removes its drawing.
+--
+-- `points` is a BLOB: one version byte (1), then little-endian Int64 values x0, y0, x1, y1, ...
+-- `bulges` is a BLOB: one version byte (1), then pairs of a little-endian Int32 segment index
+-- and the little-endian bits of a Double. A drawing has a maximum of 10 000 shapes, and one
+-- polyline of 10 000 points is a BLOB of approximately 160 KB.
+
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.time.Instant;
+import org.superdro.core.model.DrawingFormat;
+import org.superdro.core.model.ShapeType;
+
+CREATE TABLE drawing (
+    id TEXT NOT NULL PRIMARY KEY,
+    workspace_id TEXT NOT NULL UNIQUE REFERENCES workspace(id) ON DELETE CASCADE,
+    source_name TEXT,
+    source_format TEXT AS DrawingFormat,
+    created_on TEXT AS Instant NOT NULL
+);
+
+CREATE TABLE drawing_layer (
+    drawing_id TEXT NOT NULL REFERENCES drawing(id) ON DELETE CASCADE,
+    layer_index INTEGER AS Int NOT NULL,
+    name TEXT NOT NULL,
+    hidden INTEGER AS Boolean NOT NULL DEFAULT 0,
+    PRIMARY KEY (drawing_id, layer_index)
+);
+
+CREATE TABLE drawing_shape (
+    drawing_id TEXT NOT NULL REFERENCES drawing(id) ON DELETE CASCADE,
+    seq INTEGER AS Int NOT NULL,
+    layer_index INTEGER AS Int NOT NULL,
+    type TEXT AS ShapeType NOT NULL,
+    style INTEGER AS Int NOT NULL DEFAULT 1,
+    group_id TEXT,
+    closed INTEGER AS Boolean NOT NULL DEFAULT 0,
+    x1_nm INTEGER,
+    y1_nm INTEGER,
+    x2_nm INTEGER,
+    y2_nm INTEGER,
+    r_nm INTEGER,
+    a0_rad REAL,
+    da_rad REAL,
+    points BLOB,
+    bulges BLOB,
+    PRIMARY KEY (drawing_id, seq)
+);
+
+selectForWorkspace:
+SELECT * FROM drawing WHERE workspace_id = ?;
+
+selectById:
+SELECT * FROM drawing WHERE id = ?;
+
+insert:
+INSERT INTO drawing (id, workspace_id, source_name, source_format, created_on) VALUES (?, ?, ?, ?, ?);
+
+deleteForWorkspace:
+DELETE FROM drawing WHERE workspace_id = ?;
+
+selectLayersForWorkspace:
+SELECT drawing_layer.* FROM drawing_layer
+JOIN drawing ON drawing.id = drawing_layer.drawing_id
+WHERE drawing.workspace_id = ?;
+
+selectShapeSeqsForWorkspace:
+SELECT drawing_shape.seq FROM drawing_shape
+JOIN drawing ON drawing.id = drawing_shape.drawing_id
+WHERE drawing.workspace_id = ?;
+
+selectLayers:
+SELECT * FROM drawing_layer WHERE drawing_id = ? ORDER BY layer_index;
+
+insertLayer:
+INSERT INTO drawing_layer (drawing_id, layer_index, name, hidden) VALUES (?, ?, ?, ?);
+
+setLayerHidden:
+UPDATE drawing_layer SET hidden = :hidden WHERE drawing_id = :drawingId AND layer_index = :layerIndex;
+
+selectShapes:
+SELECT * FROM drawing_shape WHERE drawing_id = ? ORDER BY seq;
+
+selectShapeSeqs:
+SELECT seq FROM drawing_shape WHERE drawing_id = ? ORDER BY seq;
+
+insertShape:
+INSERT INTO drawing_shape (
+    drawing_id, seq, layer_index, type, style, group_id, closed, x1_nm, y1_nm, x2_nm, y2_nm,
+    r_nm, a0_rad, da_rad, points, bulges
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteShape:
+DELETE FROM drawing_shape WHERE drawing_id = ? AND seq = ?;
+
+deleteShapes:
+DELETE FROM drawing_shape WHERE drawing_id = ?;

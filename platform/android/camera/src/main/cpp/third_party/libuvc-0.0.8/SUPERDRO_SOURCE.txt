@@ -1,0 +1,12 @@
+libuvc 0.0.8 in SuperDRO
+
+Source: https://github.com/libuvc/libuvc
+Tag: v0.0.8
+Commit: 4e9fc773914377ec0bcf2f31621f56da5a0fa09f
+License: BSD 3-clause license (LICENSE.txt)
+
+This directory has the files of the tag that the Android build needs. The
+build does not use libjpeg, so src/frame-mjpeg.c is not here. The JNI code
+of SuperDRO and these files make libsuperdro_uvc.so.
+
+SUPERDRO_CHANGES.txt lists the changes of SuperDRO to these files.

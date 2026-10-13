@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The folders of the FileProvider of the app: the photo of the reference image and
+  the copies of the shared files. Both are in the app cache.
+-->
+<paths>
+    <cache-path name="photos" path="photos/" />
+    <cache-path name="share" path="share/" />
+</paths>

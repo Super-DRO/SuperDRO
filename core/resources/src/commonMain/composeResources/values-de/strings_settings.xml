@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The common texts of the settings screens. -->
+<resources>
+    <string name="settings_help">Hilfe</string>
+    <string name="settings_close">Schließen</string>
+    <string name="settings_cancel">Abbrechen</string>
+    <string name="settings_not_set">Nicht festgelegt</string>
+    <string name="settings_undo">Rückgängig</string>
+    <string name="settings_delete">Löschen</string>
+    <string name="settings_help_of">Hilfe: %1$s</string>
+</resources>

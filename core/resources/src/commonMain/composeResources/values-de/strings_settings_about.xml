@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The about screen: the version, the notices, and the changes. -->
+<resources>
+    <string name="settings_about_version">Version %1$s</string>
+    <string name="settings_about_version_code">Versionscode %1$d</string>
+    <string name="settings_about_group_version">Version und Änderungen</string>
+    <string name="settings_about_group_help">Hilfe</string>
+    <string name="settings_about_group_licenses">Lizenzen</string>
+    <string name="settings_about_summary">Eine Digitalanzeige für Werkzeugmaschinen. SuperDRO ist mit den TouchDRO-Adaptern kompatibel.</string>
+    <string name="settings_about_app_license">SuperDRO verwendet die Apache-Lizenz 2.0. Es sendet keine Daten an einen Server.</string>
+    <string name="settings_about_what_changed">Neuerungen</string>
+    <string name="settings_about_new">Neu</string>
+    <string name="settings_about_updated">SuperDRO wurde auf die Version %1$s aktualisiert.</string>
+    <string name="settings_about_mark_read">Als gelesen markieren</string>
+    <string name="settings_about_change_tabs">Ein Tab für jede Maschine. Viele Maschinen können gleichzeitig verbunden sein.</string>
+    <string name="settings_about_change_background">Die Verbindungen bleiben im Hintergrund offen, auch bei ausgeschaltetem Bildschirm.</string>
+    <string name="settings_about_change_links">Bluetooth-, USB- und WLAN-Adapter.</string>
+    <string name="settings_about_change_undo">Rückgängig für jede Änderung eines Versatzes.</string>
+    <string name="settings_about_change_settings">Maschinenprofile, App-Einstellungen, Tastenbelegung, Protokolle und Hilfe in der App.</string>
+    <string name="settings_about_change_languages">Alle Texte auf Englisch, Spanisch, Französisch, Deutsch, Portugiesisch und Niederländisch.</string>
+    <string name="settings_about_help_intro">Kurze Hilfetexte für die Hauptbildschirme.</string>
+    <string name="settings_about_licenses_intro">SuperDRO enthält diese Komponenten. Tippen Sie auf eine Komponente, um ihre Lizenz zu lesen.</string>
+    <string name="settings_about_notice_libraries">Bibliotheken</string>
+    <string name="settings_about_notice_native">Native Bibliotheken</string>
+    <string name="settings_about_notice_fonts">Schriftarten</string>
+    <string name="settings_about_notice_icons">Symbole</string>
+    <string name="settings_about_all_notices">Alle Hinweise als Text</string>
+    <string name="settings_about_source">Quelle: %1$s</string>
+    <string name="settings_about_license_loading">Der Lizenztext wird geladen.</string>
+    <string name="settings_about_license_missing">Der Lizenztext ist nicht verfügbar.</string>
+    <string name="settings_about_help_pick">Wählen Sie ein Thema. Der Text erscheint hier.</string>
+    <string name="settings_about_license_pick">Wählen Sie einen Hinweis. Der Lizenztext erscheint hier.</string>
+    <string name="settings_about_back_to_list">Zurück zur Liste</string>
+</resources>

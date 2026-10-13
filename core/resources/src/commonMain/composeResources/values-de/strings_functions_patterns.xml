@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the pattern screens with the point preview: the hole circle, the arbitrary hole circle, the hole grid, the step and repeat, the equidistant array, and the arc cut. -->
+<resources>
+    <string name="fnp_plane">Projektionsebene</string>
+    <string name="fnp_source">Positionsquelle</string>
+    <string name="fnp_source_current">Aktuell</string>
+    <string name="fnp_source_zero">Null</string>
+    <string name="fnp_source_custom">Eigene</string>
+    <string name="fnp_reference">Positionsbezug</string>
+    <string name="fnp_reference_center">Mitte</string>
+    <string name="fnp_reference_first_hole">Erstes Loch</string>
+    <string name="fnp_reference_radius_center">Radiusmitte</string>
+    <string name="fnp_reference_start_of_cut">Schnittbeginn</string>
+    <string name="fnp_position_center">Mittelpunktposition</string>
+    <string name="fnp_position_first_hole">Position des ersten Lochs</string>
+    <string name="fnp_position_start_of_cut">Position des Schnittbeginns</string>
+    <string name="fnp_sub_datum">Sub-Datum</string>
+    <string name="fnp_sub_datum_select">Auswählen</string>
+    <string name="fnp_axis_switch_cd">%1$s verwenden</string>
+    <string name="fnp_axis_diameter">%1$s (Durchmesser)</string>
+    <string name="fnp_cut_type">Schnittart</string>
+    <string name="fnp_cut_internal">Innen</string>
+    <string name="fnp_cut_external">Außen</string>
+    <string name="fnp_angle_reference">Winkelbezug</string>
+    <string name="fnp_angle_center">Mitte</string>
+    <string name="fnp_angle_tangent">Tangente</string>
+    <string name="fnp_add_angle">Winkel hinzufügen</string>
+    <string name="fnp_remove_angle_cd">Winkel %1$s° entfernen</string>
+    <string name="fnp_angles_title">Lochwinkel</string>
+    <string name="fnp_angles_empty">Noch keine Winkel. Fügen Sie zwei oder mehr Winkel hinzu.</string>
+    <string name="fnp_angle_item">%1$d. %2$s°</string>
+    <string name="fnp_points_title">Punkte</string>
+    <string name="fnp_points_more">%1$d weitere Punkte</string>
+    <string name="fnp_column_name">Name</string>
+    <string name="fnp_created">%1$d Sub-Datums erstellt.</string>
+    <string name="fnp_start_title">Startposition</string>
+    <string name="fnp_end_title">Endposition</string>
+    <string name="fnp_step_sources">Zu wiederholende Sub-Datums: %1$d</string>
+    <string name="fnp_no_points">Die Eingabe ergibt keine Punkte.</string>
+    <string name="fnp_prefix_default">Leer: %1$s</string>
+    <string name="fnp_degree">°</string>
+</resources>

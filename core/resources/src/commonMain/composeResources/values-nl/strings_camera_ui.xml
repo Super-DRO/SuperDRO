@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the camera screens of core:ui. -->
+<resources>
+    <string name="camera_ui_status_off">Video uit</string>
+    <string name="camera_ui_status_starting">De video start</string>
+    <string name="camera_ui_status_on">Video aan</string>
+    <string name="camera_ui_status_detail">Video aan: %1$d × %2$d, %3$s fps</string>
+    <string name="camera_ui_status_detail_no_fps">Video aan: %1$d × %2$d</string>
+    <string name="camera_ui_play">De video starten</string>
+    <string name="camera_ui_stop">De video stoppen</string>
+    <string name="camera_ui_crosshairs">Dradenkruis</string>
+    <string name="camera_ui_show_crosshairs">Het dradenkruis tonen</string>
+    <string name="camera_ui_dim">Halve dekking</string>
+    <string name="camera_ui_view_lock">De weergave aan het dradenkruis vastzetten</string>
+    <string name="camera_ui_scale_known">Bekende afstand</string>
+    <string name="camera_ui_scale_move">Machinebeweging</string>
+    <string name="camera_ui_rotation">Beelddraaiing %1$s°</string>
+    <string name="camera_ui_distance_mm">Afstand tussen de twee punten (mm)</string>
+    <string name="camera_ui_distance_in">Afstand tussen de twee punten (inch)</string>
+    <string name="camera_ui_needs_video">Start eerst de video.</string>
+    <string name="camera_ui_point_title">Punt bij het dradenkruis</string>
+    <string name="camera_ui_no_camera_probe">Geen tasterprofiel heeft het type Camera of microscoop. Voeg er een toe in de tasterbibliotheek.</string>
+    <string name="camera_ui_chip_description">Het camerascherm openen</string>
+    <string name="camera_ui_progress">Voortgang van de test</string>
+    <string name="camera_ui_loading">De camera wordt gelezen…</string>
+    <string name="camera_ui_mode_good">Video werkt</string>
+    <string name="camera_ui_mode_bad">Geen video</string>
+    <string name="camera_ui_calibrating">Beeldschaal: tik op de video</string>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The FileProvider paths of the share function: only the ZIP files of the cache folder share/. -->
+<paths>
+    <cache-path name="share" path="share/" />
+</paths>

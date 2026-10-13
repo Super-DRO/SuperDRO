@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The manifest of the debug build only. It adds the Demo launcher entry, which starts the app
+  with the fake adapter. A release build has no such entry.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+          A trampoline: it clears the task and starts MainActivity with the demo extra. The empty
+          taskAffinity keeps it out of the task of the app, and excludeFromRecents hides its task.
+        -->
+        <activity
+            android:name=".DemoActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_demo"
+            android:label="@string/demo_launcher_label"
+            android:noHistory="true"
+            android:roundIcon="@mipmap/ic_launcher_demo_round"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

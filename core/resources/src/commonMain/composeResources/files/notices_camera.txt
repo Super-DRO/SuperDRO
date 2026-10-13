@@ -1,0 +1,34 @@
+SuperDRO USB camera: third-party notices
+
+The USB camera function of SuperDRO contains the two native libraries below.
+Each one keeps its own license. The camera sends no data to a network.
+
+libusb 1.0.30
+- Copyright © 2001 Johannes Erdfelt, © 2007-2009 Daniel Drake,
+  © 2010-2012 Peter Stuge, © 2008-2016 Nathan Hjelm, © 2009-2013 Pete Batard,
+  and the other authors in licenses/libusb_authors.txt.
+- GNU Lesser General Public License, version 2.1 or later
+  (licenses/libusb_lgpl_2_1.txt).
+- Source: https://github.com/libusb/libusb, tag v1.0.30, commit
+  87a55632db62c9bdc58cd31d3ccfa673f1bb017f. SuperDRO does not change it.
+- The app has libusb as the separate shared library libusb1.0.so. The library
+  libsuperdro_uvc.so links to it dynamically. You have the right to replace
+  libusb1.0.so with a different version, also a version that you changed. The
+  build files of SuperDRO make libusb1.0.so from the source in
+  platform/android/camera/src/main/cpp/third_party/libusb-1.0.30.
+- Source offer: the complete source of the libusb version in this app is in
+  the SuperDRO source repository at the path above, and at the libusb URL
+  above. If you cannot get it there, ask the publisher of this app for a copy
+  of the source. The offer is valid for 3 years after the last distribution of
+  this app version.
+- You can change the app for your own use and reverse engineer it to debug
+  such changes (LGPL 2.1, section 6).
+
+libuvc 0.0.8
+- Copyright (C) 2010-2015 Ken Tossell. All rights reserved.
+- BSD 3-clause license (licenses/libuvc_bsd.txt).
+- Source: https://github.com/libuvc/libuvc, tag v0.0.8, commit
+  4e9fc773914377ec0bcf2f31621f56da5a0fa09f.
+- SuperDRO changed libuvc: a time limit on each control transfer, the UVC 1.5
+  H.264 format, and the UVC 1.5 fields of the stream control block. The file
+  SUPERDRO_CHANGES.txt in the source lists the changes.

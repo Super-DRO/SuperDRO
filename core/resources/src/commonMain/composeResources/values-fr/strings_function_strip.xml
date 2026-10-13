@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the function strip and the global buttons. The file values/strings_function_strip.xml has the same names. -->
+<resources>
+    <string name="strip_zero_set">Mise à zéro</string>
+    <string name="strip_mode">Mode de mesure</string>
+    <string name="strip_units">Unités</string>
+    <string name="strip_mode_absolute">Abs.</string>
+    <string name="strip_mode_incremental">Rel.</string>
+    <string name="strip_mixed">Mixte</string>
+    <string name="strip_units_inch">Pouces</string>
+    <string name="strip_units_mm">Millimètres</string>
+    <string name="strip_active">Actif</string>
+    <string name="strip_functions">Fonctions</string>
+    <string name="strip_radius">Rayon</string>
+    <string name="strip_diameter">Diamètre</string>
+    <string name="strip_lathe_tool_offset">Correcteur</string>
+    <string name="strip_z_reference">Référence Z</string>
+    <string name="strip_radius_compensation">Comp. rayon</string>
+    <string name="strip_height_compensation">Comp. hauteur</string>
+    <string name="strip_edge_finder">Palpeur</string>
+    <string name="strip_hole_circle">Cercle de trous</string>
+    <string name="strip_arbitrary_hole_circle">Cercle libre</string>
+    <string name="strip_arc_cut">Arc</string>
+    <string name="strip_hole_grid">Grille</string>
+    <string name="strip_equidistant_array">Équidistant</string>
+    <string name="strip_dimension_measure">Cote</string>
+    <string name="strip_angle_measure">Angle (mesure)</string>
+    <string name="strip_graphical_view">Graphique</string>
+    <string name="strip_thread_setup">Filetage</string>
+    <string name="strip_compound">Chariot orient.</string>
+    <string name="strip_head_tilt">Inclinaison</string>
+    <string name="strip_rotate_part">Tourner pièce</string>
+    <string name="strip_align_axes">Aligner axes</string>
+    <string name="strip_instrument">Instrument (réf.)</string>
+</resources>

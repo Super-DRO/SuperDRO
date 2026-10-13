@@ -1,0 +1,39 @@
+-- The lathe threads of a workspace. All lengths are µm.
+-- `spec_json` holds the typed ThreadSpec. A workspace delete removes them.
+
+import kotlin.time.Instant;
+
+CREATE TABLE thread_spec (
+    id TEXT NOT NULL PRIMARY KEY,
+    workspace_id TEXT NOT NULL REFERENCES workspace(id) ON DELETE CASCADE,
+    tag TEXT NOT NULL DEFAULT '',
+    spec_json TEXT NOT NULL,
+    created_on TEXT AS Instant NOT NULL,
+    updated_on TEXT AS Instant NOT NULL
+);
+
+CREATE INDEX thread_spec_workspace ON thread_spec(workspace_id);
+
+selectForWorkspace:
+SELECT * FROM thread_spec WHERE workspace_id = ? ORDER BY rowid;
+
+selectForProfile:
+SELECT thread_spec.* FROM thread_spec
+JOIN workspace ON workspace.id = thread_spec.workspace_id
+WHERE workspace.profile_id = ?
+ORDER BY thread_spec.rowid;
+
+selectById:
+SELECT * FROM thread_spec WHERE id = ?;
+
+upsert:
+INSERT INTO thread_spec (id, workspace_id, tag, spec_json, created_on, updated_on)
+VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT (id) DO UPDATE SET
+    workspace_id = excluded.workspace_id,
+    tag = excluded.tag,
+    spec_json = excluded.spec_json,
+    updated_on = excluded.updated_on;
+
+deleteById:
+DELETE FROM thread_spec WHERE id = ?;

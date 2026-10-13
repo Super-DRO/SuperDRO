@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The machine profiles screen. -->
+<resources>
+    <string name="settings_profiles_new">Nieuw profiel</string>
+    <string name="settings_profiles_empty">Nog geen machineprofiel. Maak er een met Nieuw profiel.</string>
+    <string name="settings_profiles_online">Online</string>
+    <string name="settings_profiles_offline">Geen tabblad</string>
+    <string name="settings_profiles_summary">%1$s · %2$s</string>
+    <string name="settings_profiles_copy">Kopiëren</string>
+    <string name="settings_profiles_rename">Hernoemen</string>
+    <string name="settings_profiles_change_type">Machinetype</string>
+    <string name="settings_profiles_actions">Acties van %1$s</string>
+    <string name="settings_profiles_create_title">Nieuw machineprofiel</string>
+    <string name="settings_profiles_name">Profielnaam</string>
+    <string name="settings_profiles_create">Maken</string>
+    <string name="settings_profiles_copy_title">%1$s kopiëren</string>
+    <string name="settings_profiles_copy_note">De kopie krijgt de instellingen en de gereedschappen. Ze krijgt geen werkruimten en geen adapterverbinding.</string>
+    <string name="settings_profiles_rename_title">%1$s hernoemen</string>
+    <string name="settings_profiles_save">Opslaan</string>
+    <string name="settings_profiles_type_title">Machinetype van %1$s</string>
+    <string name="settings_profiles_type_continue">Doorgaan</string>
+    <string name="settings_profiles_delete_title">%1$s verwijderen?</string>
+    <string name="settings_profiles_delete_text">De werkruimten, de subnulpunten, de machinenulpunten en de logboeken van dit profiel verdwijnen. Het tabblad van de machine sluit.</string>
+    <string name="settings_profiles_delete_tools">Gereedschappen verwijderen</string>
+    <string name="settings_profiles_keep_tools">Gereedschappen houden</string>
+    <string name="settings_profiles_keep_tools_note">Bewaarde gereedschappen gaan naar de gedeelde gereedschapsbibliotheek.</string>
+    <string name="settings_profiles_created">%1$s is gemaakt.</string>
+    <string name="settings_profiles_copied">%1$s is gemaakt als kopie van %2$s.</string>
+    <string name="settings_profiles_renamed">Het profiel is nu %1$s.</string>
+    <string name="settings_profiles_deleted">%1$s is verwijderd.</string>
+    <plurals name="settings_profiles_tool_count">
+        <item quantity="one">Dit profiel heeft %1$d gereedschap.</item>
+        <item quantity="other">Dit profiel heeft %1$d gereedschappen.</item>
+    </plurals>
+</resources>

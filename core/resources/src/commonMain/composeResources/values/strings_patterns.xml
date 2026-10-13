@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the hole patterns and of the arc cut.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="pattern_error_header">This operation could not be completed. Please fix the errors below:</string>
+    <string name="pattern_error_value_required">%1$s value is required</string>
+    <string name="pattern_error_value_too_small">%1$s value is too small</string>
+    <string name="pattern_error_value_too_large">%1$s value is too large</string>
+    <string name="pattern_error_text_too_short">%1$s must be at least 3 characters long.</string>
+    <string name="pattern_error_text_too_long">%1$s can\u0027t be longer than 16 characters.</string>
+    <string name="pattern_error_two_angles">At least two hole angles are required.</string>
+    <string name="pattern_error_repeat_too_small">%1$s or %2$s value must be larger than 1</string>
+    <string name="pattern_error_hole_count_not_valid">Please enter a valid number of holes.</string>
+    <string name="pattern_error_hole_count_too_small">Number of holes can\u0027t be less than 3.</string>
+    <string name="pattern_error_start_not_valid">Please enter a valid number for the starting %1$s position.</string>
+    <string name="pattern_error_end_not_valid">Please enter a valid number for the ending %1$s position.</string>
+    <string name="arc_error_cutter_too_large">Cutter Diameter value too large for this sweep angle.</string>
+    <string name="arc_error_stepover_too_large">Stepover value too large for this sweep angle.</string>
+    <string name="arc_error_cutter_too_large_for_radius">Cutter Diameter value too large for an internal cut of this radius.</string>
+    <string name="pattern_title_hole_circle">Hole Circle</string>
+    <string name="pattern_title_hole_circle_lathe">Circular Point Array</string>
+    <string name="pattern_title_arbitrary_hole_circle">Arbitrary Hole Circle</string>
+    <string name="pattern_title_hole_grid">Hole Grid</string>
+    <string name="pattern_title_hole_grid_lathe">Linear Point Array</string>
+    <string name="pattern_title_step_and_repeat">Step and Repeat %1$d Sub-Datums</string>
+    <string name="pattern_title_step_and_repeat_workspace">Step and Repeat Workspace</string>
+    <string name="pattern_title_equidistant">Equidistant Hole Array</string>
+    <string name="pattern_title_equidistant_lathe">Equidistant Point Array</string>
+    <string name="arc_title">Radius/Arc Cutting</string>
+    <string name="pattern_label_prefix">Sub-Datum Prefix</string>
+    <string name="pattern_label_circle_radius">Circle Radius</string>
+    <string name="pattern_label_hole_count">Hole Count</string>
+    <string name="pattern_label_start_angle">Start Angle</string>
+    <string name="pattern_label_sweep_angle">Sweep Angle</string>
+    <string name="pattern_label_hole_angle">Hole Angle</string>
+    <string name="pattern_label_repeat_x">Repeat X</string>
+    <string name="pattern_label_repeat_y">Repeat Y</string>
+    <string name="pattern_label_repeat_z">Repeat Z</string>
+    <string name="pattern_label_step_x">Step X</string>
+    <string name="pattern_label_step_y">Step Y</string>
+    <string name="pattern_label_step_z">Step Z</string>
+    <string name="pattern_label_grid_angle">Angle</string>
+    <string name="pattern_label_number_of_holes">Number of Holes</string>
+    <string name="pattern_label_start_x">Starting Position X</string>
+    <string name="pattern_label_start_y">Starting Position Y</string>
+    <string name="pattern_label_start_z">Starting Position Z</string>
+    <string name="pattern_label_end_x">Ending Position X</string>
+    <string name="pattern_label_end_y">Ending Position Y</string>
+    <string name="pattern_label_end_z">Ending Position Z</string>
+    <string name="arc_label_radius">Radius</string>
+    <string name="arc_label_cutter_diameter">Cutter Diameter</string>
+    <string name="arc_label_stepover">Stepover</string>
+</resources>

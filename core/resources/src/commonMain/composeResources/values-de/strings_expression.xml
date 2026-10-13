@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The error texts of the expression evaluator. The file values/strings_expression.xml has the same names. -->
+<resources>
+    <string name="expression_error_invalid_token">Ungültiges Zeichen \u0027%1$s\u0027</string>
+    <string name="expression_error_invalid_number">Ungültige Zahl \u0027%1$s\u0027</string>
+    <string name="expression_error_undefined_function">Unbekannte Funktion \u0027%1$s\u0027</string>
+    <string name="expression_error_undefined_variable">Unbekannte Variable \u0027%1$s\u0027</string>
+    <string name="expression_error_invalid_assignment_target">Ungültiges Ziel der Zuweisung</string>
+    <string name="expression_error_expected_paren_after_arguments">\u0027)\u0027 nach den Funktionsargumenten erwartet</string>
+    <string name="expression_error_expected_paren_after_expression">\u0027)\u0027 nach dem Ausdruck erwartet</string>
+    <string name="expression_error_expected_expression">Ausdruck erwartet</string>
+    <string name="expression_error_expected_expression_after">Ausdruck nach \u0027%1$s\u0027 erwartet</string>
+    <string name="expression_error_expected_end">Ende des Ausdrucks erwartet</string>
+    <string name="expression_error_requires_one">%1$s erfordert ein Argument</string>
+    <string name="expression_error_requires_at_least_one">%1$s erfordert mindestens ein Argument</string>
+    <string name="expression_error_requires_one_or_two">%1$s erfordert ein oder zwei Argumente</string>
+    <string name="expression_error_requires_three">%1$s erfordert drei Argumente</string>
+    <string name="expression_error_division_by_zero">Division durch null</string>
+    <string name="expression_error_negative_base_fractional_exponent">Gebrochene Potenz einer negativen Zahl</string>
+    <string name="expression_error_out_of_range">Wert außerhalb des Bereichs</string>
+    <string name="expression_error_too_complex">Ausdruck ist zu komplex</string>
+</resources>

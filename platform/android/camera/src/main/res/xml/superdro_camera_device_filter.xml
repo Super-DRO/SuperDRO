@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The attach filter of the UVC cameras: the USB class 14 (video)
+  and the subclass 1 (video control). The filter has no vendor ID and no product ID, so Android
+  offers SuperDRO for each UVC camera.
+-->
+<resources>
+    <usb-device class="14" subclass="1" />
+</resources>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the hole patterns and of the arc cut. The file values/strings_patterns.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="pattern_error_header">De bewerking kon niet worden voltooid. Herstel de onderstaande fouten:</string>
+    <string name="pattern_error_value_required">Een waarde voor %1$s is vereist</string>
+    <string name="pattern_error_value_too_small">De waarde van %1$s is te klein</string>
+    <string name="pattern_error_value_too_large">De waarde van %1$s is te groot</string>
+    <string name="pattern_error_text_too_short">%1$s moet minstens 3 tekens lang zijn.</string>
+    <string name="pattern_error_text_too_long">%1$s mag niet langer zijn dan 16 tekens.</string>
+    <string name="pattern_error_two_angles">Er zijn minstens twee gatenhoeken vereist.</string>
+    <string name="pattern_error_repeat_too_small">De waarde van %1$s of %2$s moet groter zijn dan 1</string>
+    <string name="pattern_error_hole_count_not_valid">Voer een geldig aantal gaten in.</string>
+    <string name="pattern_error_hole_count_too_small">Het aantal gaten mag niet kleiner zijn dan 3.</string>
+    <string name="pattern_error_start_not_valid">Voer een geldig getal in voor de beginpositie %1$s.</string>
+    <string name="pattern_error_end_not_valid">Voer een geldig getal in voor de eindpositie %1$s.</string>
+    <string name="arc_error_cutter_too_large">De freesdiameter is te groot voor deze zwaaihoek.</string>
+    <string name="arc_error_stepover_too_large">De zijdelingse stap is te groot voor deze zwaaihoek.</string>
+    <string name="arc_error_cutter_too_large_for_radius">De freesdiameter is te groot voor een binnensnede met deze straal.</string>
+    <string name="pattern_title_hole_circle">Gatencirkel</string>
+    <string name="pattern_title_hole_circle_lathe">Cirkelvormige puntenreeks</string>
+    <string name="pattern_title_arbitrary_hole_circle">Vrije gatencirkel</string>
+    <string name="pattern_title_hole_grid">Gatenraster</string>
+    <string name="pattern_title_hole_grid_lathe">Lineaire puntenreeks</string>
+    <string name="pattern_title_step_and_repeat">Stap en herhaal %1$d subreferenties</string>
+    <string name="pattern_title_step_and_repeat_workspace">Stap en herhaal werkruimte</string>
+    <string name="pattern_title_equidistant">Equidistante gatenreeks</string>
+    <string name="pattern_title_equidistant_lathe">Equidistante puntenreeks</string>
+    <string name="arc_title">Radius-/boogfrezen</string>
+    <string name="pattern_label_prefix">Voorvoegsel van subreferentie</string>
+    <string name="pattern_label_circle_radius">Cirkelstraal</string>
+    <string name="pattern_label_hole_count">Aantal gaten</string>
+    <string name="pattern_label_start_angle">Beginhoek</string>
+    <string name="pattern_label_sweep_angle">Zwaaihoek</string>
+    <string name="pattern_label_hole_angle">Gathoek</string>
+    <string name="pattern_label_repeat_x">Herhaling X</string>
+    <string name="pattern_label_repeat_y">Herhaling Y</string>
+    <string name="pattern_label_repeat_z">Herhaling Z</string>
+    <string name="pattern_label_step_x">Stap X</string>
+    <string name="pattern_label_step_y">Stap Y</string>
+    <string name="pattern_label_step_z">Stap Z</string>
+    <string name="pattern_label_grid_angle">Hoek</string>
+    <string name="pattern_label_number_of_holes">Aantal boringen</string>
+    <string name="pattern_label_start_x">Beginpositie X</string>
+    <string name="pattern_label_start_y">Beginpositie Y</string>
+    <string name="pattern_label_start_z">Beginpositie Z</string>
+    <string name="pattern_label_end_x">Eindpositie X</string>
+    <string name="pattern_label_end_y">Eindpositie Y</string>
+    <string name="pattern_label_end_z">Eindpositie Z</string>
+    <string name="arc_label_radius">Straal</string>
+    <string name="arc_label_cutter_diameter">Freesdiameter</string>
+    <string name="arc_label_stepover">Zijdelingse stap</string>
+</resources>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the app frame. The file values/strings_app.xml has the same names. -->
+<resources>
+    <string name="app_name">SuperDRO</string>
+    <string name="app_no_machine_online">Aucune machine n’est en ligne</string>
+    <string name="app_add_machine">Ajouter une machine</string>
+    <string name="app_settings">Paramètres</string>
+    <string name="app_more_options">Plus d’options</string>
+    <string name="app_menu_about">À propos</string>
+    <string name="app_menu_logs">Journaux</string>
+    <string name="app_menu_machine_profiles">Profils de machine</string>
+    <string name="app_menu_remembered_machines">Machines mémorisées</string>
+    <string name="app_menu_adapters">Adaptateurs</string>
+    <string name="app_menu_probe_library">Bibliothèque de palpeurs</string>
+    <string name="app_menu_data_output">Sortie de données</string>
+    <string name="app_menu_disconnect_all">Tout déconnecter</string>
+    <string name="app_status_connected">Connecté</string>
+    <string name="app_status_connecting">Connexion</string>
+    <string name="app_status_awaiting_data">En attente de données</string>
+    <string name="app_status_no_data">Aucune donnée</string>
+    <string name="app_status_reconnecting">Reconnexion (%1$d)</string>
+    <string name="app_status_waiting_for_device">En attente de l’appareil</string>
+    <string name="app_status_failed">Échec</string>
+    <string name="app_status_offline">Hors ligne</string>
+    <string name="app_cause_bluetooth_off">Bluetooth désactivé</string>
+    <string name="app_cause_unplugged">Débranché</string>
+    <string name="app_cause_no_network">Aucun réseau</string>
+    <string name="app_cause_permission_missing">Autorisation requise</string>
+    <string name="app_cause_connect_failed">Échec de la connexion</string>
+    <string name="app_cause_link_lost">Liaison perdue</string>
+    <string name="app_could_not_restore_link">Impossible de rétablir la liaison</string>
+    <string name="app_link_bluetooth">Bluetooth</string>
+    <string name="app_link_usb">USB</string>
+    <string name="app_link_wifi">Wi-Fi</string>
+    <string name="app_link_demo">Démo</string>
+    <plurals name="app_remembered_machines">
+        <item quantity="one">%1$d machine mémorisée</item>
+        <item quantity="other">%1$d machines mémorisées</item>
+    </plurals>
+</resources>

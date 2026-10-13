@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the connection sessions: the restart sequence, the identity check, and the adapter restart. -->
+<resources>
+    <string name="connection_restart_failed_title">Restart failed</string>
+    <string name="connection_restart_failed">Could not restart the adapter. Turn the adapter power off and on.</string>
+    <string name="connection_identity_differs">The adapter on this link is not the adapter of this machine profile.</string>
+    <string name="connection_adapter_restarted">The adapter restarted. The machine datums and the error maps can need a new reference.</string>
+</resources>

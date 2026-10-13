@@ -1,0 +1,4 @@
+﻿# units: MM
+name,note,tags,x,z
+Shoulder,,,12.5,-30.0
+Groove,2 mm groove,groove,"10,0",-45.5

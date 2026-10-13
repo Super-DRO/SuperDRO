@@ -1,0 +1,6 @@
+z,tags,name,extra,x,y,note
+,a b  c,Multi tag,ignored,1.5,,note one
+,,,,2,3,
+-1,,Bad number,,abc,1,
+,,Guide,,,0.75,
+-0.5,,Guide,,,,

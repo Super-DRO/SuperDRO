@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The common texts of the settings screens. -->
+<resources>
+    <string name="settings_help">Hulp</string>
+    <string name="settings_close">Sluiten</string>
+    <string name="settings_cancel">Annuleren</string>
+    <string name="settings_not_set">Niet ingesteld</string>
+    <string name="settings_undo">Ongedaan maken</string>
+    <string name="settings_delete">Verwijderen</string>
+    <string name="settings_help_of">Hulp: %1$s</string>
+</resources>

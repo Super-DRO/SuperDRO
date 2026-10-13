@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the camera screens of core:ui. -->
+<resources>
+    <string name="camera_ui_status_off">Vídeo desligado</string>
+    <string name="camera_ui_status_starting">O vídeo está iniciando</string>
+    <string name="camera_ui_status_on">Vídeo ligado</string>
+    <string name="camera_ui_status_detail">Vídeo ligado: %1$d × %2$d, %3$s fps</string>
+    <string name="camera_ui_status_detail_no_fps">Vídeo ligado: %1$d × %2$d</string>
+    <string name="camera_ui_play">Iniciar o vídeo</string>
+    <string name="camera_ui_stop">Parar o vídeo</string>
+    <string name="camera_ui_crosshairs">Mira</string>
+    <string name="camera_ui_show_crosshairs">Mostrar a mira</string>
+    <string name="camera_ui_dim">Meia opacidade</string>
+    <string name="camera_ui_view_lock">Travar a vista na mira</string>
+    <string name="camera_ui_scale_known">Distância conhecida</string>
+    <string name="camera_ui_scale_move">Movimento da máquina</string>
+    <string name="camera_ui_rotation">Rotação da imagem %1$s°</string>
+    <string name="camera_ui_distance_mm">Distância entre os dois pontos (mm)</string>
+    <string name="camera_ui_distance_in">Distância entre os dois pontos (pol)</string>
+    <string name="camera_ui_needs_video">Inicie o vídeo primeiro.</string>
+    <string name="camera_ui_point_title">Ponto na mira</string>
+    <string name="camera_ui_no_camera_probe">Nenhum perfil de apalpador tem o tipo Câmera ou microscópio. Adicione um na biblioteca de apalpadores.</string>
+    <string name="camera_ui_chip_description">Abrir a tela da câmera</string>
+    <string name="camera_ui_progress">Progresso do teste</string>
+    <string name="camera_ui_loading">Lendo a câmera…</string>
+    <string name="camera_ui_mode_good">Vídeo correto</string>
+    <string name="camera_ui_mode_bad">Sem vídeo</string>
+    <string name="camera_ui_calibrating">Escala da imagem: toque no vídeo</string>
+</resources>

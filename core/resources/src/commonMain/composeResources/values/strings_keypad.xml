@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the keypad sheet, the divisions keypad, and the preset sheet. -->
+<resources>
+    <string name="keypad_title">Set %1$s</string>
+    <string name="keypad_mode_absolute">Absolute</string>
+    <string name="keypad_mode_incremental">Incremental</string>
+    <string name="keypad_current">Current: %1$s %2$s</string>
+    <string name="keypad_result">Result: %1$s %2$s</string>
+    <string name="keypad_expression">Value or expression</string>
+    <string name="keypad_set">Set</string>
+    <string name="keypad_clear">Clear</string>
+    <string name="keypad_backspace">Delete the last character</string>
+    <string name="keypad_relative_add">Add to the current value</string>
+    <string name="keypad_relative_subtract">Subtract from the current value</string>
+    <string name="keypad_divisions_title">Divisions per revolution</string>
+    <string name="keypad_divisions_invalid">Enter a whole number of 1 or more.</string>
+    <string name="keypad_presets_title">Select the RPM</string>
+</resources>

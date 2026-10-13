@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the keypad sheet, the divisions keypad, and the preset sheet. The file values/strings_keypad.xml has the same names. -->
+<resources>
+    <string name="keypad_title">%1$s setzen</string>
+    <string name="keypad_mode_absolute">Absolut</string>
+    <string name="keypad_mode_incremental">Inkrementell</string>
+    <string name="keypad_current">Aktuell: %1$s %2$s</string>
+    <string name="keypad_result">Ergebnis: %1$s %2$s</string>
+    <string name="keypad_expression">Wert oder Ausdruck</string>
+    <string name="keypad_set">Setzen</string>
+    <string name="keypad_clear">Löschen</string>
+    <string name="keypad_backspace">Letztes Zeichen löschen</string>
+    <string name="keypad_relative_add">Zum aktuellen Wert addieren</string>
+    <string name="keypad_relative_subtract">Vom aktuellen Wert abziehen</string>
+    <string name="keypad_divisions_title">Teilungen pro Umdrehung</string>
+    <string name="keypad_divisions_invalid">Geben Sie eine ganze Zahl ab 1 ein.</string>
+    <string name="keypad_presets_title">Drehzahl wählen</string>
+</resources>

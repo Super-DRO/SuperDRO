@@ -1,0 +1,16 @@
+libusb 1.0.30 in SuperDRO
+
+Source: https://github.com/libusb/libusb
+Tag: v1.0.30
+Commit: 87a55632db62c9bdc58cd31d3ccfa673f1bb017f
+License: GNU Lesser General Public License, version 2.1 or later (COPYING)
+
+This directory has the files of the tag that the Android build needs: the
+core, the Linux usbfs back end, the POSIX events and threads, and
+android/config.h. SuperDRO does not change these files.
+
+The build makes the separate shared library libusb1.0.so from these files
+(platform/android/camera/src/main/cpp/CMakeLists.txt). The library
+libsuperdro_uvc.so links to it dynamically. Thus a user can build a changed
+libusb from this source, or from a different libusb version with the same
+API, and put it in place of libusb1.0.so (LGPL 2.1, section 6).

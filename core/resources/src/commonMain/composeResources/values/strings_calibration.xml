@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the calibration wizard of an adapter input. The check texts and the edge names are in strings_readout_core.xml. -->
+<resources>
+    <string name="calibration_title">Calibrate %1$s</string>
+    <string name="calibration_axis">Axis %1$s</string>
+    <string name="calibration_no_axis">No axis uses this input</string>
+    <string name="calibration_procedure_linear">Linear calibration with a gauge block</string>
+    <string name="calibration_procedure_angular">Angular calibration with 5 revolutions</string>
+    <string name="calibration_live_count">Current count</string>
+    <string name="calibration_block_title">Size of the calibration block</string>
+    <string name="calibration_block_text">Type the true size of the gauge block. If you touch the two outer faces with an edge finder, add the diameter of the stylus.</string>
+    <string name="calibration_block_size">Block size</string>
+    <string name="calibration_unit">Unit</string>
+    <string name="calibration_unit_mm">mm</string>
+    <string name="calibration_unit_inch">in</string>
+    <string name="calibration_continue">Continue</string>
+    <string name="calibration_retry">Retry</string>
+    <string name="calibration_apply">Apply</string>
+    <string name="calibration_discard">Discard</string>
+    <string name="calibration_first_edge_title">First edge</string>
+    <string name="calibration_second_edge_title">Second edge</string>
+    <string name="calibration_edge_text">Move the axis to the %1$s edge of the block. Then push Continue.</string>
+    <string name="calibration_first_position_title">First position</string>
+    <string name="calibration_first_position_text">Turn the axis to the 0° position. Then push Continue.</string>
+    <string name="calibration_second_position_title">Second position</string>
+    <string name="calibration_second_position_text">Turn the axis clockwise exactly 5 full revolutions. Then push Continue.</string>
+    <string name="calibration_sampling_title">Reading the input</string>
+    <string name="calibration_sampling_text">Do not move the axis. The app reads the input for up to 15 seconds.</string>
+    <string name="calibration_sampling_progress">%1$d s of %2$d s, %3$d readings</string>
+    <string name="calibration_progress_description">Reading progress: %1$d of %2$d seconds</string>
+    <string name="calibration_result_title">Calibration result</string>
+    <string name="calibration_result_linear">Resolution: %1$s counts per inch (%2$s µm for each count)</string>
+    <string name="calibration_result_angular">Resolution: %1$s counts per revolution (%2$s° for each count)</string>
+    <string name="calibration_result_direction_normal">Direction: normal. The count goes up from the first position to the second position.</string>
+    <string name="calibration_result_direction_reversed">Direction: reversed. The count goes down from the first position to the second position. Apply sets the reverse direction.</string>
+    <string name="calibration_result_apply_note">Apply writes the resolution, the direction, and the status Calibrated to the encoder settings of %1$s. Discard writes nothing.</string>
+    <string name="calibration_saved">The calibration of %1$s is saved.</string>
+    <string name="calibration_save_failed">The calibration was not saved. The adapter profile is not in the store.</string>
+    <string name="calibration_block_required_detail">Type a block size that is more than 0.</string>
+    <string name="calibration_block_too_small_text">A longer block gives a more accurate result. Use a block %1$s long. Push Continue to use this block.</string>
+    <string name="calibration_no_reading_detail">The app got no reading from %1$s. Make sure that the input is connected and that its mode sends counts.</string>
+    <string name="calibration_too_few_detail">The app got %1$d readings from %2$s. It needs %3$d or more. Push Retry to read the input again.</string>
+    <string name="calibration_jitter_detail">The readings changed by %1$s counts while the axis did not move. Hold the axis still and push Retry.</string>
+    <string name="calibration_too_close_detail">The two positions are less than %1$d counts apart. Move the axis to the second position, then push Retry.</string>
+    <string name="calibration_link_lost">Link stopped</string>
+    <string name="calibration_link_lost_detail">The link to the adapter stopped during the reading. Wait for the link, then push Retry.</string>
+    <string name="calibration_no_adapter">This machine profile has no adapter profile. Connect the adapter and make its adapter profile first.</string>
+    <string name="calibration_tach_input">The tachometer input has no calibration. Set its pulses for each revolution in the adapter details.</string>
+    <string name="calibration_disabled_input">The kind of this input is Disabled. Select Linear or Angular in the encoder settings first.</string>
+</resources>

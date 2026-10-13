@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the drawing area. The file values/strings_drawing.xml has the same names. -->
+<resources>
+    <string name="drawing_not_a_drawing">Diese Datei ist keine Zeichnung, die SuperDRO öffnen kann.</string>
+    <string name="drawing_too_large">Diese Zeichnung ist zu groß für SuperDRO (über 2 MB).</string>
+    <string name="drawing_no_shapes">SuperDRO hat in dieser Zeichnung keine Linien, Bögen oder Kurven zum Importieren gefunden.</string>
+    <string name="drawing_reading">Zeichnung wird gelesen…</string>
+    <string name="drawing_converting">Zeichnung wird konvertiert…</string>
+    <string name="drawing_not_imported_title">Zeichnung nicht importiert</string>
+    <string name="drawing_not_imported_message">SuperDRO konnte diese Zeichnung nicht importieren.</string>
+    <string name="drawing_technical_details">Technische Details</string>
+    <string name="drawing_problems_explanation">Die Datei hat Probleme, die den Import verhindern. Es wurde nichts geändert. Wenn Sie die Datei nicht bearbeiten können, geben Sie diese Liste an die Person weiter, die sie erstellt hat.</string>
+    <string name="drawing_done">Fertig</string>
+    <string name="drawing_layer_unnamed">Ebene %1$d</string>
+    <string name="drawing_delete_title">Zeichnung löschen?</string>
+    <string name="drawing_delete_message">Die Zeichnung wird aus dem Arbeitsbereich entfernt. Für einen erneuten Import brauchen Sie die Datei wieder, und Sie müssen die Zeichnung neu platzieren. Daraus erstellte Unternullpunkte bleiben erhalten.</string>
+    <string name="drawing_delete_shape_title">Geometrie löschen?</string>
+    <string name="drawing_delete_shape_message">Möchten Sie dieses Element (%1$s) wirklich entfernen?</string>
+    <string name="drawing_export_button">In DXF-Datei exportieren</string>
+    <string name="drawing_export_title">Nach DXF exportieren</string>
+    <string name="drawing_export_save_title">DXF speichern</string>
+    <string name="drawing_export_no_workspace">Es ist kein Arbeitsbereich zum Exportieren geöffnet.</string>
+    <string name="drawing_export_hidden_layers">Ausgeblendete Ebenen einschließen</string>
+    <string name="drawing_tool_geometry_title_import">Schneidengeometrie importieren</string>
+    <string name="drawing_tool_geometry_title">Schneidengeometrie</string>
+    <string name="drawing_tool_geometry_attach">Anhängen</string>
+    <string name="drawing_tool_geometry_drawn_in">Gezeichnet in</string>
+    <string name="drawing_tool_geometry_not_defined">Nicht definiert</string>
+    <string name="drawing_tool_geometry_import">Schneidengeometrie aus einer Datei importieren</string>
+    <string name="drawing_tool_geometry_remove">Schneidengeometrie entfernen</string>
+    <string name="drawing_tool_geometry_size">%1$s × %2$s</string>
+    <string name="drawing_tool_geometry_too_many_items">Diese Zeichnung enthält viel zu viel, um ein Werkzeug zu sein. Vielleicht ist es eine Zeichnung des Werkstücks und nicht der Schneide.</string>
+    <string name="drawing_tool_geometry_unlikely_size">Die Größe unten sieht nicht nach einem Schneidwerkzeug aus. Prüfen Sie, in welchen Einheiten die Zeichnung erstellt wurde.</string>
+    <string name="drawing_tool_geometry_not_closed">Die Kontur ist nicht geschlossen. Das Werkzeug wird daher als Linienzeichnung statt als gefüllte Form angezeigt.</string>
+    <string name="drawing_tool_geometry_open_segments">Ein Teil dieser Kontur ist nicht verbunden. Der gefüllten Form fehlt dieser Teil des Werkzeugs.</string>
+    <string name="drawing_tool_geometry_origin_off_edge">Der Ursprung scheint nicht auf der Schneidkante zu liegen. Die X- und Z-Versätze werden von ihm aus gemessen.</string>
+    <string name="drawing_tool_geometry_no_units">Die Zeichnung gibt ihre Einheiten nicht an – prüfen Sie die Größe unten.</string>
+    <string name="drawing_tool_geometry_unreadable">Diese Zeichnung konnte nicht gelesen werden. Versuchen Sie, sie erneut zu importieren.</string>
+</resources>

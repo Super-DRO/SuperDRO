@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the keypad sheet, the divisions keypad, and the preset sheet. The file values/strings_keypad.xml has the same names. -->
+<resources>
+    <string name="keypad_title">Definir %1$s</string>
+    <string name="keypad_mode_absolute">Absoluto</string>
+    <string name="keypad_mode_incremental">Relativo</string>
+    <string name="keypad_current">Atual: %1$s %2$s</string>
+    <string name="keypad_result">Resultado: %1$s %2$s</string>
+    <string name="keypad_expression">Valor ou expressão</string>
+    <string name="keypad_set">Definir</string>
+    <string name="keypad_clear">Limpar</string>
+    <string name="keypad_backspace">Apagar o último caractere</string>
+    <string name="keypad_relative_add">Somar ao valor atual</string>
+    <string name="keypad_relative_subtract">Subtrair do valor atual</string>
+    <string name="keypad_divisions_title">Divisões por volta</string>
+    <string name="keypad_divisions_invalid">Digite um número inteiro de 1 ou mais.</string>
+    <string name="keypad_presets_title">Selecione a rotação</string>
+</resources>

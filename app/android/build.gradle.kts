@@ -1,0 +1,153 @@
+import org.superdro.composite.util.AndroidSdk
+import org.superdro.composite.util.configureOptIns
+import org.superdro.composite.util.projectVersionCode
+
+plugins {
+    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidBaseline)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
+}
+
+android {
+    namespace = "org.superdro.app.android"
+    compileSdk = AndroidSdk.COMPILE
+    // The native libraries of platform:android:camera (libusb, libuvc) need the same NDK.
+    ndkVersion = libs.versions.ndk.get()
+
+    defaultConfig {
+        applicationId = "org.superdro"
+        minSdk = AndroidSdk.MIN
+        targetSdk = AndroidSdk.TARGET
+        // From the project version (composite, resolveProjectVersion()).
+        versionCode = projectVersionCode(project.version.toString())
+        versionName = project.version.toString()
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        buildConfig = true
+        compose = true
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+
+        create("benchmark") {
+            isDebuggable = false
+            isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    testOptions {
+        // The JVM unit tests use only the parts with no Android type.
+        unitTests.isReturnDefaultValues = true
+    }
+
+    lint {
+        htmlReport = true
+        // The full lint runs on the debug variant through the `lint` task. The lint vital
+        // pass on each release variant examines the same sources again, so it is off.
+        checkReleaseBuilds = false
+    }
+
+    sourceSets {
+        // The manifest label reads @string/app_name. The copyStringRes task copies it from
+        // core:resources (see below).
+        getByName("main").res.directories.add(
+            project.layout.buildDirectory.dir("copiedRes").get().asFile.path
+        )
+        // The debug adapter is bound for each build type: src/debug imports the module of
+        // core:fake-adapter, src/release binds NoDebugAdapter. The benchmark type is a release
+        // build, so it uses the release copy.
+        getByName("benchmark").kotlin.directories.add("src/release/kotlin")
+    }
+}
+
+kotlin {
+    configureOptIns(material3 = true)
+}
+
+baselineProfile {
+    mergeIntoMain = true
+}
+
+dependencies {
+    implementation(projects.core.connection)
+    implementation(projects.core.debugAdapter)
+    implementation(projects.core.di)
+    implementation(projects.core.model)
+    implementation(projects.core.resources)
+    implementation(projects.core.store)
+    implementation(projects.core.ui)
+    implementation(projects.core.util)
+    implementation(projects.platform.android.bluetooth)
+    implementation(projects.platform.android.camera)
+    implementation(projects.platform.android.di)
+    implementation(projects.platform.android.network)
+    implementation(projects.platform.android.service)
+    implementation(projects.platform.android.store)
+    implementation(projects.platform.android.usb)
+
+    // The fake adapter gets into the debug APK only. A release build has no access to it at
+    // compile time, so the rule does not depend on R8.
+    debugImplementation(projects.core.fakeAdapter)
+
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core)
+    implementation(libs.arbor)
+    implementation(libs.arbor.android)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.kodein)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.core)
+
+    debugImplementation(libs.compose.ui.tooling)
+
+    // JVM unit tests of the parts with no Android type (no Robolectric).
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlin.testJunit)
+    testImplementation(libs.kotlinx.coroutines.test)
+
+    // The device tests on an emulator.
+    androidTestImplementation(projects.core.fakeAdapter)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.testExt.junit)
+    androidTestImplementation(libs.kotlin.test)
+    androidTestImplementation(libs.kotlin.testJunit)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+
+    baselineProfile(projects.app.android.baseline)
+}
+
+// Only the manifest label reads a string through Android resources. The code reads each string
+// through Compose Resources, which selects the locale itself. Thus only the base file of the app
+// frame is copied, not the values-* directories.
+val copyStringRes = tasks.register<Copy>("copyStringRes") {
+    from(rootProject.layout.projectDirectory.dir("core/resources/src/commonMain/composeResources/values")) {
+        include("strings_app.xml")
+    }
+    into(layout.buildDirectory.dir("copiedRes/values"))
+}
+
+tasks.named("preBuild") {
+    dependsOn(copyStringRes)
+}

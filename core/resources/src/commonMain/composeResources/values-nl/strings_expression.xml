@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The error texts of the expression evaluator. The file values/strings_expression.xml has the same names. -->
+<resources>
+    <string name="expression_error_invalid_token">Ongeldig teken \u0027%1$s\u0027</string>
+    <string name="expression_error_invalid_number">Ongeldig getal \u0027%1$s\u0027</string>
+    <string name="expression_error_undefined_function">Onbekende functie \u0027%1$s\u0027</string>
+    <string name="expression_error_undefined_variable">Onbekende variabele \u0027%1$s\u0027</string>
+    <string name="expression_error_invalid_assignment_target">Ongeldig doel voor toewijzing</string>
+    <string name="expression_error_expected_paren_after_arguments">\u0027)\u0027 verwacht na de functieargumenten</string>
+    <string name="expression_error_expected_paren_after_expression">\u0027)\u0027 verwacht na de expressie</string>
+    <string name="expression_error_expected_expression">Expressie verwacht</string>
+    <string name="expression_error_expected_expression_after">Expressie verwacht na \u0027%1$s\u0027</string>
+    <string name="expression_error_expected_end">Einde van de expressie verwacht</string>
+    <string name="expression_error_requires_one">%1$s vereist één argument</string>
+    <string name="expression_error_requires_at_least_one">%1$s vereist ten minste één argument</string>
+    <string name="expression_error_requires_one_or_two">%1$s vereist één of twee argumenten</string>
+    <string name="expression_error_requires_three">%1$s vereist drie argumenten</string>
+    <string name="expression_error_division_by_zero">Deling door nul</string>
+    <string name="expression_error_negative_base_fractional_exponent">Gebroken macht van een negatief getal</string>
+    <string name="expression_error_out_of_range">Waarde valt buiten het bereik</string>
+    <string name="expression_error_too_complex">Expressie is te complex</string>
+</resources>

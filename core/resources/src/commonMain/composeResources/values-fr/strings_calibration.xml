@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the calibration wizard of an adapter input. The check texts and the edge names are in strings_readout_core.xml. -->
+<resources>
+    <string name="calibration_title">Calibrer %1$s</string>
+    <string name="calibration_axis">Axe %1$s</string>
+    <string name="calibration_no_axis">Aucun axe n'utilise cette entrée</string>
+    <string name="calibration_procedure_linear">Étalonnage linéaire avec une cale étalon</string>
+    <string name="calibration_procedure_angular">Étalonnage angulaire sur 5 tours</string>
+    <string name="calibration_live_count">Comptage actuel</string>
+    <string name="calibration_block_title">Taille de la cale d'étalonnage</string>
+    <string name="calibration_block_text">Saisissez la taille réelle de la cale étalon. Si vous touchez les deux faces extérieures avec un palpeur d'arête, ajoutez le diamètre de la pointe.</string>
+    <string name="calibration_block_size">Taille de la cale</string>
+    <string name="calibration_unit">Unité</string>
+    <string name="calibration_unit_mm">mm</string>
+    <string name="calibration_unit_inch">po</string>
+    <string name="calibration_continue">Continuer</string>
+    <string name="calibration_retry">Réessayer</string>
+    <string name="calibration_apply">Appliquer</string>
+    <string name="calibration_discard">Abandonner</string>
+    <string name="calibration_first_edge_title">Première arête</string>
+    <string name="calibration_second_edge_title">Deuxième arête</string>
+    <string name="calibration_edge_text">Déplacez l'axe jusqu'à l'arête %1$s de la cale. Puis appuyez sur Continuer.</string>
+    <string name="calibration_first_position_title">Première position</string>
+    <string name="calibration_first_position_text">Tournez l'axe à la position 0°. Puis appuyez sur Continuer.</string>
+    <string name="calibration_second_position_title">Deuxième position</string>
+    <string name="calibration_second_position_text">Tournez l'axe dans le sens horaire de exactement 5 tours complets. Puis appuyez sur Continuer.</string>
+    <string name="calibration_sampling_title">Lecture de l'entrée</string>
+    <string name="calibration_sampling_text">Ne déplacez pas l'axe. L'application lit l'entrée pendant 15 secondes au maximum.</string>
+    <string name="calibration_sampling_progress">%1$d s sur %2$d s, %3$d lectures</string>
+    <string name="calibration_progress_description">Progression de la lecture : %1$d sur %2$d secondes</string>
+    <string name="calibration_result_title">Résultat de l'étalonnage</string>
+    <string name="calibration_result_linear">Résolution : %1$s comptages par pouce (%2$s µm par comptage)</string>
+    <string name="calibration_result_angular">Résolution : %1$s comptages par tour (%2$s° par comptage)</string>
+    <string name="calibration_result_direction_normal">Sens : normal. Le comptage augmente de la première position à la deuxième.</string>
+    <string name="calibration_result_direction_reversed">Sens : inversé. Le comptage diminue de la première position à la deuxième. Appliquer règle le sens inverse.</string>
+    <string name="calibration_result_apply_note">Appliquer écrit la résolution, le sens et l'état Étalonné dans les réglages du codeur de %1$s. Abandonner n'écrit rien.</string>
+    <string name="calibration_saved">L'étalonnage de %1$s est enregistré.</string>
+    <string name="calibration_save_failed">L'étalonnage n'est pas enregistré. Le profil de l'adaptateur n'est pas dans le stockage.</string>
+    <string name="calibration_block_required_detail">Saisissez une taille de cale supérieure à 0.</string>
+    <string name="calibration_block_too_small_text">Une cale plus longue donne un résultat plus précis. Utilisez une cale de %1$s de long. Appuyez sur Continuer pour utiliser cette cale.</string>
+    <string name="calibration_no_reading_detail">L'application n'a reçu aucune lecture de %1$s. Vérifiez que l'entrée est connectée et que son mode envoie des comptages.</string>
+    <string name="calibration_too_few_detail">L'application a reçu %1$d lectures de %2$s. Il lui en faut %3$d ou plus. Appuyez sur Réessayer pour lire l'entrée à nouveau.</string>
+    <string name="calibration_jitter_detail">Les lectures ont varié de %1$s comptages alors que l'axe ne bougeait pas. Gardez l'axe immobile et appuyez sur Réessayer.</string>
+    <string name="calibration_too_close_detail">Les deux positions sont à moins de %1$d comptages l'une de l'autre. Déplacez l'axe à la deuxième position, puis appuyez sur Réessayer.</string>
+    <string name="calibration_link_lost">Liaison arrêtée</string>
+    <string name="calibration_link_lost_detail">La liaison avec l'adaptateur s'est arrêtée pendant la lecture. Attendez la liaison, puis appuyez sur Réessayer.</string>
+    <string name="calibration_no_adapter">Ce profil de machine n'a pas de profil d'adaptateur. Connectez l'adaptateur et créez d'abord son profil d'adaptateur.</string>
+    <string name="calibration_tach_input">L'entrée du tachymètre n'a pas d'étalonnage. Réglez ses impulsions par tour dans les détails de l'adaptateur.</string>
+    <string name="calibration_disabled_input">Le type de cette entrée est Désactivé. Sélectionnez d'abord Linéaire ou Angulaire dans les réglages du codeur.</string>
+</resources>

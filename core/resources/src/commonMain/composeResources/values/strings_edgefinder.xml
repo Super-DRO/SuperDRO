@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder screen and of the automatic Z reference. -->
+<resources>
+    <string name="edgefinder_title">Indicate Workpiece</string>
+    <string name="edgefinder_edge_left">Left</string>
+    <string name="edgefinder_edge_right">Right</string>
+    <string name="edgefinder_edge_near">Near</string>
+    <string name="edgefinder_edge_far">Far</string>
+    <string name="edgefinder_edge_description">%1$s edge: %2$s</string>
+    <string name="edgefinder_state_unknown">Not set</string>
+    <string name="edgefinder_state_scanning">Waiting for contact</string>
+    <string name="edgefinder_state_located">Located</string>
+    <string name="edgefinder_auto">AUTO</string>
+    <string name="edgefinder_auto_description">Automatic edge finder</string>
+    <string name="edgefinder_on">On</string>
+    <string name="edgefinder_off">Off</string>
+    <string name="edgefinder_camera_center">Use the point under the crosshairs</string>
+    <string name="edgefinder_camera_center_clear">Clear the center</string>
+    <string name="edgefinder_axis_title">%1$s axis</string>
+    <string name="edgefinder_external">External</string>
+    <string name="edgefinder_internal">Internal</string>
+    <string name="edgefinder_center">Center</string>
+    <string name="edgefinder_origin">Origin</string>
+    <string name="edgefinder_absolute">Absolute</string>
+    <string name="edgefinder_incremental">Incremental</string>
+    <string name="edgefinder_set_origin">Set Origin</string>
+    <string name="edgefinder_add_sub_datum">Add Sub-Datum</string>
+    <string name="edgefinder_add_sub_datum_hint">Long press: add and keep the edges</string>
+    <string name="edgefinder_cancel">Cancel</string>
+    <string name="edgefinder_z_position">Z position</string>
+    <string name="edgefinder_z_arm">Arm</string>
+    <string name="edgefinder_z_arm_description">Arm the probe to capture the Z position</string>
+    <string name="edgefinder_armed">Armed</string>
+    <string name="edgefinder_sync">Sync</string>
+    <string name="edgefinder_not_connected">SuperDRO is not connected. Positions cannot be captured until it reconnects.</string>
+    <string name="edgefinder_probe">Probe</string>
+    <string name="edgefinder_no_probe">No probe selected</string>
+    <string name="edgefinder_no_probe_hint">Choose which instrument this function measures with</string>
+    <string name="edgefinder_new_probe">New profile…</string>
+    <string name="edgefinder_probe_type_touch">Touch probe</string>
+    <string name="edgefinder_probe_type_edge">2D edge finder</string>
+    <string name="edgefinder_probe_type_setter">Tool height setter</string>
+    <string name="edgefinder_probe_type_camera">Camera</string>
+    <string name="edgefinder_undo_origin">Origin set</string>
+    <string name="edgefinder_sub_datum_added">%1$s added</string>
+    <string name="edgefinder_zauto_title">Automatic Z reference</string>
+    <string name="edgefinder_zauto_button">Auto</string>
+    <string name="edgefinder_zauto_armed">Armed: touch the setter with the tool</string>
+    <string name="edgefinder_zauto_setter_height">Setter height: %1$s %2$s</string>
+    <string name="edgefinder_zauto_profile">Z reference probe</string>
+    <string name="edgefinder_zauto_undo">Z reference set</string>
+    <string name="edgefinder_zauto_no_port">The selected probe has no trigger input.</string>
+</resources>

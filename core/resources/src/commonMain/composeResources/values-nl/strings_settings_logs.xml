@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The log screen and the record of the byte stream. -->
+<resources>
+    <string name="settings_logs_empty">Geen logregels</string>
+    <string name="settings_logs_tab_lines">Logregels</string>
+    <string name="settings_logs_tab_record">Opname van de bytestroom</string>
+    <string name="settings_logs_filter_all">Alles</string>
+    <string name="settings_logs_filter_app">Applicatie</string>
+    <string name="settings_logs_filter_description">De regels van %1$s tonen</string>
+    <string name="settings_logs_export">Exporteren</string>
+    <string name="settings_logs_clear">Wissen</string>
+    <string name="settings_logs_level_debug">Foutopsporing</string>
+    <string name="settings_logs_level_info">Informatie</string>
+    <string name="settings_logs_level_warning">Waarschuwing</string>
+    <string name="settings_logs_level_error">Fout</string>
+    <string name="settings_logs_line_count">Regels: %1$d</string>
+    <string name="settings_logs_note">De applicatie bewaart de nieuwste regels van elke machine alleen zolang hij draait.</string>
+    <string name="settings_logs_exported">Het bestand is klaar om te delen.</string>
+    <string name="settings_logs_no_share">Geen applicatie kan het bestand ontvangen.</string>
+    <string name="settings_logs_record_title">De bytestroom opnemen</string>
+    <string name="settings_logs_record_note">Een optie voor foutopsporing. De sessie schrijft elk ontvangen blok met de aankomsttijd naar een bestand. De opname begint met een nieuwe verbinding: de schakelaar sluit de verbinding en opent hem opnieuw.</string>
+    <string name="settings_logs_record_paused">De machine is gepauzeerd. Verbind hem eerst.</string>
+    <string name="settings_logs_record_no_session">Geen machine heeft een sessie.</string>
+    <string name="settings_logs_records_title">Opgenomen verbindingen</string>
+    <string name="settings_logs_records_empty">Geen opgenomen verbinding</string>
+    <string name="settings_logs_record_link">%1$s, verbinding %2$d</string>
+    <string name="settings_logs_record_detail">Start %1$s. Bytes: %2$d. Blokken: %3$d.</string>
+    <string name="settings_logs_record_open">Opname bezig</string>
+    <string name="settings_logs_record_closed">Gesloten</string>
+    <string name="settings_logs_record_truncated">De kopie in de applicatie stopt bij %1$d bytes. Het bestand van de applicatie heeft de volledige stroom.</string>
+    <string name="settings_logs_export_record_description">%1$s exporteren</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the integration of the UI areas. -->
+<resources>
+    <string name="integration_tool_geometry_defined">Definiert</string>
+    <string name="integration_tool_geometry_open">Schneidengeometrie</string>
+    <string name="integration_tool_geometry_save_first">Speichern Sie zuerst das Werkzeug. Fügen Sie dann die Schneidengeometrie hinzu.</string>
+    <string name="integration_settings_profile_file_summary">Exportieren Sie dieses Profil in eine Datei oder importieren Sie eine Profildatei.</string>
+    <string name="integration_calibration_adapter_missing">Das Adapterprofil dieses Maschinenprofils fehlt. Verbinden Sie den Adapter oder wählen Sie ein Adapterprofil im Bildschirm Adapter aus.</string>
+    <string name="integration_calibration_no_axis">Keine Achse braucht eine Kalibrierung.</string>
+    <string name="integration_calibration_opening">Die Kalibrierung des Achseingangs wird geöffnet…</string>
+    <string name="integration_add_device_rfcomm_hint">Binden Sie den Adapter unter Linux zuerst an eine serielle Schnittstelle, zum Beispiel: sudo rfcomm bind 0 &lt;MAC-Adresse&gt;. Wählen Sie dann die Schnittstelle /dev/rfcomm0.</string>
+</resources>

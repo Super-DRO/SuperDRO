@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The log screen and the record of the byte stream. -->
+<resources>
+    <string name="settings_logs_empty">No log lines</string>
+    <string name="settings_logs_tab_lines">Log lines</string>
+    <string name="settings_logs_tab_record">Byte stream record</string>
+    <string name="settings_logs_filter_all">All</string>
+    <string name="settings_logs_filter_app">App</string>
+    <string name="settings_logs_filter_description">Show the lines of %1$s</string>
+    <string name="settings_logs_export">Export</string>
+    <string name="settings_logs_clear">Clear</string>
+    <string name="settings_logs_level_debug">Debug</string>
+    <string name="settings_logs_level_info">Information</string>
+    <string name="settings_logs_level_warning">Warning</string>
+    <string name="settings_logs_level_error">Error</string>
+    <string name="settings_logs_line_count">Lines: %1$d</string>
+    <string name="settings_logs_note">The app keeps the newest lines of each machine only while it runs.</string>
+    <string name="settings_logs_exported">The file is ready to share.</string>
+    <string name="settings_logs_no_share">No app can receive the file.</string>
+    <string name="settings_logs_record_title">Record the byte stream</string>
+    <string name="settings_logs_record_note">A debug option. The session writes each received chunk with its arrival time to a file. The record starts with a new link: the switch closes the link and opens it again.</string>
+    <string name="settings_logs_record_paused">The machine is paused. Connect it first.</string>
+    <string name="settings_logs_record_no_session">No machine has a session.</string>
+    <string name="settings_logs_records_title">Recorded links</string>
+    <string name="settings_logs_records_empty">No recorded link</string>
+    <string name="settings_logs_record_link">%1$s, link %2$d</string>
+    <string name="settings_logs_record_detail">Start %1$s. Bytes: %2$d. Chunks: %3$d.</string>
+    <string name="settings_logs_record_open">Recording</string>
+    <string name="settings_logs_record_closed">Closed</string>
+    <string name="settings_logs_record_truncated">The copy in the app stops at %1$d bytes. The file of the app has the full stream.</string>
+    <string name="settings_logs_export_record_description">Export %1$s</string>
+</resources>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the data output. The file values/strings_data_output.xml has the same names. -->
+<resources>
+    <string name="data_output_title">Saída de dados</string>
+    <string name="data_output_enable">Enviar os valores ao vivo para a rede</string>
+    <string name="data_output_start">Iniciar a saída de dados</string>
+    <string name="data_output_stop">Parar a saída de dados</string>
+
+    <string name="data_output_security">Modo de segurança</string>
+    <string name="data_output_security_psk">Criptografado (PSK)</string>
+    <string name="data_output_security_plain">Texto simples (compatível com TouchDRO)</string>
+    <string name="data_output_warning_trusted">Use somente em redes confiáveis</string>
+    <string name="data_output_warning_plain">O modo de texto simples não tem criptografia nem controle de acesso. Qualquer dispositivo que alcance o tablet pode ler as posições da máquina.</string>
+    <string name="data_output_warning_mqtt_no_tls">Uma conexão com o broker sem TLS não tem criptografia. Qualquer dispositivo no caminho da rede pode ler as posições da máquina e a senha do broker.</string>
+    <string name="data_output_warning_confirm">Usar este modo</string>
+    <string name="data_output_warning_cancel">Cancelar</string>
+
+    <string name="data_output_psk_key">Chave</string>
+    <string name="data_output_psk_copy">Copiar a chave</string>
+    <string name="data_output_psk_new">Criar uma nova chave</string>
+    <string name="data_output_psk_new_warning">Uma nova chave invalida a chave antiga. Entregue a nova chave a cada cliente.</string>
+    <string name="data_output_psk_caution">Mantenha a chave em segredo. Qualquer dispositivo com a chave pode ler as posições da máquina.</string>
+
+    <string name="data_output_interface">Interface de rede</string>
+    <string name="data_output_interface_wifi">Wi-Fi</string>
+    <string name="data_output_interface_localhost">Somente este tablet (localhost)</string>
+    <string name="data_output_interface_vpn">VPN</string>
+    <string name="data_output_interface_usb_ethernet">Ethernet USB</string>
+    <string name="data_output_interface_all">Todas as interfaces</string>
+    <string name="data_output_warning_all_interfaces">Com todas as interfaces, qualquer rede do tablet pode alcançar o servidor. Use isso somente quando for necessário.</string>
+    <string name="data_output_port">Porta</string>
+
+    <string name="data_output_transport">Transporte</string>
+    <string name="data_output_transport_tcp">Servidor TCP</string>
+    <string name="data_output_transport_mqtt">Cliente MQTT</string>
+    <string name="data_output_activation">Ativação</string>
+    <string name="data_output_activation_on_demand">Sob demanda (chip da faixa de status)</string>
+    <string name="data_output_activation_always">Sempre ativa</string>
+
+    <string name="data_output_mqtt_host">Host do broker</string>
+    <string name="data_output_mqtt_port">Porta do broker</string>
+    <string name="data_output_mqtt_tls">Usar TLS</string>
+    <string name="data_output_mqtt_username">Nome de usuário</string>
+    <string name="data_output_mqtt_password">Senha</string>
+    <string name="data_output_mqtt_client_id">ID do cliente</string>
+    <string name="data_output_mqtt_machine">Nome da máquina no tópico</string>
+    <string name="data_output_mqtt_layout">Tópicos</string>
+    <string name="data_output_mqtt_layout_json">Um registro JSON em superdro/%1$s</string>
+    <string name="data_output_mqtt_layout_fields">Um tópico por campo em superdro/%1$s/…</string>
+
+    <string name="data_output_format">Formato</string>
+    <string name="data_output_format_delimited">Delimitado</string>
+    <string name="data_output_format_json">JSON</string>
+    <string name="data_output_delimiter">Delimitador</string>
+    <string name="data_output_delimiter_tab">Tabulação</string>
+    <string name="data_output_labels">Incluir os rótulos dos campos</string>
+    <string name="data_output_timestamp">Carimbo de data e hora</string>
+    <string name="data_output_timestamp_iso">ISO 8601 (UTC)</string>
+    <string name="data_output_timestamp_epoch">Tempo Unix (ms)</string>
+    <string name="data_output_distance_unit">Unidade de distância</string>
+    <string name="data_output_unit_inch">Polegada</string>
+    <string name="data_output_unit_mil">Milésimo (0,001 in)</string>
+    <string name="data_output_unit_millimeter">Milímetro</string>
+    <string name="data_output_unit_micron">Mícron</string>
+    <string name="data_output_unit_meter">Metro</string>
+    <string name="data_output_angle_unit">Unidade de ângulo</string>
+    <string name="data_output_unit_degrees">Graus decimais</string>
+    <string name="data_output_unit_dms">Graus, minutos, segundos</string>
+    <string name="data_output_unit_radians">Radianos</string>
+    <string name="data_output_precision">Casas decimais</string>
+
+    <string name="data_output_cadence">Quando enviar</string>
+    <string name="data_output_cadence_interval">Intervalo fixo</string>
+    <string name="data_output_cadence_change">Na mudança</string>
+    <string name="data_output_cadence_change_interval">Na mudança e por intervalo</string>
+    <string name="data_output_interval">Intervalo (ms)</string>
+    <string name="data_output_max_rate">Taxa máxima (Hz)</string>
+
+    <string name="data_output_fields">Campos</string>
+    <string name="data_output_field_label">Rótulo</string>
+    <string name="data_output_field_x_absolute">X absoluto</string>
+    <string name="data_output_field_x_incremental">X incremental</string>
+    <string name="data_output_field_x_feed_rate">Avanço de X</string>
+    <string name="data_output_field_y_absolute">Y absoluto</string>
+    <string name="data_output_field_y_incremental">Y incremental</string>
+    <string name="data_output_field_y_feed_rate">Avanço de Y</string>
+    <string name="data_output_field_z_absolute">Z absoluto</string>
+    <string name="data_output_field_z_incremental">Z incremental</string>
+    <string name="data_output_field_z_feed_rate">Avanço de Z</string>
+    <string name="data_output_field_angular_absolute">Ângulo absoluto</string>
+    <string name="data_output_field_angular_incremental">Ângulo incremental</string>
+    <string name="data_output_field_angular_feed_rate">Avanço angular</string>
+    <string name="data_output_field_spindle_rpm">Rotação do fuso (RPM)</string>
+    <string name="data_output_field_surface_speed">Velocidade de corte</string>
+    <string name="data_output_field_probe_1">Apalpador 1</string>
+    <string name="data_output_field_probe_2">Apalpador 2</string>
+    <string name="data_output_field_probe_1_trigger_x">Apalpador 1: disparo em X</string>
+    <string name="data_output_field_probe_1_trigger_y">Apalpador 1: disparo em Y</string>
+    <string name="data_output_field_probe_1_trigger_z">Apalpador 1: disparo em Z</string>
+    <string name="data_output_field_probe_1_trigger_dir_x">Apalpador 1: aproximação em X</string>
+    <string name="data_output_field_probe_1_trigger_dir_y">Apalpador 1: aproximação em Y</string>
+    <string name="data_output_field_probe_1_trigger_dir_z">Apalpador 1: aproximação em Z</string>
+    <string name="data_output_field_probe_1_trigger_time">Apalpador 1: hora do disparo</string>
+    <string name="data_output_field_probe_1_trigger_seq">Apalpador 1: número de disparos</string>
+    <string name="data_output_field_probe_1_trigger_feed">Apalpador 1: avanço de aproximação</string>
+
+    <string name="data_output_status_stopped">Parada</string>
+    <string name="data_output_status_starting">Iniciando</string>
+    <string name="data_output_status_ready">Aguardando clientes</string>
+    <string name="data_output_status_sending">Enviando</string>
+    <string name="data_output_status_warning">Problema</string>
+    <string name="data_output_listening">Escutando em %1$s</string>
+    <plurals name="data_output_clients">
+        <item quantity="one">%1$d cliente</item>
+        <item quantity="other">%1$d clientes</item>
+    </plurals>
+    <string name="data_output_broker">Broker MQTT %1$s</string>
+    <string name="data_output_not_running">A saída não está ativa.</string>
+
+    <string name="data_output_diagnostics_title">Problema na saída de dados</string>
+    <string name="data_output_problem">Problema: %1$s (há %2$s)</string>
+    <string name="data_output_last_success">Último registro entregue há %1$s</string>
+    <string name="data_output_no_delivery">Nenhum registro foi entregue desde o início.</string>
+    <string name="data_output_counts">%1$d enviados, %2$d com falha (%3$d por cento dos registros recentes falharam)</string>
+
+    <string name="data_output_error_bind">Não é possível escutar em %1$s: %2$s</string>
+    <string name="data_output_error_accept">O servidor parou: %1$s. Um novo servidor inicia em 5 s.</string>
+    <string name="data_output_error_no_address">A interface selecionada não tem endereço.</string>
+    <string name="data_output_error_port_taken">A saída de outra máquina usa a porta %1$d.</string>
+    <string name="data_output_error_handshake">O cliente %1$s não deu a chave correta.</string>
+    <string name="data_output_error_write">A gravação para o cliente %1$s falhou: %2$s</string>
+    <string name="data_output_error_broker">Não é possível alcançar o broker %1$s: %2$s</string>
+    <string name="data_output_error_auth">O broker %1$s recusou o nome de usuário ou a senha.</string>
+    <string name="data_output_error_tls">O handshake TLS com o broker %1$s falhou: %2$s</string>
+    <string name="data_output_error_lost">A conexão com o broker %1$s parou: %2$s</string>
+    <string name="data_output_error_publish">A publicação no broker %1$s falhou: %2$s</string>
+
+    <string name="data_output_test">Testar a conexão</string>
+    <string name="data_output_test_port_free">A porta %1$d está livre. Os clientes podem se conectar a %2$s.</string>
+    <string name="data_output_test_port_busy">A porta %1$d não está livre em %2$s: %3$s</string>
+    <string name="data_output_test_running">A saída está ativa em %1$s. Clientes: %2$d.</string>
+    <string name="data_output_test_broker_ok">O broker %1$s aceitou a conexão.</string>
+
+    <string name="data_output_label_length">Um rótulo deve ter de 1 a 32 caracteres.</string>
+    <string name="data_output_label_duplicate">Mais de um campo ativo tem o rótulo %1$s.</string>
+    <string name="data_output_label_character">Um rótulo não pode conter o caractere %1$s.</string>
+    <string name="data_output_label_reserved">Os rótulos timestamp e sequence não estão disponíveis.</string>
+</resources>

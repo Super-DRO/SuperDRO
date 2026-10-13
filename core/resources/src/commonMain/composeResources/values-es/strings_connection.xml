@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the connection sessions. The file values/strings_connection.xml has the same names. -->
+<resources>
+    <string name="connection_restart_failed_title">Error al reiniciar</string>
+    <string name="connection_restart_failed">No se pudo reiniciar el adaptador. Apague y encienda el adaptador.</string>
+    <string name="connection_identity_differs">El adaptador de esta conexión no es el adaptador de este perfil de máquina.</string>
+    <string name="connection_adapter_restarted">El adaptador se reinició. Los datums de la máquina y los mapas de error pueden necesitar una nueva referencia.</string>
+</resources>

@@ -1,0 +1,11 @@
+# touchdro: tools
+# format: 2
+# app: 3.32.00, Build 2026-09-20
+# exported: 2026-10-11 14:31:40
+# device: 6f1c2d4e-8a0b-4c55-9d3e-0b7a1e2f3c4d
+# profile-id: 2
+# profile: South Bend
+# machine: LATHE
+id,name,description,metric,internal,x_offset,z_offset
+4,Boring Bar,3/8 bar,no,yes,-0.125,0.375
+1,OD Turning,CCMT insert,no,no,0.0,0.0

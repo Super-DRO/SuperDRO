@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The background of the icon: backgroundDark of the SnapshotPB scheme. -->
+    <color name="ic_launcher_background">#101418</color>
+    <!-- The window background before Compose draws: the surface of the light scheme. -->
+    <color name="window_background">#FFFFFF</color>
+</resources>

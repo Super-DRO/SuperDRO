@@ -1,0 +1,37 @@
+{
+  "touchdro": "probe-profiles",
+  "format": 1,
+  "app": "3.32.00, Build 2026-09-20",
+  "exported": "2026-10-11 14:05:33",
+  "device": "6f1c2a9e-0d4b-4c1e-9a77-1b2c3d4e5f60",
+  "profile-id": 1,
+  "profile": "Bridgeport",
+  "excluded": "Plus activation, adapter settings, machine profile settings, sub-datums, tools, the built-in standard tips",
+  "profiles": [
+    {
+      "id": 7,
+      "type": "TOUCH_PROBE",
+      "name": "Touch probe 2 mm",
+      "input": "p",
+      "stylus-diameter": 1987.4,
+      "x-offset": 0,
+      "y-offset": 0,
+      "z-offset": 0,
+      "metric": true,
+      "effective-diameter": 1987.4,
+      "calibration-residual": 1.1,
+      "calibrated-on": "2026-10-11 13:58:02",
+      "sample-count": 3,
+      "max-spread": 20,
+      "calibration-session": "{\"format\":1,\"profile\":7,\"complete\":true, ... }",
+      "session-digest": "<64 lowercase hex digits: SHA-256 of the calibration-session string>"
+    },
+    {
+      "id": 9,
+      "type": "TOOL_HEIGHT_SETTER",
+      "name": "Tool setter 50.00 mm",
+      "z-offset": 50000,
+      "metric": true
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of core:readout (ReadoutText). The English texts must agree with ReadoutText.english. -->
+<resources>
+    <string name="readout_core_settings_same_prefix">Primary and secondary inputs can\u0027t use the same prefix</string>
+    <string name="readout_core_settings_one_axis_required">At least one output axis must be enabled</string>
+    <string name="readout_core_settings_sample_count_range">Number of edge finder samples must be a number between 1 and 10 (inclusive)</string>
+    <string name="readout_core_calibration_secondary_disabled">Secondary Input Disabled</string>
+    <string name="readout_core_calibration_prefix_missing">Input Prefix Missing</string>
+    <string name="readout_core_calibration_block_required">Block Size Required</string>
+    <string name="readout_core_calibration_block_too_small">Block Too Small</string>
+    <string name="readout_core_calibration_block_too_small_detail">at least 50.000 mm / 2.0000 in</string>
+    <string name="readout_core_calibration_no_reading">No Reading Received</string>
+    <string name="readout_core_calibration_sample_too_small">Reading Sample Too Small</string>
+    <string name="readout_core_calibration_jitter">Excessive Jitter Detected</string>
+    <string name="readout_core_calibration_too_close">Readings Too Close</string>
+    <string name="readout_core_edge_left">left</string>
+    <string name="readout_core_edge_right">right</string>
+    <string name="readout_core_edge_front">front</string>
+    <string name="readout_core_edge_back">back</string>
+    <string name="readout_core_edge_bottom">bottom</string>
+    <string name="readout_core_edge_top">top</string>
+    <string name="readout_core_edge_first">first</string>
+    <string name="readout_core_edge_second">second</string>
+    <string name="readout_core_tach_cant_set">Can\u0027t set RPM</string>
+    <string name="readout_core_state_error">Error</string>
+    <string name="readout_core_state_no_input">No input</string>
+    <string name="readout_core_map_too_many_points">The map has more than %1$d points.</string>
+    <string name="readout_core_map_malformed_line">Line %1$d is not a valid point.</string>
+    <string name="readout_core_map_no_points">The map has no points.</string>
+    <string name="readout_core_map_duplicate_position">Position %1$d occurs more than one time.</string>
+    <string name="readout_core_map_reversal">The corrected position goes back between positions %1$d and %2$d.</string>
+    <string name="readout_core_map_dead_band">The corrected position does not move between positions %1$d and %2$d.</string>
+    <string name="readout_core_map_negative_backlash">The backlash at position %1$d is negative (%2$d).</string>
+    <string name="readout_core_map_backlash_exceeds_turn">The backlash at position %1$d (%2$d) is not less than one screw turn (%3$d counts).</string>
+    <string name="readout_core_profile_backlash_map_not_allowed">A backlash map is available only for a leadscrew encoder.</string>
+</resources>

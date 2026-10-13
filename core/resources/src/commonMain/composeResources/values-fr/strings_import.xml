@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the import preview, the report screen, and the profile file screen. -->
+<resources>
+    <string name="import_title">Aperçu de l'importation</string>
+    <string name="import_reading">Lecture du fichier…</string>
+    <string name="import_writing">Importation…</string>
+    <string name="import_kind_tools">Fichier CSV d'outils</string>
+    <string name="import_kind_sub_datums">Fichier CSV de sous-datums</string>
+    <string name="import_kind_profile">Fichier de profil SuperDRO</string>
+    <string name="import_kind_tdset">Fichier de réglages TouchDRO (.tdset)</string>
+    <string name="import_provenance">Fichier %1$s du profil « %2$s », exporté le %3$s</string>
+    <string name="import_provenance_time">Fichier %1$s, exporté le %2$s</string>
+    <string name="import_operation">Opération d'importation</string>
+    <string name="import_op_update_matching">Mettre à jour les enregistrements correspondants et ajouter les autres lignes</string>
+    <string name="import_op_add_as_new">Ajouter chaque ligne comme nouvel enregistrement</string>
+    <string name="import_op_add_new_only">Ajouter seulement les points absents</string>
+    <string name="import_op_merge_matching">Ajouter toutes les lignes et mettre à jour les points présents</string>
+    <string name="import_op_replace_all">Supprimer tous les enregistrements, puis ajouter chaque ligne</string>
+    <string name="import_units">L'unité des nombres du fichier</string>
+    <string name="import_target">Importer dans</string>
+    <string name="import_target_new">Un nouveau profil</string>
+    <string name="import_target_this">Ce profil</string>
+    <string name="import_name">Nom du profil</string>
+    <string name="import_tab_import">À importer (%1$d)</string>
+    <string name="import_tab_skipped">Ignorées (%1$d)</string>
+    <string name="import_tab_warnings">Avertissements (%1$d)</string>
+    <string name="import_nothing">Aucune ligne.</string>
+    <string name="import_button">Importer (%1$d)</string>
+    <string name="import_action_add">Ajouter</string>
+    <string name="import_action_update">Mettre à jour</string>
+    <string name="import_action_unchanged">Aucun changement</string>
+    <string name="import_action_already_here">Déjà présent</string>
+    <string name="import_action_not_in_file">Absent du fichier</string>
+    <string name="import_action_skip">Ignorer</string>
+    <string name="import_row_problem">%1$s : %2$s</string>
+    <string name="import_row_point">X %1$s • Y %2$s • Z %3$s %4$s</string>
+    <string name="import_row_guide">Guide %1$s = %2$s %3$s</string>
+    <string name="import_row_setting">%1$s → %2$s</string>
+    <string name="import_row_setting_new">%1$s</string>
+    <string name="import_value_none">—</string>
+    <string name="import_profile_created">Le profil %1$s est créé. Réglages importés : %2$d.</string>
+    <string name="import_profile_updated">Réglages importés : %1$d. Profil : %2$s.</string>
+    <string name="import_probe_profile_name">Palpeur d'arête importé</string>
+    <string name="import_report_empty">Aucun rapport.</string>
+    <string name="import_report_share">Partager le rapport</string>
+    <string name="import_report_share_failed">Le menu de partage ne s'est pas ouvert.</string>
+    <string name="import_profile_title">Fichier de profil</string>
+    <string name="import_profile_export_title">Exporter les réglages de %1$s</string>
+    <string name="import_profile_export_text">Le fichier contient tous les réglages de ce profil de machine. Il ne contient ni espaces de travail, ni décalages, ni outils, ni datums machine, ni l'identité de l'appareil.</string>
+    <string name="import_profile_export">Exporter le fichier de profil</string>
+    <string name="import_profile_exported">Exporté : %1$s</string>
+    <string name="import_profile_export_failed">L'exportation n'a pas abouti.</string>
+    <string name="import_profile_import_title">Importer des réglages</string>
+    <string name="import_profile_import_text">Importez un fichier de profil SuperDRO ou un fichier de réglages TouchDRO (.tdset). Un aperçu montre chaque réglage avant l'importation. Vous choisissez le nom du profil.</string>
+    <string name="import_profile_import">Importer un fichier</string>
+</resources>

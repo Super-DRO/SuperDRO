@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the import preview, the report screen, and the profile file screen. -->
+<resources>
+    <string name="import_title">Import Preview</string>
+    <string name="import_reading">Reading the file…</string>
+    <string name="import_writing">Importing…</string>
+    <string name="import_kind_tools">Tool CSV file</string>
+    <string name="import_kind_sub_datums">Sub-datum CSV file</string>
+    <string name="import_kind_profile">SuperDRO profile file</string>
+    <string name="import_kind_tdset">TouchDRO settings file (.tdset)</string>
+    <string name="import_provenance">%1$s file of the profile “%2$s”, exported %3$s</string>
+    <string name="import_provenance_time">%1$s file, exported %2$s</string>
+    <string name="import_operation">Import operation</string>
+    <string name="import_op_update_matching">Update the matching records, and add the other rows</string>
+    <string name="import_op_add_as_new">Add each row as a new record</string>
+    <string name="import_op_add_new_only">Add only the points that are not here</string>
+    <string name="import_op_merge_matching">Add all rows, and update the points that are here</string>
+    <string name="import_op_replace_all">Delete all records, then add each row</string>
+    <string name="import_units">The unit of the numbers in the file</string>
+    <string name="import_target">Import into</string>
+    <string name="import_target_new">A new profile</string>
+    <string name="import_target_this">This profile</string>
+    <string name="import_name">Profile name</string>
+    <string name="import_tab_import">To import (%1$d)</string>
+    <string name="import_tab_skipped">Skipped (%1$d)</string>
+    <string name="import_tab_warnings">Warnings (%1$d)</string>
+    <string name="import_nothing">No rows.</string>
+    <string name="import_button">Import (%1$d)</string>
+    <string name="import_action_add">Add</string>
+    <string name="import_action_update">Update</string>
+    <string name="import_action_unchanged">No change</string>
+    <string name="import_action_already_here">Already here</string>
+    <string name="import_action_not_in_file">Not in the file</string>
+    <string name="import_action_skip">Skip</string>
+    <string name="import_row_problem">%1$s: %2$s</string>
+    <string name="import_row_point">X %1$s • Y %2$s • Z %3$s %4$s</string>
+    <string name="import_row_guide">Guide %1$s = %2$s %3$s</string>
+    <string name="import_row_setting">%1$s → %2$s</string>
+    <string name="import_row_setting_new">%1$s</string>
+    <string name="import_value_none">—</string>
+    <string name="import_profile_created">Profile %1$s is created. Imported settings: %2$d.</string>
+    <string name="import_profile_updated">Imported settings: %1$d. Profile: %2$s.</string>
+    <string name="import_probe_profile_name">Imported edge finder</string>
+    <string name="import_report_empty">No report.</string>
+    <string name="import_report_share">Share the report</string>
+    <string name="import_report_share_failed">The share sheet did not open.</string>
+    <string name="import_profile_title">Profile File</string>
+    <string name="import_profile_export_title">Export the settings of %1$s</string>
+    <string name="import_profile_export_text">The file holds all settings of this machine profile. It holds no workspaces, offsets, tools, machine datums, or device identity.</string>
+    <string name="import_profile_export">Export Profile File</string>
+    <string name="import_profile_exported">Exported: %1$s</string>
+    <string name="import_profile_export_failed">The export did not complete.</string>
+    <string name="import_profile_import_title">Import settings</string>
+    <string name="import_profile_import_text">Import a SuperDRO profile file, or a TouchDRO settings file (.tdset). A preview shows each setting before the import writes. You select the name of the profile.</string>
+    <string name="import_profile_import">Import a File</string>
+</resources>

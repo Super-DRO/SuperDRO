@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the integration of the UI areas. -->
+<resources>
+    <string name="integration_tool_geometry_defined">Defined</string>
+    <string name="integration_tool_geometry_open">Cutter geometry</string>
+    <string name="integration_tool_geometry_save_first">Save the tool first. Then add the cutter geometry.</string>
+    <string name="integration_settings_profile_file_summary">Export this profile to a file, or import a profile file.</string>
+    <string name="integration_calibration_adapter_missing">The adapter profile of this machine profile is missing. Connect the adapter, or select an adapter profile in the Adapters screen.</string>
+    <string name="integration_calibration_no_axis">No axis needs a calibration.</string>
+    <string name="integration_calibration_opening">Opening the calibration of the axis input…</string>
+    <string name="integration_add_device_rfcomm_hint">On Linux, bind the adapter to a serial port first, for example: sudo rfcomm bind 0 &lt;MAC address&gt;. Then select the port /dev/rfcomm0.</string>
+</resources>

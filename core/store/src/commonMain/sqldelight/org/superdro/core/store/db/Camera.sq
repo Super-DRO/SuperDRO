@@ -1,0 +1,57 @@
+-- The camera tables.
+--
+-- `camera_mode_result` holds the test result of each mode of each camera model (VID:PID). All
+-- machine profiles share it, and a profile delete keeps it. `camera_selection` holds the mode
+-- that a machine profile uses with a camera. A profile delete removes it.
+-- `calibration_json` is the typed JSON of the image scale (`CameraCalibration`), or NULL
+-- when the profile has no scale for the camera.
+
+import kotlin.Int;
+import kotlin.time.Instant;
+import org.superdro.core.model.CameraModeStatus;
+
+CREATE TABLE camera_mode_result (
+    vid_pid TEXT NOT NULL,
+    mode_key TEXT NOT NULL,
+    status TEXT AS CameraModeStatus NOT NULL,
+    width INTEGER AS Int NOT NULL,
+    height INTEGER AS Int NOT NULL,
+    codec TEXT NOT NULL,
+    measured_fps REAL,
+    updated_on TEXT AS Instant NOT NULL,
+    PRIMARY KEY (vid_pid, mode_key)
+);
+
+CREATE TABLE camera_selection (
+    profile_id TEXT NOT NULL REFERENCES machine_profile(id) ON DELETE CASCADE,
+    camera_key TEXT NOT NULL,
+    mode_key TEXT NOT NULL,
+    updated_on TEXT AS Instant NOT NULL,
+    calibration_json TEXT,
+    PRIMARY KEY (profile_id, camera_key)
+);
+
+selectModeResults:
+SELECT * FROM camera_mode_result WHERE vid_pid = ? ORDER BY mode_key;
+
+selectModeResult:
+SELECT * FROM camera_mode_result WHERE vid_pid = ? AND mode_key = ?;
+
+upsertModeResult:
+INSERT OR REPLACE INTO camera_mode_result (vid_pid, mode_key, status, width, height, codec, measured_fps, updated_on)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteModeResults:
+DELETE FROM camera_mode_result WHERE vid_pid = ?;
+
+selectSelections:
+SELECT * FROM camera_selection WHERE profile_id = ? ORDER BY updated_on DESC, camera_key;
+
+selectSelection:
+SELECT * FROM camera_selection WHERE profile_id = ? AND camera_key = ?;
+
+upsertSelection:
+INSERT OR REPLACE INTO camera_selection (profile_id, camera_key, mode_key, updated_on, calibration_json) VALUES (?, ?, ?, ?, ?);
+
+deleteSelection:
+DELETE FROM camera_selection WHERE profile_id = ? AND camera_key = ?;

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The values of the Demo launcher entry of the debug build. The label is not a string of
+      core:resources: it names a developer tool that no release build has.
+    -->
+    <string name="demo_launcher_label">SuperDRO Demo</string>
+
+    <!-- Green shows "test" beside the dark icon of the app. -->
+    <color name="demo_launcher_background">#2E7D32</color>
+</resources>

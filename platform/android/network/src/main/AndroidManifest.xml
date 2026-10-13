@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The network callbacks of NetworkTracker need ACCESS_NETWORK_STATE (a normal permission). The
+    manifest merger adds it to each app that uses this module. app:android declares INTERNET and
+    ACCESS_LOCAL_NETWORK itself.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+</manifest>

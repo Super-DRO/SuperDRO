@@ -1,0 +1,112 @@
+-- The undo copy of the last workspace transform.
+--
+-- Before a transform, the store keeps a copy of the stored data that the transform changes: the
+-- sub-datums with their tags, the guides, the drawing shapes, the reference image, and the
+-- absolute offsets. Each workspace has 0 or 1 copy. "Undo" writes the copy back in one
+-- transaction and removes it.
+--
+-- Each item of the copy is one row, so that no row is larger than the cursor window of Android
+-- (2 MB).
+--
+-- A later change of data that the copy restores removes the copy (the triggers below). Thus an
+-- undo never removes a change that the user made after the transform.
+
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.time.Instant;
+
+CREATE TABLE workspace_undo (
+    workspace_id TEXT NOT NULL PRIMARY KEY REFERENCES workspace(id) ON DELETE CASCADE,
+    label TEXT NOT NULL,
+    created_on TEXT AS Instant NOT NULL,
+    has_shapes INTEGER AS Boolean NOT NULL,
+    has_image INTEGER AS Boolean NOT NULL,
+    reference_image_json TEXT,
+    absolute_offsets_json TEXT
+);
+
+-- `kind` is SubDatum, Guide, or Shape. `item_json` is the typed item.
+CREATE TABLE workspace_undo_item (
+    workspace_id TEXT NOT NULL REFERENCES workspace_undo(workspace_id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    seq INTEGER AS Int NOT NULL,
+    item_json TEXT NOT NULL,
+    PRIMARY KEY (workspace_id, kind, seq)
+);
+
+CREATE TRIGGER sub_datum_insert_drops_undo AFTER INSERT ON sub_datum BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = new.workspace_id;
+END;
+
+CREATE TRIGGER sub_datum_update_drops_undo AFTER UPDATE ON sub_datum BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = old.workspace_id OR workspace_id = new.workspace_id;
+END;
+
+CREATE TRIGGER sub_datum_delete_drops_undo AFTER DELETE ON sub_datum BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = old.workspace_id;
+END;
+
+CREATE TRIGGER sub_datum_tag_insert_drops_undo AFTER INSERT ON sub_datum_tag BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = (SELECT workspace_id FROM sub_datum WHERE id = new.sub_datum_id);
+END;
+
+CREATE TRIGGER sub_datum_tag_delete_drops_undo AFTER DELETE ON sub_datum_tag BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = (SELECT workspace_id FROM sub_datum WHERE id = old.sub_datum_id);
+END;
+
+CREATE TRIGGER guide_insert_drops_undo AFTER INSERT ON guide BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = new.workspace_id;
+END;
+
+CREATE TRIGGER guide_update_drops_undo AFTER UPDATE ON guide BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = old.workspace_id OR workspace_id = new.workspace_id;
+END;
+
+CREATE TRIGGER guide_delete_drops_undo AFTER DELETE ON guide BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = old.workspace_id;
+END;
+
+CREATE TRIGGER drawing_insert_drops_undo AFTER INSERT ON drawing BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = new.workspace_id AND has_shapes = 1;
+END;
+
+CREATE TRIGGER drawing_delete_drops_undo AFTER DELETE ON drawing BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = old.workspace_id AND has_shapes = 1;
+END;
+
+CREATE TRIGGER drawing_shape_insert_drops_undo AFTER INSERT ON drawing_shape BEGIN
+    DELETE FROM workspace_undo
+    WHERE has_shapes = 1 AND workspace_id = (SELECT workspace_id FROM drawing WHERE id = new.drawing_id);
+END;
+
+CREATE TRIGGER drawing_shape_delete_drops_undo AFTER DELETE ON drawing_shape BEGIN
+    DELETE FROM workspace_undo
+    WHERE has_shapes = 1 AND workspace_id = (SELECT workspace_id FROM drawing WHERE id = old.drawing_id);
+END;
+
+CREATE TRIGGER workspace_image_drops_undo AFTER UPDATE OF reference_image_json ON workspace
+WHEN old.reference_image_json IS NOT new.reference_image_json BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = new.id AND has_image = 1;
+END;
+
+CREATE TRIGGER axis_state_absolute_drops_undo AFTER UPDATE OF absolute_offset ON axis_state
+WHEN old.absolute_offset IS NOT new.absolute_offset BEGIN
+    DELETE FROM workspace_undo WHERE workspace_id = new.workspace_id AND absolute_offsets_json IS NOT NULL;
+END;
+
+selectUndo:
+SELECT * FROM workspace_undo WHERE workspace_id = ?;
+
+selectUndoItems:
+SELECT * FROM workspace_undo_item WHERE workspace_id = ? AND kind = ? ORDER BY seq;
+
+insertUndo:
+INSERT INTO workspace_undo (
+    workspace_id, label, created_on, has_shapes, has_image, reference_image_json, absolute_offsets_json
+) VALUES (?, ?, ?, ?, ?, ?, ?);
+
+insertUndoItem:
+INSERT INTO workspace_undo_item (workspace_id, kind, seq, item_json) VALUES (?, ?, ?, ?);
+
+deleteUndo:
+DELETE FROM workspace_undo WHERE workspace_id = ?;

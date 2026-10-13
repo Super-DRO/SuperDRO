@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the drawing area. The file values/strings_drawing.xml has the same names. -->
+<resources>
+    <string name="drawing_not_a_drawing">Ce fichier n'est pas un dessin que SuperDRO peut ouvrir.</string>
+    <string name="drawing_too_large">Ce dessin est trop volumineux pour SuperDRO (plus de 2 Mo).</string>
+    <string name="drawing_no_shapes">SuperDRO n'a trouvé aucune ligne, aucun arc ni aucune courbe à importer dans ce dessin.</string>
+    <string name="drawing_reading">Lecture du dessin…</string>
+    <string name="drawing_converting">Conversion du dessin…</string>
+    <string name="drawing_not_imported_title">Dessin non importé</string>
+    <string name="drawing_not_imported_message">SuperDRO n'a pas pu importer ce dessin.</string>
+    <string name="drawing_technical_details">Détails techniques</string>
+    <string name="drawing_problems_explanation">Le fichier contient des problèmes qui empêchent son importation. Rien n'a été modifié. Si vous ne pouvez pas modifier le fichier, transmettez cette liste à la personne qui l'a produit.</string>
+    <string name="drawing_done">Terminé</string>
+    <string name="drawing_layer_unnamed">Calque %1$d</string>
+    <string name="drawing_delete_title">Supprimer le dessin ?</string>
+    <string name="drawing_delete_message">Le dessin sera retiré de l'espace de travail. Il vous faudra de nouveau le fichier pour le réimporter, et vous devrez le placer à nouveau. Les sous-origines créées à partir de lui sont conservées.</string>
+    <string name="drawing_delete_shape_title">Supprimer la géométrie ?</string>
+    <string name="drawing_delete_shape_message">Voulez-vous vraiment supprimer ce %1$s ?</string>
+    <string name="drawing_export_button">Exporter vers un fichier DXF</string>
+    <string name="drawing_export_title">Exporter en DXF</string>
+    <string name="drawing_export_save_title">Enregistrer le DXF</string>
+    <string name="drawing_export_no_workspace">Aucun espace de travail ouvert à exporter.</string>
+    <string name="drawing_export_hidden_layers">Inclure les calques masqués</string>
+    <string name="drawing_tool_geometry_title_import">Importation de la géométrie de l'outil</string>
+    <string name="drawing_tool_geometry_title">Géométrie de l'outil</string>
+    <string name="drawing_tool_geometry_attach">Joindre</string>
+    <string name="drawing_tool_geometry_drawn_in">Dessiné en</string>
+    <string name="drawing_tool_geometry_not_defined">Non définie</string>
+    <string name="drawing_tool_geometry_import">Importer la géométrie de l'outil depuis un fichier</string>
+    <string name="drawing_tool_geometry_remove">Supprimer la géométrie de l'outil</string>
+    <string name="drawing_tool_geometry_size">%1$s × %2$s</string>
+    <string name="drawing_tool_geometry_too_many_items">Ce dessin contient beaucoup trop d'éléments pour être un outil. Il s'agit peut-être d'un dessin de la pièce plutôt que de l'outil.</string>
+    <string name="drawing_tool_geometry_unlikely_size">La taille ci-dessous ne ressemble pas à celle d'un outil de coupe. Vérifiez dans quelles unités le dessin a été fait.</string>
+    <string name="drawing_tool_geometry_not_closed">Le contour n'est pas fermé : l'outil s'affichera comme un dessin au trait et non comme une forme pleine.</string>
+    <string name="drawing_tool_geometry_open_segments">Une partie de ce contour ne se raccorde pas. Cette partie de l'outil manque dans la forme pleine.</string>
+    <string name="drawing_tool_geometry_origin_off_edge">L'origine ne semble pas être sur l'arête de coupe. Les décalages X et Z sont mesurés à partir d'elle.</string>
+    <string name="drawing_tool_geometry_no_units">Le dessin n'indique pas ses unités — vérifiez la taille ci-dessous.</string>
+    <string name="drawing_tool_geometry_unreadable">Impossible de lire ce dessin. Essayez de l'importer à nouveau.</string>
+</resources>

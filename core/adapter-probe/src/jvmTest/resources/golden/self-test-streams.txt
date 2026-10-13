@@ -1,0 +1,67 @@
+# The golden streams of scripts/adapter_probe.py --self-test (GOLDEN), copied for the unit tests of
+# core:adapter-probe. Format: a line 'stream <hex bytes>', then one line 'expect <kind> <key> <value>' for
+# each message. The value of count, bool, and time is decimal. status and error: '<sub> <code>' in decimal.
+# info and sig: '<field> <text>' (the text can be empty). unknown: the key is the text, and no value.
+stream 5831323730303b592d333137353b5a303b50313b40316132623b24306161333b
+expect count X 12700
+expect count Y -3175
+expect count Z 0
+expect bool P 1
+expect time @ 6699
+expect status $ 10 163
+stream 58313230303b
+expect count X 1200
+stream 403345383b
+expect time @ 1000
+stream 592d3335303b
+expect count Y -350
+stream 50313b
+expect bool P 1
+stream 403744303b
+expect time @ 2000
+stream 54313530303b0d0a
+expect count T 1500
+stream 24304141333b
+expect status $ 10 163
+stream 3f30353330616561346131623263333b
+expect info ? 5 30aea4a1b2c3
+stream 21304132313b
+expect error ! 10 33
+stream 58313220333b
+expect unknown X12
+stream 46353b
+expect count F 5
+stream 66353b
+expect count F 5
+stream 583132592d353b
+expect unknown X12
+expect count Y -5
+stream 5031303b
+expect unknown P1
+stream 3f363451554a443b
+expect sig ? 100 QUJD
+stream 3f363451554a4452413d3d3b
+expect sig ? 100 QUJDRA==
+stream 3f363451554a3b58313b
+expect unknown ?64QUJ
+expect count X 1
+stream 24353b
+expect unknown $5
+stream 24333230353b
+expect status $ 50 5
+stream 403b
+expect unknown @
+stream 5031783b
+expect unknown P1
+expect unknown x
+stream 58323134373438333634373b58323134373438333634383b582d323134373438333634383b
+expect count X 2147483647
+expect unknown X214748364
+expect count X -2147483648
+stream 3f30333b3f30317830303066303030323b2e333b
+expect info ? 3
+expect info ? 1 x000f0002
+expect count . 3
+stream 2430413b243061613366303b
+expect unknown $0A
+expect status $ 10 41968

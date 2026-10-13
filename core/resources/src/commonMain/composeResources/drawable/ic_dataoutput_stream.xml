@@ -1,0 +1,10 @@
+<!-- The "stat_sys_tether_wifi" path of the Android Open Source Project (Apache License 2.0). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M24,22c-2.2,0 -4,1.8 -4,4c0,2.2 1.8,4 4,4c2.2,0 4,-1.8 4,-4C28,23.8 26.2,22 24,22zM36,26c0,-6.6 -5.4,-12 -12,-12c-6.6,0 -12,5.4 -12,12c0,4.4 2.4,8.3 6,10.4l2,-3.5c-2.4,-1.4 -4,-3.9 -4,-6.9c0,-4.4 3.6,-8 8,-8s8,3.6 8,8c0,3 -1.6,5.5 -4,6.9l2,3.5C33.6,34.3 36,30.4 36,26zM24,6C13,6 4,15 4,26c0,7.4 4,13.8 10,17.3l2,-3.5c-4.8,-2.8 -8,-7.9 -8,-13.8c0,-8.8 7.2,-16 16,-16s16,7.2 16,16c0,5.9 -3.2,11.1 -8,13.8l2,3.5c6,-3.5 10,-9.9 10,-17.3C44,15 35,6 24,6z" />
+</vector>

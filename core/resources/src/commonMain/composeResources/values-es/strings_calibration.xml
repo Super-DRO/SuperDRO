@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the calibration wizard of an adapter input. The check texts and the edge names are in strings_readout_core.xml. -->
+<resources>
+    <string name="calibration_title">Calibrar %1$s</string>
+    <string name="calibration_axis">Eje %1$s</string>
+    <string name="calibration_no_axis">Ningún eje usa esta entrada</string>
+    <string name="calibration_procedure_linear">Calibración lineal con un bloque patrón</string>
+    <string name="calibration_procedure_angular">Calibración angular con 5 vueltas</string>
+    <string name="calibration_live_count">Cuenta actual</string>
+    <string name="calibration_block_title">Tamaño del bloque de calibración</string>
+    <string name="calibration_block_text">Escriba el tamaño real del bloque patrón. Si toca las dos caras exteriores con un buscador de bordes, sume el diámetro de la punta.</string>
+    <string name="calibration_block_size">Tamaño del bloque</string>
+    <string name="calibration_unit">Unidad</string>
+    <string name="calibration_unit_mm">mm</string>
+    <string name="calibration_unit_inch">pulg</string>
+    <string name="calibration_continue">Continuar</string>
+    <string name="calibration_retry">Reintentar</string>
+    <string name="calibration_apply">Aplicar</string>
+    <string name="calibration_discard">Descartar</string>
+    <string name="calibration_first_edge_title">Primer borde</string>
+    <string name="calibration_second_edge_title">Segundo borde</string>
+    <string name="calibration_edge_text">Mueva el eje hasta el borde %1$s del bloque. Después pulse Continuar.</string>
+    <string name="calibration_first_position_title">Primera posición</string>
+    <string name="calibration_first_position_text">Gire el eje a la posición de 0°. Después pulse Continuar.</string>
+    <string name="calibration_second_position_title">Segunda posición</string>
+    <string name="calibration_second_position_text">Gire el eje en sentido horario exactamente 5 vueltas completas. Después pulse Continuar.</string>
+    <string name="calibration_sampling_title">Lectura de la entrada</string>
+    <string name="calibration_sampling_text">No mueva el eje. La aplicación lee la entrada durante un máximo de 15 segundos.</string>
+    <string name="calibration_sampling_progress">%1$d s de %2$d s, %3$d lecturas</string>
+    <string name="calibration_progress_description">Progreso de la lectura: %1$d de %2$d segundos</string>
+    <string name="calibration_result_title">Resultado de la calibración</string>
+    <string name="calibration_result_linear">Resolución: %1$s cuentas por pulgada (%2$s µm por cuenta)</string>
+    <string name="calibration_result_angular">Resolución: %1$s cuentas por vuelta (%2$s° por cuenta)</string>
+    <string name="calibration_result_direction_normal">Sentido: normal. La cuenta aumenta de la primera posición a la segunda.</string>
+    <string name="calibration_result_direction_reversed">Sentido: invertido. La cuenta disminuye de la primera posición a la segunda. Aplicar ajusta el sentido inverso.</string>
+    <string name="calibration_result_apply_note">Aplicar escribe la resolución, el sentido y el estado Calibrado en los ajustes del codificador de %1$s. Descartar no escribe nada.</string>
+    <string name="calibration_saved">Se guardó la calibración de %1$s.</string>
+    <string name="calibration_save_failed">La calibración no se guardó. El perfil del adaptador no está en el almacenamiento.</string>
+    <string name="calibration_block_required_detail">Escriba un tamaño de bloque mayor que 0.</string>
+    <string name="calibration_block_too_small_text">Un bloque más largo da un resultado más preciso. Use un bloque de %1$s de largo. Pulse Continuar para usar este bloque.</string>
+    <string name="calibration_no_reading_detail">La aplicación no recibió ninguna lectura de %1$s. Compruebe que la entrada está conectada y que su modo envía cuentas.</string>
+    <string name="calibration_too_few_detail">La aplicación recibió %1$d lecturas de %2$s. Necesita %3$d o más. Pulse Reintentar para leer la entrada otra vez.</string>
+    <string name="calibration_jitter_detail">Las lecturas cambiaron %1$s cuentas mientras el eje no se movía. Mantenga el eje quieto y pulse Reintentar.</string>
+    <string name="calibration_too_close_detail">Las dos posiciones están a menos de %1$d cuentas. Mueva el eje a la segunda posición y pulse Reintentar.</string>
+    <string name="calibration_link_lost">Enlace detenido</string>
+    <string name="calibration_link_lost_detail">El enlace con el adaptador se detuvo durante la lectura. Espere el enlace y pulse Reintentar.</string>
+    <string name="calibration_no_adapter">Este perfil de máquina no tiene perfil de adaptador. Conecte el adaptador y cree primero su perfil de adaptador.</string>
+    <string name="calibration_tach_input">La entrada del tacómetro no tiene calibración. Ajuste sus pulsos por vuelta en los detalles del adaptador.</string>
+    <string name="calibration_disabled_input">El tipo de esta entrada es Desactivado. Seleccione primero Lineal o Angular en los ajustes del codificador.</string>
+</resources>

@@ -1,0 +1,29 @@
+{
+  "touchdro": "adapter-profile",
+  "format": 1,
+  "app": "3.32.00, Build 2026-09-20",
+  "exported": "2026-10-11 14:30:00",
+  "device": "3f2b9c1e-7d4a-4c55-9a51-2f0d8e6b1a77",
+  "adapter": "TouchDRO Adapter",
+  "model": "tda-xxx",
+  "excluded": "Plus activation, adapter identity binding, machine profile settings, sub-datums, tools",
+  "inputs": [
+    {
+      "input": "X",
+      "encoder-type": "SCALE",
+      "kind": "CONTINUOUS",
+      "resolution": 5080,
+      "invert": false,
+      "filter": false,
+      "error-map": "position,correction\n0,0\n10000,4\n20000,9",
+      "backlash-mode": "CONSTANT",
+      "backlash-constant": 3,
+      "calibration-status": "CALIBRATED",
+      "calibrated-on": "2026-10-01 09:12:45"
+    }
+  ],
+  "probe": {
+    "contact-type": "AUTO",
+    "debounce-ms": 0
+  }
+}

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The in-app help texts of the main screens. SuperDRO writes these texts. -->
+<resources>
+    <string name="settings_help_readout_title">Lectura</string>
+    <string name="settings_help_readout_text">La lectura muestra una fila para cada eje activado. Toque un valor para fijarlo con el teclado. Toque la etiqueta de un eje para ver sus detalles. Cada cambio de un desplazamiento muestra Deshacer durante 10 segundos. La barra de estado superior muestra las unidades, el modo, la herramienta, el subdato y el estado del enlace.</string>
+    <string name="settings_help_add_machine_title">Añadir máquina</string>
+    <string name="settings_help_add_machine_text">Toque + para añadir una máquina. Primero seleccione el adaptador: un adaptador Bluetooth emparejado, un adaptador USB o un adaptador Wi-Fi con su host y su puerto. Después seleccione un perfil nuevo, una copia o un perfil guardado, y dé un nombre a la máquina. SuperDRO recuerda la máquina y se conecta a ella.</string>
+    <string name="settings_help_machine_settings_title">Ajustes de la máquina</string>
+    <string name="settings_help_machine_settings_text">Los ajustes de la máquina pertenecen al perfil de esta pestaña. Cada cambio se aplica de inmediato, también con el adaptador conectado. Los grupos contienen la pantalla, los botones de función, los ejes, el tacómetro, la sonda y el enlace del adaptador.</string>
+    <string name="settings_help_inputs_title">Ejes y entradas</string>
+    <string name="settings_help_inputs_text">Cada eje lee una letra de entrada del adaptador: x, y, z, w, u o v. Una entrada secundaria añade una segunda regla al eje, por ejemplo una regla de la pinola. Las dos entradas de un eje no pueden usar la misma letra. La resolución y el filtro de una entrada están en los ajustes del codificador del adaptador.</string>
+    <string name="settings_help_tachometer_title">Tacómetro</string>
+    <string name="settings_help_tachometer_text">El tacómetro muestra la velocidad del husillo. En el modo Sensor de RPM, la entrada t del adaptador da la velocidad, y se aplican los pulsos por revolución. En el modo Preajuste, usted selecciona una velocidad de la lista. En el modo Entrada directa, usted escribe la velocidad.</string>
+    <string name="settings_help_adapter_link_title">Enlace del adaptador</string>
+    <string name="settings_help_adapter_link_text">El enlace del adaptador de un perfil es una dirección Bluetooth, un dispositivo USB con su velocidad en baudios, o un host y un puerto Wi-Fi. La comunicación bidireccional permite que SuperDRO envíe consultas y comandos al adaptador. Los comandos de configuración del adaptador cambian los modos de entrada del adaptador. Actívelos solo cuando los necesite.</string>
+    <string name="settings_help_app_settings_title">Ajustes</string>
+    <string name="settings_help_app_settings_text">Los ajustes de la app se aplican a todas las máquinas: el tema, los botones grandes, los sonidos, la pantalla completa y el bloqueo de activación. Los interruptores de tipo de enlace ocultan un tipo de enlace en la hoja Añadir máquina. La optimización de batería de Android puede detener los enlaces en segundo plano.</string>
+    <string name="settings_help_machine_profiles_title">Perfiles de máquina</string>
+    <string name="settings_help_machine_profiles_text">Un perfil de máquina guarda los ajustes, las herramientas y los espacios de trabajo de una máquina. Usted puede crear, copiar, renombrar y eliminar un perfil. Cada nombre de perfil debe ser único. Una copia contiene los ajustes y las herramientas, pero no los espacios de trabajo.</string>
+    <string name="settings_help_machine_type_title">Tipo de máquina</string>
+    <string name="settings_help_machine_type_text">Usted puede cambiar el tipo de máquina de un perfil. Antes del cambio, SuperDRO muestra los datos que no son válidos para el nuevo tipo, por ejemplo herramientas de torno en una fresadora. SuperDRO convierte lo que puede. Archiva o elimina el resto, según lo que usted seleccione.</string>
+    <string name="settings_help_key_mapping_title">Asignación de teclas</string>
+    <string name="settings_help_key_mapping_text">Las teclas de un teclado, un teclado numérico, un pedal o un mando a distancia pueden iniciar acciones en la pestaña seleccionada. Seleccione una acción y después pulse la tecla. La asignación por defecto usa el teclado numérico y las teclas de página.</string>
+    <string name="settings_help_logs_title">Registros</string>
+    <string name="settings_help_logs_text">La pantalla de registros muestra los mensajes de la app y de cada sesión de máquina. Seleccione una máquina para ver solo sus mensajes. Exportar envía las líneas a otra app. La grabación del flujo de bytes es una opción de depuración. Guarda los bytes recibidos de una sesión para un análisis.</string>
+</resources>

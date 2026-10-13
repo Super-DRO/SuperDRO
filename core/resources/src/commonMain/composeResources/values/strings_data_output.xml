@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the data output (module core:data-output). -->
+<resources>
+    <string name="data_output_title">Data output</string>
+    <string name="data_output_enable">Send the live values to the network</string>
+    <string name="data_output_start">Start the data output</string>
+    <string name="data_output_stop">Stop the data output</string>
+
+    <string name="data_output_security">Security mode</string>
+    <string name="data_output_security_psk">Encrypted (PSK)</string>
+    <string name="data_output_security_plain">Plain text (TouchDRO compatible)</string>
+    <string name="data_output_warning_trusted">Use only on trusted networks</string>
+    <string name="data_output_warning_plain">The plain text mode has no encryption and no access control. Each device that can reach the tablet can read the machine positions.</string>
+    <string name="data_output_warning_mqtt_no_tls">A broker link without TLS has no encryption. Each device on the network path can read the machine positions and the broker password.</string>
+    <string name="data_output_warning_confirm">Use this mode</string>
+    <string name="data_output_warning_cancel">Cancel</string>
+
+    <string name="data_output_psk_key">Key</string>
+    <string name="data_output_psk_copy">Copy the key</string>
+    <string name="data_output_psk_new">Make a new key</string>
+    <string name="data_output_psk_new_warning">A new key stops the old key. Give the new key to each client.</string>
+    <string name="data_output_psk_caution">Keep the key secret. Each device with the key can read the machine positions.</string>
+
+    <string name="data_output_interface">Network interface</string>
+    <string name="data_output_interface_wifi">Wi-Fi</string>
+    <string name="data_output_interface_localhost">This tablet only (localhost)</string>
+    <string name="data_output_interface_vpn">VPN</string>
+    <string name="data_output_interface_usb_ethernet">USB Ethernet</string>
+    <string name="data_output_interface_all">All interfaces</string>
+    <string name="data_output_warning_all_interfaces">With all interfaces, each network of the tablet can reach the server. Use this only when you need it.</string>
+    <string name="data_output_port">Port</string>
+
+    <string name="data_output_transport">Transport</string>
+    <string name="data_output_transport_tcp">TCP server</string>
+    <string name="data_output_transport_mqtt">MQTT client</string>
+    <string name="data_output_activation">Activation</string>
+    <string name="data_output_activation_on_demand">On demand (chip in the status strip)</string>
+    <string name="data_output_activation_always">Always on</string>
+
+    <string name="data_output_mqtt_host">Broker host</string>
+    <string name="data_output_mqtt_port">Broker port</string>
+    <string name="data_output_mqtt_tls">Use TLS</string>
+    <string name="data_output_mqtt_username">User name</string>
+    <string name="data_output_mqtt_password">Password</string>
+    <string name="data_output_mqtt_client_id">Client ID</string>
+    <string name="data_output_mqtt_machine">Machine name in the topic</string>
+    <string name="data_output_mqtt_layout">Topics</string>
+    <string name="data_output_mqtt_layout_json">One JSON record on superdro/%1$s</string>
+    <string name="data_output_mqtt_layout_fields">One topic for each field on superdro/%1$s/…</string>
+
+    <string name="data_output_format">Format</string>
+    <string name="data_output_format_delimited">Delimited</string>
+    <string name="data_output_format_json">JSON</string>
+    <string name="data_output_delimiter">Delimiter</string>
+    <string name="data_output_delimiter_tab">Tab</string>
+    <string name="data_output_labels">Include the field labels</string>
+    <string name="data_output_timestamp">Time stamp</string>
+    <string name="data_output_timestamp_iso">ISO 8601 (UTC)</string>
+    <string name="data_output_timestamp_epoch">Unix time (ms)</string>
+    <string name="data_output_distance_unit">Distance unit</string>
+    <string name="data_output_unit_inch">Inch</string>
+    <string name="data_output_unit_mil">Mil (0.001 in)</string>
+    <string name="data_output_unit_millimeter">Millimeter</string>
+    <string name="data_output_unit_micron">Micron</string>
+    <string name="data_output_unit_meter">Meter</string>
+    <string name="data_output_angle_unit">Angle unit</string>
+    <string name="data_output_unit_degrees">Decimal degrees</string>
+    <string name="data_output_unit_dms">Degrees, minutes, seconds</string>
+    <string name="data_output_unit_radians">Radians</string>
+    <string name="data_output_precision">Decimals</string>
+
+    <string name="data_output_cadence">When to send</string>
+    <string name="data_output_cadence_interval">Fixed interval</string>
+    <string name="data_output_cadence_change">On change</string>
+    <string name="data_output_cadence_change_interval">On change and interval</string>
+    <string name="data_output_interval">Interval (ms)</string>
+    <string name="data_output_max_rate">Maximum rate (Hz)</string>
+
+    <string name="data_output_fields">Fields</string>
+    <string name="data_output_field_label">Label</string>
+    <string name="data_output_field_x_absolute">X absolute</string>
+    <string name="data_output_field_x_incremental">X incremental</string>
+    <string name="data_output_field_x_feed_rate">X feed rate</string>
+    <string name="data_output_field_y_absolute">Y absolute</string>
+    <string name="data_output_field_y_incremental">Y incremental</string>
+    <string name="data_output_field_y_feed_rate">Y feed rate</string>
+    <string name="data_output_field_z_absolute">Z absolute</string>
+    <string name="data_output_field_z_incremental">Z incremental</string>
+    <string name="data_output_field_z_feed_rate">Z feed rate</string>
+    <string name="data_output_field_angular_absolute">Angle absolute</string>
+    <string name="data_output_field_angular_incremental">Angle incremental</string>
+    <string name="data_output_field_angular_feed_rate">Angle feed rate</string>
+    <string name="data_output_field_spindle_rpm">Spindle speed (RPM)</string>
+    <string name="data_output_field_surface_speed">Surface speed</string>
+    <string name="data_output_field_probe_1">Probe 1</string>
+    <string name="data_output_field_probe_2">Probe 2</string>
+    <string name="data_output_field_probe_1_trigger_x">Probe 1 trigger X</string>
+    <string name="data_output_field_probe_1_trigger_y">Probe 1 trigger Y</string>
+    <string name="data_output_field_probe_1_trigger_z">Probe 1 trigger Z</string>
+    <string name="data_output_field_probe_1_trigger_dir_x">Probe 1 approach X</string>
+    <string name="data_output_field_probe_1_trigger_dir_y">Probe 1 approach Y</string>
+    <string name="data_output_field_probe_1_trigger_dir_z">Probe 1 approach Z</string>
+    <string name="data_output_field_probe_1_trigger_time">Probe 1 trigger time</string>
+    <string name="data_output_field_probe_1_trigger_seq">Probe 1 trigger count</string>
+    <string name="data_output_field_probe_1_trigger_feed">Probe 1 approach feed rate</string>
+
+    <string name="data_output_status_stopped">Stopped</string>
+    <string name="data_output_status_starting">Starting</string>
+    <string name="data_output_status_ready">Waiting for clients</string>
+    <string name="data_output_status_sending">Sending</string>
+    <string name="data_output_status_warning">Problem</string>
+    <string name="data_output_listening">Listening on %1$s</string>
+    <plurals name="data_output_clients">
+        <item quantity="one">%1$d client</item>
+        <item quantity="other">%1$d clients</item>
+    </plurals>
+    <string name="data_output_broker">MQTT broker %1$s</string>
+    <string name="data_output_not_running">The output does not run.</string>
+
+    <string name="data_output_diagnostics_title">Data output problem</string>
+    <string name="data_output_problem">Problem: %1$s (%2$s ago)</string>
+    <string name="data_output_last_success">Last record delivered %1$s ago</string>
+    <string name="data_output_no_delivery">No record was delivered since the start.</string>
+    <string name="data_output_counts">%1$d sent, %2$d failed (%3$d percent of the recent records failed)</string>
+
+    <string name="data_output_error_bind">Cannot listen on %1$s: %2$s</string>
+    <string name="data_output_error_accept">The server stopped: %1$s. A new server starts in 5 s.</string>
+    <string name="data_output_error_no_address">The selected interface has no address.</string>
+    <string name="data_output_error_port_taken">The output of a different machine uses port %1$d.</string>
+    <string name="data_output_error_handshake">The client %1$s did not give the correct key.</string>
+    <string name="data_output_error_write">The write to the client %1$s failed: %2$s</string>
+    <string name="data_output_error_broker">Cannot reach the broker %1$s: %2$s</string>
+    <string name="data_output_error_auth">The broker %1$s refused the user name or the password.</string>
+    <string name="data_output_error_tls">The TLS handshake with the broker %1$s failed: %2$s</string>
+    <string name="data_output_error_lost">The link to the broker %1$s stopped: %2$s</string>
+    <string name="data_output_error_publish">The publish to the broker %1$s failed: %2$s</string>
+
+    <string name="data_output_test">Test connection</string>
+    <string name="data_output_test_port_free">Port %1$d is free. Clients can connect to %2$s.</string>
+    <string name="data_output_test_port_busy">Port %1$d is not free on %2$s: %3$s</string>
+    <string name="data_output_test_running">The output runs on %1$s. Clients: %2$d.</string>
+    <string name="data_output_test_broker_ok">The broker %1$s accepted the connection.</string>
+
+    <string name="data_output_label_length">A label must have 1 to 32 characters.</string>
+    <string name="data_output_label_duplicate">More than one enabled field has the label %1$s.</string>
+    <string name="data_output_label_character">A label cannot contain the character %1$s.</string>
+    <string name="data_output_label_reserved">The labels timestamp and sequence are not available.</string>
+</resources>

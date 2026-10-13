@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the hole patterns and of the arc cut. The file values/strings_patterns.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="pattern_error_header">No se pudo completar la operación. Corrija los errores siguientes:</string>
+    <string name="pattern_error_value_required">Se requiere un valor para %1$s</string>
+    <string name="pattern_error_value_too_small">El valor de %1$s es demasiado pequeño</string>
+    <string name="pattern_error_value_too_large">El valor de %1$s es demasiado grande</string>
+    <string name="pattern_error_text_too_short">%1$s debe tener al menos 3 caracteres.</string>
+    <string name="pattern_error_text_too_long">%1$s no puede tener más de 16 caracteres.</string>
+    <string name="pattern_error_two_angles">Se requieren al menos dos ángulos de agujero.</string>
+    <string name="pattern_error_repeat_too_small">El valor de %1$s o de %2$s debe ser mayor que 1</string>
+    <string name="pattern_error_hole_count_not_valid">Introduzca un número de agujeros válido.</string>
+    <string name="pattern_error_hole_count_too_small">El número de agujeros no puede ser menor que 3.</string>
+    <string name="pattern_error_start_not_valid">Introduzca un número válido para la posición inicial de %1$s.</string>
+    <string name="pattern_error_end_not_valid">Introduzca un número válido para la posición final de %1$s.</string>
+    <string name="arc_error_cutter_too_large">El diámetro de la fresa es demasiado grande para este ángulo de barrido.</string>
+    <string name="arc_error_stepover_too_large">El paso lateral es demasiado grande para este ángulo de barrido.</string>
+    <string name="arc_error_cutter_too_large_for_radius">El diámetro de la fresa es demasiado grande para un corte interior de este radio.</string>
+    <string name="pattern_title_hole_circle">Círculo de agujeros</string>
+    <string name="pattern_title_hole_circle_lathe">Matriz circular de puntos</string>
+    <string name="pattern_title_arbitrary_hole_circle">Círculo de agujeros libre</string>
+    <string name="pattern_title_hole_grid">Rejilla de agujeros</string>
+    <string name="pattern_title_hole_grid_lathe">Matriz lineal de puntos</string>
+    <string name="pattern_title_step_and_repeat">Paso y repetición de %1$d subreferencias</string>
+    <string name="pattern_title_step_and_repeat_workspace">Paso y repetición del espacio de trabajo</string>
+    <string name="pattern_title_equidistant">Matriz de agujeros equidistantes</string>
+    <string name="pattern_title_equidistant_lathe">Matriz de puntos equidistantes</string>
+    <string name="arc_title">Corte de radio/arco</string>
+    <string name="pattern_label_prefix">Prefijo de subreferencia</string>
+    <string name="pattern_label_circle_radius">Radio del círculo</string>
+    <string name="pattern_label_hole_count">Cantidad de agujeros</string>
+    <string name="pattern_label_start_angle">Ángulo inicial</string>
+    <string name="pattern_label_sweep_angle">Ángulo de barrido</string>
+    <string name="pattern_label_hole_angle">Ángulo del agujero</string>
+    <string name="pattern_label_repeat_x">Repetir X</string>
+    <string name="pattern_label_repeat_y">Repetir Y</string>
+    <string name="pattern_label_repeat_z">Repetir Z</string>
+    <string name="pattern_label_step_x">Paso X</string>
+    <string name="pattern_label_step_y">Paso Y</string>
+    <string name="pattern_label_step_z">Paso Z</string>
+    <string name="pattern_label_grid_angle">Ángulo</string>
+    <string name="pattern_label_number_of_holes">Número de agujeros</string>
+    <string name="pattern_label_start_x">Posición inicial X</string>
+    <string name="pattern_label_start_y">Posición inicial Y</string>
+    <string name="pattern_label_start_z">Posición inicial Z</string>
+    <string name="pattern_label_end_x">Posición final X</string>
+    <string name="pattern_label_end_y">Posición final Y</string>
+    <string name="pattern_label_end_z">Posición final Z</string>
+    <string name="arc_label_radius">Radio</string>
+    <string name="arc_label_cutter_diameter">Diámetro de la fresa</string>
+    <string name="arc_label_stepover">Paso lateral</string>
+</resources>

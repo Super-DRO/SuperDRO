@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the drawing area: DXF import and export, the problem list, and the cutter geometry. -->
+<resources>
+    <string name="drawing_not_a_drawing">This file isn't a drawing SuperDRO can open.</string>
+    <string name="drawing_too_large">This drawing is too large for SuperDRO (over 2 MB).</string>
+    <string name="drawing_no_shapes">SuperDRO didn't find any lines, arcs or curves to import in this drawing.</string>
+    <string name="drawing_reading">Reading your drawing…</string>
+    <string name="drawing_converting">Converting your drawing…</string>
+    <string name="drawing_not_imported_title">Drawing Not Imported</string>
+    <string name="drawing_not_imported_message">SuperDRO couldn't import this drawing.</string>
+    <string name="drawing_technical_details">Technical details</string>
+    <string name="drawing_problems_explanation">The file has problems that prevent importing it. Nothing was changed. If you can't edit the file, share this list with whoever produced it.</string>
+    <string name="drawing_done">Done</string>
+    <string name="drawing_layer_unnamed">Layer %1$d</string>
+    <string name="drawing_delete_title">Delete Drawing?</string>
+    <string name="drawing_delete_message">This removes the drawing from the workspace. You will need the file again to re-import it, and you will have to place it again. Any sub-datums created from it are kept.</string>
+    <string name="drawing_delete_shape_title">Delete Geometry?</string>
+    <string name="drawing_delete_shape_message">Are you sure you want to remove this %1$s?</string>
+    <string name="drawing_export_button">Export to DXF File</string>
+    <string name="drawing_export_title">Export to DXF</string>
+    <string name="drawing_export_save_title">Save DXF</string>
+    <string name="drawing_export_no_workspace">There is no open workspace to export.</string>
+    <string name="drawing_export_hidden_layers">Include hidden layers</string>
+    <string name="drawing_tool_geometry_title_import">Cutter Geometry Import</string>
+    <string name="drawing_tool_geometry_title">Cutter Geometry</string>
+    <string name="drawing_tool_geometry_attach">Attach</string>
+    <string name="drawing_tool_geometry_drawn_in">Drawn in</string>
+    <string name="drawing_tool_geometry_not_defined">Not defined</string>
+    <string name="drawing_tool_geometry_import">Import cutter geometry from a file</string>
+    <string name="drawing_tool_geometry_remove">Remove cutter geometry</string>
+    <string name="drawing_tool_geometry_size">%1$s × %2$s</string>
+    <string name="drawing_tool_geometry_too_many_items">This drawing has far too much in it to be a tool. It may be a drawing of the part rather than of the cutter.</string>
+    <string name="drawing_tool_geometry_unlikely_size">The size below doesn't look like a cutting tool's. Check which units the drawing was made in.</string>
+    <string name="drawing_tool_geometry_not_closed">The outline isn't closed, so the tool will show as a line drawing instead of a solid shape.</string>
+    <string name="drawing_tool_geometry_open_segments">Part of this outline doesn't join up. The solid shape is missing that part of the tool.</string>
+    <string name="drawing_tool_geometry_origin_off_edge">The origin doesn't look like it's on the cutting edge. The X and Z offsets are measured from it.</string>
+    <string name="drawing_tool_geometry_no_units">The drawing doesn't say which units it uses — check the size below.</string>
+    <string name="drawing_tool_geometry_unreadable">This drawing couldn't be read. Try importing it again.</string>
+</resources>

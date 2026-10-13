@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the data output. The file values/strings_data_output.xml has the same names. -->
+<resources>
+    <string name="data_output_title">Sortie de données</string>
+    <string name="data_output_enable">Envoyer les valeurs en direct sur le réseau</string>
+    <string name="data_output_start">Démarrer la sortie de données</string>
+    <string name="data_output_stop">Arrêter la sortie de données</string>
+
+    <string name="data_output_security">Mode de sécurité</string>
+    <string name="data_output_security_psk">Chiffré (PSK)</string>
+    <string name="data_output_security_plain">Texte en clair (compatible TouchDRO)</string>
+    <string name="data_output_warning_trusted">À utiliser uniquement sur des réseaux de confiance</string>
+    <string name="data_output_warning_plain">Le mode texte en clair n’a ni chiffrement ni contrôle d’accès. Tout appareil qui peut joindre la tablette peut lire les positions de la machine.</string>
+    <string name="data_output_warning_mqtt_no_tls">Une liaison au broker sans TLS n’a pas de chiffrement. Tout appareil sur le chemin réseau peut lire les positions de la machine et le mot de passe du broker.</string>
+    <string name="data_output_warning_confirm">Utiliser ce mode</string>
+    <string name="data_output_warning_cancel">Annuler</string>
+
+    <string name="data_output_psk_key">Clé</string>
+    <string name="data_output_psk_copy">Copier la clé</string>
+    <string name="data_output_psk_new">Créer une nouvelle clé</string>
+    <string name="data_output_psk_new_warning">Une nouvelle clé annule l’ancienne clé. Donnez la nouvelle clé à chaque client.</string>
+    <string name="data_output_psk_caution">Gardez la clé secrète. Tout appareil qui a la clé peut lire les positions de la machine.</string>
+
+    <string name="data_output_interface">Interface réseau</string>
+    <string name="data_output_interface_wifi">Wi-Fi</string>
+    <string name="data_output_interface_localhost">Cette tablette seulement (localhost)</string>
+    <string name="data_output_interface_vpn">VPN</string>
+    <string name="data_output_interface_usb_ethernet">Ethernet USB</string>
+    <string name="data_output_interface_all">Toutes les interfaces</string>
+    <string name="data_output_warning_all_interfaces">Avec toutes les interfaces, chaque réseau de la tablette peut joindre le serveur. Utilisez ce choix seulement si nécessaire.</string>
+    <string name="data_output_port">Port</string>
+
+    <string name="data_output_transport">Transport</string>
+    <string name="data_output_transport_tcp">Serveur TCP</string>
+    <string name="data_output_transport_mqtt">Client MQTT</string>
+    <string name="data_output_activation">Activation</string>
+    <string name="data_output_activation_on_demand">À la demande (puce de la bande d'état)</string>
+    <string name="data_output_activation_always">Toujours active</string>
+
+    <string name="data_output_mqtt_host">Hôte du broker</string>
+    <string name="data_output_mqtt_port">Port du broker</string>
+    <string name="data_output_mqtt_tls">Utiliser TLS</string>
+    <string name="data_output_mqtt_username">Nom d’utilisateur</string>
+    <string name="data_output_mqtt_password">Mot de passe</string>
+    <string name="data_output_mqtt_client_id">ID client</string>
+    <string name="data_output_mqtt_machine">Nom de la machine dans le sujet</string>
+    <string name="data_output_mqtt_layout">Sujets</string>
+    <string name="data_output_mqtt_layout_json">Un enregistrement JSON sur superdro/%1$s</string>
+    <string name="data_output_mqtt_layout_fields">Un sujet par champ sur superdro/%1$s/…</string>
+
+    <string name="data_output_format">Format</string>
+    <string name="data_output_format_delimited">Délimité</string>
+    <string name="data_output_format_json">JSON</string>
+    <string name="data_output_delimiter">Délimiteur</string>
+    <string name="data_output_delimiter_tab">Tabulation</string>
+    <string name="data_output_labels">Inclure les étiquettes des champs</string>
+    <string name="data_output_timestamp">Horodatage</string>
+    <string name="data_output_timestamp_iso">ISO 8601 (UTC)</string>
+    <string name="data_output_timestamp_epoch">Temps Unix (ms)</string>
+    <string name="data_output_distance_unit">Unité de distance</string>
+    <string name="data_output_unit_inch">Pouce</string>
+    <string name="data_output_unit_mil">Mil (0,001 in)</string>
+    <string name="data_output_unit_millimeter">Millimètre</string>
+    <string name="data_output_unit_micron">Micron</string>
+    <string name="data_output_unit_meter">Mètre</string>
+    <string name="data_output_angle_unit">Unité d’angle</string>
+    <string name="data_output_unit_degrees">Degrés décimaux</string>
+    <string name="data_output_unit_dms">Degrés, minutes, secondes</string>
+    <string name="data_output_unit_radians">Radians</string>
+    <string name="data_output_precision">Décimales</string>
+
+    <string name="data_output_cadence">Quand envoyer</string>
+    <string name="data_output_cadence_interval">Intervalle fixe</string>
+    <string name="data_output_cadence_change">Au changement</string>
+    <string name="data_output_cadence_change_interval">Au changement et par intervalle</string>
+    <string name="data_output_interval">Intervalle (ms)</string>
+    <string name="data_output_max_rate">Fréquence maximale (Hz)</string>
+
+    <string name="data_output_fields">Champs</string>
+    <string name="data_output_field_label">Étiquette</string>
+    <string name="data_output_field_x_absolute">X absolu</string>
+    <string name="data_output_field_x_incremental">X incrémental</string>
+    <string name="data_output_field_x_feed_rate">Avance de X</string>
+    <string name="data_output_field_y_absolute">Y absolu</string>
+    <string name="data_output_field_y_incremental">Y incrémental</string>
+    <string name="data_output_field_y_feed_rate">Avance de Y</string>
+    <string name="data_output_field_z_absolute">Z absolu</string>
+    <string name="data_output_field_z_incremental">Z incrémental</string>
+    <string name="data_output_field_z_feed_rate">Avance de Z</string>
+    <string name="data_output_field_angular_absolute">Angle absolu</string>
+    <string name="data_output_field_angular_incremental">Angle incrémental</string>
+    <string name="data_output_field_angular_feed_rate">Avance angulaire</string>
+    <string name="data_output_field_spindle_rpm">Vitesse de broche (tr/min)</string>
+    <string name="data_output_field_surface_speed">Vitesse de coupe</string>
+    <string name="data_output_field_probe_1">Palpeur 1</string>
+    <string name="data_output_field_probe_2">Palpeur 2</string>
+    <string name="data_output_field_probe_1_trigger_x">Palpeur 1 : déclenchement X</string>
+    <string name="data_output_field_probe_1_trigger_y">Palpeur 1 : déclenchement Y</string>
+    <string name="data_output_field_probe_1_trigger_z">Palpeur 1 : déclenchement Z</string>
+    <string name="data_output_field_probe_1_trigger_dir_x">Palpeur 1 : approche X</string>
+    <string name="data_output_field_probe_1_trigger_dir_y">Palpeur 1 : approche Y</string>
+    <string name="data_output_field_probe_1_trigger_dir_z">Palpeur 1 : approche Z</string>
+    <string name="data_output_field_probe_1_trigger_time">Palpeur 1 : heure du déclenchement</string>
+    <string name="data_output_field_probe_1_trigger_seq">Palpeur 1 : nombre de déclenchements</string>
+    <string name="data_output_field_probe_1_trigger_feed">Palpeur 1 : avance d’approche</string>
+
+    <string name="data_output_status_stopped">Arrêtée</string>
+    <string name="data_output_status_starting">Démarrage</string>
+    <string name="data_output_status_ready">En attente de clients</string>
+    <string name="data_output_status_sending">Envoi</string>
+    <string name="data_output_status_warning">Problème</string>
+    <string name="data_output_listening">À l’écoute sur %1$s</string>
+    <plurals name="data_output_clients">
+        <item quantity="one">%1$d client</item>
+        <item quantity="other">%1$d clients</item>
+    </plurals>
+    <string name="data_output_broker">Broker MQTT %1$s</string>
+    <string name="data_output_not_running">La sortie n’est pas active.</string>
+
+    <string name="data_output_diagnostics_title">Problème de la sortie de données</string>
+    <string name="data_output_problem">Problème : %1$s (il y a %2$s)</string>
+    <string name="data_output_last_success">Dernier enregistrement livré il y a %1$s</string>
+    <string name="data_output_no_delivery">Aucun enregistrement livré depuis le démarrage.</string>
+    <string name="data_output_counts">%1$d envoyés, %2$d en échec (%3$d pour cent des enregistrements récents en échec)</string>
+
+    <string name="data_output_error_bind">Impossible d’écouter sur %1$s : %2$s</string>
+    <string name="data_output_error_accept">Le serveur s’est arrêté : %1$s. Un nouveau serveur démarre dans 5 s.</string>
+    <string name="data_output_error_no_address">L’interface sélectionnée n’a pas d’adresse.</string>
+    <string name="data_output_error_port_taken">La sortie d’une autre machine utilise le port %1$d.</string>
+    <string name="data_output_error_handshake">Le client %1$s n’a pas donné la bonne clé.</string>
+    <string name="data_output_error_write">L’écriture vers le client %1$s a échoué : %2$s</string>
+    <string name="data_output_error_broker">Impossible de joindre le broker %1$s : %2$s</string>
+    <string name="data_output_error_auth">Le broker %1$s a refusé le nom d’utilisateur ou le mot de passe.</string>
+    <string name="data_output_error_tls">La négociation TLS avec le broker %1$s a échoué : %2$s</string>
+    <string name="data_output_error_lost">La liaison avec le broker %1$s s’est arrêtée : %2$s</string>
+    <string name="data_output_error_publish">La publication vers le broker %1$s a échoué : %2$s</string>
+
+    <string name="data_output_test">Tester la connexion</string>
+    <string name="data_output_test_port_free">Le port %1$d est libre. Les clients peuvent se connecter à %2$s.</string>
+    <string name="data_output_test_port_busy">Le port %1$d n’est pas libre sur %2$s : %3$s</string>
+    <string name="data_output_test_running">La sortie est active sur %1$s. Clients : %2$d.</string>
+    <string name="data_output_test_broker_ok">Le broker %1$s a accepté la connexion.</string>
+
+    <string name="data_output_label_length">Une étiquette doit avoir de 1 à 32 caractères.</string>
+    <string name="data_output_label_duplicate">Plusieurs champs actifs ont l’étiquette %1$s.</string>
+    <string name="data_output_label_character">Une étiquette ne peut pas contenir le caractère %1$s.</string>
+    <string name="data_output_label_reserved">Les étiquettes timestamp et sequence ne sont pas disponibles.</string>
+</resources>

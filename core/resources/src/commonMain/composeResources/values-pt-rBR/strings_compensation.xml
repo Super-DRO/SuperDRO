@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the tool compensation and of the lathe tool offset. The file values/strings_compensation.xml has the same names.
+     Write an apostrophe as \u0027. Compose Multiplatform 1.10.3 keeps the backslash of \'. -->
+<resources>
+    <string name="compensation_error_tool_diameter">Informe um diâmetro de ferramenta válido</string>
+    <string name="compensation_error_z_offset_zero">O deslocamento Z não pode ser 0</string>
+    <string name="compensation_error_z_offset_not_valid">Informe um deslocamento Z válido</string>
+    <string name="compensation_error_no_lathe_offset">Defina um deslocamento em pelo menos um eixo</string>
+</resources>

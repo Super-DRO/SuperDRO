@@ -1,0 +1,266 @@
+SuperDRO third-party notices
+
+SuperDRO is licensed under the Apache License, Version 2.0 (licenses/apache_2_0.txt).
+The app contains the components below. Each one keeps its own license. The paths
+of the license texts start at the notice folder of the app (files/).
+
+Libraries
+=========
+
+Kotlin standard library
+  Version: 2.3.20
+  License: Apache License 2.0
+  Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/JetBrains/kotlin
+
+kotlinx.coroutines (core, android)
+  Version: 1.11.0
+  License: Apache License 2.0
+  Copyright 2000-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/Kotlin/kotlinx.coroutines
+
+kotlinx.serialization (core, json, json-io)
+  Version: 1.11.0
+  License: Apache License 2.0
+  Copyright JetBrains s.r.o. and Kotlin Programming Language contributors.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/Kotlin/kotlinx.serialization
+
+kotlinx-datetime
+  Version: 0.7.1
+  License: Apache License 2.0
+  Copyright JetBrains s.r.o. and Kotlin Programming Language contributors.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/Kotlin/kotlinx-datetime
+
+kotlinx-io
+  Version: 0.9.0
+  License: Apache License 2.0
+  Copyright JetBrains s.r.o. and Kotlin Programming Language contributors.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/Kotlin/kotlinx-io
+
+Kodein DI
+  Version: 7.31.0
+  License: MIT License
+  Copyright (c) 2020 KODEIN SAS
+  License text: licenses/kodein_mit.txt
+  Source: https://github.com/kosi-libs/Kodein
+
+Arbor (arbor, arbor-android)
+  Version: 3.0.136
+  License: Apache License 2.0
+  Copyright 2019 ToxicBakery
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/ToxicBakery/Arbor
+
+Compose Multiplatform (runtime, foundation, ui, components-resources)
+  Version: 1.10.3
+  License: Apache License 2.0
+  Copyright 2020-2021 JetBrains s.r.o. and respective authors and developers.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/JetBrains/compose-multiplatform
+
+Jetpack Compose (androidx.compose)
+  Version: 1.10.x
+  License: Apache License 2.0
+  Copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://android.googlesource.com/platform/frameworks/support
+
+Compose Material 3
+  Version: 1.10.0-alpha05
+  License: Apache License 2.0
+  Copyright JetBrains s.r.o. and respective authors and developers; copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/JetBrains/compose-multiplatform-core
+
+Material 3 adaptive
+  Version: 1.3.0-alpha02
+  License: Apache License 2.0
+  Copyright JetBrains s.r.o. and respective authors and developers; copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/JetBrains/compose-multiplatform-core
+
+navigation3 (navigation3-ui)
+  Version: 1.1.0-rc01
+  License: Apache License 2.0
+  Copyright JetBrains s.r.o. and respective authors and developers; copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/JetBrains/compose-multiplatform-core
+
+Lifecycle (lifecycle-runtime-compose)
+  Version: 2.10.0
+  License: Apache License 2.0
+  Copyright JetBrains s.r.o. and respective authors and developers; copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/JetBrains/compose-multiplatform-core
+
+androidx.activity (activity-compose)
+  Version: 1.13.0
+  License: Apache License 2.0
+  Copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://android.googlesource.com/platform/frameworks/support
+
+androidx.core
+  Version: 1.19.0
+  License: Apache License 2.0
+  Copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://android.googlesource.com/platform/frameworks/support
+
+Other AndroidX libraries that come with Compose and activity (annotation, arch.core, autofill, collection, concurrent, customview, documentfile, dynamicanimation, emoji2, graphics, interpolator, legacy, loader, localbroadcastmanager, navigationevent, print, profileinstaller, savedstate, startup, tracing, transition, versionedparcelable, window)
+  Version: the versions of the APK
+  License: Apache License 2.0
+  Copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://android.googlesource.com/platform/frameworks/support
+
+Guava listenablefuture
+  Version: 1.0
+  License: Apache License 2.0
+  Copyright (C) The Guava Authors.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/google/guava
+
+SQLDelight (runtime, coroutines-extensions, android-driver)
+  Version: 2.4.1
+  License: Apache License 2.0
+  Copyright 2016 Square, Inc.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/sqldelight/sqldelight
+
+androidx.sqlite (sqlite, sqlite-framework)
+  Version: 2.7.1
+  License: Apache License 2.0
+  Copyright The Android Open Source Project.
+  License text: licenses/apache_2_0.txt
+  Source: https://android.googlesource.com/platform/frameworks/support
+
+Osmerion sqlite-android
+  Version: 0.14.0
+  License: Apache License 2.0
+  Copyright 2005-2012 The Android Open Source Project; copyright 2017-2024 requery.io; copyright 2024-2026 Leon Linhart.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/Osmerion/sqlite-android
+
+SQLite (in Osmerion sqlite-android)
+  Version: 3.53.4
+  License: Public domain
+  The author disclaims copyright to this source code.
+  License text: licenses/sqlite_public_domain.txt
+  Source: https://www.sqlite.org/copyright.html
+
+BlueFalcon (blue-falcon-core, blue-falcon-engine-android)
+  Version: 3.7.14
+  License: Apache License 2.0
+  Copyright 2024 Andrew Reed
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/Reedyuk/blue-falcon
+
+Ktor (ktor-network)
+  Version: 3.6.0
+  License: Apache License 2.0
+  Copyright 2000-2023 JetBrains s.r.o.
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/ktorio/ktor
+
+usb-serial-for-android
+  Version: 3.11.0
+  License: MIT License
+  Copyright (c) 2011-2013 Google Inc.; copyright (c) 2013 Mike Wakerly
+  License text: licenses/usb_serial_for_android_mit.txt
+  Source: https://github.com/mik3y/usb-serial-for-android
+
+Bouncy Castle (bctls, bcutil, bcprov; jdk15to18)
+  Version: 1.86
+  License: MIT License (Bouncy Castle Licence)
+  Copyright (c) 2000-2026 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org)
+  License text: licenses/bouncy_castle_licence.txt
+  Source: https://www.bouncycastle.org
+
+Eclipse Paho MQTT client (org.eclipse.paho.client.mqttv3)
+  Version: 1.2.5
+  License: Eclipse Distribution License 1.0 (EDL 1.0, BSD-3-Clause)
+  Copyright (c) 2009, 2018 IBM Corp. and others; EDL text copyright (c) 2007, Eclipse Foundation, Inc. and its licensors.
+  License text: licenses/eclipse_distribution_license_1_0.txt
+  Source: https://github.com/eclipse-paho/paho.mqtt.java
+
+Kotlin Multiplatform bignum
+  Version: 0.3.10
+  License: Apache License 2.0
+  Copyright 2019 Ugljesa Jovanovic
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/ionspin/kotlin-multiplatform-bignum
+
+Native libraries
+================
+
+libusb (libusb1.0.so)
+  Version: 1.0.30
+  License: GNU Lesser General Public License 2.1 or later
+  Copyright (c) 2001 Johannes Erdfelt, (c) 2007-2009 Daniel Drake, (c) 2010-2012 Peter Stuge, (c) 2008-2016 Nathan Hjelm, (c) 2009-2013 Pete Batard, and the other authors of libusb_authors.txt.
+  License text: notices_camera.txt, licenses/libusb_lgpl_2_1.txt, licenses/libusb_authors.txt
+  Source: https://github.com/libusb/libusb
+
+libuvc (in libsuperdro_uvc.so)
+  Version: 0.0.8
+  License: BSD 3-clause license
+  Copyright (C) 2010-2015 Ken Tossell. All rights reserved.
+  License text: notices_camera.txt, licenses/libuvc_bsd.txt
+  Source: https://github.com/libuvc/libuvc
+
+Fonts
+=====
+
+DSEG7 Modern Bold Italic
+  Version: DSEG v0.46
+  License: SIL Open Font License 1.1
+  Copyright (c) 2017, keshikan, with Reserved Font Name "DSEG".
+  License text: licenses/dseg_ofl.txt
+  Source: https://github.com/keshikan/DSEG
+
+JetBrains Mono
+  Version: 2.304
+  License: SIL Open Font License 1.1
+  Copyright 2020 The JetBrains Mono Project Authors.
+  License text: licenses/jetbrains_mono_ofl.txt
+  Source: https://github.com/JetBrains/JetBrainsMono
+
+Roboto Mono
+  Version: upstream main (2025-03-31)
+  License: SIL Open Font License 1.1
+  Copyright 2015 The Roboto Mono Project Authors.
+  License text: licenses/roboto_mono_ofl.txt
+  Source: https://github.com/googlefonts/RobotoMono
+
+Cousine
+  Version: upstream main
+  License: SIL Open Font License 1.1
+  Copyright 2026 The Cousine Project Authors.
+  License text: licenses/cousine_ofl.txt
+  Source: https://github.com/googlefonts/cousine
+
+Droid Sans Mono
+  Version: AOSP main
+  License: Apache License 2.0
+  Copyright (c) 2005-2008, The Android Open Source Project
+  License text: licenses/droid_sans_mono_notice.txt, licenses/apache_2_0.txt
+  Source: https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/data/fonts/
+
+Icons
+=====
+
+Material Icons (path data)
+  Version: -
+  License: Apache License 2.0
+  Copyright Google LLC
+  License text: licenses/apache_2_0.txt
+  Source: https://github.com/google/material-design-icons
+
+The libusb notice (notices_camera.txt) has the source offer of the LGPL 2.1 and
+the right to replace libusb1.0.so. The SIL Open Font License permits a font in
+software with a different license. The fonts are not sold alone.

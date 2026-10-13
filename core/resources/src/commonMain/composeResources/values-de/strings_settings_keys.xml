@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The key mapping screen. -->
+<resources>
+    <string name="settings_keys_press">Drücken Sie eine Taste</string>
+    <string name="settings_keys_press_hint">Drücken Sie die Taste auf der Tastatur, dem Ziffernblock, dem Fußschalter oder der Fernbedienung. Escape bricht ab.</string>
+    <string name="settings_keys_intro">Die Tasten einer Tastatur, eines Ziffernblocks, eines Fußschalters oder einer Fernbedienung starten eine Aktion im gewählten Tab.</string>
+    <string name="settings_keys_section_map">Tastenbelegung</string>
+    <string name="settings_keys_default_active">Die Standardbelegung ist aktiv.</string>
+    <string name="settings_keys_custom_active">Ihre eigene Tastenbelegung ist aktiv.</string>
+    <string name="settings_keys_empty">Die Tastenbelegung hat keine Tasten.</string>
+    <string name="settings_keys_add">Taste hinzufügen</string>
+    <string name="settings_keys_reset">Auf Standard zurücksetzen</string>
+    <string name="settings_keys_reset_done">Die Standardbelegung ist wieder aktiv.</string>
+    <string name="settings_keys_remove">%1$s entfernen</string>
+    <string name="settings_keys_change">Taste von %1$s ändern</string>
+    <string name="settings_keys_removed">Taste %1$s entfernt</string>
+    <string name="settings_keys_added">Taste %1$s: %2$s</string>
+    <string name="settings_keys_replaced">Die Taste %1$s hatte die Aktion %2$s. Ihre Aktion ist jetzt %3$s.</string>
+    <string name="settings_keys_code">Tastencode %1$d</string>
+    <string name="settings_keys_add_title">Taste hinzufügen</string>
+    <string name="settings_keys_action">Aktion</string>
+    <string name="settings_keys_axis">Achse</string>
+    <string name="settings_keys_next">Weiter</string>
+    <string name="settings_keys_axis_angular">Winkelachse</string>
+    <string name="settings_keys_action_zero">%1$s nullen</string>
+    <string name="settings_keys_action_set">%1$s setzen</string>
+    <string name="settings_keys_action_keypad">Tastenfeld von %1$s</string>
+    <string name="settings_keys_action_hold">%1$s halten</string>
+    <string name="settings_keys_action_half">Hälfte von %1$s</string>
+    <string name="settings_keys_action_zero_all">Alle Achsen nullen</string>
+    <string name="settings_keys_action_mode">ABS oder INC</string>
+    <string name="settings_keys_action_units">Einheiten (Zoll oder mm)</string>
+    <string name="settings_keys_action_next_point">Nächster Punkt</string>
+    <string name="settings_keys_action_previous_point">Vorheriger Punkt</string>
+    <string name="settings_keys_pick_zero">Eine Achse nullen</string>
+    <string name="settings_keys_pick_set">Eine Achse setzen</string>
+    <string name="settings_keys_pick_keypad">Tastenfeld öffnen</string>
+    <string name="settings_keys_pick_hold">Eine Achse halten</string>
+    <string name="settings_keys_pick_half">Hälfte einer Achse</string>
+    <string name="settings_keys_point_active">Punkt %1$s ist aktiv</string>
+    <string name="settings_keys_no_points">Dieser Arbeitsbereich hat keine Punkte.</string>
+    <string name="settings_keys_note_device">Eine Taste wirkt auf jedem Gerät. Die Aktion geht an den gewählten Tab.</string>
+</resources>

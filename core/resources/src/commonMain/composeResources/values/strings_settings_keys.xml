@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The key mapping screen. -->
+<resources>
+    <string name="settings_keys_press">Press a key</string>
+    <string name="settings_keys_press_hint">Press the key on the keyboard, the numeric keypad, the foot pedal, or the remote. Escape cancels.</string>
+    <string name="settings_keys_intro">The keys of a keyboard, a numeric keypad, a foot pedal, or a remote start an action in the selected tab.</string>
+    <string name="settings_keys_section_map">Key map</string>
+    <string name="settings_keys_default_active">The default key map is in use.</string>
+    <string name="settings_keys_custom_active">Your own key map is in use.</string>
+    <string name="settings_keys_empty">The key map has no keys.</string>
+    <string name="settings_keys_add">Add a key</string>
+    <string name="settings_keys_reset">Reset to the default</string>
+    <string name="settings_keys_reset_done">The default key map is back.</string>
+    <string name="settings_keys_remove">Remove %1$s</string>
+    <string name="settings_keys_change">Change the key of %1$s</string>
+    <string name="settings_keys_removed">Key %1$s removed</string>
+    <string name="settings_keys_added">Key %1$s: %2$s</string>
+    <string name="settings_keys_replaced">Key %1$s had the action %2$s. Its action is now %3$s.</string>
+    <string name="settings_keys_code">Key code %1$d</string>
+    <string name="settings_keys_add_title">Add a key</string>
+    <string name="settings_keys_action">Action</string>
+    <string name="settings_keys_axis">Axis</string>
+    <string name="settings_keys_next">Next</string>
+    <string name="settings_keys_axis_angular">angular axis</string>
+    <string name="settings_keys_action_zero">Zero %1$s</string>
+    <string name="settings_keys_action_set">Set %1$s</string>
+    <string name="settings_keys_action_keypad">Keypad of %1$s</string>
+    <string name="settings_keys_action_hold">Hold %1$s</string>
+    <string name="settings_keys_action_half">Half of %1$s</string>
+    <string name="settings_keys_action_zero_all">Zero all axes</string>
+    <string name="settings_keys_action_mode">ABS or INC</string>
+    <string name="settings_keys_action_units">Units (inch or mm)</string>
+    <string name="settings_keys_action_next_point">Next point</string>
+    <string name="settings_keys_action_previous_point">Previous point</string>
+    <string name="settings_keys_pick_zero">Zero an axis</string>
+    <string name="settings_keys_pick_set">Set an axis</string>
+    <string name="settings_keys_pick_keypad">Open the keypad</string>
+    <string name="settings_keys_pick_hold">Hold an axis</string>
+    <string name="settings_keys_pick_half">Half of an axis</string>
+    <string name="settings_keys_point_active">Point %1$s is active</string>
+    <string name="settings_keys_no_points">This workspace has no points.</string>
+    <string name="settings_keys_note_device">A key works on each device. The action goes to the selected tab.</string>
+</resources>

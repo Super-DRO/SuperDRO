@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The key mapping screen. -->
+<resources>
+    <string name="settings_keys_press">Appuyez sur une touche</string>
+    <string name="settings_keys_press_hint">Appuyez sur la touche du clavier, du pavé numérique, de la pédale ou de la télécommande. Échap annule.</string>
+    <string name="settings_keys_intro">Les touches d'un clavier, d'un pavé numérique, d'une pédale ou d'une télécommande lancent une action dans l'onglet sélectionné.</string>
+    <string name="settings_keys_section_map">Carte des touches</string>
+    <string name="settings_keys_default_active">La carte des touches par défaut est utilisée.</string>
+    <string name="settings_keys_custom_active">Votre carte des touches est utilisée.</string>
+    <string name="settings_keys_empty">La carte des touches n'a aucune touche.</string>
+    <string name="settings_keys_add">Ajouter une touche</string>
+    <string name="settings_keys_reset">Rétablir les valeurs par défaut</string>
+    <string name="settings_keys_reset_done">La carte des touches par défaut est rétablie.</string>
+    <string name="settings_keys_remove">Retirer %1$s</string>
+    <string name="settings_keys_change">Changer la touche de %1$s</string>
+    <string name="settings_keys_removed">Touche %1$s retirée</string>
+    <string name="settings_keys_added">Touche %1$s : %2$s</string>
+    <string name="settings_keys_replaced">La touche %1$s avait l'action %2$s. Son action est maintenant %3$s.</string>
+    <string name="settings_keys_code">Code de touche %1$d</string>
+    <string name="settings_keys_add_title">Ajouter une touche</string>
+    <string name="settings_keys_action">Action</string>
+    <string name="settings_keys_axis">Axe</string>
+    <string name="settings_keys_next">Suivant</string>
+    <string name="settings_keys_axis_angular">axe angulaire</string>
+    <string name="settings_keys_action_zero">Zéro sur %1$s</string>
+    <string name="settings_keys_action_set">Définir %1$s</string>
+    <string name="settings_keys_action_keypad">Pavé de %1$s</string>
+    <string name="settings_keys_action_hold">Figer %1$s</string>
+    <string name="settings_keys_action_half">Moitié de %1$s</string>
+    <string name="settings_keys_action_zero_all">Zéro sur tous les axes</string>
+    <string name="settings_keys_action_mode">ABS ou INC</string>
+    <string name="settings_keys_action_units">Unités (pouce ou mm)</string>
+    <string name="settings_keys_action_next_point">Point suivant</string>
+    <string name="settings_keys_action_previous_point">Point précédent</string>
+    <string name="settings_keys_pick_zero">Zéro sur un axe</string>
+    <string name="settings_keys_pick_set">Définir un axe</string>
+    <string name="settings_keys_pick_keypad">Ouvrir le pavé</string>
+    <string name="settings_keys_pick_hold">Figer un axe</string>
+    <string name="settings_keys_pick_half">Moitié d'un axe</string>
+    <string name="settings_keys_point_active">Le point %1$s est actif</string>
+    <string name="settings_keys_no_points">Cet espace de travail n'a aucun point.</string>
+    <string name="settings_keys_note_device">Une touche fonctionne sur chaque appareil. L'action va à l'onglet sélectionné.</string>
+</resources>

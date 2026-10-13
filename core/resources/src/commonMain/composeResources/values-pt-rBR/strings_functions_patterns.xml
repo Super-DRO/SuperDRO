@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the pattern screens with the point preview: the hole circle, the arbitrary hole circle, the hole grid, the step and repeat, the equidistant array, and the arc cut. -->
+<resources>
+    <string name="fnp_plane">Plano de projeção</string>
+    <string name="fnp_source">Origem da posição</string>
+    <string name="fnp_source_current">Atual</string>
+    <string name="fnp_source_zero">Zero</string>
+    <string name="fnp_source_custom">Personalizada</string>
+    <string name="fnp_reference">Referência da posição</string>
+    <string name="fnp_reference_center">Centro</string>
+    <string name="fnp_reference_first_hole">Primeiro furo</string>
+    <string name="fnp_reference_radius_center">Centro do raio</string>
+    <string name="fnp_reference_start_of_cut">Início do corte</string>
+    <string name="fnp_position_center">Posição do centro</string>
+    <string name="fnp_position_first_hole">Posição do primeiro furo</string>
+    <string name="fnp_position_start_of_cut">Posição do início do corte</string>
+    <string name="fnp_sub_datum">Sub-datum</string>
+    <string name="fnp_sub_datum_select">Selecionar</string>
+    <string name="fnp_axis_switch_cd">Usar %1$s</string>
+    <string name="fnp_axis_diameter">%1$s (diâmetro)</string>
+    <string name="fnp_cut_type">Tipo de corte</string>
+    <string name="fnp_cut_internal">Interno</string>
+    <string name="fnp_cut_external">Externo</string>
+    <string name="fnp_angle_reference">Referência do ângulo</string>
+    <string name="fnp_angle_center">Centro</string>
+    <string name="fnp_angle_tangent">Tangente</string>
+    <string name="fnp_add_angle">Adicionar ângulo</string>
+    <string name="fnp_remove_angle_cd">Remover o ângulo %1$s°</string>
+    <string name="fnp_angles_title">Ângulos dos furos</string>
+    <string name="fnp_angles_empty">Ainda não há ângulos. Adicione dois ou mais ângulos.</string>
+    <string name="fnp_angle_item">%1$d. %2$s°</string>
+    <string name="fnp_points_title">Pontos</string>
+    <string name="fnp_points_more">Mais %1$d pontos</string>
+    <string name="fnp_column_name">Nome</string>
+    <string name="fnp_created">%1$d sub-datums criados.</string>
+    <string name="fnp_start_title">Posição inicial</string>
+    <string name="fnp_end_title">Posição final</string>
+    <string name="fnp_step_sources">Sub-datums a repetir: %1$d</string>
+    <string name="fnp_no_points">Os valores não dão nenhum ponto.</string>
+    <string name="fnp_prefix_default">Vazio: %1$s</string>
+    <string name="fnp_degree">°</string>
+</resources>

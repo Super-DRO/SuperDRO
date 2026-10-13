@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the edge finder screen and of the automatic Z reference. -->
+<resources>
+    <string name="edgefinder_title">Werkstuk aantasten</string>
+    <string name="edgefinder_edge_left">Links</string>
+    <string name="edgefinder_edge_right">Rechts</string>
+    <string name="edgefinder_edge_near">Voor</string>
+    <string name="edgefinder_edge_far">Achter</string>
+    <string name="edgefinder_edge_description">Rand %1$s: %2$s</string>
+    <string name="edgefinder_state_unknown">Niet ingesteld</string>
+    <string name="edgefinder_state_scanning">Wacht op contact</string>
+    <string name="edgefinder_state_located">Gevonden</string>
+    <string name="edgefinder_auto">AUTO</string>
+    <string name="edgefinder_auto_description">Automatische randtaster</string>
+    <string name="edgefinder_on">Aan</string>
+    <string name="edgefinder_off">Uit</string>
+    <string name="edgefinder_camera_center">Punt onder het dradenkruis gebruiken</string>
+    <string name="edgefinder_camera_center_clear">Midden wissen</string>
+    <string name="edgefinder_axis_title">As %1$s</string>
+    <string name="edgefinder_external">Buiten</string>
+    <string name="edgefinder_internal">Binnen</string>
+    <string name="edgefinder_center">Midden</string>
+    <string name="edgefinder_origin">Nulpunt</string>
+    <string name="edgefinder_absolute">Absoluut</string>
+    <string name="edgefinder_incremental">Incrementeel</string>
+    <string name="edgefinder_set_origin">Nulpunt instellen</string>
+    <string name="edgefinder_add_sub_datum">Subnulpunt toevoegen</string>
+    <string name="edgefinder_add_sub_datum_hint">Lang drukken: toevoegen en de randen houden</string>
+    <string name="edgefinder_cancel">Annuleren</string>
+    <string name="edgefinder_z_position">Z-positie</string>
+    <string name="edgefinder_z_arm">Activeren</string>
+    <string name="edgefinder_z_arm_description">De taster activeren om de Z-positie te meten</string>
+    <string name="edgefinder_armed">Actief</string>
+    <string name="edgefinder_sync">Overnemen</string>
+    <string name="edgefinder_not_connected">SuperDRO is niet verbonden. Posities kunnen pas worden vastgelegd na het opnieuw verbinden.</string>
+    <string name="edgefinder_probe">Taster</string>
+    <string name="edgefinder_no_probe">Geen taster gekozen</string>
+    <string name="edgefinder_no_probe_hint">Kies het meetinstrument van deze functie</string>
+    <string name="edgefinder_new_probe">Nieuw profiel…</string>
+    <string name="edgefinder_probe_type_touch">Meettaster</string>
+    <string name="edgefinder_probe_type_edge">2D-randtaster</string>
+    <string name="edgefinder_probe_type_setter">Gereedschapslengtemeter</string>
+    <string name="edgefinder_probe_type_camera">Camera</string>
+    <string name="edgefinder_undo_origin">Nulpunt ingesteld</string>
+    <string name="edgefinder_sub_datum_added">%1$s toegevoegd</string>
+    <string name="edgefinder_zauto_title">Automatische Z-referentie</string>
+    <string name="edgefinder_zauto_button">Auto</string>
+    <string name="edgefinder_zauto_armed">Actief: raak de meter aan met het gereedschap</string>
+    <string name="edgefinder_zauto_setter_height">Hoogte van de meter: %1$s %2$s</string>
+    <string name="edgefinder_zauto_profile">Z-referentietaster</string>
+    <string name="edgefinder_zauto_undo">Z-referentie ingesteld</string>
+    <string name="edgefinder_zauto_no_port">De gekozen taster heeft geen schakelingang.</string>
+</resources>

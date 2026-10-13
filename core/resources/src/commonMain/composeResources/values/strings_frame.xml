@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the app frame: the navigation, the tabs, the add-device sheet, and the remembered machines. -->
+<resources>
+    <string name="frame_under_construction">This screen is under construction.</string>
+    <string name="frame_function_under_construction">This function is under construction.</string>
+    <string name="frame_back">Back</string>
+    <string name="frame_close">Close</string>
+    <string name="frame_done">Done</string>
+    <string name="frame_cancel">Cancel</string>
+    <string name="frame_machine_message">%1$s: %2$s</string>
+    <string name="frame_reconnecting">Reconnecting</string>
+    <string name="frame_tab_description">%1$s, %2$s, %3$s</string>
+    <string name="frame_menu_disconnect">Disconnect</string>
+    <string name="frame_menu_rename">Rename</string>
+    <string name="frame_state_online">online</string>
+    <string name="frame_state_offline">offline</string>
+    <string name="frame_state_paused">paused</string>
+    <string name="frame_remembered_connect">Connect</string>
+    <string name="frame_remembered_pause">Pause</string>
+    <string name="frame_remembered_edit">Edit</string>
+    <string name="frame_remembered_remove">Remove</string>
+    <string name="frame_remove_title">Remove %1$s?</string>
+    <string name="frame_remove_text">The link stops and the machine leaves the remembered machines. The machine profile stays in the machine profiles.</string>
+    <string name="frame_no_link">No link</string>
+    <string name="frame_no_remembered">No machine is remembered.</string>
+    <string name="frame_rename_name">Machine name</string>
+    <string name="frame_save">Save</string>
+    <string name="frame_edit_link">Link</string>
+</resources>

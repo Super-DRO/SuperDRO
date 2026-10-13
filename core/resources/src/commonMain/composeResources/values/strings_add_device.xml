@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the add-device sheet and of the machine setup. -->
+<resources>
+    <string name="add_device_step_link">Select a link</string>
+    <string name="add_device_step_profile">Machine profile</string>
+    <string name="add_device_pair_new">Pair new adapter</string>
+    <string name="add_device_grant_permission">Grant permission</string>
+    <string name="add_device_bluetooth_permission">SuperDRO needs the Bluetooth permission to show the paired adapters.</string>
+    <string name="add_device_bluetooth_off">Bluetooth is off.</string>
+    <string name="add_device_turn_on_bluetooth">Turn on Bluetooth</string>
+    <string name="add_device_no_paired">No adapter is paired. Pair the adapter in the system settings.</string>
+    <string name="add_device_no_usb">No USB adapter is attached.</string>
+    <string name="add_device_usb_permission">Needs the USB permission</string>
+    <string name="add_device_wifi_host">Host name or IP address</string>
+    <string name="add_device_wifi_port">Port</string>
+    <string name="add_device_wifi_use">Use this address</string>
+    <string name="add_device_error_host_blank">Type the host name or the IP address.</string>
+    <string name="add_device_error_host_not_valid">This is not a valid host name, IPv4 address, or IPv6 address.</string>
+    <string name="add_device_error_port">The port must be a number from 1 to 65535.</string>
+    <string name="add_device_error_select_profile">Select a profile.</string>
+    <string name="add_device_source_new">New machine</string>
+    <string name="add_device_source_copy">Copy of a profile</string>
+    <string name="add_device_source_stored">Stored profile</string>
+    <string name="add_device_no_profiles">No profile is stored.</string>
+    <string name="add_device_name">Machine name</string>
+    <string name="add_device_machine_type">Machine type</string>
+    <string name="add_device_type_vertical_mill">Vertical mill</string>
+    <string name="add_device_type_lathe">Lathe</string>
+    <string name="add_device_type_horizontal_mill">Horizontal mill</string>
+    <string name="add_device_units">Units</string>
+    <string name="add_device_units_inch">Inches</string>
+    <string name="add_device_units_mm">Millimeters</string>
+    <string name="add_device_inputs">Inputs</string>
+    <string name="add_device_input_x">X input</string>
+    <string name="add_device_input_y">Y input</string>
+    <string name="add_device_input_z">Z input</string>
+    <string name="add_device_input_cross_slide">Cross slide input</string>
+    <string name="add_device_input_carriage">Carriage input</string>
+    <string name="add_device_input_quill">Quill scale</string>
+    <string name="add_device_input_auxiliary">Auxiliary readout</string>
+    <string name="add_device_auxiliary_type">The auxiliary readout measures</string>
+    <string name="add_device_aux_tailstock">Tailstock</string>
+    <string name="add_device_aux_compound">Compound slide</string>
+    <string name="add_device_aux_other">Other</string>
+    <string name="add_device_tachometer">Tachometer</string>
+    <string name="add_device_conflicts_title">Check the inputs</string>
+    <string name="add_device_conflict_twice">Input %1$s is added two times to %2$s. The value doubles.</string>
+    <string name="add_device_conflict_shared">Input %1$s is used by %2$s. These axes show the same value.</string>
+    <string name="add_device_conflict_angular">Input %1$s is used by %2$s. A linear axis and the angular axis cannot share one resolution, so one of them reads incorrectly.</string>
+    <string name="add_device_conflict_compound">The compound slide uses input %1$s, which X or Z also uses. The compound projection stays off.</string>
+    <string name="add_device_conflict_head_tilt">The quill uses input %1$s, which X, Y, or Z also uses. The head tilt projection stays off.</string>
+    <string name="add_device_setup_note">The setup sets no resolution. Calibrate each input after the first connect.</string>
+    <string name="add_device_connect">Connect</string>
+</resources>

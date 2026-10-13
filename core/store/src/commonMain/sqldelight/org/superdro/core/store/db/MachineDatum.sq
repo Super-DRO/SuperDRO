@@ -1,0 +1,45 @@
+-- The machine datums of a machine profile. X, Y, Z are µm in
+-- machine coordinates and A is arc seconds. A profile delete removes them. The list
+-- sort (a natural sort by name) is in the repository.
+
+import kotlin.time.Instant;
+
+CREATE TABLE machine_datum (
+    id TEXT NOT NULL PRIMARY KEY,
+    profile_id TEXT NOT NULL REFERENCES machine_profile(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    x_um REAL,
+    y_um REAL,
+    z_um REAL,
+    a_arcsec REAL,
+    created_on TEXT AS Instant NOT NULL,
+    updated_on TEXT AS Instant NOT NULL
+);
+
+CREATE INDEX machine_datum_profile ON machine_datum(profile_id);
+
+selectForProfile:
+SELECT * FROM machine_datum WHERE profile_id = ?;
+
+selectById:
+SELECT * FROM machine_datum WHERE id = ?;
+
+upsert:
+INSERT INTO machine_datum (id, profile_id, name, note, x_um, y_um, z_um, a_arcsec, created_on, updated_on)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (id) DO UPDATE SET
+    profile_id = excluded.profile_id,
+    name = excluded.name,
+    note = excluded.note,
+    x_um = excluded.x_um,
+    y_um = excluded.y_um,
+    z_um = excluded.z_um,
+    a_arcsec = excluded.a_arcsec,
+    updated_on = excluded.updated_on;
+
+setY:
+UPDATE machine_datum SET y_um = :yUm, updated_on = :updatedOn WHERE id = :id;
+
+deleteById:
+DELETE FROM machine_datum WHERE id = ?;

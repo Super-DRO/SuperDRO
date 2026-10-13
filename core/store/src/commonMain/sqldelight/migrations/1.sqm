@@ -1,0 +1,5 @@
+-- Schema version 1 to version 2.
+--
+-- The comment lines of an error map (the provenance of a map of the wizard) go into the encoder
+-- profile row. A row of version 1 gets an empty list.
+ALTER TABLE encoder_profile ADD COLUMN error_map_comments_json TEXT NOT NULL DEFAULT '[]';

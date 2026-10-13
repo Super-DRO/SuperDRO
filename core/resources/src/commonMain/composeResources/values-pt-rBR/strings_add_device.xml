@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the add-device sheet and of the machine setup. The file values/strings_add_device.xml has the same names. -->
+<resources>
+    <string name="add_device_step_link">Selecione uma conexão</string>
+    <string name="add_device_step_profile">Perfil da máquina</string>
+    <string name="add_device_pair_new">Parear novo adaptador</string>
+    <string name="add_device_grant_permission">Conceder permissão</string>
+    <string name="add_device_bluetooth_permission">O SuperDRO precisa da permissão de Bluetooth para mostrar os adaptadores pareados.</string>
+    <string name="add_device_bluetooth_off">O Bluetooth está desligado.</string>
+    <string name="add_device_turn_on_bluetooth">Ligar o Bluetooth</string>
+    <string name="add_device_no_paired">Nenhum adaptador está pareado. Pareie o adaptador nas configurações do sistema.</string>
+    <string name="add_device_no_usb">Nenhum adaptador USB está conectado.</string>
+    <string name="add_device_usb_permission">Precisa da permissão USB</string>
+    <string name="add_device_wifi_host">Nome do host ou endereço IP</string>
+    <string name="add_device_wifi_port">Porta</string>
+    <string name="add_device_wifi_use">Usar este endereço</string>
+    <string name="add_device_error_host_blank">Digite o nome do host ou o endereço IP.</string>
+    <string name="add_device_error_host_not_valid">Este não é um nome de host, endereço IPv4 ou endereço IPv6 válido.</string>
+    <string name="add_device_error_port">A porta deve ser um número de 1 a 65535.</string>
+    <string name="add_device_error_select_profile">Selecione um perfil.</string>
+    <string name="add_device_source_new">Nova máquina</string>
+    <string name="add_device_source_copy">Cópia de um perfil</string>
+    <string name="add_device_source_stored">Perfil salvo</string>
+    <string name="add_device_no_profiles">Nenhum perfil está salvo.</string>
+    <string name="add_device_name">Nome da máquina</string>
+    <string name="add_device_machine_type">Tipo de máquina</string>
+    <string name="add_device_type_vertical_mill">Fresadora vertical</string>
+    <string name="add_device_type_lathe">Torno</string>
+    <string name="add_device_type_horizontal_mill">Fresadora horizontal</string>
+    <string name="add_device_units">Unidades</string>
+    <string name="add_device_units_inch">Polegadas</string>
+    <string name="add_device_units_mm">Milímetros</string>
+    <string name="add_device_inputs">Entradas</string>
+    <string name="add_device_input_x">Entrada X</string>
+    <string name="add_device_input_y">Entrada Y</string>
+    <string name="add_device_input_z">Entrada Z</string>
+    <string name="add_device_input_cross_slide">Entrada do carro transversal</string>
+    <string name="add_device_input_carriage">Entrada do carro principal</string>
+    <string name="add_device_input_quill">Régua do mangote</string>
+    <string name="add_device_input_auxiliary">Leitura auxiliar</string>
+    <string name="add_device_auxiliary_type">A leitura auxiliar mede</string>
+    <string name="add_device_aux_tailstock">Contraponta</string>
+    <string name="add_device_aux_compound">Carro orientável</string>
+    <string name="add_device_aux_other">Outro</string>
+    <string name="add_device_tachometer">Tacômetro</string>
+    <string name="add_device_conflicts_title">Verifique as entradas</string>
+    <string name="add_device_conflict_twice">A entrada %1$s é somada duas vezes a %2$s. O valor dobra.</string>
+    <string name="add_device_conflict_shared">A entrada %1$s é usada por %2$s. Estes eixos mostram o mesmo valor.</string>
+    <string name="add_device_conflict_angular">A entrada %1$s é usada por %2$s. Um eixo linear e o eixo angular não podem compartilhar uma resolução, então um deles lê errado.</string>
+    <string name="add_device_conflict_compound">O carro orientável usa a entrada %1$s, que X ou Z também usa. A projeção do carro orientável fica desligada.</string>
+    <string name="add_device_conflict_head_tilt">O mangote usa a entrada %1$s, que X, Y ou Z também usa. A projeção da inclinação do cabeçote fica desligada.</string>
+    <string name="add_device_setup_note">A configuração não define nenhuma resolução. Calibre cada entrada após a primeira conexão.</string>
+    <string name="add_device_connect">Conectar</string>
+</resources>

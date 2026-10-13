@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the app frame: the navigation, the tabs, the add-device sheet, and the remembered machines. The file values/strings_frame.xml has the same names. -->
+<resources>
+    <string name="frame_under_construction">Esta tela está em construção.</string>
+    <string name="frame_function_under_construction">Esta função está em construção.</string>
+    <string name="frame_back">Voltar</string>
+    <string name="frame_close">Fechar</string>
+    <string name="frame_done">Concluído</string>
+    <string name="frame_cancel">Cancelar</string>
+    <string name="frame_machine_message">%1$s: %2$s</string>
+    <string name="frame_reconnecting">Reconectando</string>
+    <string name="frame_tab_description">%1$s, %2$s, %3$s</string>
+    <string name="frame_menu_disconnect">Desconectar</string>
+    <string name="frame_menu_rename">Renomear</string>
+    <string name="frame_state_online">on-line</string>
+    <string name="frame_state_offline">off-line</string>
+    <string name="frame_state_paused">pausada</string>
+    <string name="frame_remembered_connect">Conectar</string>
+    <string name="frame_remembered_pause">Pausar</string>
+    <string name="frame_remembered_edit">Editar</string>
+    <string name="frame_remembered_remove">Remover</string>
+    <string name="frame_remove_title">Remover %1$s?</string>
+    <string name="frame_remove_text">A conexão para e a máquina sai das máquinas salvas. O perfil da máquina fica nos perfis de máquina.</string>
+    <string name="frame_no_link">Sem conexão</string>
+    <string name="frame_no_remembered">Nenhuma máquina está salva.</string>
+    <string name="frame_rename_name">Nome da máquina</string>
+    <string name="frame_save">Salvar</string>
+    <string name="frame_edit_link">Conexão</string>
+</resources>
