@@ -57,3 +57,58 @@ class LinkPathTest {
         runCurrent()
     }
 }
+
+/** The record of a link: a queue, batches on the link I/O dispatcher, and the last chunks at the close. */
+class QueuedRecordTest {
+
+    /** A sink that keeps each batch. */
+    private class BatchSink : RecordSink {
+        val batches = ArrayList<List<RecordedChunk>>()
+        var closed = false
+
+        override fun write(chunk: RecordedChunk) {
+            batches += listOf(chunk)
+        }
+
+        override fun writeAll(chunks: List<RecordedChunk>) {
+            batches += chunks.toList()
+        }
+
+        override fun close() {
+            closed = true
+        }
+    }
+
+    @Test
+    fun theRecordGetsTheChunksInBatchesAndTheLastChunksAtTheClose() = runTest {
+        val sink = BatchSink()
+        val h = Harness(this, recorder = StreamRecorder { _, _, _ -> sink })
+        h.setups[DeviceId("mill")] = defaultSetup()
+        h.manager.connect(device("mill", USB, twoWay = false, record = true))
+        runCurrent()
+        val link = h.links.last
+        link.receive("X1;")
+        runCurrent()
+        assertEquals(listOf(listOf("X1;")), sink.batches.map { batch -> batch.map { chunk -> chunk.bytes.decodeToString() } })
+        // In the interval, the chunks wait in the queue.
+        link.receive("X2;")
+        advanceTimeBy(10)
+        link.receive("X3;")
+        advanceTimeBy(10)
+        runCurrent()
+        assertEquals(1, sink.batches.size)
+        advanceTimeBy(QueuedRecordSink.BATCH_MS)
+        runCurrent()
+        assertEquals(listOf("X2;", "X3;"), sink.batches[1].map { chunk -> chunk.bytes.decodeToString() })
+        assertEquals(10L, sink.batches[1][1].timeMs - sink.batches[1][0].timeMs, "each chunk keeps its arrival time")
+        // The close gives the chunks in the queue at once, then closes the sink.
+        link.receive("X4;")
+        runCurrent()
+        link.receive("X5;")
+        runCurrent()
+        h.manager.disconnectAll()
+        runCurrent()
+        assertEquals(listOf("X1;", "X2;", "X3;", "X4;", "X5;"), sink.batches.flatten().map { chunk -> chunk.bytes.decodeToString() })
+        assertTrue(sink.closed)
+    }
+}

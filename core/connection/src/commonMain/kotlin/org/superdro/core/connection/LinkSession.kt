@@ -149,7 +149,7 @@ internal class LinkSession(
         val writes = Channel<PendingWrite>(Channel.UNLIMITED)
         var readerJob: Job? = null
         var writerJob: Job? = null
-        var sink: RecordSink? = null
+        var sink: QueuedRecordSink? = null
         var lastValidMs: Long = openedAtMs
         var lastWriteMs: Long? = null
         var belPending = false
@@ -418,7 +418,14 @@ internal class LinkSession(
         // A link that opens ends the restart sequence, also after a failed connect.
         restartState = AdapterRestartState.Idle
         val ref = _device.value
-        current.sink = if (ref.recordStream) recorder.open(id, ref.address, current.number) else null
+        current.sink = if (ref.recordStream) {
+            recorder.open(id, ref.address, current.number)?.let { sink ->
+                // A sink exception is a defect: it goes to onFatal on the session dispatcher.
+                QueuedRecordSink(sink, scope, linkIo, onFailure = { error -> scope.launch { throw error } })
+            }
+        } else {
+            null
+        }
         stage.onLinkStart()
         _inputs.value = stage.snapshot
         setState(SessionState.AwaitingData)
@@ -574,7 +581,10 @@ internal class LinkSession(
         current.writes.close()
         current.readerJob?.cancel()
         current.writerJob?.cancel()
-        current.sink?.close()
+        current.sink?.let { sink ->
+            if (sink.dropped > 0) log.w { "$id: the record of link ${current.number} lost ${sink.dropped} chunks: the file writes were too slow" }
+            sink.close()
+        }
         current.sink = null
         closeTransport(current.transport)
         publishInfo()

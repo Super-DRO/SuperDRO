@@ -52,14 +52,15 @@ class FakeAdapterScenariosTest {
         runCurrent()
         advanceTimeBy(999)
         runCurrent()
-        val chunks = h.records.getValue(1)
-        assertEquals((0L until 1_000L step 50L).toList(), chunks.map { it.timeMs })
-        assertEquals("X10000;Y20000;Z-5000;", chunks.first().bytes.decodeToString())
         assertTrue(session.state.value is SessionState.Connected)
         assertEquals(10_000L, x(session))
         assertEquals(-5_000.0, session.inputs.value.axisValue(AxisId.Z))
+        // The record gets the chunks in batches. The close of the link gives the last batch.
         h.manager.disconnectAll()
         runCurrent()
+        val chunks = h.records.getValue(1)
+        assertEquals((0L until 1_000L step 50L).toList(), chunks.map { it.timeMs })
+        assertEquals("X10000;Y20000;Z-5000;", chunks.first().bytes.decodeToString())
     }
 
     @Test
