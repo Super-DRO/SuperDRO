@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,11 @@ import org.superdro.core.store.writeAtomically
  *   holds the value in [state], a [StateFlow], and changes it with [MutableStateFlow.update].
  * - A [Mutex] serializes the file IO. Each write is atomic: the full JSON goes to a temporary
  *   entry, and a move then replaces the file.
+ * - The writes are coalesced. One writer job writes the last value at most [WRITE_DELAY_MS] after
+ *   the first update that is not in the file. The updates in that time go into one write, for
+ *   example the keystrokes of a text field. Durability: when the process stops in that time, the
+ *   file does not have these updates. [flush] starts the write immediately, and [awaitWrites]
+ *   also waits for it. The app calls [flush] when it goes to the background.
  * - A reader that reads one time calls [awaitLoaded] first. Before the load, [state] holds the
  *   defaults, and a read cannot tell them from an empty file.
  * - An [update] before the load completes is not lost: the load applies it again on top of the
@@ -74,7 +80,15 @@ abstract class JsonFileStore<T : Any>(
     private var loadApplied = false
 
     private val initialLoad = CompletableDeferred<Unit>()
-    private var lastWrite: Job? = null
+
+    /** True when [state] has an update that is not in the file. Read and written only in a synchronized function. */
+    private var dirty = false
+
+    /** The writer job, or null when no write is pending. Read and written only in a synchronized function. */
+    private var writer: Job? = null
+
+    /** Completes when [flush] wants the pending write immediately. Read and written only in a synchronized function. */
+    private var wake = CompletableDeferred<Unit>()
 
     private val mutableState = MutableStateFlow(defaultValue)
 
@@ -92,23 +106,52 @@ abstract class JsonFileStore<T : Any>(
     }
 
     /**
-     * Changes the value with [transform] and writes the file. [transform] must have no side
-     * effect, because the load can apply it a second time on top of the value of the file.
+     * Changes the value with [transform] and writes the file at most [WRITE_DELAY_MS] later.
+     * [transform] must have no side effect, because the load can apply it a second time on top of
+     * the value of the file.
      */
     @Synchronized
     fun update(transform: (T) -> T) {
         mutableState.update(transform)
         if (!loadApplied) pendingBeforeLoad += transform
-        lastWrite = write()
+        dirty = true
+        if (writer?.isActive != true) {
+            wake = CompletableDeferred()
+            writer = startWriter(wake)
+        }
     }
 
-    /** Suspends until the last write that [update] started is complete. */
+    /** Starts the pending write immediately. It does nothing when no write is pending. */
+    @Synchronized
+    fun flush() {
+        wake.complete(Unit)
+    }
+
+    /** Starts the pending write immediately and suspends until all updates are in the file. */
     suspend fun awaitWrites() {
-        currentWrite()?.join()
+        flush()
+        currentWriter()?.join()
     }
 
     @Synchronized
-    private fun currentWrite(): Job? = lastWrite
+    private fun currentWriter(): Job? = writer
+
+    /** Gives true and clears the flag when an update is not in the file. Else the writer job ends. */
+    @Synchronized
+    private fun takeDirty(): Boolean {
+        if (dirty) {
+            dirty = false
+            return true
+        }
+        writer = null
+        return false
+    }
+
+    /** The writer job failed: the next update starts a new one. */
+    @Synchronized
+    private fun writerFailed() {
+        writer = null
+    }
 
     @Synchronized
     private fun applyLoaded(loaded: T?) {
@@ -142,10 +185,27 @@ abstract class JsonFileStore<T : Any>(
         }
     }
 
-    private fun write(): Job = scope.launch {
-        // No write before the load: a write at the start must not replace the file before the
-        // store read it.
-        initialLoad.await()
+    /**
+     * The writer job. It writes the last value until no update is pending. Each write writes the
+     * full value, thus a write after more updates contains all of them.
+     */
+    private fun startWriter(wake: CompletableDeferred<Unit>): Job = scope.launch {
+        try {
+            // No write before the load: a write at the start must not replace the file before the
+            // store read it.
+            initialLoad.await()
+            withTimeoutOrNull(WRITE_DELAY_MS) { wake.await() }
+            while (takeDirty()) writeFile()
+        } catch (error: CancellationException) {
+            writerFailed()
+            throw error
+        } catch (error: Exception) {
+            writerFailed()
+            log.e(error) { "The file IO of $fileName failed." }
+        }
+    }
+
+    private suspend fun writeFile() {
         lock.withLock {
             if (writesBlocked) {
                 log.e { "No write of $fileName: the file that does not decode could not move aside." }
@@ -172,5 +232,10 @@ abstract class JsonFileStore<T : Any>(
 
     init {
         load()
+    }
+
+    companion object {
+        /** The maximum time from an update to the start of its write, in ms. */
+        const val WRITE_DELAY_MS: Long = 250
     }
 }
