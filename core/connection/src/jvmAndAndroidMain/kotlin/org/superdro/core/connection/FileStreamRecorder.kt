@@ -18,13 +18,22 @@ import org.superdro.core.model.AdapterAddress
  * A write failure does not stop the session: the recorder logs it and writes no more lines to that
  * file.
  *
- * @param directory The folder of the files.
+ * The recorder finds the folder at the first [open]. On Android, `Context.getFilesDir` reads the
+ * disk, and the DI graph can make the recorder on the main thread.
+ *
+ * @param directory Gives the folder of the files. The recorder calls it one time, at the first
+ *   [open].
  * @param nowMs Gives the wall clock time for the file name.
  */
 class FileStreamRecorder(
-    private val directory: File,
+    directory: () -> File,
     private val nowMs: () -> Long = System::currentTimeMillis,
 ) : StreamRecorder {
+
+    /** Makes a recorder with the folder [directory]. */
+    constructor(directory: File, nowMs: () -> Long = System::currentTimeMillis) : this({ directory }, nowMs)
+
+    private val directory: File by lazy(directory)
 
     override fun open(device: DeviceId, address: AdapterAddress, link: Int): RecordSink? {
         val file = File(directory, fileName(device, link, nowMs()))

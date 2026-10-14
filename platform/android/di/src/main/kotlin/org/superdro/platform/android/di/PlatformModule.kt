@@ -165,8 +165,12 @@ val platformModule = DI.Module("platformModule") {
         )
     }
 
-    // The recorded byte streams of the debug option.
-    bindSingleton<StreamRecorder> { FileStreamRecorder(File(instance<Application>().filesDir, FileStreamRecorder.FOLDER)) }
+    // The recorded byte streams of the debug option. getFilesDir reads the disk, so the recorder
+    // finds the folder at the first record, not on the thread that makes the graph.
+    bindSingleton<StreamRecorder> {
+        val application = instance<Application>()
+        FileStreamRecorder(directory = { File(application.filesDir, FileStreamRecorder.FOLDER) })
+    }
 
     // The network interfaces, the secret store, and the camera back end.
     bindSingleton<NetworkInterfaces> { AndroidNetworkInterfaces(instance<Application>(), instance(tag = PLATFORM_SCOPE_TAG)) }
