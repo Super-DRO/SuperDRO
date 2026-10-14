@@ -101,6 +101,12 @@ object ProximityWarning {
     /** The level goes to 0 after 5000 ms with no new value. */
     const val SILENCE_MS: Long = 5000L
 
+    /**
+     * The still time of a point target: an axis that did not move for 500 ms gives no tone. The
+     * tone of a point target stops when no axis of the point moved for this time.
+     */
+    const val STILL_MS: Long = 500L
+
     /** The beep length: 0.1 s. */
     const val BEEP_MS: Double = 100.0
 

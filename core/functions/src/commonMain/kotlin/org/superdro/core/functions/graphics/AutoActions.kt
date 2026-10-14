@@ -49,6 +49,23 @@ object AutoGuideActions {
         ProximityTarget(axis = guide.axis, targetUm = 0.0, absolute = false)
 }
 
+/** The automatic functions at a selected point. The selected point is the active sub-datum. */
+object AutoPointActions {
+
+    /**
+     * Gives the automatic proximity target when the point [pointId] becomes the selected item:
+     * the two axes of [plane], each with the target 0 (the distance to the point on that axis).
+     */
+    fun proximityTarget(plane: Plane, pointId: String): ProximityTarget =
+        ProximityTarget(
+            axis = PlaneAxes.horizontal(plane),
+            targetUm = 0.0,
+            absolute = false,
+            secondAxis = PlaneAxes.vertical(plane),
+            pointId = pointId,
+        )
+}
+
 /** An edge of the Z plunge detector. */
 sealed interface PlungeEdge {
     /** Z went down by the hysteresis below its highest value [maxUm]. */

@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.functions.proximity.ProximityState
 import org.superdro.core.functions.proximity.ProximityWarning
+import org.superdro.core.model.AxisId
 import org.superdro.core.model.ProximityTarget
 import org.superdro.core.readout.ReadoutFrame
 import org.superdro.core.ui.sound.SoundController
@@ -27,6 +28,16 @@ import org.superdro.core.util.Clock
  *   has no timer, so a test with virtual time can run until idle.
  * - The measurement mode stops the warning.
  * - The mute rules of the sound controller apply.
+ *
+ * A point target ([ProximityTarget.pointId]) has its own rules:
+ * - The value of each axis of the target is the distance to the point on that axis:
+ *   `abs + S`, with the sub-datum offset `S` of the point. Each axis has its own level rule.
+ * - Only an axis that moved in the last [ProximityWarning.STILL_MS] gives a tone. The level is
+ *   the highest level of these axes. Thus the tone follows the axis that moves to its target,
+ *   and the distance on the other axis has no effect.
+ * - The tone stops [ProximityWarning.STILL_MS] after the last motion, and starts again with the
+ *   next motion.
+ * - The target has no effect when its point is not the active sub-datum.
  */
 class ProximityToneRunner(
     private val frame: StateFlow<ReadoutFrame?>,
@@ -38,6 +49,11 @@ class ProximityToneRunner(
     private var state: ProximityState? = null
     private var sentLevel: Double = 0.0
     private var silence: Job? = null
+
+    // The state of a point target: the level rule and the time of the last motion of each axis.
+    private val pointStates = LinkedHashMap<AxisId, ProximityState>()
+    private val lastMotionMs = LinkedHashMap<AxisId, Long>()
+    private var still: Job? = null
 
     /** The level that the runner sent last, 0 to 1. */
     val level: Double get() = sentLevel
@@ -57,12 +73,24 @@ class ProximityToneRunner(
             target = null
             state = null
             silence?.cancel()
+            clearPoint()
             send(0.0)
             return
         }
         if (newTarget != target) {
+            val pointChange = newTarget.pointId != null || target?.pointId != null
             target = newTarget
             state = ProximityWarning.start(newTarget.targetUm)
+            if (pointChange) {
+                // A change to or from a point target stops the tone of the old target.
+                silence?.cancel()
+                clearPoint()
+                send(0.0)
+            }
+        }
+        if (newTarget.pointId != null) {
+            onPointFrame(current, newTarget, scope)
+            return
         }
         val reading = current.reading(newTarget.axis)
         if (!reading.hasValue) return
@@ -78,6 +106,58 @@ class ProximityToneRunner(
             delay(ProximityWarning.SILENCE_MS)
             send(0.0)
         }
+    }
+
+    private fun onPointFrame(current: ReadoutFrame, point: ProximityTarget, scope: CoroutineScope) {
+        if (current.workspace.activeSubDatumId != point.pointId) {
+            clearPoint()
+            send(0.0)
+            return
+        }
+        val now = clock.nowMs()
+        var moved = false
+        point.axes.forEach { axis ->
+            val offset = current.subDatumOffsets[axis] ?: return@forEach
+            val reading = current.reading(axis)
+            if (!reading.hasValue) return@forEach
+            val value = reading.absolute + offset
+            val old = pointStates[axis] ?: ProximityWarning.start(point.targetUm)
+            if (old.previousUm == value) return@forEach
+            pointStates[axis] = old.update(value, now)
+            // The first value is not a motion.
+            if (old.previousUm != null) {
+                lastMotionMs[axis] = now
+                moved = true
+            }
+        }
+        if (!moved) return
+        send(pointLevel(now))
+        startStillTimer(scope)
+    }
+
+    /** The highest level of the axes that moved in the last [ProximityWarning.STILL_MS]. */
+    private fun pointLevel(nowMs: Long): Double =
+        lastMotionMs.entries
+            .filter { (_, time) -> nowMs - time < ProximityWarning.STILL_MS }
+            .maxOfOrNull { (axis, _) -> pointStates[axis]?.level ?: 0.0 } ?: 0.0
+
+    /** Sets the level again when the still time of each moving axis ends. The timer then stops. */
+    private fun startStillTimer(scope: CoroutineScope) {
+        still?.cancel()
+        still = scope.launch {
+            while (true) {
+                val now = clock.nowMs()
+                val next = lastMotionMs.values.filter { time -> now - time < ProximityWarning.STILL_MS }.minOrNull() ?: break
+                delay(next + ProximityWarning.STILL_MS - now)
+                send(pointLevel(clock.nowMs()))
+            }
+        }
+    }
+
+    private fun clearPoint() {
+        still?.cancel()
+        pointStates.clear()
+        lastMotionMs.clear()
     }
 
     private fun send(level: Double) {
