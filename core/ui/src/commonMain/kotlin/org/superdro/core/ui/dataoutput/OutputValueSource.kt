@@ -9,6 +9,7 @@ import org.superdro.core.model.TachometerMode
 import org.superdro.core.model.Workspace
 import org.superdro.core.readout.ReadoutFrame
 import org.superdro.core.readout.SurfaceSpeed
+import org.superdro.core.readout.input.AxisValue
 import org.superdro.core.readout.input.InputSnapshot
 import org.superdro.core.readout.input.ProbeEvent
 
@@ -31,6 +32,46 @@ object DisplayFrames {
             projectedAxes = inputs.axes.values.filter { value -> value.projected }.mapTo(LinkedHashSet()) { value -> value.axis },
         )
     }
+}
+
+/**
+ * Keeps the last frame of [DisplayFrames.of]. A new snapshot with the same profile, the same
+ * workspace, and the same sum and projection of each axis gives the kept frame. The frame does
+ * not use the other parts of a snapshot (the channel counts and times, the probes). Thus the
+ * kept frame and a new frame give the same values, and the frame calculates its readings only
+ * one time.
+ *
+ * Use one cache in one coroutine.
+ */
+class DisplayFrameCache {
+    private var frame: ReadoutFrame? = null
+    private var axes: Map<AxisId, AxisValue> = emptyMap()
+
+    /** Gives the frame of [profile] with [workspace] and the session values [inputs]. */
+    fun of(profile: MachineProfile, workspace: Workspace, inputs: InputSnapshot): ReadoutFrame {
+        val last = frame
+        if (last != null && last.profile == profile && last.workspace == workspace && sameSums(axes, inputs.axes)) {
+            axes = inputs.axes
+            return last
+        }
+        return DisplayFrames.of(profile, workspace, inputs).also { next ->
+            frame = next
+            axes = inputs.axes
+        }
+    }
+
+    private fun sameSums(old: Map<AxisId, AxisValue>, new: Map<AxisId, AxisValue>): Boolean {
+        if (old === new) return true
+        if (old.size != new.size) return false
+        return old.all { (axis, value) ->
+            val other = new[axis] ?: return false
+            other.projected == value.projected && sameValue(other.value, value.value)
+        }
+    }
+
+    /** Compares the bits, so that −0.0 and 0.0 are different and NaN is equal to NaN. */
+    private fun sameValue(a: Double?, b: Double?): Boolean =
+        if (a == null || b == null) a == null && b == null else a.toBits() == b.toBits()
 }
 
 /**

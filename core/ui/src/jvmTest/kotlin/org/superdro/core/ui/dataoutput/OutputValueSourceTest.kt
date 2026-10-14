@@ -2,7 +2,9 @@ package org.superdro.core.ui.dataoutput
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import org.superdro.core.dataoutput.RecordFormatter
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.AxisState
@@ -165,5 +167,36 @@ class OutputValueSourceTest {
 
         val twoAxes = OutputValueSource.trigger(frame, event, mapOf(AxisId.X to 1, AxisId.Y to -1, AxisId.Z to 0), sequence = 2L, timeEpochMs = 0L)
         assertNull(twoAxes.feedUmPerMinute, "Two axes move: no approach feed.")
+    }
+
+    @Test
+    fun theFrameCacheKeepsTheFrameWhileTheSumsAndTheModelDoNotChange() {
+        val mill = MachineProfile.create(MachineType.VerticalMill)
+        val workspace = mill.activeWorkspace!!
+        val cache = DisplayFrameCache()
+        val sums = mapOf(AxisId.X to 12700.0, AxisId.Y to -3175.0)
+        val first = cache.of(mill, workspace, inputs(sums))
+        // A new snapshot with new times, new counts, and new probe states keeps the frame.
+        val later = inputs(sums, probes = mapOf(Channels.P to true)).let { snapshot ->
+            snapshot.copy(axes = snapshot.axes.mapValues { (_, value) -> value.copy(timeMs = 500L) })
+        }
+        assertSame(first, cache.of(mill, workspace, later))
+        // A change of a sum, of the projection, of the profile, or of the workspace makes a new frame.
+        val moved = cache.of(mill, workspace, inputs(sums + (AxisId.X to 12701.0)))
+        assertNotSame(first, moved)
+        assertEquals(12701.0, OutputValueSource.values(moved, later, emptyMap(), null, null).xAbsolute)
+        val projected = inputs(sums + (AxisId.X to 12701.0)).let { snapshot ->
+            snapshot.copy(axes = snapshot.axes + (AxisId.X to snapshot.axes.getValue(AxisId.X).copy(projected = true)))
+        }
+        assertNotSame(moved, cache.of(mill, workspace, projected))
+        val preset = mill.copy(tachometer = mill.tachometer.copy(mode = TachometerMode.Preset))
+        val withPreset = cache.of(preset, workspace, projected)
+        assertSame(preset, withPreset.profile)
+        val x = (workspace.axisStates[AxisId.X] ?: AxisState.forAxis(AxisId.X, MachineType.VerticalMill)).copy(absoluteOffset = 500.0)
+        val offset = workspace.copy(axisStates = workspace.axisStates + (AxisId.X to x))
+        assertSame(offset, cache.of(preset, offset, projected).workspace)
+        // Negative zero is a different sum.
+        val zero = cache.of(mill, workspace, inputs(mapOf(AxisId.X to 0.0)))
+        assertNotSame(zero, cache.of(mill, workspace, inputs(mapOf(AxisId.X to -0.0))))
     }
 }
