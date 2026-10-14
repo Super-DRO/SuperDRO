@@ -351,7 +351,8 @@ class DataOutputController(
             val number = sequence++
             val timestamp = current.updatedAtEpochMs ?: platform.wallClock.nowEpochMs()
             statistics.update { value -> value.withRecord() }
-            tcp?.publish(formatter.record(texts, timestamp, number).encodeToByteArray())
+            // The server makes the bytes only when a client is connected.
+            tcp?.publish { formatter.record(texts, timestamp, number).encodeToByteArray() }
             mqtt?.publish(OutputRecord(texts, timestamp, number))
         }
 
