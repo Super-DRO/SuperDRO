@@ -287,6 +287,12 @@ internal class LinkSession(
             return
         }
         applyTwoWay()
+        if (current is SessionState.WaitingForDevice) {
+            // A user connect checks the capability again: the link opens when it is available.
+            log.i { "$id: connect while waiting for ${current.cause}" }
+            failures = 0
+            startLink(1)
+        }
     }
 
     private fun relink(ref: DeviceRef) {
@@ -492,6 +498,10 @@ internal class LinkSession(
                     restartCloseAtMs = null
                     restartConnectAtMs = null
                     waitForDevice(value.cause, fallback = false)
+                } else if (wanted && current is SessionState.WaitingForDevice) {
+                    // For example DeviceGone, then PermissionMissing after an attach with no permission.
+                    log.i { "$id: capability changed while waiting: ${value.cause}" }
+                    if (value.cause.waitsForCapability) setState(SessionState.WaitingForDevice(value.cause))
                 }
             }
             LinkCapability.Available -> if (wanted && current is SessionState.WaitingForDevice) {

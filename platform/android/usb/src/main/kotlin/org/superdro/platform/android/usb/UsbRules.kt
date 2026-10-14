@@ -76,6 +76,8 @@ data class UsbIdentity(
  * @property serial The serial number. Null without the USB permission.
  * @property portCount The number of serial ports of the driver. CP210x and FTDI have one port for
  *   each interface.
+ * @property deviceName The device path of the system (`UsbDevice.getDeviceName()`), for example
+ *   `/dev/bus/usb/001/004`. It identifies one attached device, also without the permission.
  */
 data class UsbDeviceInfo(
     val vendorId: Int,
@@ -85,6 +87,7 @@ data class UsbDeviceInfo(
     val serial: String?,
     val permitted: Boolean,
     val portCount: Int = 1,
+    val deviceName: String? = null,
 )
 
 /** The rules of the USB link with no Android type. */
@@ -132,7 +135,9 @@ object UsbRules {
      * each attached device that a prober accepts. The name is [deviceName]. The detail is the
      * vendor ID and the product ID in hex, and `#<n>` for the port n of a device with more than one
      * port. A device with no permission gives an address with no serial number and
-     * `needsPermission = true`. A new address has the default baud rate 115200.
+     * `needsPermission = true`. A new address has the default baud rate 115200. The
+     * `deviceKey` of each row is the [UsbDeviceInfo.deviceName], so that the permission request
+     * goes to the device of the row.
      */
     fun discoveredAdapters(devices: Collection<UsbDeviceInfo>): List<DiscoveredAdapter> =
         devices.flatMap { device ->
@@ -148,9 +153,17 @@ object UsbRules {
                     displayName = deviceName(device.manufacturer, device.product),
                     detail = if (device.portCount > 1) "$ids #${portIndex + 1}" else ids,
                     needsPermission = !device.permitted,
+                    deviceKey = device.deviceName,
                 )
             }
         }
+
+    /**
+     * Gives the order of the attached devices: the vendor ID, the product ID, and the device path.
+     * The permission and the serial number do not change the order.
+     */
+    val deviceOrder: Comparator<UsbDeviceInfo> =
+        compareBy({ info -> info.vendorId }, { info -> info.productId }, { info -> info.deviceName.orEmpty() })
 
     /** Gives the capability part (`CapabilityState.attachedUsb`) of the attached devices. */
     fun attachedDevices(devices: Collection<UsbDeviceInfo>): List<AttachedUsbDevice> =

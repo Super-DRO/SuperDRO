@@ -39,12 +39,14 @@ class UsbPermissionRequester(context: Context) {
     val grants: SharedFlow<AdapterAddress.UsbSerial> = grantEvents.asSharedFlow()
 
     /**
-     * Asks for the permission of the device of [address]. Gives true when the user grants it, or
-     * when the app has it already. Gives false when the device is not attached or the user refuses.
+     * Asks for the permission of the device of [address]. [deviceKey] is the device path of the
+     * selected row, or null. With a key, the request goes to that device, also when other devices
+     * have the same vendor ID and product ID. Gives true when the user grants it, or when the app
+     * has it already. Gives false when the device is not attached or the user refuses.
      */
-    suspend fun request(address: AdapterAddress.UsbSerial): Boolean {
+    suspend fun request(address: AdapterAddress.UsbSerial, deviceKey: String? = null): Boolean {
         val manager = context.usbManager() ?: return false
-        val device = manager.deviceOf(address) ?: return false
+        val device = manager.deviceOf(address, deviceKey) ?: return false
         val granted = request(manager, device)
         if (granted) grantEvents.tryEmit(address)
         return granted
