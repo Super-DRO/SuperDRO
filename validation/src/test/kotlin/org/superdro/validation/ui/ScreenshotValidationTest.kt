@@ -220,7 +220,7 @@ class ScreenshotValidationTest {
 
     private fun screensClipped(width: Int, height: Int): List<String> = AppGraph().use { graph ->
         graph.connect("mill", "Mill") { profile -> profile.copy(caliper = profile.caliper.copy(enabled = true)) }
-        graph.connect("lathe", "Lathe", MachineType.Lathe)
+        graph.connect("lathe", "Lathe", MachineType.Lathe, scenario = "commands")
         val problems = ArrayList<String>()
         runWindowTest(width, height) {
             setContent { ProvideDI(graph.di) { App() } }
@@ -311,7 +311,7 @@ class ScreenshotValidationTest {
     @OptIn(androidx.compose.ui.InternalComposeUiApi::class)
     private fun lightThinPrimary(width: Int, height: Int): Map<String, List<Blob>> = AppGraph().use { graph ->
         graph.connect("mill", "Mill") { profile -> profile.copy(caliper = profile.caliper.copy(enabled = true)) }
-        graph.connect("lathe", "Lathe", MachineType.Lathe)
+        graph.connect("lathe", "Lathe", MachineType.Lathe, scenario = "commands")
         val found = LinkedHashMap<String, List<Blob>>()
         val primary = Theme.lightScheme.primary.toArgbOpaque()
         runWindowTest(width, height) {

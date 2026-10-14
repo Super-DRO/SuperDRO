@@ -30,7 +30,7 @@ actual fun pskStreamSecurity(key: PskKey): StreamSecurity = PskTlsSecurity(key)
 /**
  * The encrypted mode "Encrypted (PSK)":
  * TLS 1.3 (RFC 8446) with an external PSK, through the BouncyCastle TLS API in its non-blocking
- * mode on the Ktor sockets.
+ * mode on the TCP sockets of the system.
  *
  * - Only TLS 1.3. The cipher suites are `TLS_AES_128_GCM_SHA256` and
  *   `TLS_CHACHA20_POLY1305_SHA256`, the suites with the hash of the PSK (SHA-256).

@@ -101,14 +101,14 @@ object RealSockets {
         }
     }
 
-    /** One output on the loopback interface, with the real Ktor sockets. */
+    /** One output on the loopback interface, with the real sockets of the system. */
     class LoopbackOutput(
         config: DataOutputConfig,
         retryDelayMs: Long = TcpOutputServer.RETRY_DELAY_MS,
-        listenSockets: ((KtorListenSocketFactory) -> ListenSocketFactory) = { factory -> factory },
+        listenSockets: ((ListenSocketFactory) -> ListenSocketFactory) = { factory -> factory },
     ) {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        val sockets = KtorListenSocketFactory(Dispatchers.IO)
+        val sockets = systemListenSockets(Dispatchers.IO)
         val store = InMemorySecretStore()
         val values = MutableStateFlow(testValues)
         val interfaces = FakeNetworkInterfaces(listOf(NetworkInterfaceInfo("lo", BindInterface.Localhost, listOf(LOOPBACK))))
@@ -129,7 +129,6 @@ object RealSockets {
         fun close() {
             controller.close()
             scope.cancel()
-            sockets.close()
         }
     }
 }
