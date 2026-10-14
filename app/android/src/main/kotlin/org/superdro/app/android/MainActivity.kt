@@ -13,17 +13,22 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.toxicbakery.logging.Arbor
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.instance
@@ -68,6 +73,12 @@ import org.superdro.platform.android.usb.UsbPermissionRequester
  *   tab of a machine), and the demo entry of a debug build.
  *
  * `singleTop`: one instance collects the bus. The UI does not bind to the connection service.
+ *
+ * The first read of the DI graph makes the graph: the connection manager, the repositories, the
+ * database driver, the transport factories, and the monitors. Thus the activity reads the graph
+ * first on [Dispatchers.Default], and then starts on the main thread ([StartGate]). Until then,
+ * the window shows the theme background. When the graph is ready (for example after a rotation),
+ * the activity starts at once in [onCreate].
  */
 class MainActivity : ComponentActivity(), DIAware, FilePickerHost {
 
@@ -86,53 +97,103 @@ class MainActivity : ComponentActivity(), DIAware, FilePickerHost {
     private val filePicker: AndroidFilePicker by instance()
     private val navigation: NavigationHolder by instance()
 
+    private val startGate = StartGate()
+
+    // Android can give a result before the start, after it made the process again. Each result
+    // thus waits for the start (StartGate.whenReady). After the start, a result runs at once.
+
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         log.d { "Permission result: $result" }
-        refresher.refreshAll()
-        result[PermissionRules.CAMERA]?.let { granted -> cameraBridge.onResult(granted, showsCameraRationale()) }
+        startGate.whenReady {
+            refresher.refreshAll()
+            result[PermissionRules.CAMERA]?.let { granted -> cameraBridge.onResult(granted, showsCameraRationale()) }
+        }
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         log.d { "Notification permission: $granted" }
-        lifecycleScope.launch { askBatteryExemptionIfNeeded() }
+        startGate.whenReady { lifecycleScope.launch { askBatteryExemptionIfNeeded() } }
     }
 
     private val enableBluetoothLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        refresher.refreshAll()
+        startGate.whenReady { refresher.refreshAll() }
     }
 
-    private val openDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> filePicker.deliver(uri) }
+    private val openDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        startGate.whenReady { filePicker.deliver(uri) }
+    }
 
     private val createDocumentContract = CreateDocumentOfType()
-    private val createDocumentLauncher = registerForActivityResult(createDocumentContract) { uri -> filePicker.deliver(uri) }
+    private val createDocumentLauncher = registerForActivityResult(createDocumentContract) { uri ->
+        startGate.whenReady { filePicker.deliver(uri) }
+    }
 
-    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { taken -> filePicker.deliver(taken) }
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
+        startGate.whenReady { filePicker.deliver(taken) }
+    }
 
     private val cameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        filePicker.deliver(granted)
-        cameraBridge.onResult(granted, showsCameraRationale())
-        refresher.refreshAll()
+        startGate.whenReady {
+            filePicker.deliver(granted)
+            cameraBridge.onResult(granted, showsCameraRationale())
+            refresher.refreshAll()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        filePicker.attach(this)
         // A new activity handles its launch intent. An activity that Android makes again keeps
         // the tab and the demo state of the old one.
-        if (savedInstanceState == null) handleIntent(intent)
+        val handleLaunch = savedInstanceState == null
+        val launchIntent: Intent? = intent
+
+        // The content stays empty until the start. Compose starts on the main thread while the
+        // graph starts in the background.
+        setContent {
+            val ready by startGate.ready.collectAsState()
+            if (ready) {
+                ProvideDI(di) {
+                    App()
+                }
+            }
+        }
+
+        if (graphReady) {
+            startGate.start { start(handleLaunch, launchIntent) }
+        } else {
+            lifecycleScope.launch {
+                withContext(Dispatchers.Default) { makeGraph() }
+                startGate.start { start(handleLaunch, launchIntent) }
+            }
+        }
+    }
+
+    /**
+     * Makes the graph and each value that [start] reads. Call it on a background thread: the
+     * first read of the graph makes the connection manager, the repositories, the database driver,
+     * the transport factories, and the monitors.
+     */
+    private fun makeGraph() {
+        val mark = TimeSource.Monotonic.markNow()
+        val values = listOf(
+            debugAdapter, connectionRequests, connectionManager, keepAliveController, appSettings, tabStore,
+            refresher, batteryOptimization, usbPermissions, cameraBridge, filePicker, navigation,
+        )
+        graphReady = true
+        log.d { "The graph is ready (${values.size} values) in ${mark.elapsedNow()}" }
+    }
+
+    /** The start of the activity on the main thread, after [makeGraph]. */
+    private fun start(handleLaunch: Boolean, launchIntent: Intent?) {
+        filePicker.attach(this)
+        if (handleLaunch) handleIntent(launchIntent)
         collectConnectionRequests()
         collectFullScreen()
         watchFirstConnect()
         // Each remembered machine that is not paused connects at the app start. A session that
         // runs does not change.
         connectionManager.restore()
-
-        setContent {
-            ProvideDI(di) {
-                App()
-            }
-        }
     }
 
     /**
@@ -142,23 +203,25 @@ class MainActivity : ComponentActivity(), DIAware, FilePickerHost {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleIntent(intent)
+        startGate.whenReady { handleIntent(intent) }
     }
 
     override fun onResume() {
         super.onResume()
         // Android sends no broadcast for a permission or a battery optimization change.
-        refresher.refreshAll()
+        startGate.whenReady { refresher.refreshAll() }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        // A system dialog can show the bars. Hide them again when the app has the focus.
-        if (hasFocus) SystemBars.apply(window, appSettings.settings.value.fullScreen)
+        // A system dialog can show the bars. Hide them again when the app has the focus. Before
+        // the start, collectFullScreen applies the setting.
+        if (hasFocus && startGate.ready.value) SystemBars.apply(window, appSettings.settings.value.fullScreen)
     }
 
     override fun onDestroy() {
-        filePicker.detach(this, finishing = isFinishing)
+        // Before the start, the file picker has no host.
+        if (startGate.ready.value) filePicker.detach(this, finishing = isFinishing)
         super.onDestroy()
     }
 
@@ -347,5 +410,9 @@ class MainActivity : ComponentActivity(), DIAware, FilePickerHost {
         const val EXTRA_DEVICE_ID = "org.superdro.extra.DEVICE_ID"
 
         private val log = Arbor.tag("MainActivity")
+
+        /** True after the first [makeGraph] of the process. A later activity then starts at once. */
+        @Volatile
+        private var graphReady = false
     }
 }
