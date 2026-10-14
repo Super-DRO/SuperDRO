@@ -31,6 +31,21 @@ android {
         compose = true
     }
 
+    // The upload key (docs/versioning-and-release-plan.md, section 7). The release `signingConfig`
+    // exists only when the release workflow decrypted the keystore and set ANDROID_KEYSTORE_FILE.
+    // A local build, a pull request build, and a validation build make an unsigned release APK.
+    val releaseKeystore: String? = System.getenv("ANDROID_KEYSTORE_FILE")
+    signingConfigs {
+        if (!releaseKeystore.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
@@ -38,6 +53,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // With no keystore, the release build stays unsigned.
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
 
         create("benchmark") {

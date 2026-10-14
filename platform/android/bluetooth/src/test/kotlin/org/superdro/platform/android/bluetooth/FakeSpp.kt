@@ -30,6 +30,10 @@ internal class FakeSppSocket : SppSocket {
     @Volatile
     var connectBlocks = false
 
+    /** The exception of a `connect()` that blocks, after the socket closes. */
+    @Volatile
+    var blockedConnectFailure: IOException = IOException("read failed, socket might closed or timeout, read ret: -1")
+
     /** When not null, each write blocks until this latch opens or the socket closes. */
     @Volatile
     var writeGate: CountDownLatch? = null
@@ -64,7 +68,7 @@ internal class FakeSppSocket : SppSocket {
         connectFailure?.let { failure -> throw failure }
         if (connectBlocks) {
             closedLatch.await()
-            throw IOException("read failed, socket might closed or timeout, read ret: -1")
+            throw blockedConnectFailure
         }
     }
 

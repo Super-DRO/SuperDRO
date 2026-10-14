@@ -15,6 +15,7 @@ import org.superdro.core.functions.drawing.SnapKind
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
+import org.superdro.core.model.ReadoutFormat
 import org.superdro.core.model.ShapeType
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.drawingui_applied
@@ -29,12 +30,17 @@ import org.superdro.core.resources.drawingui_status_extents
 import org.superdro.core.resources.drawingui_status_picked
 import org.superdro.core.resources.drawingui_status_rotated
 import org.superdro.core.resources.drawingui_unit_inch_as_mm
+import org.superdro.core.resources.readout_unit_inch
+import org.superdro.core.resources.readout_unit_mm
 import org.superdro.core.functions.drawing.UnitCheck
 import org.superdro.core.ui.graphics.GraphicsHarness
 import org.superdro.core.ui.text.UiText
 
 /** The tests of "Set Up Drawing". */
 class DrawingSetupPresenterTest {
+
+    private val mm = UiText.of(Res.string.readout_unit_mm)
+    private val inch = UiText.of(Res.string.readout_unit_inch)
 
     private class Setup(val harness: GraphicsHarness, val controller: DrawingImportController, val presenter: DrawingSetupPresenter)
 
@@ -80,12 +86,28 @@ class DrawingSetupPresenterTest {
             val groups = setup.presenter.uiState.value.groups
             assertEquals(listOf(SnapKind.NamedPoint, SnapKind.CircleCenter), groups.map { group -> group.kind })
             assertEquals(UiText.of(Res.string.drawingui_group_points), groups[0].label)
-            assertEquals(UiText.of(Res.string.drawingui_group_holes, "6.0", 1), groups[1].label)
+            assertEquals(UiText.of(Res.string.drawingui_group_holes, "6.000", 1, mm), groups[1].label)
             assertTrue(groups[0].create, "Named points have Create as sub-datums on")
             assertTrue(groups.all { group -> group.shown })
             assertEquals(2, setup.presenter.uiState.value.marks.size)
             val status = setup.presenter.uiState.value.status
-            assertEquals(UiText.of(Res.string.drawingui_status_extents, 3, "0.0", "20.0", "0.0", "8.0"), status)
+            assertEquals(UiText.of(Res.string.drawingui_status_extents, 3, "0.000", "20.000", "0.000", "8.000", mm), status)
+        }
+    }
+
+    @Test
+    fun onAnInchProfileTheSummaryHasInchValuesAndTheInchUnit() = runTest {
+        withSetup(MachineProfile.create(MachineType.VerticalMill, "Mill").copy(metricDefault = false)) { setup ->
+            val presenter = setup.presenter
+            val state = presenter.uiState.value
+            assertEquals(false, state.metric)
+            assertEquals(UiText.of(Res.string.drawingui_status_extents, 3, "0.0000", "0.7874", "0.0000", "0.3150", inch), state.status)
+            assertEquals(UiText.of(Res.string.drawingui_group_holes, "0.2362", 1, inch), state.groups[1].label)
+            tapMark(presenter, 10_000.0, 5_000.0)
+            advanceUntilIdle()
+            val status = assertIs<UiText.Resource>(presenter.uiState.value.status)
+            assertEquals(Res.string.drawingui_status_picked, status.resource)
+            assertEquals(listOf("0.3937", "0.1969", inch), status.args.drop(1))
         }
     }
 
@@ -101,7 +123,7 @@ class DrawingSetupPresenterTest {
             assertTrue(card.hasPick)
             val status = assertIs<UiText.Resource>(presenter.uiState.value.status)
             assertEquals(Res.string.drawingui_status_picked, status.resource)
-            assertEquals(listOf("10.00", "5.00"), status.args.drop(1))
+            assertEquals(listOf("10.000", "5.000", mm), status.args.drop(1))
             presenter.onCardXText(0, "110")
             presenter.onCardYText(0, "200 + 5")
             presenter.onCardSet(0)
@@ -175,9 +197,11 @@ class DrawingSetupPresenterTest {
 
     @Test
     fun theDistanceMessageTellsFurtherOrCloser() {
-        assertEquals(UiText.of(Res.string.drawingui_mismatch_further, "1.25"), DrawingSetupPresenter.bannerOf(UnitCheck.Mismatch(1.25)))
-        assertEquals(UiText.of(Res.string.drawingui_mismatch_closer, "0.50"), DrawingSetupPresenter.bannerOf(UnitCheck.Mismatch(-0.5)))
-        assertNull(DrawingSetupPresenter.bannerOf(UnitCheck.Agrees))
+        val format = ReadoutFormat.Format3
+        assertEquals(UiText.of(Res.string.drawingui_mismatch_further, "1.250", mm), DrawingSetupPresenter.bannerOf(UnitCheck.Mismatch(1.25), true, format))
+        assertEquals(UiText.of(Res.string.drawingui_mismatch_closer, "0.500", mm), DrawingSetupPresenter.bannerOf(UnitCheck.Mismatch(-0.5), true, format))
+        assertEquals(UiText.of(Res.string.drawingui_mismatch_further, "0.0500", inch), DrawingSetupPresenter.bannerOf(UnitCheck.Mismatch(1.27), false, format))
+        assertNull(DrawingSetupPresenter.bannerOf(UnitCheck.Agrees, true, format))
     }
 
     @Test

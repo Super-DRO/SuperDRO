@@ -3,14 +3,14 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>composite</groupId>
   <artifactId>composite.gradle.plugin</artifactId>
-  <version>1.0-5e80b039d5fd</version>
+  <version>1.0-b1d9f21725fa</version>
   <packaging>pom</packaging>
   <name>SuperDRO build logic</name>
   <dependencies>
     <dependency>
       <groupId>org.superdro.composite</groupId>
       <artifactId>composite</artifactId>
-      <version>1.0-5e80b039d5fd</version>
+      <version>1.0-b1d9f21725fa</version>
     </dependency>
   </dependencies>
 </project>
