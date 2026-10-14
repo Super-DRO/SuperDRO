@@ -88,7 +88,8 @@ android {
             project.layout.buildDirectory.dir("copiedRes").get().asFile.path
         )
         // The debug adapter is bound for each build type: src/debug imports the module of
-        // core:fake-adapter, src/release binds NoDebugAdapter.
+        // core:fake-adapter, src/release binds NoDebugAdapter. The profile build types use
+        // src/profile (see profileBuildTypes below).
     }
 }
 
@@ -98,6 +99,39 @@ kotlin {
 
 baselineProfile {
     mergeIntoMain = true
+    // The profile build types contain the fake adapter (see below). The release APK does not,
+    // so its rules have no use in the merged profile.
+    filter {
+        exclude("org.superdro.core.fakeadapter.**")
+    }
+}
+
+// The build types that the baselineProfile plugin makes from release. The profile generator
+// starts the app with the demo extra, and the live readout needs the fake adapter for that. Thus
+// these two build types bind the fake adapter (src/profile) in place of NoDebugAdapter
+// (src/release). The plugin copies the release source directories into these build types in its
+// own finalizeDsl callback, which runs before this one. If the order changes, src/release and
+// src/profile both declare debugModule, and the compiler stops the build. The release build type
+// does not change: it has no fake adapter and no new code.
+val profileBuildTypes = setOf("nonMinifiedRelease", "benchmarkRelease")
+
+androidComponents {
+    finalizeDsl { extension ->
+        profileBuildTypes.forEach { name ->
+            extension.sourceSets.getByName(name).kotlin.directories.apply {
+                remove("src/release/kotlin")
+                add("src/profile/kotlin")
+            }
+        }
+    }
+}
+
+// The plugin makes the configurations of the profile build types after this script runs, so the
+// dependencies block cannot name them.
+configurations.matching { configuration ->
+    configuration.name in profileBuildTypes.map { name -> "${name}Implementation" }
+}.configureEach {
+    dependencies.add(project.dependencies.create(projects.core.fakeAdapter))
 }
 
 dependencies {
