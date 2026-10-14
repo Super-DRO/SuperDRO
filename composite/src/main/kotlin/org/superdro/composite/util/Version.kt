@@ -34,6 +34,8 @@ fun Project.resolveProjectVersion(): String =
  *
  * `26.41.1` gives `2641001`. The function ignores the `-dev+...` part. A version with no tag
  * (`0.0.0-dev`) gives `1`, because Android needs `versionCode >= 1`.
+ *
+ * `version_code()` in `scripts/cut_version.py` uses the same formula. Keep the two the same.
  */
 fun projectVersionCode(version: String): Int {
     val base = version.substringBefore('-')
@@ -47,9 +49,16 @@ fun projectVersionCode(version: String): Int {
 
 /**
  * Gives the `major.minor.patch` part of [version] with no `-dev+<metadata>` part. A desktop
- * installer tool accepts only this form.
+ * installer tool accepts only this form. The MSI tool also refuses a major part above 255. Thus
+ * the year has two digits.
  */
 fun packagingVersion(version: String): String = version.substringBefore('-')
+
+/**
+ * The `git describe --match` glob of a release tag. `scripts/cut_version.py` makes only tags of
+ * this form.
+ */
+internal const val RELEASE_TAG_GLOB = "v[0-9]*.[0-9]*.[0-9]*"
 
 /**
  * Changes the text of `git describe --tags --always --dirty` into the version. The function has
@@ -100,7 +109,9 @@ abstract class GitVersionValueSource : ValueSource<String, GitVersionValueSource
         val raw = runCatching {
             execOperations.exec {
                 workingDir = java.io.File(parameters.workingDir.get())
-                commandLine("git", "describe", "--tags", "--always", "--dirty")
+                // Only a release tag `v<year>.<week>.<count>` counts. A different tag on the
+                // branch (for example a backup tag) does not change the version.
+                commandLine("git", "describe", "--tags", "--match", RELEASE_TAG_GLOB, "--always", "--dirty")
                 standardOutput = stdout
                 errorOutput = ByteArrayOutputStream()
                 isIgnoreExitValue = true

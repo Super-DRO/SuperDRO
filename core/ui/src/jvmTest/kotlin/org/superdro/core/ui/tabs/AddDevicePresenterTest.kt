@@ -14,6 +14,7 @@ import org.superdro.core.connection.ConnectionRequest
 import org.superdro.core.connection.DiscoveredAdapter
 import org.superdro.core.connection.LinkCapability
 import org.superdro.core.connection.LinkFailure
+import org.superdro.core.connection.PairedListState
 import org.superdro.core.connection.PermissionKind
 import org.superdro.core.debugadapter.DebugAdapter
 import org.superdro.core.debugadapter.NoDebugAdapter
@@ -38,12 +39,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import org.superdro.core.ui.adaptive.LocalWindowLayout
 import org.superdro.core.ui.adaptive.WindowLayout
+import org.superdro.core.ui.tabs.adddevice.ADD_DEVICE_PAIR_NEW_TAG
 import org.superdro.core.ui.tabs.adddevice.ADD_DEVICE_RFCOMM_HINT_TAG
 import org.superdro.core.ui.tabs.adddevice.AddDeviceSheet
 import org.superdro.core.ui.theme.AppTheme
@@ -187,11 +190,11 @@ class AddDevicePresenterTest {
         val harness = Harness(this)
         harness.capabilities.state.value = CapabilityState(bluetooth = LinkCapability.Unavailable(LinkFailure.PermissionMissing))
         runCurrent()
-        assertTrue(harness.state.sections[0].permissionMissing)
+        assertEquals(PairedListState.PermissionMissing, harness.state.sections[0].paired)
         harness.presenter.grantBluetooth()
         harness.capabilities.state.value = CapabilityState(bluetooth = LinkCapability.Unavailable(LinkFailure.RadioOff))
         runCurrent()
-        assertTrue(harness.state.sections[0].radioOff)
+        assertEquals(PairedListState.RadioOff, harness.state.sections[0].paired)
         harness.presenter.enableBluetooth()
         harness.presenter.selectLink(harness.state.sections[1].options.single())
         assertEquals(
@@ -202,6 +205,86 @@ class AddDevicePresenterTest {
             ),
             harness.requests.sent,
         )
+        harness.close()
+    }
+
+    @Test
+    fun theBluetoothSectionHasTheStateOfThePairedList() = runTest {
+        val harness = Harness(this)
+        runCurrent()
+        assertEquals(PairedListState.Paired, harness.state.sections[0].paired)
+        assertEquals(listOf("HC-05"), harness.state.sections[0].options.map { it.name })
+        assertNull(harness.state.sections[1].paired)
+
+        // Android gives an empty list when the radio is off. This is not "no adapter is paired".
+        harness.capabilities.state.value = CapabilityState(bluetooth = LinkCapability.Unavailable(LinkFailure.RadioOff))
+        harness.bluetooth.list.value = emptyList()
+        runCurrent()
+        assertEquals(PairedListState.RadioOff, harness.state.sections[0].paired)
+        assertTrue(harness.state.sections[0].options.isEmpty())
+
+        // Android gives an empty list without the permission. This is not "no adapter is paired".
+        harness.capabilities.state.value = CapabilityState(bluetooth = LinkCapability.Unavailable(LinkFailure.PermissionMissing))
+        runCurrent()
+        assertEquals(PairedListState.PermissionMissing, harness.state.sections[0].paired)
+        assertTrue(harness.state.sections[0].options.isEmpty())
+
+        // The radio is on and the app has the permission: the empty list is really empty.
+        harness.capabilities.state.value = CapabilityState()
+        runCurrent()
+        assertEquals(PairedListState.NoPaired, harness.state.sections[0].paired)
+
+        harness.bluetooth.list.value = listOf(DiscoveredAdapter(AdapterAddress.BluetoothSpp("24:6F:28:A1:B2:C3"), "HC-05"))
+        runCurrent()
+        assertEquals(PairedListState.Paired, harness.state.sections[0].paired)
+        harness.close()
+    }
+
+    @Test
+    fun aRadioThatIsOffHidesThePairedAdaptersThatTheListStillHas() = runTest {
+        val harness = Harness(this)
+        harness.capabilities.state.value = CapabilityState(bluetooth = LinkCapability.Unavailable(LinkFailure.RadioOff))
+        runCurrent()
+        assertEquals(PairedListState.RadioOff, harness.state.sections[0].paired)
+        assertTrue(harness.state.sections[0].options.isEmpty())
+        harness.close()
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun theSheetShowsOnlyTheNoticeWhenBluetoothIsOffOrNotPermitted() = runComposeUiTest {
+        val scope = TestScope()
+        val harness = Harness(scope)
+        harness.bluetooth.list.value = emptyList()
+        harness.capabilities.state.value = CapabilityState(bluetooth = LinkCapability.Unavailable(LinkFailure.RadioOff))
+        scope.testScheduler.advanceUntilIdle()
+        setContent {
+            AppTheme(systemInDarkTheme = false) {
+                CompositionLocalProvider(LocalWindowLayout provides WindowLayout.of(1280.dp, 800.dp)) {
+                    val state by harness.presenter.uiState.collectAsState()
+                    AddDeviceSheet(state, harness.presenter, onDismiss = {})
+                }
+            }
+        }
+        onNodeWithText("Bluetooth is off.").assertExists()
+        onNodeWithText("Turn on Bluetooth").assertExists()
+        onNodeWithText("No adapter is paired", substring = true).assertDoesNotExist()
+        onNodeWithTag(ADD_DEVICE_PAIR_NEW_TAG).assertDoesNotExist()
+
+        harness.capabilities.state.value = CapabilityState(bluetooth = LinkCapability.Unavailable(LinkFailure.PermissionMissing))
+        scope.testScheduler.advanceUntilIdle()
+        waitForIdle()
+        onNodeWithText("Bluetooth is off.").assertDoesNotExist()
+        onNodeWithText("Grant permission").assertExists()
+        onNodeWithText("No adapter is paired", substring = true).assertDoesNotExist()
+        onNodeWithTag(ADD_DEVICE_PAIR_NEW_TAG).assertDoesNotExist()
+
+        harness.capabilities.state.value = CapabilityState()
+        scope.testScheduler.advanceUntilIdle()
+        waitForIdle()
+        onNodeWithText("Grant permission").assertDoesNotExist()
+        onNodeWithText("No adapter is paired", substring = true).assertExists()
+        onNodeWithTag(ADD_DEVICE_PAIR_NEW_TAG).assertExists()
         harness.close()
     }
 

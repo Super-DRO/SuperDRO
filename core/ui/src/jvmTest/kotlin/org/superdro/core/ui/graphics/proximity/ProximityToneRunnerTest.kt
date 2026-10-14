@@ -4,7 +4,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.superdro.core.functions.proximity.ProximityWarning
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.MachineMode
 import org.superdro.core.model.ProximityTarget
@@ -23,6 +27,32 @@ class ProximityToneRunnerTest {
         // A second axis takes the warning: one axis at a time.
         assertEquals(AxisId.Y, ProximityTargets.toggle(on, AxisId.Y).proximity?.axis)
         assertEquals(null, ProximityTargets.toggle(on, AxisId.X).proximity)
+        // A point target has two axes. The button of each axis shows "on" and clears the target.
+        val point = workspace.copy(proximity = ProximityTarget(AxisId.X, 0.0, secondAxis = AxisId.Y, pointId = "p1"))
+        assertTrue(ProximityTargets.isOn(point, AxisId.X))
+        assertTrue(ProximityTargets.isOn(point, AxisId.Y))
+        assertFalse(ProximityTargets.isOn(point, AxisId.Z))
+        assertEquals(null, ProximityTargets.toggle(point, AxisId.Y).proximity)
+    }
+
+    @Test
+    fun anAxisTargetKeepsTheToneOfAStillAxisUntilTheSilenceTime() = runTest {
+        val harness = GraphicsHarness(this)
+        try {
+            harness.start()
+            harness.moveTo(10L, x = 5_000L, y = 0L, z = 0L)
+            harness.updateWorkspace { workspace -> ProximityTargets.toggle(workspace, AxisId.X) }
+            harness.session.move('x', 1_000L, 20L)
+            runCurrent()
+            // The target of one axis does not use the still time of a point target.
+            advanceTimeBy(ProximityWarning.STILL_MS + 1_000L)
+            runCurrent()
+            assertEquals(listOf(0.65), harness.sounds.proximityLevels)
+            advanceUntilIdle()
+            assertEquals(listOf(0.65, 0.0), harness.sounds.proximityLevels)
+        } finally {
+            harness.close()
+        }
     }
 
     @Test

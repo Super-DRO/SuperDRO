@@ -16,6 +16,7 @@ The app code uses the Apache License 2.0 ([LICENSE](LICENSE)).
 | Document | Content |
 |---|---|
 | [CLAUDE.md](CLAUDE.md) | The work rules of the repository |
+| [docs/versioning-and-release-plan.md](docs/versioning-and-release-plan.md) | The app version and the release workflows |
 
 ## Status
 

@@ -13,7 +13,7 @@ package org.superdro.core.connection
  * |---|---|---|
  * | [Disconnected] | [Connecting] (1) | A user connect, or the restore |
  * | [Connecting] | [AwaitingData] | The open succeeds |
- * | [Connecting] | [Reconnecting] | The open fails ([LinkFailure.Refused]) |
+ * | [Connecting] | [Reconnecting] | The open fails ([LinkFailure.Refused], [LinkFailure.NoAnswer]) |
  * | [Connecting], an open state | [WaitingForDevice] | [LinkFailure.RadioOff], [LinkFailure.PermissionMissing], [LinkFailure.DeviceGone] |
  * | [AwaitingData], [NoData] | [Connected] | A valid message |
  * | [Connected] | [NoData] | No valid message for 7 s |

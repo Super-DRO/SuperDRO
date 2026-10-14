@@ -3,6 +3,7 @@ package org.superdro.core.connection
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /** The reconnect policy. */
@@ -62,6 +63,8 @@ class ReconnectPolicyTest {
             assertEquals(ReconnectDecision.WaitForCapability(failure), policy.decide(failure, 3))
         }
         assertTrue(policy.decide(LinkFailure.Refused, 0) is ReconnectDecision.Retry)
+        assertTrue(policy.decide(LinkFailure.NoAnswer, 0) is ReconnectDecision.Retry)
+        assertFalse(LinkFailure.NoAnswer.waitsForCapability)
         assertTrue(policy.decide(LinkFailure.Lost, 0) is ReconnectDecision.Retry)
     }
 }

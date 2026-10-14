@@ -38,14 +38,28 @@ data class AxisState(
 /**
  * The target of the proximity warning.
  *
+ * A point target ([pointId] is not null) comes from the automatic proximity warning at a
+ * selected point. It has two axes: [axis] and [secondAxis]. The value of each axis is the
+ * distance to the point on that axis, and the target is 0. The tone follows the axis that moves
+ * to its target, and the tone stops when the axes stop.
+ *
  * @property absolute True when [targetUm] is an absolute position, false for the shown value.
+ *   A point target ignores it.
+ * @property secondAxis The second axis of a point target, or null.
+ * @property pointId The ID of the selected point (the active sub-datum) of a point target, or
+ *   null. The target has no effect when this point is not the active sub-datum.
  */
 @Serializable
 data class ProximityTarget(
     val axis: AxisId = AxisId.X,
     val targetUm: Double = 0.0,
     val absolute: Boolean = false,
-)
+    val secondAxis: AxisId? = null,
+    val pointId: String? = null,
+) {
+    /** The axes of the target: [axis], and [secondAxis] when it is not null. */
+    val axes: List<AxisId> get() = listOfNotNull(axis, secondAxis)
+}
 
 /** The automatic functions of the graphical view. All are off for a new workspace. */
 @Serializable

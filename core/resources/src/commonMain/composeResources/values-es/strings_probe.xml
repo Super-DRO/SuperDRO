@@ -17,6 +17,10 @@
     <string name="probe_paired_devices">Dispositivos vinculados</string>
     <string name="probe_no_paired">Ningún dispositivo vinculado. Vincule el adaptador en los ajustes de Bluetooth.</string>
     <string name="probe_open_bt_settings">Ajustes de Bluetooth</string>
+    <string name="probe_bt_permission_missing">La app necesita el permiso de Bluetooth para mostrar los dispositivos vinculados.</string>
+    <string name="probe_bt_request_permission">Pedir el permiso de Bluetooth</string>
+    <string name="probe_bt_off">El Bluetooth está desactivado.</string>
+    <string name="probe_bt_turn_on">Activar Bluetooth</string>
     <string name="probe_usb_devices">Dispositivos USB serie</string>
     <string name="probe_no_usb">No hay ningún dispositivo USB serie conectado.</string>
     <string name="probe_usb_permission">Pedir el permiso USB</string>

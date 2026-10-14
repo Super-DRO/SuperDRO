@@ -56,9 +56,9 @@ class DrawingScreensUiTest {
     fun theSetupScreenSendsItsEvents() = runComposeUiTest {
         val state = DrawingSamples.setupState()
         val events = RecordingSetupEvents()
-        setContent { Themed { DrawingSetupScreen(state.copy(banner = DrawingSetupPresenter.bannerOf(org.superdro.core.functions.drawing.UnitCheck.Mismatch(1.25))), events) } }
+        setContent { Themed { DrawingSetupScreen(state.copy(banner = DrawingSetupPresenter.bannerOf(org.superdro.core.functions.drawing.UnitCheck.Mismatch(1.27), false, org.superdro.core.model.ReadoutFormat.Format3)), events) } }
         onNodeWithTag(DRAWING_BANNER_TAG).assertExists()
-        onNodeWithText("These points are 1.25 mm further apart on the machine than in the drawing.").assertExists()
+        onNodeWithText("These points are 0.0500 in further apart on the machine than in the drawing.").assertExists()
         onNodeWithTag(drawingStepTag("mirror-h")).performClick()
         onNodeWithTag(drawingStepTag("rotate-right")).performClick()
         onNodeWithContentDescription("Mirror top and bottom").performClick()
