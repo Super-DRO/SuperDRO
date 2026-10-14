@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.superdro.core.camera.CameraError
 import org.superdro.core.camera.CameraErrorKind
 import org.superdro.core.camera.CameraIdentity
@@ -155,20 +156,19 @@ class CameraScreenshotTest {
         metric = true,
         probes = listOf(microscope),
         probe = microscope,
-        pointX = "15.000",
-        pointY = "1.000",
-        unit = DisplayUnit.Millimeter,
     )
+
+    private val point = MutableStateFlow(CameraPointUiState(x = "15.000", y = "1.000", unit = DisplayUnit.Millimeter))
 
     @Test
     fun theCameraScreen() {
-        render("screen") { CameraScreen(playing, screenState, NoScreenEvents, onBack = {}) }
+        render("screen") { CameraScreen(playing, screenState, point, NoScreenEvents, onBack = {}) }
         // A tall landscape window shows the whole control panel: the image scale and the point.
         listOf(false, true).forEach { dark ->
             ScreenshotRenderer.render("camera-screen-panel-${if (dark) "dark" else "light"}", 1280, 1400) {
                 AppTheme(mode = if (dark) ThemeMode.Dark else ThemeMode.System, systemInDarkTheme = false) {
                     CompositionLocalProvider(LocalWindowLayout provides WindowLayout(org.superdro.core.ui.adaptive.WidthClass.Expanded, landscape = true)) {
-                        CameraScreen(playing, screenState.copy(message = CameraScreenPresenter.scaleText(20.0)), NoScreenEvents, onBack = {})
+                        CameraScreen(playing, screenState.copy(message = CameraScreenPresenter.scaleText(20.0)), point, NoScreenEvents, onBack = {})
                     }
                 }
             }
@@ -177,6 +177,7 @@ class CameraScreenshotTest {
             CameraScreen(
                 CameraVideoUiState(attached = true, configured = true, camera = TestCameras.logitech),
                 CameraScreenUiState(),
+                MutableStateFlow(CameraPointUiState()),
                 NoScreenEvents,
                 onBack = {},
             )
@@ -187,6 +188,7 @@ class CameraScreenshotTest {
                 screenState.copy(
                     calibration = CalibrationSession(CalibrationMethod.KnownDistance, firstImage = org.superdro.core.camera.ImagePoint(400.0, 360.0)),
                 ),
+                point,
                 NoScreenEvents,
                 onBack = {},
             )
