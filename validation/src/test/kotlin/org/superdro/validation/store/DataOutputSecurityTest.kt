@@ -51,7 +51,6 @@ import org.superdro.core.dataoutput.DataOutputController
 import org.superdro.core.dataoutput.DataOutputErrorType
 import org.superdro.core.dataoutput.DataOutputPlatform
 import org.superdro.core.dataoutput.DataOutputSecrets
-import org.superdro.core.dataoutput.KtorListenSocketFactory
 import org.superdro.core.dataoutput.ListenSocket
 import org.superdro.core.dataoutput.ListenSocketFactory
 import org.superdro.core.dataoutput.OutputRunRule
@@ -61,6 +60,7 @@ import org.superdro.core.dataoutput.PskKey
 import org.superdro.core.dataoutput.SenderState
 import org.superdro.core.dataoutput.StartBlock
 import org.superdro.core.dataoutput.TcpOutputServer
+import org.superdro.core.dataoutput.systemListenSockets
 import org.superdro.core.model.BindInterface
 import org.superdro.core.model.DataOutputActivation
 import org.superdro.core.model.DataOutputCadence
@@ -83,7 +83,7 @@ class DataOutputSecurityTest {
     private val expectedRecord = "2026-10-11T14:03:22.517Z;12.7000;-3.1750;0.0000\n".encodeToByteArray()
     private val values = MutableStateFlow(OutputValues(xAbsolute = 12_700.0, yAbsolute = -3_175.0, zAbsolute = 0.0, updatedAtEpochMs = 1_791_727_402_517L))
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val sockets = KtorListenSocketFactory(Dispatchers.IO)
+    private val sockets = systemListenSockets(Dispatchers.IO)
     private val binds = AtomicInteger(0)
     private val countingSockets = ListenSocketFactory { host, port -> binds.incrementAndGet(); sockets.bind(host, port) }
     private val secretStore = InMemorySecretStore()
@@ -99,7 +99,6 @@ class DataOutputSecurityTest {
     fun close() {
         controllers.forEach(DataOutputController::close)
         scope.cancel()
-        sockets.close()
     }
 
     private fun freePort(): Int = ServerSocket(0).use { it.localPort }
@@ -445,15 +444,7 @@ class DataOutputSecurityTest {
         assertTrue(binds.get() >= 1)
         output.setMachineOnline(false)
         assertEquals(StartBlock.MachineOffline, output.state.value.block)
-        // Ktor closes a server socket through its selector, so the port can accept for a short time after the stop.
-        // "At once" is at once for the user: the port must close in 2 s.
-        val closedBy = System.currentTimeMillis() + 2000
-        var closed = false
-        while (!closed && System.currentTimeMillis() < closedBy) {
-            closed = runCatching { Socket().use { it.connect(InetSocketAddress("127.0.0.1", port), 200) } }
-                .exceptionOrNull() is ConnectException
-            if (!closed) Thread.sleep(50)
-        }
-        assertTrue(closed, "the port is still open 2 s after the machine went offline")
+        // The stop releases the port before it returns.
+        assertTrue(connectRefused(port), "the port is still open after the machine went offline")
     }
 }
