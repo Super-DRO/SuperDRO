@@ -134,8 +134,12 @@ object ShapePaths {
         return matrix
     }
 
-    /** Gives a copy of the model [path] in screen pixels through [matrix]. */
+    /**
+     * Gives a copy of the model [path] in screen pixels through [matrix]. The copy keeps the fill
+     * type of [path], because `addPath` does not copy it.
+     */
     fun screenPath(path: Path, matrix: Matrix): Path = Path().apply {
+        fillType = path.fillType
         addPath(path)
         transform(matrix)
     }

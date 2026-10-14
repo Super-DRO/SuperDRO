@@ -61,6 +61,27 @@ class BleTransportTest {
     }
 
     @Test
+    fun aFullNotificationQueueEndsTheLinkAfterTheQueuedNotifications() = runTest {
+        val f = fixture()
+        f.transport.open()
+        val total = BleLinkDefaults.NOTIFICATION_QUEUE + 10
+        repeat(total) { index ->
+            f.engine.notify(f.device, "X$index;")
+            // The engine buffer holds 64 notifications.
+            if (index % 32 == 31) runCurrent()
+        }
+        runCurrent()
+        val chunks = ArrayList<String>()
+        val failure = assertFailsWith<LinkFailureException> {
+            f.transport.incoming.collect { bytes -> chunks += bytes.decodeToString() }
+        }
+        assertEquals(LinkFailure.Lost, failure.failure)
+        // No gap: the collector gets each notification of the queue in order, then the failure.
+        assertEquals((0 until BleLinkDefaults.NOTIFICATION_QUEUE).map { index -> "X$index;" }, chunks)
+        f.transport.close()
+    }
+
+    @Test
     fun aWriteGoesToTheRxCharacteristicInChunksOfTheMtu() = runTest {
         val f = fixture()
         f.transport.open()

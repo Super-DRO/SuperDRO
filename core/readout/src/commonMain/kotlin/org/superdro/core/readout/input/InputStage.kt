@@ -35,6 +35,9 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
         Channels.Q to ProbeInput(Channels.Q, configuration.probe),
     )
     private val pendingLatches = ArrayList<PendingLatch>()
+
+    /** The probe events of the current call. Each public call starts with an empty list. */
+    private val events = ArrayList<ProbeEvent>()
     private var probeSequence = 0L
     private var latestTime: Long? = null
 
@@ -61,20 +64,24 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
 
     /**
      * Processes one numeric readout: the channel letter [channel], the count [count], and the
-     * time [timeMs]. Gives the probe events that this sample completes.
+     * time [timeMs]. Gives the probe events that this sample completes. Most samples complete no
+     * event: then the result is a shared empty list.
      */
     fun onAxisCount(channel: Char, count: Long, timeMs: Long): List<ProbeEvent> {
         acceptedSample = null
+        events.clear()
         val letter = Channels.normalize(channel)
-        if (letter !in Channels.encoderInputs) return advance(timeMs)
+        if (letter !in Channels.encoderInputs) {
+            advance(timeMs)
+            return takeEvents()
+        }
         val encoder = channelFor(letter)
         val accepted = encoder.process(count, timeMs)
         if (accepted) acceptedSample = encoder.snapshot()
-        val events = ArrayList<ProbeEvent>()
         // The deadline comes first: a sample with a time after the deadline counts as the deadline.
-        events.addAll(advance(timeMs))
-        if (accepted) resolveWithSample(letter, timeMs, encoder.correctedCount, events)
-        return events
+        advance(timeMs)
+        if (accepted) resolveWithSample(letter, timeMs, encoder.correctedCount)
+        return takeEvents()
     }
 
     /**
@@ -82,14 +89,14 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
      * the value [value] (0 or 1), and the time [timeMs]. Gives the probe events that complete.
      */
     fun onBinaryInput(channel: Char, value: Int, timeMs: Long): List<ProbeEvent> {
-        val probe = probes[Channels.normalize(channel)] ?: return advance(timeMs)
-        val events = ArrayList<ProbeEvent>()
-        events.addAll(advance(timeMs))
-        if (probe.onMessage(value, timeMs)) {
+        events.clear()
+        advance(timeMs)
+        val probe = probes[Channels.normalize(channel)]
+        if (probe != null && probe.onMessage(value, timeMs)) {
             probeSequence += 1
-            startLatch(probeSequence, probe.port, timeMs, events)
+            startLatch(probeSequence, probe.port, timeMs)
         }
-        return events
+        return takeEvents()
     }
 
     /**
@@ -98,7 +105,11 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
      * same result as a message after the deadline. Gives the probe events that
      * complete.
      */
-    fun onTick(nowMs: Long): List<ProbeEvent> = advance(nowMs, tick = true)
+    fun onTick(nowMs: Long): List<ProbeEvent> {
+        events.clear()
+        advance(nowMs, tick = true)
+        return takeEvents()
+    }
 
     /**
      * Starts all stages again at the start of a link: the first count
@@ -179,29 +190,36 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
      * tick at or after the deadline, resolves each open input of the latch with its last sample
      * at or before `t` (complete).
      */
-    private fun advance(timeMs: Long, tick: Boolean = false): List<ProbeEvent> {
+    private fun advance(timeMs: Long, tick: Boolean = false) {
         val latest = latestTime
         if (latest == null || timeMs > latest) latestTime = timeMs
         probes.values.forEach { probe -> probe.advanceTo(timeMs) }
-        val events = ArrayList<ProbeEvent>()
+        if (pendingLatches.isEmpty()) return
         pendingLatches.forEach { latch ->
             val deadline = latch.timeMs + LATCH_WAIT_MS
             if (timeMs > deadline || (tick && timeMs >= deadline)) {
-                latch.inputs.values.filter { input -> !input.resolved }.forEach { input -> input.useBefore() }
+                latch.inputs.values.forEach { input -> if (!input.resolved) input.useBefore() }
             }
         }
-        emitResolved(events)
-        return events
+        emitResolved()
     }
 
-    private fun startLatch(sequence: Long, port: Char, timeMs: Long, events: MutableList<ProbeEvent>) {
+    /** Gives the events of the current call: a copy, or a shared empty list when there are none. */
+    private fun takeEvents(): List<ProbeEvent> {
+        if (events.isEmpty()) return emptyList()
+        val result = events.toList()
+        events.clear()
+        return result
+    }
+
+    private fun startLatch(sequence: Long, port: Char, timeMs: Long) {
         val axes = configuration.axes.values.filter { terms -> terms.enabled && terms.axis != AxisId.Tachometer && terms.terms.isNotEmpty() }
         val inputs = LinkedHashMap<Char, LatchInput>()
         axes.forEach { terms ->
             terms.inputs.forEach { letter -> inputs.getOrPut(letter) { latchInput(letter, timeMs) } }
         }
         pendingLatches.add(PendingLatch(sequence, port, timeMs, axes, inputs))
-        emitResolved(events)
+        emitResolved()
     }
 
     private fun latchInput(letter: Char, timeMs: Long): LatchInput {
@@ -230,18 +248,18 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
         return input
     }
 
-    private fun resolveWithSample(letter: Char, timeMs: Long, corrected: Long?, events: MutableList<ProbeEvent>) {
-        if (corrected == null) return
+    private fun resolveWithSample(letter: Char, timeMs: Long, corrected: Long?) {
+        if (corrected == null || pendingLatches.isEmpty()) return
         pendingLatches.forEach { latch ->
             val input = latch.inputs[letter] ?: return@forEach
             if (!input.resolved && timeMs > latch.timeMs && timeMs <= latch.timeMs + LATCH_WAIT_MS) {
                 input.resolveWith(latch.timeMs, timeMs, corrected)
             }
         }
-        emitResolved(events)
+        emitResolved()
     }
 
-    private fun emitResolved(events: MutableList<ProbeEvent>) {
+    private fun emitResolved() {
         while (pendingLatches.isNotEmpty() && pendingLatches.first().inputs.values.all { input -> input.resolved }) {
             events.add(pendingLatches.removeAt(0).toEvent())
         }

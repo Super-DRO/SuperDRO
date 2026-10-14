@@ -57,6 +57,7 @@ import org.superdro.core.ui.functions.common.LengthFieldState
 import org.superdro.core.ui.functions.common.NumberFieldState
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 
 /** The text fields of the thread setup. */
@@ -150,6 +151,9 @@ data class ThreadSetupUiState(
  *   group kind `Thread`.
  * - All fields come back from the last thread of the workspace, or from a thread that the user
  *   selects: also Start (Z), the length, and the reliefs.
+ *
+ * The state uses no live position: only a change of the profile or of the workspace makes it
+ * again. The `++x` text and the sync of Start (Z) read the live Z of the readout.
  */
 class ThreadSetupPresenter(
     private val readout: TabReadout,
@@ -157,6 +161,8 @@ class ThreadSetupPresenter(
 ) : ScopedPresenter(services.context) {
 
     private val mutable = MutableStateFlow(ThreadSetupUiState())
+
+    /** The last frame with a new structure. Its readings can be old: read the live Z from [readout]. */
     private var frame: ReadoutFrame? = null
     private var threads: List<ThreadSpec> = emptyList()
     private var workspaceId: String? = null
@@ -168,13 +174,13 @@ class ThreadSetupPresenter(
 
     init {
         scope.launch {
-            readout.frame.collect { current ->
+            readout.frame.structure().collect { current ->
                 frame = current
                 if (current != null) refresh()
             }
         }
         scope.launch {
-            readout.frame.map { current -> current?.workspace?.id }.distinctUntilChanged().collectLatest { id ->
+            readout.frame.structure().map { current -> current?.workspace?.id }.distinctUntilChanged().collectLatest { id ->
                 workspaceId = id
                 if (id == null) return@collectLatest
                 services.machines.threads(id).collect { stored ->
@@ -245,7 +251,7 @@ class ThreadSetupPresenter(
 
     /** A text of the field [field]. Start (Z) takes `++x` and `--x` with the current Z as the base. */
     fun onText(field: ThreadField, text: String) {
-        val currentZ = frame?.reading(AxisId.Z)?.shown?.takeIf { it.isFinite() } ?: 0.0
+        val currentZ = readout.frame.value?.reading(AxisId.Z)?.shown?.takeIf { it.isFinite() } ?: 0.0
         edit {
             when (field) {
                 ThreadField.Tag -> copy(tag = text)
@@ -271,7 +277,7 @@ class ThreadSetupPresenter(
      */
     fun onSyncStartZ(): UiText? {
         readout.positionUnavailable()?.let { return it }
-        val z = frame?.reading(AxisId.Z)?.shown?.takeIf { it.isFinite() } ?: return null
+        val z = readout.frame.value?.reading(AxisId.Z)?.shown?.takeIf { it.isFinite() } ?: return null
         edit { copy(startZ = startZ.withValue(z)) }
         refresh()
         return null

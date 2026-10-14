@@ -21,6 +21,7 @@ import org.superdro.core.model.MachineType
 import org.superdro.core.model.ReferenceImage
 import org.superdro.core.store.StoreRefusal
 import org.superdro.core.ui.functions.FunctionsHarness
+import org.superdro.core.ui.functions.subscribe
 import org.superdro.core.ui.functions.TestEnvironment
 import org.superdro.core.ui.functions.common.loadString
 import org.superdro.core.ui.text.UiText
@@ -131,6 +132,7 @@ class WorkspacePresentersTest {
         harness.start(mill, states = mapOf(AxisId.X to AxisState(toolOffset = 5_000.0, toolOffsetActive = true, absoluteOffset = 777.0)))
         harness.inputs(AxisId.X to 152_400.0, AxisId.Y to 76_200.0, AxisId.Z to -12_700.0)
         val panel = MachineDatumPanelPresenter(harness.profile.id, harness.services, harness.presenter, harness.tab.undo, messages::add)
+        subscribe(panel.uiState)
         runCurrent()
         panel.onQuickCapture()
         runCurrent()
@@ -153,6 +155,7 @@ class WorkspacePresentersTest {
         harness.start(mill.copy(angular = AngularAxisConfig(enabled = true)))
         harness.inputs(AxisId.X to 1_000.0, AxisId.Y to 2_000.0, AxisId.Z to 3_000.0, AxisId.Angular to 90.0 * 3600.0)
         val panel = MachineDatumPanelPresenter(harness.profile.id, harness.services, harness.presenter, harness.tab.undo, messages::add)
+        subscribe(panel.uiState)
         runCurrent()
         panel.onQuickCapture()
         runCurrent()
@@ -175,6 +178,7 @@ class WorkspacePresentersTest {
         harness.store.machines.saveMachineDatum(harness.profile.id, MachineDatum(id = "d", name = "Datum 1", x = 152_400.0, y = 76_200.0, z = -12_700.0))
         advanceUntilIdle()
         val panel = MachineDatumPanelPresenter(harness.profile.id, harness.services, harness.presenter, harness.tab.undo, messages::add)
+        subscribe(panel.uiState)
         runCurrent()
         assertEquals(10_000.0, absolute(AxisId.X), 1e-9)
         panel.onTap("d")
@@ -203,6 +207,7 @@ class WorkspacePresentersTest {
         }
         advanceUntilIdle()
         val panel = MachineDatumPanelPresenter(harness.profile.id, harness.services, harness.presenter, harness.tab.undo, messages::add)
+        subscribe(panel.uiState)
         runCurrent()
         assertEquals(listOf("Datum 2", "Datum 10", "vise jaw"), panel.uiState.value.rows.map { it.name })
         panel.onDelete("Datum 2")

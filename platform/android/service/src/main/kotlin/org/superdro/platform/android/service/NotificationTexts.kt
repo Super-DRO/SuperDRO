@@ -8,7 +8,7 @@ import kotlinx.coroutines.withContext
  * The texts of the notification that the service loads after its start: the name of the channel
  * and the action "Disconnect all".
  */
-data class NotificationTexts(val channelName: String, val disconnectAll: String) {
+internal data class NotificationTexts(val channelName: String, val disconnectAll: String) {
 
     companion object {
         /**

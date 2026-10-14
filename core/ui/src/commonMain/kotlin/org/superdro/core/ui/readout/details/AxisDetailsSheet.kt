@@ -109,7 +109,7 @@ fun AxisDetailsSheet(
                 } else {
                     listOf(AxisButtonMode.SetCenter, AxisButtonMode.SetZero, AxisButtonMode.ToggleIncremental, AxisButtonMode.ToggleUnits, AxisButtonMode.Hold)
                 }
-                modes.forEach { mode -> ActionButton(row, mode, value, events) }
+                modes.forEach { mode -> ActionButton(row, mode, value.incremental, value.metric, value.divisions, value.held, events) }
                 if (row.kind == RowKind.Linear) {
                     val center = stringResource(Res.string.readout_details_center)
                     DroButton(onClick = onCenterAbsolute, contentDescription = center, style = DroButtonStyle.Primary, modifier = Modifier.testTag("axis-details-center")) {

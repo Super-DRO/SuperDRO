@@ -76,6 +76,28 @@ class RecordedStreamsTest {
     }
 
     @Test
+    fun oneBatchGivesOneUpdateOfTheLinksAndStopsAtTheCap() {
+        val platform = PlatformRecorder()
+        val streams = RecordedStreams(platform, FixedWallClock(), maxBytesPerLink = 5)
+        val sink = streams.open(mill, address, link = 1)
+        val updates = ArrayList<List<RecordedLink>>()
+        updates += streams.links.value
+        val chunks = listOf(RecordedChunk(0L, byteArrayOf(1, 2)), RecordedChunk(10L, byteArrayOf(3, 4)), RecordedChunk(20L, byteArrayOf(5, 6)))
+        sink.writeAll(chunks)
+        assertTrue(streams.links.value !== updates.single(), "the batch gives an update")
+        val link = streams.links.value.single()
+        assertEquals(2, link.chunkCount)
+        assertEquals(4L, link.byteCount)
+        assertTrue(link.truncated)
+        assertEquals(chunks, platform.written)
+        assertEquals(listOf(0L, 10L), streams.chunks(link.id).map { it.timeMs })
+        // After the cap, a batch gives no update.
+        val last = streams.links.value
+        sink.writeAll(listOf(RecordedChunk(30L, byteArrayOf(7))))
+        assertTrue(streams.links.value === last)
+    }
+
+    @Test
     fun theAppKeepsTheNewestRecordsAndAlsoRecordsWithNoPlatformFile() {
         val platform = PlatformRecorder(gives = false)
         val streams = RecordedStreams(platform, FixedWallClock(), maxLinks = 2)

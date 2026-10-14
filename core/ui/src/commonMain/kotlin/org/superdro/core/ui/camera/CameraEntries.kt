@@ -59,7 +59,7 @@ private fun CameraScreenEntry(scope: TabEntryScope, route: CameraRoute) {
     val videoState by video.state.collectAsState()
     val screenState by presenter.state.collectAsState()
     val events = remember(video, presenter, scope) { PresenterCameraEvents(video, presenter, ui, scope) }
-    CameraScreen(video = videoState, screen = screenState, events = events, onBack = { scope.navigator.pop(route) })
+    CameraScreen(video = videoState, screen = screenState, point = presenter.point, events = events, onBack = { scope.navigator.pop(route) })
 }
 
 /** The [CameraScreenEvents] of the presenters of the camera screen. */

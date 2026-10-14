@@ -43,6 +43,25 @@ data class ToolOutline(val geometry: ToolGeometry, val anchor: PointUm)
 data class ThreadOutline(val polylines: List<List<PointUm>>)
 
 /**
+ * Keeps the thread outline of the last thread spec. A new readout frame with the same armed
+ * thread then gives the same [ThreadOutline] and builds no polylines. The scene flow of one tab
+ * is its only user.
+ */
+class ThreadOutlineCache {
+    private var spec: ThreadSpec? = null
+    private var outline: ThreadOutline? = null
+
+    /** Gives the thread outline of [spec] ([GraphicalSceneBuilder.threadOutline]). */
+    fun of(spec: ThreadSpec): ThreadOutline? {
+        if (spec != this.spec) {
+            outline = GraphicalSceneBuilder.threadOutline(spec)
+            this.spec = spec
+        }
+        return outline
+    }
+}
+
+/**
  * The content of the graphical view at one time, in model µm. The view
  * position (h, v) has the vertical sign of the plane. The canvas draws the layers of the
  * scene in the draw order; the hit test uses the same values.
@@ -106,6 +125,7 @@ object GraphicalSceneBuilder {
      * @param threads The threads of the workspace, for the armed thread outline.
      * @param selectedGuideId The guide that the view selected, or null.
      * @param selectedShape The index of the selected drawing shape, or null.
+     * @param threadOutlines Gives the thread outline of a spec, for example [ThreadOutlineCache.of].
      */
     fun build(
         frame: ReadoutFrame,
@@ -114,6 +134,7 @@ object GraphicalSceneBuilder {
         threads: List<ThreadSpec> = emptyList(),
         selectedGuideId: String? = null,
         selectedShape: Int? = null,
+        threadOutlines: (ThreadSpec) -> ThreadOutline? = ::threadOutline,
     ): GraphicalScene {
         val profile = frame.profile
         val workspace = frame.workspace
@@ -157,7 +178,7 @@ object GraphicalSceneBuilder {
             drawingSelectable = restrictedIds == null,
             selectedShape = selectedShape.takeIf { restrictedIds == null },
             displayFrame = displayFrame,
-            threadOutline = armed?.let(::threadOutline),
+            threadOutline = armed?.let(threadOutlines),
             metric = frame.metric(PlaneAxes.horizontal(plane)),
             display = display,
             restricted = restrictedIds != null,

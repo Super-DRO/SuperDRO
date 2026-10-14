@@ -96,6 +96,27 @@ class TcpOutputServerTest {
     }
 
     @Test
+    fun theServerMakesTheBytesOfARecordOnlyForConnectedClientsAndOnlyOneTime() = runTest {
+        val setup = setup()
+        var made = 0
+        val bytes = { text: String -> { made += 1; record(text) } }
+        setup.server.publish(bytes("stopped\n"))
+        setup.server.start()
+        runCurrent()
+        val socket = setup.sockets.open.single()
+        setup.server.publish(bytes("no client\n"))
+        assertEquals(0, made)
+        val first = socket.connect("192.168.1.30")
+        val second = socket.connect("192.168.1.31")
+        runCurrent()
+        setup.server.publish(bytes("a\n"))
+        runCurrent()
+        assertEquals(1, made)
+        assertEquals("a\n", first.receivedText)
+        assertEquals("a\n", second.receivedText)
+    }
+
+    @Test
     fun theSlotOfAClientHasOnlyTheNewestRecord() = runTest {
         val setup = setup()
         setup.server.start()

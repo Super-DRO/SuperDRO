@@ -93,26 +93,40 @@ object MqttTopics {
         return "$ROOT/$level"
     }
 
-    /** Gives the messages of one record as (topic, payload) pairs. */
+    /**
+     * Gives the messages of one record as (topic, payload) pairs.
+     *
+     * @param topics The topics of [baseTopic] and [formatter]. An output keeps them for all of its records.
+     */
     fun messages(
         layout: MqttTopicLayout,
         baseTopic: String,
         formatter: RecordFormatter,
         record: OutputRecord,
         timestampEnabled: Boolean,
+        topics: FieldTopics = FieldTopics(baseTopic, formatter),
     ): List<Pair<String, ByteArray>> = when (layout) {
         MqttTopicLayout.JsonRecord -> {
             val text = formatter.record(record.texts, record.timestampEpochMs, record.sequence).removeSuffix("\n")
             listOf(baseTopic to text.encodeToByteArray())
         }
-        MqttTopicLayout.TopicPerField -> buildList {
+        MqttTopicLayout.TopicPerField -> buildList(topics.fields.size + 1) {
             if (timestampEnabled) {
-                add("$baseTopic/${RecordFormatter.TIMESTAMP_KEY}" to formatter.timestampText(record.timestampEpochMs).encodeToByteArray())
+                add(topics.timestamp to formatter.timestampText(record.timestampEpochMs).encodeToByteArray())
             }
-            formatter.fields.forEachIndexed { index, field ->
-                add("$baseTopic/${field.label}" to record.texts[index].orEmpty().encodeToByteArray())
+            topics.fields.forEachIndexed { index, topic ->
+                add(topic to record.texts[index].orEmpty().encodeToByteArray())
             }
         }
+    }
+
+    /**
+     * The topics of the layout [MqttTopicLayout.TopicPerField]: `<base>/timestamp` and
+     * `<base>/<label>` for each enabled field of the formatter, in order.
+     */
+    class FieldTopics(baseTopic: String, formatter: RecordFormatter) {
+        val timestamp: String = "$baseTopic/${RecordFormatter.TIMESTAMP_KEY}"
+        val fields: List<String> = formatter.fields.map { field -> "$baseTopic/${field.label}" }
     }
 }
 
@@ -140,6 +154,9 @@ class MqttOutput(
     private val retryDelayMs: Long = TcpOutputServer.RETRY_DELAY_MS,
 ) {
     private val _state = MutableStateFlow<SenderState>(SenderState.Stopped)
+
+    /** The topics of the fields. They do not change while the output runs. */
+    private val topics = MqttTopics.FieldTopics(baseTopic, formatter)
 
     /** The state of the client. */
     val state: StateFlow<SenderState> = _state.asStateFlow()
@@ -225,7 +242,7 @@ class MqttOutput(
         private suspend fun publishUntilLoss(link: MqttConnection): DataOutputError = coroutineScope {
             val publisher = launch {
                 for (record in slot) {
-                    MqttTopics.messages(layout, baseTopic, formatter, record, timestampEnabled).forEach { (topic, payload) ->
+                    MqttTopics.messages(layout, baseTopic, formatter, record, timestampEnabled, topics).forEach { (topic, payload) ->
                         try {
                             link.publish(topic, payload)
                             onWrite(true)

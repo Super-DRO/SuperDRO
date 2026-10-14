@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -57,6 +58,7 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
@@ -116,6 +118,7 @@ import org.superdro.core.resources.ic_play_arrow
 import org.superdro.core.resources.ic_settings
 import org.superdro.core.ui.adaptive.LocalWindowLayout
 import org.superdro.core.ui.navigation.ScreenScaffold
+import org.superdro.core.ui.presenter.collectLiveState
 import org.superdro.core.ui.readout.ReadoutTexts
 import org.superdro.core.ui.text.resolve
 import org.superdro.core.ui.theme.AccentButtons
@@ -184,6 +187,7 @@ interface CameraScreenEvents {
 fun CameraScreen(
     video: CameraVideoUiState,
     screen: CameraScreenUiState,
+    point: StateFlow<CameraPointUiState>,
     events: CameraScreenEvents,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -194,13 +198,13 @@ fun CameraScreen(
             Row(Modifier.fillMaxSize()) {
                 VideoArea(video, screen, events, Modifier.weight(1f).fillMaxHeight())
                 VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Controls(video, screen, events, Modifier.width(PanelWidth).fillMaxHeight())
+                Controls(video, screen, point, events, Modifier.width(PanelWidth).fillMaxHeight())
             }
         } else {
             Column(Modifier.fillMaxSize()) {
                 VideoArea(video, screen, events, Modifier.weight(0.55f).fillMaxWidth())
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Controls(video, screen, events, Modifier.weight(0.45f).fillMaxWidth())
+                Controls(video, screen, point, events, Modifier.weight(0.45f).fillMaxWidth())
             }
         }
     }
@@ -308,7 +312,13 @@ private fun CalibrationBanner(session: CalibrationSession, events: CameraScreenE
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Controls(video: CameraVideoUiState, screen: CameraScreenUiState, events: CameraScreenEvents, modifier: Modifier) {
+private fun Controls(
+    video: CameraVideoUiState,
+    screen: CameraScreenUiState,
+    point: StateFlow<CameraPointUiState>,
+    events: CameraScreenEvents,
+    modifier: Modifier,
+) {
     val targets = LocalTouchTargets.current
     Column(
         modifier.verticalScroll(rememberScrollState()).padding(16.dp),
@@ -346,7 +356,7 @@ private fun Controls(video: CameraVideoUiState, screen: CameraScreenUiState, eve
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         ScaleSection(video, screen, events)
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        PointSection(screen, events)
+        PointSection(screen, point, events)
     }
 }
 
@@ -478,7 +488,7 @@ private fun ScaleSection(video: CameraVideoUiState, screen: CameraScreenUiState,
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PointSection(screen: CameraScreenUiState, events: CameraScreenEvents) {
+private fun PointSection(screen: CameraScreenUiState, point: StateFlow<CameraPointUiState>, events: CameraScreenEvents) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SectionTitle(Res.string.camera_ui_point_title)
         if (screen.probes.isEmpty()) {
@@ -499,9 +509,11 @@ private fun PointSection(screen: CameraScreenUiState, events: CameraScreenEvents
         } else {
             screen.probe?.let { probe -> Text(probe.name, style = MaterialTheme.typography.bodyLarge) }
         }
-        val unit = screen.unit?.let { value -> stringResource(ReadoutTexts.unitSymbol(value)) }.orEmpty()
-        AxisValue("X", screen.pointX, unit)
-        AxisValue("Y", screen.pointY, unit)
+        // Only this section reads the point, so a new frame recomposes no other part of the screen.
+        val current by point.collectLiveState()
+        val unit = current.unit?.let { value -> stringResource(ReadoutTexts.unitSymbol(value)) }.orEmpty()
+        AxisValue("X", current.x, unit)
+        AxisValue("Y", current.y, unit)
     }
 }
 
