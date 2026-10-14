@@ -454,8 +454,8 @@ class DrawingSetupPresenter(
                     error = card.error,
                 )
             },
-            groups = state.groups.map { group -> SnapGroupUiState(group.kind, groupLabel(group), group.shown, group.createSubDatums) },
-            banner = bannerOf(placement.unitCheck()),
+            groups = state.groups.map { group -> SnapGroupUiState(group.kind, groupLabel(group, metric, format), group.shown, group.createSubDatums) },
+            banner = bannerOf(placement.unitCheck(), metric, format),
             status = statusOf(state, frame),
             message = state.message,
             busy = state.busy,
@@ -463,7 +463,12 @@ class DrawingSetupPresenter(
         )
     }
 
+    /** Gives the status line. The lengths have the unit and the readout format of the profile. */
     private fun statusOf(state: Local, frame: ReadoutFrame?): UiText {
+        val metric = metric(frame)
+        val format = readoutFormat(frame)
+        val unit = unitOf(metric)
+        fun length(um: Double): String = LengthTexts.format(um, metric, format)
         val shapes = state.preview
         val box = ShapeGeometry.extents(shapes)
         var status = if (box == null) {
@@ -472,10 +477,11 @@ class DrawingSetupPresenter(
             UiText.of(
                 Res.string.drawingui_status_extents,
                 shapes.size,
-                ONE_DECIMAL.format(box.minX / NM_PER_MM),
-                ONE_DECIMAL.format(box.maxX / NM_PER_MM),
-                ONE_DECIMAL.format(box.minY / NM_PER_MM),
-                ONE_DECIMAL.format(box.maxY / NM_PER_MM),
+                length(box.minX / NM_PER_UM),
+                length(box.maxX / NM_PER_UM),
+                length(box.minY / NM_PER_UM),
+                length(box.maxY / NM_PER_UM),
+                unit,
             )
         }
         val rotation = state.placement.rotationRad
@@ -489,8 +495,9 @@ class DrawingSetupPresenter(
             status = UiText.of(
                 Res.string.drawingui_status_picked,
                 status,
-                TWO_DECIMALS.format(machine.x / UM_PER_MM),
-                TWO_DECIMALS.format(sign * machine.y / UM_PER_MM),
+                length(machine.x),
+                length(sign * machine.y),
+                unit,
             )
         }
         return status
@@ -498,22 +505,34 @@ class DrawingSetupPresenter(
 
     companion object {
         private const val NM_PER_UM: Double = 1000.0
-        private const val NM_PER_MM: Double = 1_000_000.0
         private const val UM_PER_MM: Double = 1000.0
         private const val MIN_FIT_UM: Double = 10_000.0
         private val ONE_DECIMAL = NumberPattern("0.0")
-        private val TWO_DECIMALS = NumberPattern("0.00")
 
-        /** Gives the label of [group]: "Holes - %1$smm (%2$d)", "Arc centers", "Corners", "Named points". */
-        fun groupLabel(group: SnapGroup): UiText = when (group.kind) {
-            SnapKind.CircleCenter -> UiText.of(Res.string.drawingui_group_holes, ONE_DECIMAL.format((group.diameterUm ?: 0L) / UM_PER_MM), group.points.size)
+        /** Gives the unit symbol "mm" or "in" as a [UiText]. */
+        private fun unitOf(metric: Boolean): UiText = UiText.of(LengthTexts.unitSymbol(metric))
+
+        /**
+         * Gives the label of [group]: "Holes - %1$s %3$s (%2$d)", "Arc centers", "Corners", "Named points".
+         * The hole diameter has the unit ([metric]) and the readout format [format] of the profile.
+         */
+        fun groupLabel(group: SnapGroup, metric: Boolean, format: ReadoutFormat): UiText = when (group.kind) {
+            SnapKind.CircleCenter -> UiText.of(
+                Res.string.drawingui_group_holes,
+                LengthTexts.format((group.diameterUm ?: 0L).toDouble(), metric, format),
+                group.points.size,
+                unitOf(metric),
+            )
             SnapKind.ArcCenter -> UiText.of(Res.string.drawingui_group_arcs)
             SnapKind.Corner -> UiText.of(Res.string.drawingui_group_corners)
             SnapKind.NamedPoint -> UiText.of(Res.string.drawingui_group_points)
         }
 
-        /** Gives the unit banner of the unit test [check], or null. */
-        fun bannerOf(check: UnitCheck): UiText? = when (check) {
+        /**
+         * Gives the unit banner of the unit test [check], or null. A distance has the unit ([metric])
+         * and the readout format [format] of the profile.
+         */
+        fun bannerOf(check: UnitCheck, metric: Boolean, format: ReadoutFormat): UiText? = when (check) {
             UnitCheck.Agrees -> null
             is UnitCheck.WrongUnit -> UiText.of(
                 when (check.unit) {
@@ -526,9 +545,9 @@ class DrawingSetupPresenter(
                 },
             )
             is UnitCheck.Mismatch -> if (check.differenceMm >= 0.0) {
-                UiText.of(Res.string.drawingui_mismatch_further, TWO_DECIMALS.format(check.differenceMm))
+                UiText.of(Res.string.drawingui_mismatch_further, LengthTexts.format(check.differenceMm * UM_PER_MM, metric, format), unitOf(metric))
             } else {
-                UiText.of(Res.string.drawingui_mismatch_closer, TWO_DECIMALS.format(abs(check.differenceMm)))
+                UiText.of(Res.string.drawingui_mismatch_closer, LengthTexts.format(abs(check.differenceMm) * UM_PER_MM, metric, format), unitOf(metric))
             }
         }
 

@@ -29,6 +29,7 @@ import org.superdro.core.functions.compensation.ToolCompensation
 import org.superdro.core.functions.compensation.ToolPosition
 import org.superdro.core.functions.graphics.AutoGuideActions
 import org.superdro.core.functions.graphics.AutoPlungeActions
+import org.superdro.core.functions.graphics.AutoPointActions
 import org.superdro.core.functions.graphics.GuideOrientation
 import org.superdro.core.functions.graphics.GuideRules
 import org.superdro.core.functions.graphics.GuideSnapper
@@ -118,8 +119,11 @@ data class AddGuideRequest(val position: PointUm, val plane: Plane)
  *   SuperDRO.
  * - Snap to point, snap to guide, the automatic tool offset, the automatic proximity warning, the
  *   automatic zero, and the automatic sub-datum are workspace switches (default off).
- * - Snap to guide, the automatic tool offset, and the automatic proximity warning act only when
- *   the guides layer shows. Snap to point does not act in the measurement mode.
+ * - Snap to guide, the automatic tool offset, and the automatic proximity warning at a guide act
+ *   only when the guides layer shows. Snap to point does not act in the measurement mode.
+ * - The automatic proximity warning at a selected point (snap to point or a tap) sets a point
+ *   target on the two axes of the plane. The target clears when the point is not the active
+ *   sub-datum.
  * - A delete of a guide or a sub-datum has undo for 10 s.
  */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
@@ -196,8 +200,10 @@ class GraphicalTabPresenter(
     fun onPointTap(id: String) {
         val frame = readout.frame.value ?: return
         selectedGuide.value = null
-        val result = if (frame.workspace.activeSubDatumId == id) SubDatumOperations.deactivate(frame) else SubDatumOperations.activate(frame, id)
+        val deactivate = frame.workspace.activeSubDatumId == id
+        val result = if (deactivate) SubDatumOperations.deactivate(frame) else SubDatumOperations.activate(frame, id)
         readout.apply(result, null)
+        if (deactivate) clearPointTarget() else onPointSelected(frame, id)
         if (frame.workspace.graphical.snapToPoint) setSwitch(GraphicalSwitch.SnapToPoint, false)
         deps.sounds.play(UiSound.Short, deviceId)
     }
@@ -430,6 +436,9 @@ class GraphicalTabPresenter(
     private fun runAutomaticFunctions(frame: ReadoutFrame) {
         val plane = PlaneAxes.planeFor(frame.profile.machineType.isLathe, frame.workspace.plane)
         val switches = frame.workspace.graphical
+        frame.workspace.proximity?.pointId?.let { pointId ->
+            if (pointId != frame.workspace.activeSubDatumId) clearPointTarget()
+        }
         runPlungeWatcher(frame, switches)
         val tool = GraphicalSceneBuilder.toolPosition(frame, plane) ?: return
         if (tool == lastTool) return
@@ -440,6 +449,7 @@ class GraphicalTabPresenter(
             SnapToPoint.select(tool, points, frame.workspace.activeSubDatumId)?.let { id ->
                 selectedGuide.value = null
                 readout.apply(SubDatumOperations.activate(frame, id), null)
+                onPointSelected(frame, id)
             }
         }
         if (switches.snapToGuide && display.guidesShown) {
@@ -517,6 +527,21 @@ class GraphicalTabPresenter(
         }
         if (switches.automaticProximityWarning) {
             readout.applyWorkspace(null) { workspace -> workspace.copy(proximity = proximityAt(guide)) }
+        }
+    }
+
+    /** The point [id] becomes the selected item: the automatic proximity warning sets a point target. */
+    private fun onPointSelected(frame: ReadoutFrame, id: String) {
+        if (!frame.workspace.graphical.automaticProximityWarning) return
+        val plane = PlaneAxes.planeFor(frame.profile.machineType.isLathe, frame.workspace.plane)
+        readout.applyWorkspace(null) { workspace -> workspace.copy(proximity = AutoPointActions.proximityTarget(plane, id)) }
+    }
+
+    /** Clears a point target whose point is not the active sub-datum. Other targets do not change. */
+    private fun clearPointTarget() {
+        readout.applyWorkspace(null) { workspace ->
+            val pointId = workspace.proximity?.pointId
+            if (pointId != null && pointId != workspace.activeSubDatumId) workspace.copy(proximity = null) else workspace
         }
     }
 

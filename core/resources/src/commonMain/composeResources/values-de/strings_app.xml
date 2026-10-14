@@ -28,6 +28,7 @@
     <string name="app_cause_permission_missing">Berechtigung erforderlich</string>
     <string name="app_cause_connect_failed">Verbindung fehlgeschlagen</string>
     <string name="app_cause_link_lost">Verbindung verloren</string>
+    <string name="app_cause_no_answer">Adapter antwortet nicht</string>
     <string name="app_could_not_restore_link">Die Verbindung konnte nicht wiederhergestellt werden</string>
     <string name="app_link_bluetooth">Bluetooth</string>
     <string name="app_link_usb">USB</string>

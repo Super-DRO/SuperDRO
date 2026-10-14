@@ -71,8 +71,8 @@ class AccessibilityValidationTest {
         listOf(AxisButtonMode.SetZero, AxisButtonMode.SetCenter, AxisButtonMode.ToggleIncremental).map { mode -> axis to mode }
     }
 
-    private fun SkikoComposeUiTest.assertTargets(minimum: Float) {
-        val tags = axisButtons.map { (axis, mode) -> actionTag(axis, mode) } +
+    private fun SkikoComposeUiTest.assertTargets(minimum: Float, axis: List<Pair<AxisId, AxisButtonMode>> = axisButtons) {
+        val tags = axis.map { (axis, mode) -> actionTag(axis, mode) } +
             listOf(ZERO_SET_TAG, MODE_TAG, UNITS_TAG, ADD_POINT_TAG) +
             MainScreenSamples.mill().functions.map { functionTag(it.button) }
         tags.forEach { tag ->
@@ -84,7 +84,8 @@ class AccessibilityValidationTest {
     @Test
     fun axis_buttons_and_function_buttons_have_64_dp_landscape() = runWindowTest(1280, 800) {
         setContent { SampleMainScreen(MainScreenSamples.mill(), dark = false) }
-        assertTargets(64f)
+        // The readout column of 45 % is narrower than 600 dp: each row shows only its zero button.
+        assertTargets(64f, axisButtons.filter { (_, mode) -> mode == AxisButtonMode.SetZero })
     }
 
     @Test
@@ -94,14 +95,22 @@ class AccessibilityValidationTest {
     }
 
     @Test
-    fun gaps_between_buttons_are_12_dp() = runWindowTest(1280, 800) {
+    fun gaps_between_buttons_are_12_dp() = runWindowTest(800, 1280) {
         setContent { SampleMainScreen(MainScreenSamples.mill(), dark = false) }
-        // The three action buttons of the X row.
+        // The three action buttons of the X row (portrait shows all the buttons of a row).
         val x = listOf(AxisButtonMode.SetZero, AxisButtonMode.SetCenter, AxisButtonMode.ToggleIncremental).map { rectOf(actionTag(AxisId.X, it)) }.sortedBy { it.left }
         x.zipWithNext().forEach { (a, b) -> assertEquals(12f, b.left - a.right, 0.5f, "gap of the axis buttons") }
         // The buttons of the rail.
         val rail = listOf(ZERO_SET_TAG, MODE_TAG, UNITS_TAG).map { tag -> rectOf(tag) }
         rail.zipWithNext().forEach { (a, b) -> assertEquals(12f, b.top - a.bottom, 0.5f, "gap of the rail") }
+    }
+
+    @Test
+    fun gaps_between_the_buttons_of_the_landscape_grid_are_12_dp() = runWindowTest(1280, 800) {
+        setContent { SampleMainScreen(MainScreenSamples.mill(), dark = false) }
+        // The first row of the grid: Zero Set, Mode, and Units.
+        val grid = listOf(ZERO_SET_TAG, MODE_TAG, UNITS_TAG).map { tag -> rectOf(tag) }
+        grid.zipWithNext().forEach { (a, b) -> assertEquals(12f, b.left - a.right, 0.5f, "gap of the grid") }
     }
 
     @Test

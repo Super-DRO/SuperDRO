@@ -23,6 +23,12 @@ object Spp {
     /** A write that does not end in this time is `LinkFailure.Lost`. */
     const val WRITE_WATCHDOG_MS: Long = 4000L
 
+    /**
+     * After a connect fails with no `ACTION_ACL_CONNECTED` for the adapter, the socket waits this
+     * time for a late broadcast. Then it reports that the adapter did not answer.
+     */
+    const val ACL_GRACE_MS: Long = 500L
+
     /** The size of the read buffer. */
     const val READ_BUFFER_BYTES: Int = 1024
 
