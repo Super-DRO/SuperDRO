@@ -83,6 +83,9 @@ object MainScreenSamples {
         AxisId.Tachometer to AxisValueUiState(AxisId.Tachometer, digits = "1250", unit = DisplayUnit.Rpm, state = ValueState.Normal),
     ).mapValues { (_, value) -> MutableStateFlow(value) }
 
+    /** The RPM text of the status strip. */
+    val rpm: StateFlow<String?> = MutableStateFlow("1250")
+
     /** Gives the value flow of [axis]. */
     fun value(axis: AxisId): StateFlow<AxisValueUiState> = values[axis] ?: MutableStateFlow(AxisValueUiState(axis))
 
@@ -106,7 +109,7 @@ object MainScreenSamples {
         deviceId = DeviceId("mill"),
         loaded = true,
         machineType = MachineType.VerticalMill,
-        status = StatusStripUiState(toolName = "3", subDatumName = "S2", rpmText = "1250", link = LinkStatus.Connected, measurementMode = measurement),
+        status = StatusStripUiState(toolName = "3", subDatumName = "S2", link = LinkStatus.Connected, measurementMode = measurement),
         rows = rows,
         functions = FunctionStripRules.buttons(millProfile, millProfile.activeWorkspace),
         sidePanel = SidePanelUiState(mode = sidePanel, toolsEnabled = true, addVisible = sidePanel != SidePanelMode.Tools),
@@ -165,6 +168,7 @@ fun SampleMainScreen(
                     ReadoutScreen(
                         state = state,
                         axisValue = MainScreenSamples::value,
+                        rpmText = MainScreenSamples.rpm,
                         events = events,
                         modifier = modifier,
                         sidePanelContent = { mode ->

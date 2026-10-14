@@ -1,14 +1,19 @@
 package org.superdro.core.ui.readout
 
+import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicLong
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
+import kotlin.math.floor
+import kotlin.math.pow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -94,10 +99,18 @@ import org.superdro.core.resources.fns_undo_head_tilt_clear
  * The tab owns it ([org.superdro.core.ui.navigation.TabEntryScope.readout]), so the sheets of the
  * tab and the function screens of the other areas use the same object.
  *
- * Data flow: the session inputs and the machine profile with its active workspace
- * give the [ReadoutFrame] of `core:readout`. The frame gives the main UI state and one value flow
- * for each axis. An operation of `core:readout` gives a new workspace. The presenter writes
- * the changed fields in one write transaction of [MachineRepository]. It sends no adapter command.
+ * Data flow: two paths, so that a new position does not make the main UI state again.
+ * - The stored path: the machine profile with its active workspace, the hold values, and the
+ *   instrument give the stored frame (a [ReadoutFrame] with no inputs). The stored frame, the
+ *   session state, and the local state give [uiState].
+ * - The live path: the session inputs become a key with the axis sums, the statuses, and the
+ *   projections (no time), so a sample with the same values does not continue. One collector
+ *   makes the [frame] from the stored frame and the key, and then the value of each axis and
+ *   the RPM text from that one frame.
+ *
+ * An operation of `core:readout` gives a new workspace. The presenter writes the changed fields
+ * in one write transaction of [MachineRepository]. It sends no adapter command. An action at a
+ * press uses [latestFrame]: the frame with the newest inputs of the session.
  *
  * Rules:
  * - The tab keeps the last values while the session is not online.
@@ -130,7 +143,12 @@ class ReadoutPresenter(
     private val ids = AtomicLong(0L)
     private val hold = MutableStateFlow<Map<AxisId, Double>>(emptyMap())
     private val local = MutableStateFlow(LocalState())
+    @Volatile
     private var lastOnline: InputSnapshot = InputSnapshot.EMPTY
+
+    /** The snapshot that the live path used last: online, or the last online one. */
+    @Volatile
+    private var lastShown: InputSnapshot = InputSnapshot.EMPTY
     private var undoTimer: Job? = null
     private var hintTimer: Job? = null
     private var messageTimer: Job? = null
@@ -144,20 +162,6 @@ class ReadoutPresenter(
     override val sessionState: StateFlow<SessionState?> = session
         .flatMapLatest { current -> current?.state ?: flowOf(null) }
         .stateIn(scope, SharingStarted.Eagerly, session.value?.state?.value)
-
-    private val snapshot: StateFlow<InputSnapshot> = session
-        .flatMapLatest { current ->
-            if (current == null) flowOf(null to lastOnline) else combine(current.state, current.inputs) { state, inputs -> state to inputs }
-        }
-        .map { (state, inputs) ->
-            if (state?.isOnline == true) {
-                lastOnline = inputs
-                inputs
-            } else {
-                lastOnline
-            }
-        }
-        .stateIn(scope, SharingStarted.Eagerly, InputSnapshot.EMPTY)
 
     private val profile: StateFlow<MachineProfile?> = machines.profile(profileId).stateIn(scope, SharingStarted.Eagerly, null)
 
@@ -181,28 +185,57 @@ class ReadoutPresenter(
         }
         .stateIn(scope, SharingStarted.Eagerly, null)
 
-    override val frame: StateFlow<ReadoutFrame?> = combine(profile, workspace, snapshot, hold, instrument) { current, active, inputs, held, probe ->
-        if (current == null || active == null) null else buildFrame(current, active, inputs, held, probe)
+    /**
+     * The stored frame: the profile, the active workspace, the hold values, and the instrument,
+     * with no inputs. Null until the profile and the workspace load.
+     */
+    private val stored: StateFlow<ReadoutFrame?> = combine(profile, workspace, hold, instrument) { current, active, held, probe ->
+        if (current == null || active == null) null else ReadoutFrame(current, active, emptyMap(), probe, held)
     }.stateIn(scope, SharingStarted.Eagerly, null)
 
+    /**
+     * The inputs of the session as a [LiveInputs] key. The tab keeps the last online inputs while
+     * the session is not online. A new snapshot with the same key (for example only a new time)
+     * stops here.
+     */
+    private val liveInputs: Flow<LiveInputs> = session
+        .flatMapLatest { current ->
+            if (current == null) flowOf(LiveInputs.of(null, lastOnline)) else combine(current.state, current.inputs, ::shownInputs)
+        }
+        .distinctUntilChanged()
+
+    private val _frame = MutableStateFlow<ReadoutFrame?>(null)
+    private val axisValues: Map<AxisId, MutableStateFlow<AxisValueUiState>> =
+        AxisId.entries.associateWith { axis -> MutableStateFlow(AxisValueUiState(axis)) }
+    private val _rpmText = MutableStateFlow<String?>(null)
+
+    override val frame: StateFlow<ReadoutFrame?> = _frame.asStateFlow()
+
+    /**
+     * The RPM text of the tachometer for the status strip, or null when the tachometer is off. It
+     * changes with each new RPM value, so only the RPM chip reads it.
+     */
+    val rpmText: StateFlow<String?> = _rpmText.asStateFlow()
+
+    /** The axes of the proximity target of the active workspace. The axis details sheet shows its switch with them. */
+    val proximityAxes: StateFlow<Set<AxisId>> = workspace
+        .map { active -> active?.proximity?.axes.orEmpty().toSet() }
+        .distinctUntilChanged()
+        .stateIn(scope, SharingStarted.Eagerly, emptySet())
+
     init {
+        // The live path: one collector gives the frame, the axis values, and the RPM text of one
+        // set of inputs, so the values of the axes always agree with the frame.
+        scope.launch {
+            combine(stored, liveInputs) { base, inputs -> base to inputs }.collect { (base, inputs) -> onLive(base, inputs) }
+        }
         // The proximity warning tone of the tab: the graphics area gives the runner.
         ProximityToneRunner(frame, sounds, deviceId, clock).start(scope)
     }
 
-    private val values: StateFlow<Map<AxisId, AxisValueUiState>> = combine(frame, sessionState, snapshot) { current, state, inputs ->
-        if (current == null) emptyMap() else AxisId.entries.associateWith { axis -> axisValueOf(current, axis, state, inputs) }
-    }.stateIn(scope, SharingStarted.Eagerly, emptyMap())
-
-    private val axisValues: Map<AxisId, StateFlow<AxisValueUiState>> = AxisId.entries.associateWith { axis ->
-        values.map { map -> map[axis] ?: AxisValueUiState(axis) }
-            .distinctUntilChanged()
-            .stateIn(scope, SharingStarted.Eagerly, AxisValueUiState(axis))
-    }
-
-    /** The UI state of the readout screen. The values of the axes are in [axisValue]. */
+    /** The UI state of the readout screen. The values of the axes are in [axisValue], the RPM is in [rpmText]. */
     val uiState: StateFlow<ReadoutUiState> = combine(
-        frame,
+        stored,
         sessionState,
         adapter,
         library,
@@ -217,6 +250,18 @@ class ReadoutPresenter(
 
     /** The value of [axis]. Each row collects only the flow of its own axis. */
     fun axisValue(axis: AxisId): StateFlow<AxisValueUiState> = axisValues.getValue(axis)
+
+    /**
+     * Gives the frame with the newest inputs of the session: [frame] can be one display frame
+     * older. While the session is not online, it gives [frame].
+     */
+    override fun latestFrame(): ReadoutFrame? {
+        val current = frame.value ?: return null
+        val live = session.value ?: return current
+        val state = live.state.value
+        if (!state.isOnline) return current
+        return buildFrame(current.with(hold = hold.value), LiveInputs.of(state, live.currentInputs()))
+    }
 
     // ---------------------------------------------------------------------------------------
     // TabReadout
@@ -283,7 +328,7 @@ class ReadoutPresenter(
 
     /** A tap on an action button of [axis] with [mode]. Gives the route to open, or null. */
     fun onActionTap(axis: AxisId, mode: AxisButtonMode): TabRoute? {
-        val current = frame.value ?: return null
+        val current = latestFrame() ?: return null
         val label = labelOf(current.profile, axis)
         when (mode) {
             AxisButtonMode.SetZero -> {
@@ -317,7 +362,7 @@ class ReadoutPresenter(
 
     /** A long press on an action button of [axis] with [mode]. */
     fun onActionLongPress(axis: AxisId, mode: AxisButtonMode) {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         val label = labelOf(current.profile, axis)
         when (mode) {
             AxisButtonMode.SetZero -> {
@@ -334,7 +379,7 @@ class ReadoutPresenter(
 
     /** Center in the absolute mode (the axis details): `L(axis, shown / 2)`. */
     fun onCenterAbsolute(axis: AxisId) {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         if (!requirePosition()) return
         apply(AxisOperations.center(current, axis), UiText.of(Res.string.readout_undo_center, labelOf(current.profile, axis)))
     }
@@ -344,7 +389,7 @@ class ReadoutPresenter(
 
     /** The global Zero Set button, tap. */
     fun onZeroSetTap() {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         if (!requirePosition()) return
         apply(ZeroButtons.globalTap(current), UiText.of(Res.string.readout_undo_all_zero))
         if (!current.profile.display.shortPressZero) showHint(Hint.ZeroLongPress)
@@ -352,7 +397,7 @@ class ReadoutPresenter(
 
     /** The global Zero Set button, long press: no action with `short_press_zero_set` on. */
     fun onZeroSetLongPress() {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         if (current.profile.display.shortPressZero) return
         if (!requirePosition()) return
         apply(ZeroButtons.globalLongPress(current), UiText.of(Res.string.readout_undo_all_absolute_zero))
@@ -360,20 +405,20 @@ class ReadoutPresenter(
 
     /** The global Mode button, tap. */
     fun onModeTap() {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         apply(GlobalButtons.modeTap(current), null)
         showHint(Hint.ClearLongPress)
     }
 
     /** The global Mode button, long press: clears the offsets of the mode (no action in mixed modes). */
     fun onModeLongPress() {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         apply(GlobalButtons.modeLongPress(current), UiText.of(Res.string.readout_undo_all_clear))
     }
 
     /** The global Units button, tap. */
     fun onUnitsTap() {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         apply(GlobalButtons.unitsTap(current), null)
     }
 
@@ -427,7 +472,7 @@ class ReadoutPresenter(
 
     /** The RPM or SFM button of the tachometer row. */
     fun onTachometerToggle() {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         apply(ActionButtons.toggleUnits(current, AxisId.Tachometer), null)
     }
 
@@ -436,7 +481,7 @@ class ReadoutPresenter(
 
     /** Selects the preset [rpm]. */
     fun onPresetSelected(rpm: Double) {
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         apply(TachometerActions.selectPreset(current, rpm), UiText.of(Res.string.readout_undo_set, labelOf(current.profile, AxisId.Tachometer)))
     }
 
@@ -454,7 +499,7 @@ class ReadoutPresenter(
     // The keypad and the divisions
 
     /** The display value of [axis], or NaN. The relative entries `++x` and `--x` add to it. */
-    fun currentDisplay(axis: AxisId): Double = frame.value?.reading(axis)?.display ?: Double.NaN
+    fun currentDisplay(axis: AxisId): Double = latestFrame()?.reading(axis)?.display ?: Double.NaN
 
     /** The live result of the keypad text [text] for [axis], or null for an empty text. */
     fun keypadPreview(axis: AxisId, text: String): ExpressionResult? =
@@ -466,7 +511,7 @@ class ReadoutPresenter(
      * or the error of the expression.
      */
     fun onKeypadSet(axis: AxisId, text: String): UiText? {
-        val current = frame.value ?: return UiText.of(Res.string.readout_no_adapter)
+        val current = latestFrame() ?: return UiText.of(Res.string.readout_no_adapter)
         if (needsPosition(current, axis)) {
             positionUnavailable()?.let { refusal ->
                 sounds.error(deviceId)
@@ -493,7 +538,7 @@ class ReadoutPresenter(
 
     /** Sets `N` = [divisions] and turns on the divisions mode. Gives false for a value less than 1. */
     fun onDivisionsSet(divisions: Int): Boolean {
-        val current = frame.value ?: return false
+        val current = latestFrame() ?: return false
         if (divisions < 1) return false
         apply(Divisions.set(current, divisions), null)
         return true
@@ -508,7 +553,7 @@ class ReadoutPresenter(
      */
     suspend fun feedRate(axis: AxisId): Double {
         val current = session.value ?: return 0.0
-        val now = snapshot.value.channels.values.maxOfOrNull { channel -> channel.timeMs } ?: return 0.0
+        val now = lastShown.channels.values.maxOfOrNull { channel -> channel.timeMs } ?: return 0.0
         return current.readHistory { history -> FeedValues.feedRate(history, axis, now) }
     }
 
@@ -643,28 +688,37 @@ class ReadoutPresenter(
 
     private fun nextId(): Long = ids.incrementAndFetch()
 
-    private fun buildFrame(
-        profile: MachineProfile,
-        workspace: Workspace,
-        inputs: InputSnapshot,
-        held: Map<AxisId, Double>,
-        instrument: ProbeProfile?,
-    ): ReadoutFrame {
-        val sums = inputs.axisValues().toMutableMap()
-        if (profile.tachometer.mode != TachometerMode.Sensor) sums[AxisId.Tachometer] = 0.0
-        return ReadoutFrame(
-            profile = profile,
-            workspace = workspace,
-            inputs = sums,
-            instrument = instrument,
-            hold = held,
-            projectedAxes = inputs.axes.values.filter { value -> value.projected }.mapTo(LinkedHashSet()) { value -> value.axis },
-        )
+    /** Gives the key of [inputs] that the tab shows for [state]: the last online inputs while not online. */
+    private fun shownInputs(state: SessionState?, inputs: InputSnapshot): LiveInputs {
+        val shown = if (state?.isOnline == true) inputs.also { lastOnline = it } else lastOnline
+        lastShown = shown
+        return LiveInputs.of(state, shown)
     }
 
-    private fun axisValueOf(current: ReadoutFrame, axis: AxisId, state: SessionState?, inputs: InputSnapshot): AxisValueUiState {
+    /** The live path: the frame, the value of each axis, and the RPM text of [base] with [inputs]. */
+    private fun onLive(base: ReadoutFrame?, inputs: LiveInputs) {
+        if (base == null) {
+            _frame.value = null
+            axisValues.forEach { (axis, flow) -> flow.value = AxisValueUiState(axis) }
+            _rpmText.value = null
+            return
+        }
+        val current = buildFrame(base, inputs)
+        _frame.value = current
+        axisValues.forEach { (axis, flow) -> flow.value = axisValueOf(current, axis, inputs) }
+        _rpmText.value = if (current.profile.tachometer.enabled) ReadoutPatterns.RPM.format(current.reading(AxisId.Tachometer).shown) else null
+    }
+
+    /** Gives the frame of the stored frame [base] with the sums of [inputs]. */
+    private fun buildFrame(base: ReadoutFrame, inputs: LiveInputs): ReadoutFrame {
+        val sums = if (base.profile.tachometer.mode != TachometerMode.Sensor) inputs.sums + (AxisId.Tachometer to 0.0) else inputs.sums
+        return base.withInputs(sums, inputs.projected)
+    }
+
+    private fun axisValueOf(current: ReadoutFrame, axis: AxisId, inputs: LiveInputs): AxisValueUiState {
         val reading = current.reading(axis)
-        val status = inputs.axes[axis]?.status
+        val state = inputs.state
+        val status = inputs.statuses[axis]
         val manualTachometer = axis == AxisId.Tachometer && current.profile.tachometer.mode != TachometerMode.Sensor
         val online = state?.isOnline == true
         val live = state is SessionState.Connected && reading.hasValue
@@ -688,7 +742,7 @@ class ReadoutPresenter(
             unit = reading.unit,
             state = valueState,
             errorInput = errorInput,
-            positionUm = if (linear) reading.shown else 0.0,
+            positionUm = if (linear) sliderPosition(current, axis, reading.shown) else 0.0,
             toolSizeUm = if (linear) PositionSlider.toolSizeUm(axis, current.profile.machineType, current.workspace.toolXUm) else 0.0,
             toolOffsetUm = if (linear) reading.toolOffset else 0.0,
             incremental = reading.incremental,
@@ -698,10 +752,20 @@ class ReadoutPresenter(
         )
     }
 
-    private fun errorInputOf(profile: MachineProfile, axis: AxisId, inputs: InputSnapshot): Char? {
+    /**
+     * Gives [shown] rounded to the last digit of the display of [axis], so that a change below the
+     * resolution of the display does not give a new slider value.
+     */
+    private fun sliderPosition(current: ReadoutFrame, axis: AxisId, shown: Double): Double {
+        if (!shown.isFinite()) return shown
+        val step = (if (current.metric(axis)) UM_PER_MM else UM_PER_INCH) / 10.0.pow(current.pattern(axis).decimals)
+        return floor(shown / step + 0.5) * step
+    }
+
+    private fun errorInputOf(profile: MachineProfile, axis: AxisId, inputs: LiveInputs): Char? {
         val letters = SetupReminder.inputs(profile, axis).map { input -> input.channel.lowercaseChar() }
         val bad = letters.firstOrNull { letter ->
-            val status = inputs.channels[letter]?.status
+            val status = inputs.channelStatuses[letter]
             status == ChannelStatus.NoProfile || status == ChannelStatus.InvalidResolution
         }
         return bad ?: letters.firstOrNull() ?: SetupReminder.primaryInput(profile, axis)
@@ -724,7 +788,6 @@ class ReadoutPresenter(
         val mode = GlobalButtons.modeState(current)
         val toolName = workspace.activeToolId?.let { id -> tools.firstOrNull { tool -> tool.id == id }?.name?.ifBlank { null } ?: id.take(8) }
         val subDatum = current.activeSubDatum
-        val rpm = if (profile.tachometer.enabled) ReadoutPatterns.RPM.format(current.reading(AxisId.Tachometer).shown) else null
         val expandedRows = ReadoutRows.rows(profile, collapsed = false)
         val collapsedRows = ReadoutRows.rows(profile, collapsed = true)
         return ReadoutUiState(
@@ -738,7 +801,6 @@ class ReadoutPresenter(
                 mode = mode,
                 toolName = toolName,
                 subDatumName = subDatum?.let { datum -> datum.name.ifBlank { datum.id.take(8) } },
-                rpmText = rpm,
                 link = linkStatusOf(state),
                 measurementMode = current.measurementActive,
                 offline = offlineLabelOf(state),
@@ -764,6 +826,35 @@ class ReadoutPresenter(
     }
 
     private data class UndoRecord(val id: Long, val workspaceId: String, val delta: WorkspaceDelta)
+
+    /**
+     * The part of the session inputs that the readout shows: the session state, the sum, the
+     * status, and the projection of each axis, and the status of each channel. It has no time,
+     * so a sample with the same values gives an equal key.
+     */
+    private data class LiveInputs(
+        val state: SessionState?,
+        val sums: Map<AxisId, Double?>,
+        val statuses: Map<AxisId, AxisValueStatus>,
+        val projected: Set<AxisId>,
+        val channelStatuses: Map<Char, ChannelStatus>,
+    ) {
+        companion object {
+            fun of(state: SessionState?, snapshot: InputSnapshot): LiveInputs {
+                val sums = LinkedHashMap<AxisId, Double?>()
+                val statuses = LinkedHashMap<AxisId, AxisValueStatus>()
+                val projected = LinkedHashSet<AxisId>()
+                snapshot.axes.values.forEach { value ->
+                    sums[value.axis] = value.value
+                    statuses[value.axis] = value.status
+                    if (value.projected) projected.add(value.axis)
+                }
+                val channels = LinkedHashMap<Char, ChannelStatus>()
+                snapshot.channels.values.forEach { value -> channels[value.input] = value.status }
+                return LiveInputs(state, sums, statuses, projected, channels)
+            }
+        }
+    }
 
     private data class LocalState(
         val undo: UndoUiState? = null,
@@ -805,6 +896,9 @@ class ReadoutPresenter(
 
         /** A message shows for this time. */
         const val MESSAGE_MS: Long = 4_000L
+
+        private const val UM_PER_MM: Double = 1_000.0
+        private const val UM_PER_INCH: Double = 25_400.0
 
         /** Gives the label of [axis] of [profile], for example "X". */
         fun labelOf(profile: MachineProfile, axis: AxisId): String = when (axis) {
