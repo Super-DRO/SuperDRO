@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.shareIn
  * - A shared flow starts with its first collector and stops when its last collector stops. Then
  *   it forgets its value, thus the next collector reads again. Thus [scope] has no work when no
  *   collector exists.
- * - A new collector of a shared flow that runs gets the last value immediately.
+ * - A new collector of a shared flow that runs gets the last value immediately. When a write
+ *   is not read yet, that value is old, and the new value follows after the read. Thus do not
+ *   use `first()` of a shared flow to read the result of a write: use a one-time read.
  * - A slow collector gets only the last value.
  * - An exception of the upstream flow goes to each collector, as with a flow that is not shared.
  *   The next collector starts the upstream flow again.
