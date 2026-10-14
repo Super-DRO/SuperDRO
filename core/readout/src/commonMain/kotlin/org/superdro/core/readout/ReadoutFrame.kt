@@ -83,6 +83,10 @@ data class AxisReading(
  * @property instrument The selected reference instrument of the measurement mode, or null.
  * @property hold The held shown value of each axis with the hold on.
  * @property projectedAxes The axes that a projection changes.
+ *
+ * Two frames are equal when they have the same profile, workspace, inputs, instrument, hold
+ * values, and projected axes. The comparison of the profile and the workspace first compares the
+ * references, so two frames of one stored state compare quickly.
  */
 class ReadoutFrame(
     val profile: MachineProfile,
@@ -110,8 +114,14 @@ class ReadoutFrame(
         (alignmentOn && workspace.axisAlignment.source == AxisAlignmentSource.AngularEncoder) ||
             (workspace.partRotation.active && workspace.partRotation.linkedToAngularEncoder)
 
-    /** Gives the stored state of [axis]. */
-    fun state(axis: AxisId): AxisState = workspace.axisStates[axis] ?: AxisState.forAxis(axis, profile.machineType)
+    /** The state of each axis after its first use, in the order of [AxisId.entries]. */
+    private val states = arrayOfNulls<AxisState>(AXIS_COUNT)
+
+    /** Gives the stored state of [axis], or the default state of a new workspace. */
+    fun state(axis: AxisId): AxisState =
+        states[axis.ordinal] ?: (workspace.axisStates[axis] ?: AxisState.forAxis(axis, profile.machineType)).also { state ->
+            states[axis.ordinal] = state
+        }
 
     /** Gives `R` of [axis], or NaN. */
     fun r(axis: AxisId): Double = inputs[axis] ?: Double.NaN
@@ -267,6 +277,31 @@ class ReadoutFrame(
     fun with(workspace: Workspace = this.workspace, hold: Map<AxisId, Double> = this.hold): ReadoutFrame =
         ReadoutFrame(profile, workspace, inputs, instrument, hold, projectedAxes)
 
+    /** Gives a frame with the sums [inputs] and the projected axes [projectedAxes], and the same stored state. */
+    fun withInputs(inputs: Map<AxisId, Double?>, projectedAxes: Set<AxisId> = this.projectedAxes): ReadoutFrame =
+        ReadoutFrame(profile, workspace, inputs, instrument, hold, projectedAxes)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ReadoutFrame) return false
+        return inputs == other.inputs && hold == other.hold && projectedAxes == other.projectedAxes &&
+            (profile === other.profile || profile == other.profile) &&
+            (workspace === other.workspace || workspace == other.workspace) &&
+            (instrument === other.instrument || instrument == other.instrument)
+    }
+
+    override fun hashCode(): Int {
+        var result = profile.hashCode()
+        result = 31 * result + workspace.hashCode()
+        result = 31 * result + inputs.hashCode()
+        result = 31 * result + (instrument?.hashCode() ?: 0)
+        result = 31 * result + hold.hashCode()
+        result = 31 * result + projectedAxes.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "ReadoutFrame(profile=${profile.id}, workspace=${workspace.id}, inputs=$inputs, hold=$hold)"
+
     private fun computeReadings(): Map<AxisId, AxisReading> {
         val absolutes = LinkedHashMap<AxisId, Double>()
         AxisId.entries.forEach { axis ->
@@ -339,6 +374,8 @@ class ReadoutFrame(
     }
 
     companion object {
+        private val AXIS_COUNT: Int = AxisId.entries.size
+
         /**
          * Gives the frame of [profile] with the active workspace (or [workspace]) and the sums of
          * [snapshot].

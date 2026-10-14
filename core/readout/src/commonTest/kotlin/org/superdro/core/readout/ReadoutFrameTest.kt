@@ -3,7 +3,9 @@ package org.superdro.core.readout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import org.superdro.core.model.AxisAlignment
 import org.superdro.core.model.AxisAlignmentSource
@@ -31,6 +33,33 @@ class ReadoutFrameTest {
         val base = Fixtures.workspace(profile)
         val workspace = change(base.copy(axisStates = base.axisStates + states))
         return ReadoutFrame(profile, workspace, inputs, instrument)
+    }
+
+    @Test
+    fun twoFramesOfTheSameStateAndTheSameInputsAreEqual() {
+        val profile = Fixtures.mill()
+        val workspace = Fixtures.workspace(profile)
+        val a = ReadoutFrame(profile, workspace, mapOf(AxisId.X to 10.0, AxisId.Y to null), hold = mapOf(AxisId.Z to 3.0))
+        val b = ReadoutFrame(profile.copy(), workspace.copy(), mapOf(AxisId.X to 10.0, AxisId.Y to null), hold = mapOf(AxisId.Z to 3.0))
+        assertEquals(a, b)
+        assertEquals(a.hashCode(), b.hashCode())
+        assertEquals(a, a.withInputs(mapOf(AxisId.X to 10.0, AxisId.Y to null)))
+        // Each part of the frame takes part in the comparison.
+        assertNotEquals(a, a.withInputs(mapOf(AxisId.X to 10.5, AxisId.Y to null)))
+        assertNotEquals(a, a.withInputs(a.inputs, projectedAxes = setOf(AxisId.X)))
+        assertNotEquals(a, a.with(hold = emptyMap()))
+        assertNotEquals(a, a.with(workspace = workspace.copy(axisStates = mapOf(AxisId.X to AxisState(absoluteOffset = 1.0)))))
+        assertNotEquals(a, ReadoutFrame(profile.copy(name = "Other"), workspace, a.inputs, hold = a.hold))
+        assertNotEquals(a, ReadoutFrame(profile, workspace, a.inputs, instrument = ProbeProfile(type = ProbeType.Camera), hold = a.hold))
+    }
+
+    @Test
+    fun theFrameKeepsTheDefaultStateOfAnAxisWithNoStoredState() {
+        val profile = Fixtures.mill()
+        val frame = ReadoutFrame(profile, Fixtures.workspace(profile).copy(axisStates = emptyMap()), emptyMap())
+        val first = frame.state(AxisId.Angular)
+        assertEquals(AxisState.forAxis(AxisId.Angular, profile.machineType), first)
+        assertSame(first, frame.state(AxisId.Angular))
     }
 
     @Test
