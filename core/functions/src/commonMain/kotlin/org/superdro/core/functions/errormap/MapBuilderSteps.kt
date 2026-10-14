@@ -358,28 +358,45 @@ object MapBuilderSteps {
     fun fitNodes(k: Int, samples: List<MapSample>): List<MapPoint> {
         if (samples.isEmpty() || k < 1) return emptyList()
         val sorted = samples.sortedBy { it.position }
-        val positions = ArrayList<Double>()
-        val deltas = ArrayList<Double>()
+        val positions = DoubleArray(sorted.size) { sorted[it].position }
+        val deltas = DoubleArray(sorted.size) { sorted[it].delta }
+        return fitSortedNodes(k, positions, deltas, sorted.size)
+    }
+
+    /**
+     * [fitNodes] for samples that are already sorted by position: the first [count] values of
+     * [positions] and [deltas].
+     */
+    private fun fitSortedNodes(k: Int, positions: DoubleArray, deltas: DoubleArray, count: Int): List<MapPoint> {
+        if (count == 0 || k < 1) return emptyList()
+        val nodePositions = DoubleArray((count + k - 1) / k)
+        val nodeDeltas = DoubleArray(nodePositions.size)
+        var nodeCount = 0
+        val group = DoubleArray(k)
         var i = 0
-        while (i < sorted.size) {
-            val end = minOf(i + k, sorted.size)
-            val group = sorted.subList(i, end)
-            if (group.size < max(2, k / 2) && positions.isNotEmpty()) break
-            val position = Stats.median(group.map { it.position })!!
-            val delta = Stats.median(group.map { it.delta })!!
-            if (positions.isEmpty() || position >= positions.last() + 5.0) {
-                positions.add(position)
-                deltas.add(delta)
+        while (i < count) {
+            val end = minOf(i + k, count)
+            val size = end - i
+            if (size < max(2, k / 2) && nodeCount > 0) break
+            // The positions are sorted, so the median position is the middle of the group.
+            val position = sortedMedian(positions, i, size)
+            deltas.copyInto(group, 0, i, end)
+            group.sort(0, size)
+            val delta = sortedMedian(group, 0, size)
+            if (nodeCount == 0 || position >= nodePositions[nodeCount - 1] + 5.0) {
+                nodePositions[nodeCount] = position
+                nodeDeltas[nodeCount] = delta
+                nodeCount++
             }
             i = end
         }
-        val y = DoubleArray(positions.size) { positions[it] + deltas[it] - it }
+        val y = DoubleArray(nodeCount) { nodePositions[it] + nodeDeltas[it] - it }
         val iso = isotonic(y)
         val nodes = ArrayList<MapPoint>()
-        for (n in positions.indices) {
+        for (n in 0 until nodeCount) {
             val corrected = iso[n] + n
-            val position = Stats.roundHalfUp(positions[n])
-            var correction = Stats.roundHalfUp(corrected - positions[n])
+            val position = Stats.roundHalfUp(nodePositions[n])
+            var correction = Stats.roundHalfUp(corrected - nodePositions[n])
             val last = nodes.lastOrNull()
             if (last != null) {
                 if (position <= last.position) continue
@@ -392,26 +409,32 @@ object MapBuilderSteps {
         return nodes
     }
 
+    /** The median of [size] sorted values from [from], with the rule of [Stats.median]. */
+    private fun sortedMedian(values: DoubleArray, from: Int, size: Int): Double =
+        if (size % 2 == 1) values[from + size / 2] else (values[from + size / 2 - 1] + values[from + size / 2]) / 2.0
+
     /**
      * Gives the isotonic regression of [values] with equal weights (pool adjacent violators):
      * the closest sequence in the least-squares sense that does not decrease.
      */
     fun isotonic(values: DoubleArray): DoubleArray {
-        val sums = ArrayList<Double>()
-        val counts = ArrayList<Int>()
+        // A stack of blocks: the sum and the number of values of each block.
+        val sums = DoubleArray(values.size)
+        val counts = IntArray(values.size)
+        var blocks = 0
         for (value in values) {
-            sums.add(value)
-            counts.add(1)
-            while (sums.size >= 2 && sums[sums.size - 2] / counts[counts.size - 2] > sums.last() / counts.last()) {
-                val s = sums.removeAt(sums.size - 1)
-                val c = counts.removeAt(counts.size - 1)
-                sums[sums.size - 1] += s
-                counts[counts.size - 1] += c
+            sums[blocks] = value
+            counts[blocks] = 1
+            blocks++
+            while (blocks >= 2 && sums[blocks - 2] / counts[blocks - 2] > sums[blocks - 1] / counts[blocks - 1]) {
+                sums[blocks - 2] += sums[blocks - 1]
+                counts[blocks - 2] += counts[blocks - 1]
+                blocks--
             }
         }
         val result = DoubleArray(values.size)
         var index = 0
-        for (b in sums.indices) {
+        for (b in 0 until blocks) {
             val mean = sums[b] / counts[b]
             repeat(counts[b]) { result[index++] = mean }
         }
@@ -449,17 +472,22 @@ object MapBuilderSteps {
      * 5. When no `K` has a score: `K = 2` for fewer than 64 samples, else `K = 16`.
      *
      * The function calls [checkCancelled] before each `K`.
+     *
+     * The samples of all folds are sorted by position only one time ([TrainingSets]). The
+     * training set of a fold is this order without the samples of the fold. This is the same
+     * order as a stable sort of the other folds, so the result is the same as a sort for each
+     * `K` and each fold.
      */
     fun selectK(folds: List<List<MapSample>>, checkCancelled: () -> Unit = {}): Int {
         data class Score(val k: Int, val score: Double, val se: Double)
         val scores = ArrayList<Score>()
+        val training = TrainingSets(folds)
         for (k in K_CANDIDATES) {
             checkCancelled()
-            val residualsByFold = heldOutResiduals(k, folds).filter { it.isNotEmpty() }
-            val all = residualsByFold.flatten()
-            if (all.size < 20 || residualsByFold.size < 2) continue
-            val score = Stats.populationSd(all) ?: continue
-            val foldSd = residualsByFold.map { Stats.populationSd(it)!! }
+            val residualsByFold = training.residuals(k).filter { it.isNotEmpty() }
+            if (residualsByFold.sumOf { it.size } < 20 || residualsByFold.size < 2) continue
+            val score = populationSd(residualsByFold)
+            val foldSd = residualsByFold.map { populationSd(listOf(it)) }
             val variance = Stats.sampleVariance(foldSd) ?: 0.0
             scores.add(Score(k, score, sqrt(variance / residualsByFold.size)))
         }
@@ -474,15 +502,66 @@ object MapBuilderSteps {
      * A fold whose other folds have fewer than `2 × K` samples gives no residuals.
      */
     fun heldOutResiduals(k: Int, folds: List<List<MapSample>>): List<List<Double>> =
-        folds.indices.map { f ->
-            val training = folds.filterIndexed { index, _ -> index != f }.flatten()
-            if (training.size < 2 * k) {
-                emptyList()
-            } else {
-                val nodes = fitNodes(k, training)
-                folds[f].map { it.delta - fitValue(nodes, it.position) }
-            }
+        TrainingSets(folds).residuals(k).map { it.toList() }
+
+    /**
+     * [Stats.populationSd] of all values of [parts], in sequence. The sums go in the same
+     * sequence as the sums of [Stats.populationSd] of the joined list, so the result is the same.
+     */
+    private fun populationSd(parts: List<DoubleArray>): Double {
+        var count = 0
+        var sum = 0.0
+        for (part in parts) {
+            count += part.size
+            for (v in part) sum += v
         }
+        val mean = sum / count
+        var squares = 0.0
+        for (part in parts) for (v in part) squares += (v - mean) * (v - mean)
+        return sqrt(squares / count)
+    }
+
+    /**
+     * The training sets of the cross-validation: all samples of [folds], sorted by position
+     * (a stable sort, in the order of the folds), with the fold of each sample.
+     */
+    private class TrainingSets(private val folds: List<List<MapSample>>) {
+        private val positions: DoubleArray
+        private val deltas: DoubleArray
+        private val foldOf: IntArray
+        private val bufferPositions: DoubleArray
+        private val bufferDeltas: DoubleArray
+
+        init {
+            val tagged = ArrayList<Pair<MapSample, Int>>(folds.sumOf { it.size })
+            folds.forEachIndexed { f, fold -> fold.forEach { tagged.add(it to f) } }
+            val sorted = tagged.sortedBy { it.first.position }
+            positions = DoubleArray(sorted.size) { sorted[it].first.position }
+            deltas = DoubleArray(sorted.size) { sorted[it].first.delta }
+            foldOf = IntArray(sorted.size) { sorted[it].second }
+            bufferPositions = DoubleArray(sorted.size)
+            bufferDeltas = DoubleArray(sorted.size)
+        }
+
+        /** The residuals of each fold, as in [heldOutResiduals]. An empty array for no residuals. */
+        fun residuals(k: Int): List<DoubleArray> =
+            folds.indices.map { f ->
+                var count = 0
+                for (i in positions.indices) {
+                    if (foldOf[i] == f) continue
+                    bufferPositions[count] = positions[i]
+                    bufferDeltas[count] = deltas[i]
+                    count++
+                }
+                if (count < 2 * k) {
+                    DoubleArray(0)
+                } else {
+                    val nodes = fitSortedNodes(k, bufferPositions, bufferDeltas, count)
+                    val fold = folds[f]
+                    DoubleArray(fold.size) { fold[it].delta - fitValue(nodes, fold[it].position) }
+                }
+            }
+    }
 
     /**
      * Gives the cross-validation folds: each pass is one fold for 2 or more
