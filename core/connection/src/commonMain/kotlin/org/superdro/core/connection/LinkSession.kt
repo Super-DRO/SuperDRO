@@ -1012,6 +1012,17 @@ internal class LinkSession(
     }
 
     private fun publishInfo() {
+        val queueActive = link?.queue?.isActive == true
+        val old = _adapterInfo.value
+        // The queue calls this at each step. With no change, do not make a new value: the values
+        // of the adapter change only by a new object.
+        if (old.values === values && old.twoWayCommunication == twoWay && old.identity == identity &&
+            old.identityCheck == identityCheck && old.busyChannels == busy && old.restartNeeded == restartNeeded &&
+            old.restart == restartState && old.adapterRestarts == adapterRestarts && old.detailsOpen == detailsOpen &&
+            old.queueActive == queueActive
+        ) {
+            return
+        }
         _adapterInfo.value = AdapterInfo(
             values = values,
             twoWayCommunication = twoWay,
@@ -1022,7 +1033,7 @@ internal class LinkSession(
             restart = restartState,
             adapterRestarts = adapterRestarts,
             detailsOpen = detailsOpen,
-            queueActive = link?.queue?.isActive == true,
+            queueActive = queueActive,
         )
     }
 
