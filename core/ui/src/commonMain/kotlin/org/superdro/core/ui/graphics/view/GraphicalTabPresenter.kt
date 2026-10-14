@@ -162,6 +162,9 @@ class GraphicalTabPresenter(
     /** The tool library of the profile, for the lathe tool outline. */
     val tools: StateFlow<List<Tool>> = deps.tools.library(profileId).stateIn(scope, SharingStarted.Eagerly, emptyList())
 
+    /** Keeps the points and the guides of the last scene while only the tool moves. */
+    private val sceneCache = GraphicalSceneCache()
+
     /** The scene of the view, or null until the profile and the workspace load. */
     val scene: StateFlow<GraphicalScene?> = combine(
         readout.frame,
@@ -170,7 +173,7 @@ class GraphicalTabPresenter(
         selectedGuide,
         selectedShapeIndex,
     ) { frame, current, (library, list), guide, shape ->
-        frame?.let { value -> GraphicalSceneBuilder.build(value, current, library, list, guide, shape) }
+        frame?.let { value -> sceneCache.build(value, current, library, list, guide, shape) }
     }.distinctUntilChanged().stateIn(scope, SharingStarted.Eagerly, null)
 
     /** The controls of the view. */

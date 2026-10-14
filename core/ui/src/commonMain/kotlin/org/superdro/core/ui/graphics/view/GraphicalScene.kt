@@ -19,8 +19,10 @@ import org.superdro.core.functions.thread.ThreadPoints
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.Drawing
 import org.superdro.core.model.GraphicalDisplay
+import org.superdro.core.model.Guide
 import org.superdro.core.model.MachineType
 import org.superdro.core.model.Plane
+import org.superdro.core.model.SubDatum
 import org.superdro.core.model.ThreadSpec
 import org.superdro.core.model.Tool
 import org.superdro.core.model.ToolGeometry
@@ -91,6 +93,68 @@ data class GraphicalScene(
 }
 
 /**
+ * The key of the structure of a scene. Two frames with equal keys have the same points, guides,
+ * selection, and thread outline. A list compares by identity first, so an unchanged workspace
+ * compares fast.
+ */
+internal data class StructureKey(
+    val subDatums: List<SubDatum>,
+    val guides: List<Guide>,
+    val activeSubDatumId: String?,
+    val plane: Plane,
+    val displayFrame: DisplayFrame,
+    val armed: ThreadSpec?,
+    val selectedGuideId: String?,
+)
+
+/** The parts of a scene that do not change when only the tool moves. */
+internal class SceneStructure(
+    val displayFrame: DisplayFrame,
+    val points: List<ViewPoint>,
+    val ghostPoints: List<PointUm>,
+    val guides: List<ViewGuide>,
+    val ghostGuides: List<ViewGuide>,
+    val selection: GraphSelection,
+    val restricted: Boolean,
+    val threadOutline: ThreadOutline?,
+)
+
+/**
+ * Builds the scenes of one view and keeps the structure of the last scene. When only the live
+ * parts change (the tool and the cutter), the next scene uses the same lists of points and
+ * guides. Thus a frame with many sub-datums does not make the lists again, and the equality check
+ * of two scenes is fast. Use one cache in only one flow: the cache has no lock.
+ */
+class GraphicalSceneCache {
+
+    private var key: StructureKey? = null
+    private var structure: SceneStructure? = null
+
+    /** Gives the scene, the same as [GraphicalSceneBuilder.build]. */
+    fun build(
+        frame: ReadoutFrame,
+        drawing: Drawing? = null,
+        tools: List<Tool> = emptyList(),
+        threads: List<ThreadSpec> = emptyList(),
+        selectedGuideId: String? = null,
+        selectedShape: Int? = null,
+    ): GraphicalScene {
+        val plane = PlaneAxes.planeFor(frame.profile.machineType.isLathe, frame.workspace.plane)
+        val nextKey = GraphicalSceneBuilder.structureKey(frame, plane, threads, selectedGuideId)
+        val cached = structure
+        val next = if (cached != null && nextKey == key) {
+            cached
+        } else {
+            GraphicalSceneBuilder.structureOf(nextKey).also { value ->
+                key = nextKey
+                structure = value
+            }
+        }
+        return GraphicalSceneBuilder.assemble(frame, plane, next, drawing, tools, selectedShape)
+    }
+}
+
+/**
  * Builds the [GraphicalScene] of a readout frame. The
  * function is pure, so that the tests can check each layer.
  */
@@ -115,27 +179,73 @@ object GraphicalSceneBuilder {
         selectedGuideId: String? = null,
         selectedShape: Int? = null,
     ): GraphicalScene {
+        val plane = PlaneAxes.planeFor(frame.profile.machineType.isLathe, frame.workspace.plane)
+        val key = structureKey(frame, plane, threads, selectedGuideId)
+        return assemble(frame, plane, structureOf(key), drawing, tools, selectedShape)
+    }
+
+    /**
+     * Gives the key of the structure of the scene: all the values that the points, the guides, the
+     * selection, and the thread outline use. The tool position is not part of the key.
+     */
+    internal fun structureKey(frame: ReadoutFrame, plane: Plane, threads: List<ThreadSpec>, selectedGuideId: String?): StructureKey {
+        val workspace = frame.workspace
+        return StructureKey(
+            subDatums = workspace.subDatums,
+            guides = workspace.guides,
+            activeSubDatumId = workspace.activeSubDatumId,
+            plane = plane,
+            displayFrame = displayFrameOf(frame, plane),
+            armed = workspace.armedThreadId?.let { id -> threads.firstOrNull { thread -> thread.id == id } },
+            selectedGuideId = selectedGuideId,
+        )
+    }
+
+    /** Gives the structure of the scene from [key]. This is the slow part with many sub-datums. */
+    internal fun structureOf(key: StructureKey): SceneStructure {
+        val plane = key.plane
+        val armed = key.armed
+        val restrictedIds = armed?.let { spec -> ThreadPoints.cornerSubDatums(spec, key.subDatums).mapTo(HashSet()) { point -> point.id } }
+        val allPoints = viewPoints(key.subDatums, plane, key.displayFrame)
+        val points = if (restrictedIds == null) allPoints else allPoints.filter { point -> point.id in restrictedIds }
+        val ghostPoints = if (restrictedIds == null) emptyList() else allPoints.filter { point -> point.id !in restrictedIds }.map { point -> point.position }
+        val allGuides = GuideRules.viewsOf(plane, key.guides)
+        val guides = if (restrictedIds == null) allGuides else emptyList()
+        val ghostGuides = if (restrictedIds == null) emptyList() else allGuides
+        val selectedGuideId = key.selectedGuideId
+        val activeSubDatumId = key.activeSubDatumId
+        val selection = when {
+            selectedGuideId != null && guides.any { guide -> guide.id == selectedGuideId } -> GraphSelection.Guide(selectedGuideId)
+            activeSubDatumId != null && points.any { point -> point.id == activeSubDatumId } -> GraphSelection.Point(activeSubDatumId)
+            else -> GraphSelection.None
+        }
+        return SceneStructure(
+            displayFrame = key.displayFrame,
+            points = points,
+            ghostPoints = ghostPoints,
+            guides = guides,
+            ghostGuides = ghostGuides,
+            selection = selection,
+            restricted = restrictedIds != null,
+            threadOutline = armed?.let(::threadOutline),
+        )
+    }
+
+    /** Gives the scene from the [structure] and the live parts of [frame]: the tool and the cutter. */
+    internal fun assemble(
+        frame: ReadoutFrame,
+        plane: Plane,
+        structure: SceneStructure,
+        drawing: Drawing?,
+        tools: List<Tool>,
+        selectedShape: Int?,
+    ): GraphicalScene {
         val profile = frame.profile
         val workspace = frame.workspace
         val machineType = profile.machineType
-        val plane = PlaneAxes.planeFor(machineType.isLathe, workspace.plane)
         val display = profile.graphicalDisplay
-        val displayFrame = displayFrameOf(frame, plane)
         val tool = toolPosition(frame, plane)
-        val armed = workspace.armedThreadId?.let { id -> threads.firstOrNull { thread -> thread.id == id } }
-        val restrictedIds = armed?.let { spec -> ThreadPoints.cornerSubDatums(spec, workspace.subDatums).mapTo(HashSet()) { point -> point.id } }
-        val allPoints = viewPoints(workspace, plane, displayFrame)
-        val points = if (restrictedIds == null) allPoints else allPoints.filter { point -> point.id in restrictedIds }
-        val ghostPoints = if (restrictedIds == null) emptyList() else allPoints.filter { point -> point.id !in restrictedIds }.map { point -> point.position }
-        val allGuides = GuideRules.viewsOf(plane, workspace.guides)
-        val guides = if (restrictedIds == null) allGuides else emptyList()
-        val ghostGuides = if (restrictedIds == null) emptyList() else allGuides
-        val selection = when {
-            selectedGuideId != null && guides.any { guide -> guide.id == selectedGuideId } -> GraphSelection.Guide(selectedGuideId)
-            workspace.activeSubDatumId != null && points.any { point -> point.id == workspace.activeSubDatumId } ->
-                GraphSelection.Point(workspace.activeSubDatumId!!)
-            else -> GraphSelection.None
-        }
+        val restricted = structure.restricted
         val baseAlpha = when {
             !display.drawingShown -> 0.0
             display.drawingDimmed -> DIMMED_DRAWING_ALPHA
@@ -147,20 +257,20 @@ object GraphicalSceneBuilder {
             tool = tool,
             cutter = tool?.let { position -> cutterOf(frame, plane, position) },
             toolOutline = tool?.let { position -> toolOutlineOf(workspace, machineType, tools, position) },
-            points = points,
-            ghostPoints = ghostPoints,
-            guides = guides,
-            ghostGuides = ghostGuides,
-            selection = selection,
+            points = structure.points,
+            ghostPoints = structure.ghostPoints,
+            guides = structure.guides,
+            ghostGuides = structure.ghostGuides,
+            selection = structure.selection,
             drawing = drawing,
-            drawingAlpha = if (restrictedIds != null) baseAlpha / 2.0 else baseAlpha,
-            drawingSelectable = restrictedIds == null,
-            selectedShape = selectedShape.takeIf { restrictedIds == null },
-            displayFrame = displayFrame,
-            threadOutline = armed?.let(::threadOutline),
+            drawingAlpha = if (restricted) baseAlpha / 2.0 else baseAlpha,
+            drawingSelectable = !restricted,
+            selectedShape = selectedShape.takeIf { !restricted },
+            displayFrame = structure.displayFrame,
+            threadOutline = structure.threadOutline,
             metric = frame.metric(PlaneAxes.horizontal(plane)),
             display = display,
-            restricted = restrictedIds != null,
+            restricted = restricted,
         )
     }
 
@@ -187,7 +297,11 @@ object GraphicalSceneBuilder {
      * The rank of a point is its place in the list, so a newer point has a higher rank.
      */
     fun viewPoints(workspace: Workspace, plane: Plane, displayFrame: DisplayFrame): List<ViewPoint> =
-        workspace.subDatums.mapIndexedNotNull { index, subDatum ->
+        viewPoints(workspace.subDatums, plane, displayFrame)
+
+    /** Gives the points of [subDatums] with both plane coordinates, through the display frame. */
+    fun viewPoints(subDatums: List<SubDatum>, plane: Plane, displayFrame: DisplayFrame): List<ViewPoint> =
+        subDatums.mapIndexedNotNull { index, subDatum ->
             val stored = PlaneAxes.viewOf(plane, subDatum) ?: return@mapIndexedNotNull null
             val shown = if (displayFrame.isIdentity) stored else displayFrame.apply(Vec2.of(stored)).toPointUm()
             ViewPoint(subDatum.id, shown, index.toLong())
