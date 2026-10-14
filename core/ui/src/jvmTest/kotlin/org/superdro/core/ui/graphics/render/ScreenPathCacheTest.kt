@@ -3,6 +3,7 @@ package org.superdro.core.ui.graphics.render
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,6 +24,17 @@ class ScreenPathCacheTest {
 
     private fun matrixOf(originX: Double, originY: Double, scale: Double): Matrix =
         ShapePaths.toScreen(ViewTransform(originX, originY, scale, metrics))
+
+    @Test
+    fun theScreenCopyKeepsTheFillType() {
+        val evenOdd = Path().apply {
+            fillType = PathFillType.EvenOdd
+            addRect(Rect(5_000f, 5_000f, 15_000f, 15_000f))
+        }
+        val matrix = matrixOf(100.0, 200.0, 1.0)
+        assertEquals(PathFillType.EvenOdd, ShapePaths.screenPath(evenOdd, matrix).fillType)
+        assertEquals(PathFillType.EvenOdd, ScreenPathCache().screenPath(evenOdd, assertNotNullPart(matrix)).fillType)
+    }
 
     @Test
     fun aPanKeepsTheLinearPartAndTheScreenCopy() {
