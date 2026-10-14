@@ -80,7 +80,7 @@ class AppValidationTest {
         runWindowTest(1280, 800) {
             app(graph)
             graph.connect("mill", "Mill")
-            graph.connect("lathe", "Lathe", MachineType.Lathe) { profile -> profile.copy(y = profile.y.copy(enabled = true)) }
+            graph.connect("lathe", "Lathe", MachineType.Lathe, scenario = "commands") { profile -> profile.copy(y = profile.y.copy(enabled = true)) }
             waitFor(tabTag(DeviceId("mill")))
             waitFor(tabTag(DeviceId("lathe")))
             waitUntil("connected", 10_000L) {
@@ -172,7 +172,7 @@ class AppValidationTest {
         runWindowTest(1280, 800) {
             app(graph)
             graph.connect("mill", "Mill")
-            graph.connect("mill2", "Mill 2")
+            graph.connect("mill2", "Mill 2", scenario = "commands")
             waitFor(tabTag(DeviceId("mill")))
             waitFor(tabTag(DeviceId("mill2")))
             onNodeWithTag(tabTag(DeviceId("mill"))).performClick()
