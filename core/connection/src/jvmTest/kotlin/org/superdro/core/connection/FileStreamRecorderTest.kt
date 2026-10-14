@@ -44,4 +44,20 @@ class FileStreamRecorderTest {
         assertNull(recorder.open(DeviceId("mill"), AdapterAddress.Fake("DemoMill"), link = 1))
         file.delete()
     }
+
+    @Test
+    fun theRecorderFindsTheFolderAtTheFirstOpenOnly() {
+        val directory = Files.createTempDirectory("streams").toFile().resolve(FileStreamRecorder.FOLDER)
+        var calls = 0
+        val recorder = FileStreamRecorder(directory = {
+            calls++
+            directory
+        })
+        assertEquals(0, calls)
+        assertNotNull(recorder.open(DeviceId("mill"), AdapterAddress.Fake("DemoMill"), link = 1)).close()
+        assertNotNull(recorder.open(DeviceId("lathe"), AdapterAddress.Fake("DemoLathe"), link = 1)).close()
+        assertEquals(1, calls)
+        assertEquals(2, directory.listFiles()?.size)
+        directory.parentFile?.deleteRecursively()
+    }
 }

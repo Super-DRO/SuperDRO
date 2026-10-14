@@ -34,13 +34,16 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         val di = (context.applicationContext as DIAware).di
-        val wanted: WantedLinkSource = di.direct.instance()
-        val host: ConnectionServiceHost = di.direct.instance()
-        val texts: ServiceTexts = di.direct.instance()
         // Null when a test calls onReceive directly, with no broadcast of the system.
         val pending: PendingResult? = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
             try {
+                // The first read of the graph makes the graph: the connection manager, the
+                // repositories, the database driver, and the monitors. It must not occur on the
+                // main thread.
+                val wanted: WantedLinkSource = di.direct.instance()
+                val host: ConnectionServiceHost = di.direct.instance()
+                val texts: ServiceTexts = di.direct.instance()
                 // A read that does not end in time counts as "wanted": the service then decides.
                 val anyWanted = withTimeoutOrNull(WANTED_TIMEOUT_MS) { wanted.wantedLinks.first().isNotEmpty() } ?: true
                 if (anyWanted) {

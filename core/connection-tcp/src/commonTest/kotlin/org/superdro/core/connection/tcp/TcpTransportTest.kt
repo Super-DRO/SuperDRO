@@ -285,6 +285,39 @@ class TcpTransportTest {
         }
     }
 
+    @Test
+    fun theFactoryMakesTheSelectorAtTheFirstConnectOnly() = runTest {
+        var made = 0
+        val factory = TcpTransportFactory(StandardTestDispatcher(testScheduler)) {
+            made++
+            SelectorManager(Dispatchers.IO)
+        }
+        val notValid = factory.create(AdapterAddress.Tcp("192.168.1.300"))
+        val first = factory.create(AdapterAddress.Tcp("10.255.255.1", 8080))
+        assertEquals(0, made)
+        // An address that is not valid gives no connect, and thus no selector.
+        assertFailsWith<LinkFailureException> { notValid.open() }
+        assertEquals(0, made)
+        assertEquals(LinkFailure.Refused, assertFailsWith<LinkFailureException> { first.open() }.failure)
+        assertEquals(1, made)
+        assertFailsWith<LinkFailureException> { factory.create(AdapterAddress.Tcp("10.255.255.1", 8081)).open() }
+        assertEquals(1, made)
+        factory.close()
+    }
+
+    @Test
+    fun aClosedFactoryMakesNoSelectorAndItsTransportsAreRefused() = runTest {
+        var made = 0
+        val factory = TcpTransportFactory(StandardTestDispatcher(testScheduler)) {
+            made++
+            SelectorManager(Dispatchers.IO)
+        }
+        factory.close()
+        val transport = factory.create(AdapterAddress.Tcp("127.0.0.1", 9))
+        assertEquals(LinkFailure.Refused, assertFailsWith<LinkFailureException> { transport.open() }.failure)
+        assertEquals(0, made)
+    }
+
     /** Runs [block] with real time: the sockets need real time, not the virtual time of the test. */
     private fun realTime(block: suspend CoroutineScope.() -> Unit): TestResult = runTest(timeout = 90.seconds) {
         withContext(Dispatchers.Default) { block() }
