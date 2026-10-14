@@ -18,7 +18,7 @@ import org.superdro.core.connection.DeviceId
 import org.superdro.core.connection.DeviceRef
 import org.superdro.core.connection.DiscoveredAdapter
 import org.superdro.core.connection.LinkCapability
-import org.superdro.core.connection.LinkFailure
+import org.superdro.core.connection.PairedListState
 import org.superdro.core.connection.PermissionKind
 import org.superdro.core.debugadapter.DebugAdapter
 import org.superdro.core.model.AdapterAddress
@@ -82,16 +82,16 @@ data class LinkOption(
 /**
  * The adapters of one link type in step 1.
  *
- * @property permissionMissing True when the Bluetooth permission is not granted: the sheet shows
- *   "Grant permission".
- * @property radioOff True when the Bluetooth radio is off: the sheet shows "Turn on Bluetooth".
+ * @property paired The state of the Bluetooth list, or null for a section that is not Bluetooth.
+ *   [PairedListState.PermissionMissing] shows only "Grant permission", [PairedListState.RadioOff]
+ *   shows only "Turn on Bluetooth", and [PairedListState.NoPaired] shows "No adapter is paired".
+ *   In the first two states, [options] is empty.
  */
 @Immutable
 data class LinkSection(
     val kind: TransportKind,
     val options: List<LinkOption> = emptyList(),
-    val permissionMissing: Boolean = false,
-    val radioOff: Boolean = false,
+    val paired: PairedListState? = null,
 )
 
 /** One stored machine profile of step 2. */
@@ -177,12 +177,9 @@ class AddDevicePresenter(
         scope.launch {
             combine(appSettings, capabilities.state, bluetooth, usb) { settings, capability, bluetoothList, usbList ->
                 val shown = LinkTypes.shown(settings.hiddenLinkTypes)
-                val bluetoothCapability = capability.bluetooth
-                val missing = bluetoothCapability is LinkCapability.Unavailable && bluetoothCapability.cause == LinkFailure.PermissionMissing
-                val radioOff = bluetoothCapability is LinkCapability.Unavailable && bluetoothCapability.cause == LinkFailure.RadioOff
                 val sections = shown.mapNotNull { kind ->
                     when (kind) {
-                        TransportKind.BluetoothSpp -> LinkSection(kind, bluetoothList.map(::optionOf), permissionMissing = missing, radioOff = radioOff)
+                        TransportKind.BluetoothSpp -> bluetoothSection(capability.bluetooth, bluetoothList)
                         TransportKind.UsbSerial -> LinkSection(kind, usbList.map(::optionOf))
                         else -> null
                     }
@@ -354,6 +351,16 @@ class AddDevicePresenter(
         val flows = discoveries.filter { discovery -> discovery.kind == kind }.map { discovery -> discovery.adapters.onStart { emit(emptyList()) } }
         if (flows.isEmpty()) return flowOf(emptyList())
         return combine(flows) { lists -> lists.flatMap { it } }
+    }
+
+    /**
+     * Gives the Bluetooth section. With the radio off or with no permission, Android cannot read
+     * the paired list: the section has no option and does not tell that no adapter is paired.
+     */
+    private fun bluetoothSection(capability: LinkCapability, paired: List<DiscoveredAdapter>): LinkSection {
+        val listState = PairedListState.of(capability, paired)
+        val options = if (listState.readable) paired.map(::optionOf) else emptyList()
+        return LinkSection(TransportKind.BluetoothSpp, options, paired = listState)
     }
 
     private fun optionOf(adapter: DiscoveredAdapter): LinkOption =

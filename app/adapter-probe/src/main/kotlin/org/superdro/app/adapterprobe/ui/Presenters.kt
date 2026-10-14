@@ -20,6 +20,8 @@ import org.superdro.app.adapterprobe.ProbeGraph
 import org.superdro.core.adapterprobe.CameraAttach
 import org.superdro.core.adapterprobe.ConsoleState
 import org.superdro.core.adapterprobe.LinkInfo
+import org.superdro.core.adapterprobe.PairedDevices
+import org.superdro.core.adapterprobe.PairedDevicesPresenter
 import org.superdro.core.adapterprobe.PrintLevel
 import org.superdro.core.adapterprobe.ProbeTestId
 import org.superdro.core.adapterprobe.ProbeTexts
@@ -62,11 +64,14 @@ data class PermissionRow(val permission: String, val granted: Boolean)
  * The state of the Link screen: the link type, the paired
  * Bluetooth devices, the USB serial devices, the host and the TCP port, the baud rate, and the
  * state of the link of the current test or console.
+ *
+ * @property paired The paired Bluetooth devices and the state of the list: no permission, radio
+ *   off, no paired device, or the devices.
  */
 data class LinkUiState(
     val choice: LinkChoice = LinkChoice(),
     val types: List<LinkType> = LinkType.entries,
-    val paired: List<DiscoveredAdapter> = emptyList(),
+    val paired: PairedDevices = PairedDevices(),
     val usb: List<DiscoveredAdapter> = emptyList(),
     val baudRates: List<Int> = AdapterAddress.UsbSerial.BAUD_RATES,
     val scenarios: List<String> = emptyList(),
@@ -82,6 +87,8 @@ class LinkPresenter(private val graph: ProbeGraph, private val scope: CoroutineS
 
     private val permissionTick = MutableStateFlow(0)
 
+    private val pairedDevices = PairedDevicesPresenter(graph.bluetoothCapability.capability, graph.sppDiscovery.adapters, scope)
+
     private val linkInfo = combine(graph.runner.state, graph.console.state) { run, console -> run.running to console.open }
         .flatMapLatest { (running, consoleOpen) ->
             when {
@@ -94,7 +101,7 @@ class LinkPresenter(private val graph: ProbeGraph, private val scope: CoroutineS
     /** The state of the screen. */
     val state: StateFlow<LinkUiState> = combine(
         graph.link,
-        graph.sppDiscovery.adapters,
+        pairedDevices.state,
         graph.usbDiscovery.adapters,
         linkInfo,
         permissionTick,
@@ -151,16 +158,21 @@ class LinkPresenter(private val graph: ProbeGraph, private val scope: CoroutineS
     }
 
     /** Asks for the run-time permissions of the links and the notification. */
-    fun requestPermissions() {
+    fun requestPermissions() = request(graph.runtimePermissions())
+
+    /** Asks for the Bluetooth permission only: the request of the Bluetooth list. */
+    fun requestBluetoothPermission() = request(graph.bluetoothPermissions())
+
+    private fun request(permissions: List<String>) {
         scope.launch {
-            graph.permissions.request(graph.runtimePermissions())
-            graph.sppDiscovery.refresh()
-            permissionTick.update { it + 1 }
+            graph.permissions.request(permissions)
+            refresh()
         }
     }
 
-    /** Reads the permissions and the device lists again. */
+    /** Reads the permissions, the Bluetooth radio, and the device lists again. */
     fun refresh() {
+        graph.bluetoothCapability.refresh()
         graph.sppDiscovery.refresh()
         graph.usbDiscovery.refresh()
         permissionTick.update { it + 1 }

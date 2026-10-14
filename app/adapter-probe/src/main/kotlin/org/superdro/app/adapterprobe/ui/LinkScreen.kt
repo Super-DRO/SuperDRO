@@ -31,9 +31,14 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.superdro.app.adapterprobe.LinkType
 import org.superdro.core.connection.DiscoveredAdapter
+import org.superdro.core.connection.PairedListState
 import org.superdro.core.model.AdapterAddress
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.probe_baud_rate
+import org.superdro.core.resources.probe_bt_off
+import org.superdro.core.resources.probe_bt_permission_missing
+import org.superdro.core.resources.probe_bt_request_permission
+import org.superdro.core.resources.probe_bt_turn_on
 import org.superdro.core.resources.probe_fake_scenario
 import org.superdro.core.resources.probe_last_messages
 import org.superdro.core.resources.probe_link_bluetooth
@@ -90,13 +95,28 @@ fun LinkScreen(presenter: LinkPresenter, actions: ActivityActions) {
             when (state.choice.type) {
                 LinkType.Bluetooth -> {
                     Text(stringResource(Res.string.probe_paired_devices), style = MaterialTheme.typography.titleSmall)
-                    if (state.paired.isEmpty()) Text(stringResource(Res.string.probe_no_paired))
-                    state.paired.forEach { adapter ->
-                        DeviceRow(adapter, (adapter.address as? AdapterAddress.BluetoothSpp)?.mac == state.choice.bluetooth) {
-                            presenter.selectBluetooth(adapter)
+                    when (state.paired.state) {
+                        PairedListState.PermissionMissing -> {
+                            Text(stringResource(Res.string.probe_bt_permission_missing))
+                            Button(colors = ProbeButtons.filled(), onClick = presenter::requestBluetoothPermission) {
+                                Text(stringResource(Res.string.probe_bt_request_permission))
+                            }
                         }
+                        PairedListState.RadioOff -> {
+                            Text(stringResource(Res.string.probe_bt_off))
+                            Button(colors = ProbeButtons.filled(), onClick = actions.enableBluetooth) { Text(stringResource(Res.string.probe_bt_turn_on)) }
+                        }
+                        PairedListState.NoPaired, PairedListState.Paired -> {
+                            if (state.paired.state == PairedListState.NoPaired) Text(stringResource(Res.string.probe_no_paired))
+                            state.paired.devices.forEach { adapter ->
+                                DeviceRow(adapter, (adapter.address as? AdapterAddress.BluetoothSpp)?.mac == state.choice.bluetooth) {
+                                    presenter.selectBluetooth(adapter)
+                                }
+                            }
+                            OutlinedButton(colors = ProbeButtons.outlined(), onClick = actions.openBluetoothSettings) { Text(stringResource(Res.string.probe_open_bt_settings)) }
+                        }
+                        null -> Unit
                     }
-                    OutlinedButton(colors = ProbeButtons.outlined(), onClick = actions.openBluetoothSettings) { Text(stringResource(Res.string.probe_open_bt_settings)) }
                 }
                 LinkType.Usb -> {
                     Text(stringResource(Res.string.probe_usb_devices), style = MaterialTheme.typography.titleSmall)
