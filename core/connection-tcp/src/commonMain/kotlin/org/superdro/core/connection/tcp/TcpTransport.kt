@@ -24,7 +24,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -119,12 +118,15 @@ class TcpTransport internal constructor(
     /** True after [open] stopped to wait for the connect. Guarded by [stateLock]. */
     private var connectAbandoned = false
 
+    // Only the read runs on the dispatcher. Do not use flowOn here. With flowOn, the failure at the
+    // end of the stream cancels the collector before it gets the bytes in the flowOn buffer. The
+    // collector then loses the last bytes before the end of the stream.
     override val incoming: Flow<ByteArray> = flow {
         val channel = input ?: if (closed) return@flow else error("Call open() before the collection of incoming.")
         val buffer = ByteArray(TcpLinkDefaults.READ_BUFFER_BYTES)
         while (true) {
             val count = try {
-                channel.readAvailable(buffer, 0, buffer.size)
+                withContext(dispatcher) { channel.readAvailable(buffer, 0, buffer.size) }
             } catch (failure: Throwable) {
                 currentCoroutineContext().ensureActive()
                 if (closed) return@flow
@@ -136,7 +138,7 @@ class TcpTransport internal constructor(
             }
             if (count > 0) emit(buffer.copyOf(count))
         }
-    }.flowOn(dispatcher)
+    }
 
     override suspend fun open() {
         stateLock.withLock {
