@@ -26,6 +26,8 @@ dependencies {
     implementation(projects.core.util)
 
     implementation(libs.arbor)
+    // The version check of a debuggable app runs on Dispatchers.IO.
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.io)
     implementation(libs.sqldelight.android)
     // The bundled SQLite 3.53.4. It needs compileSdk 37.

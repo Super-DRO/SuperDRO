@@ -122,7 +122,7 @@ private fun MachineDatumPanelEntry(scope: TabEntryScope) {
 private fun MachineDatumEditEntry(scope: TabEntryScope, route: MachineDatumEditRoute) {
     val services = rememberFunctionServices()
     val presenter = rememberPresenter {
-        MachineDatumEditPresenter(scope.deviceId.value, route.datumId, services, scope.readout.frame, scope.readout::positionUnavailable)
+        MachineDatumEditPresenter(scope.deviceId.value, route.datumId, services, scope.readout.frame, scope.readout::positionUnavailable, scope.readout::latestFrame)
     }
     val state by presenter.uiState.collectAsState()
     val coroutines = rememberCoroutineScope()
@@ -181,7 +181,7 @@ private fun WorkspaceTransformEntry(scope: TabEntryScope, route: WorkspaceTransf
         return
     }
     val presenter = rememberPresenter {
-        TransformPresenter(route.kind, services, scope.readout.frame, scope.readout::positionUnavailable, tab.undo)
+        TransformPresenter(route.kind, services, scope.readout.frame, scope.readout::positionUnavailable, tab.undo, scope.readout::latestFrame)
     }
     val state by presenter.uiState.collectAsState()
     LaunchedEffect(state.done) { if (state.done) scope.navigator.pop(route) }

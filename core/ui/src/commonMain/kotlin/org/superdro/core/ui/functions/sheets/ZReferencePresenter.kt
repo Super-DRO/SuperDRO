@@ -124,7 +124,7 @@ class ZReferencePresenter(
      */
     suspend fun onApply(): Boolean {
         if (frame == null) return false
-        val current = readout.frame.value ?: return false
+        val current = readout.latestFrame() ?: return false
         val state = mutable.value
         val desired = state.desiredZ.valueUm
         if (desired != null && desired.isNaN()) {

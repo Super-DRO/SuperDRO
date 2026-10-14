@@ -251,7 +251,6 @@ class ThreadSetupPresenter(
 
     /** A text of the field [field]. Start (Z) takes `++x` and `--x` with the current Z as the base. */
     fun onText(field: ThreadField, text: String) {
-        val currentZ = readout.frame.value?.reading(AxisId.Z)?.shown?.takeIf { it.isFinite() } ?: 0.0
         edit {
             when (field) {
                 ThreadField.Tag -> copy(tag = text)
@@ -260,7 +259,7 @@ class ThreadSetupPresenter(
                 ThreadField.Major -> copy(major = major.withText(text))
                 ThreadField.Minor -> copy(minor = minor.withText(text))
                 ThreadField.TipRadius -> copy(tipRadius = tipRadius.withText(text))
-                ThreadField.StartZ -> copy(startZ = startZ.withText(text, currentZ))
+                ThreadField.StartZ -> copy(startZ = startZ.withText(text, currentZ()))
                 ThreadField.Length -> copy(length = length.withText(text))
                 ThreadField.LeftRelief -> copy(leftRelief = leftRelief.withText(text))
                 ThreadField.RightRelief -> copy(rightRelief = rightRelief.withText(text))
@@ -271,13 +270,16 @@ class ThreadSetupPresenter(
         refresh()
     }
 
+    /** The shown Z with the newest inputs, or 0 when Z has no value. */
+    private fun currentZ(): Double = readout.latestFrame()?.reading(AxisId.Z)?.shown?.takeIf { it.isFinite() } ?: 0.0
+
     /**
      * The sync button of Start (Z): the field gets the current Z position. The sync needs a
      * `Connected` session: the function gives the refusal text, or null.
      */
     fun onSyncStartZ(): UiText? {
         readout.positionUnavailable()?.let { return it }
-        val z = readout.frame.value?.reading(AxisId.Z)?.shown?.takeIf { it.isFinite() } ?: return null
+        val z = readout.latestFrame()?.reading(AxisId.Z)?.shown?.takeIf { it.isFinite() } ?: return null
         edit { copy(startZ = startZ.withValue(z)) }
         refresh()
         return null

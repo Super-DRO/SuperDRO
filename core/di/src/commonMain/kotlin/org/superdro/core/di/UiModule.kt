@@ -2,12 +2,12 @@ package org.superdro.core.di
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.kodein.di.DI
-import org.kodein.di.bindEagerSingleton
 import org.kodein.di.bindFactory
 import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
@@ -48,7 +48,7 @@ internal val uiModule = DI.Module("uiModule") {
     // does not close a presenter.
     bindSingleton { NavigationHolder() }
     bindSingleton<EntryRegistry> { appEntryRegistry() }
-    bindSingleton { PresenterContext(dispatcher = Dispatchers.Default, clock = instance()) }
+    bindSingleton { PresenterContext(dispatcher = Dispatchers.Default, clock = instance(), fileDispatcher = Dispatchers.IO) }
     bindSingleton<Connections> { ManagerConnections(instance<ConnectionManager>(), instance<CapabilitySource>(), instance<RequestSender>()) }
 
     bindSingleton<StateFlow<Set<DeviceId>>>(tag = MUTED_MACHINES) {
@@ -83,11 +83,13 @@ internal val uiModule = DI.Module("uiModule") {
             keepAliveStatus = instance<ConnectionKeepAlive>().status,
         )
     }
-    // The profiles of the demo machines of a debug build.
-    bindEagerSingleton {
+    // The profiles of the demo machines of a debug build. The graph makes the object in the
+    // background: the first frame does not need it.
+    bindSingleton {
         DemoMachines(debugAdapter = instance(), connections = instance(), machines = instance(), adapters = instance())
             .also { demo -> demo.start(instance(tag = APP_SCOPE)) }
     }
+    bindBackgroundStart<DemoMachines>()
     bindProvider {
         AddDevicePresenter(
             connections = instance(),

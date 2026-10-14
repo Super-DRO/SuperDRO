@@ -8,6 +8,10 @@ import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.osmerion.android.database.sqlite.OsmerionSQLiteOpenHelperFactory
 import com.toxicbakery.logging.Arbor
 import java.io.File
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.superdro.core.store.checkSqliteVersion
 import org.superdro.core.store.createSuperDroDatabase
 import org.superdro.core.store.db.SuperDroDatabase
@@ -23,16 +27,21 @@ import org.superdro.core.store.db.SuperDroDatabase
  *   transaction. Without them a delete does not remove the owned rows.
  * - `onCorruption` copies the damaged file (and its `-journal`, `-wal`, and `-shm` files) to
  *   `<files>/corrupt/` before the default deletes it.
- * - A debuggable app reads `SELECT sqlite_version()` after the open and stops when the value is
- *   lower than 3.38.0. [checkVersion] can force the check.
+ * - A debuggable app reads `SELECT sqlite_version()` on `Dispatchers.IO` and stops when the value
+ *   is lower than 3.38.0. [checkVersion] can force the check. The check opens the database and
+ *   runs the migrations, so it must not run on the main thread. The driver opens the database at
+ *   the first query.
  *
  * @param name The file name of the database. Null gives a database in memory (tests).
  * @param checkVersion True runs the version check. The default is true for a debuggable app.
+ * @param checkDispatcher The dispatcher of the version check. A test gives
+ *   `Dispatchers.Unconfined`, so the check runs in [create] before the test closes the driver.
  */
 class AndroidSqlDriverFactory(
     private val context: Context,
     private val name: String? = DATABASE_NAME,
     private val checkVersion: Boolean = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0,
+    private val checkDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     /** Makes the driver. Make one driver for the process. */
     fun create(): SqlDriver {
@@ -54,8 +63,11 @@ class AndroidSqlDriverFactory(
             },
         )
         if (checkVersion) {
-            val version = checkSqliteVersion(createSuperDroDatabase(driver))
-            log.i { "SQLite $version" }
+            // An exception of the check stops the app, as an uncaught exception does on a thread.
+            CoroutineScope(checkDispatcher).launch {
+                val version = checkSqliteVersion(createSuperDroDatabase(driver))
+                log.i { "SQLite $version" }
+            }
         }
         return driver
     }

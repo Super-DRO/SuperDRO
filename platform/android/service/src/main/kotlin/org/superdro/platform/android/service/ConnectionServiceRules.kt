@@ -76,4 +76,11 @@ object ConnectionServiceRules {
      * be in progress).
      */
     fun stopsForSummary(summary: KeepAliveSummary?, sawSummary: Boolean): Boolean = summary == null && sawSummary
+
+    /**
+     * True when the service posts its notification again after the load of the texts: the
+     * service is in the foreground and does not stop. Before `startForeground`, the start posts
+     * the notification with the texts. After a stop, a post must not occur.
+     */
+    fun repostsAfterTexts(inForeground: Boolean, stopped: Boolean): Boolean = inForeground && !stopped
 }

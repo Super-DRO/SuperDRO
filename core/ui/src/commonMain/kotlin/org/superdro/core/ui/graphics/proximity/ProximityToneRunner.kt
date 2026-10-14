@@ -1,5 +1,8 @@
 package org.superdro.core.ui.graphics.proximity
 
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -24,8 +27,9 @@ import org.superdro.core.util.Clock
  *   absolute ([ProximityTarget.absolute]).
  * - Each new value goes through the level rule of [ProximityState.update]. The runner sends the
  *   level to [SoundController.proximity] only when the level changes.
- * - The level goes to 0 after [ProximityWarning.SILENCE_MS] with no new value. The runner then
- *   has no timer, so a test with virtual time can run until idle.
+ * - The level goes to 0 after [ProximityWarning.SILENCE_MS] with no new value. One timer
+ *   holds the deadline: a new value moves the deadline, and does not start a new timer. After
+ *   the deadline the runner has no timer, so a test with virtual time can run until idle.
  * - The measurement mode stops the warning.
  * - The mute rules of the sound controller apply.
  *
@@ -38,6 +42,9 @@ import org.superdro.core.util.Clock
  * - The tone stops [ProximityWarning.STILL_MS] after the last motion, and starts again with the
  *   next motion.
  * - The target has no effect when its point is not the active sub-datum.
+ *
+ * The collector and the timers run on one thread at a time (a view of the dispatcher of the
+ * scope with a parallelism of 1), so they do not need a lock.
  */
 class ProximityToneRunner(
     private val frame: StateFlow<ReadoutFrame?>,
@@ -50,6 +57,9 @@ class ProximityToneRunner(
     private var sentLevel: Double = 0.0
     private var silence: Job? = null
 
+    /** The time of the end of the silence time: the time of the last value plus [ProximityWarning.SILENCE_MS]. */
+    private var silenceAtMs: Long = 0L
+
     // The state of a point target: the level rule and the time of the last motion of each axis.
     private val pointStates = LinkedHashMap<AxisId, ProximityState>()
     private val lastMotionMs = LinkedHashMap<AxisId, Long>()
@@ -58,12 +68,20 @@ class ProximityToneRunner(
     /** The level that the runner sent last, 0 to 1. */
     val level: Double get() = sentLevel
 
-    /** Collects the readout frames in [scope] until the scope stops. */
-    fun start(scope: CoroutineScope): Job = scope.launch {
-        try {
-            frame.collect { current -> onFrame(current, scope) }
-        } finally {
-            send(0.0)
+    /**
+     * Collects the readout frames in [scope] until the scope stops. The timers are children of the
+     * collector, on the same thread.
+     */
+    fun start(scope: CoroutineScope): Job {
+        val dispatcher = scope.coroutineContext[ContinuationInterceptor] as? CoroutineDispatcher
+        // An unconfined dispatcher has no view with a limit: it runs in the thread of the caller.
+        val confined = dispatcher?.takeIf { value -> value.isDispatchNeeded(scope.coroutineContext) }?.limitedParallelism(1)
+        return scope.launch(confined ?: EmptyCoroutineContext) {
+            try {
+                frame.collect { current -> onFrame(current, this) }
+            } finally {
+                send(0.0)
+            }
         }
     }
 
@@ -101,9 +119,25 @@ class ProximityToneRunner(
         val next = old.update(value, now)
         state = next
         send(next.levelAt(now))
-        silence?.cancel()
+        startSilence(scope, now)
+    }
+
+    /**
+     * Moves the end of the silence time to [nowMs] + [ProximityWarning.SILENCE_MS]. The timer
+     * that runs keeps on with the new deadline. Only a runner with no timer starts one.
+     */
+    private fun startSilence(scope: CoroutineScope, nowMs: Long) {
+        silenceAtMs = nowMs + ProximityWarning.SILENCE_MS
+        if (silence?.isActive == true) return
         silence = scope.launch {
-            delay(ProximityWarning.SILENCE_MS)
+            while (true) {
+                val before = clock.nowMs()
+                val left = silenceAtMs - before
+                if (left <= 0L) break
+                delay(left)
+                // A clock that does not follow the delays cannot move the deadline: stop.
+                if (clock.nowMs() == before) break
+            }
             send(0.0)
         }
     }
@@ -132,7 +166,7 @@ class ProximityToneRunner(
         }
         if (!moved) return
         send(pointLevel(now))
-        startStillTimer(scope)
+        if (still?.isActive != true) startStillTimer(scope)
     }
 
     /** The highest level of the axes that moved in the last [ProximityWarning.STILL_MS]. */
@@ -141,9 +175,12 @@ class ProximityToneRunner(
             .filter { (_, time) -> nowMs - time < ProximityWarning.STILL_MS }
             .maxOfOrNull { (axis, _) -> pointStates[axis]?.level ?: 0.0 } ?: 0.0
 
-    /** Sets the level again when the still time of each moving axis ends. The timer then stops. */
+    /**
+     * Sets the level again when the still time of each moving axis ends. The timer then stops. A
+     * motion while the timer runs does not start a new timer: the timer reads the new times of
+     * the last motion at its next step.
+     */
     private fun startStillTimer(scope: CoroutineScope) {
-        still?.cancel()
         still = scope.launch {
             while (true) {
                 val now = clock.nowMs()

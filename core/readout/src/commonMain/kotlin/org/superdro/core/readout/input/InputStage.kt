@@ -41,6 +41,14 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
     private var probeSequence = 0L
     private var latestTime: Long? = null
 
+    /**
+     * The count of the changes to the [snapshot]: an accepted sample, a probe state, a probe
+     * activation, a link start, or a new configuration. The value increases at each change. A
+     * caller that keeps a snapshot makes a new one only when this value changed.
+     */
+    var revision: Long = 0L
+        private set
+
     init {
         history.setTerms(configuration.axes, null)
     }
@@ -77,7 +85,10 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
         }
         val encoder = channelFor(letter)
         val accepted = encoder.process(count, timeMs)
-        if (accepted) acceptedSample = encoder.snapshot()
+        if (accepted) {
+            acceptedSample = encoder.snapshot()
+            revision += 1
+        }
         // The deadline comes first: a sample with a time after the deadline counts as the deadline.
         advance(timeMs)
         if (accepted) resolveWithSample(letter, timeMs, encoder.correctedCount)
@@ -92,9 +103,13 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
         events.clear()
         advance(timeMs)
         val probe = probes[Channels.normalize(channel)]
-        if (probe != null && probe.onMessage(value, timeMs)) {
-            probeSequence += 1
-            startLatch(probeSequence, probe.port, timeMs)
+        if (probe != null) {
+            val wasActive = probe.active
+            if (probe.onMessage(value, timeMs)) {
+                probeSequence += 1
+                startLatch(probeSequence, probe.port, timeMs)
+            }
+            if (probe.active != wasActive) revision += 1
         }
         return takeEvents()
     }
@@ -123,6 +138,7 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
         probes.values.forEach { probe -> probe.reset() }
         pendingLatches.clear()
         latestTime = null
+        revision += 1
     }
 
     /**
@@ -140,6 +156,7 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
         }
         history.setTerms(newConfiguration.axes, latestTime)
         if (old.probe != newConfiguration.probe) probes.values.forEach { probe -> probe.settings = newConfiguration.probe }
+        revision += 1
     }
 
     private fun channelFor(letter: Char): EncoderChannel = channels.getOrPut(letter) {
@@ -193,7 +210,7 @@ class InputStage(configuration: InputConfiguration = InputConfiguration()) {
     private fun advance(timeMs: Long, tick: Boolean = false) {
         val latest = latestTime
         if (latest == null || timeMs > latest) latestTime = timeMs
-        probes.values.forEach { probe -> probe.advanceTo(timeMs) }
+        probes.values.forEach { probe -> if (probe.advanceTo(timeMs)) revision += 1 }
         if (pendingLatches.isEmpty()) return
         pendingLatches.forEach { latch ->
             val deadline = latch.timeMs + LATCH_WAIT_MS

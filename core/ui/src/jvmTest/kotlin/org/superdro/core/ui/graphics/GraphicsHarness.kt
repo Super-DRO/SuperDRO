@@ -1,5 +1,6 @@
 package org.superdro.core.ui.graphics
 
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -147,8 +148,10 @@ class FakeProbeSession(
  * The stores, a fake probe session, a readout presenter, and the [GraphicsDependencies] of one
  * machine for the presenter tests of the graphics area. All work runs on the test scheduler of
  * [scope] (virtual time).
+ *
+ * @param fileDispatcher The file dispatcher of the presenters. Null gives the dispatcher of the store.
  */
-class GraphicsHarness(private val scope: TestScope) {
+class GraphicsHarness(private val scope: TestScope, fileDispatcher: CoroutineContext? = null) {
     val store = UiStoreFixture(scope)
     val probes = ProbeRepository(store.writer, SuperDroJson, store.wallClock)
     val drawings = DrawingRepository(store.writer)
@@ -158,7 +161,7 @@ class GraphicsHarness(private val scope: TestScope) {
     val clock = Clock { scope.testScheduler.currentTime }
     val soundController = SoundController(sounds, store.appSettings.settings, MutableStateFlow(emptySet()), clock)
     val filePicker = RecordingFilePicker()
-    val context = PresenterContext(store.dispatcher, clock)
+    val context = PresenterContext(store.dispatcher, clock, fileDispatcher ?: store.dispatcher)
     lateinit var profile: MachineProfile
     lateinit var adapter: AdapterProfile
     lateinit var session: FakeProbeSession

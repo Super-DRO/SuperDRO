@@ -24,6 +24,14 @@ object ConnectionNotificationChannel {
             .build()
         NotificationManagerCompat.from(context).createNotificationChannel(channel)
     }
+
+    /**
+     * Makes the channel with [name] only when it does not exist. An existing channel keeps its
+     * name, for example the name in the language of the device from an earlier start.
+     */
+    fun createIfMissing(context: Context, name: String) {
+        if (NotificationManagerCompat.from(context).getNotificationChannelCompat(ID) == null) create(context, name)
+    }
 }
 
 /** Makes the notifications of the connection service. */

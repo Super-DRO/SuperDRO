@@ -34,6 +34,29 @@ class InputStageTest {
     }
 
     @Test
+    fun theRevisionChangesOnlyWhenTheSnapshotCanChange() {
+        val stage = stage(Fixtures.mill(), linearInputs('x', 'y', 'z'))
+        var revision = stage.revision
+        fun changed(): Boolean = (stage.revision != revision).also { revision = stage.revision }
+        stage.onAxisCount('x', 5L, 10L)
+        assertTrue(changed(), "an accepted sample")
+        stage.onAxisCount('x', 6L, 5L)
+        assertFalse(changed(), "a sample with an earlier time is dropped")
+        stage.onAxisCount('a', 6L, 20L)
+        assertFalse(changed(), "a letter with no value")
+        stage.onTick(100L)
+        assertFalse(changed(), "a tick with no probe and no latch")
+        stage.onBinaryInput('p', 1, 110L)
+        assertTrue(changed(), "a probe activation")
+        stage.onBinaryInput('p', 1, 120L)
+        assertFalse(changed(), "the same probe state")
+        stage.onTick(5_000L)
+        assertTrue(changed(), "the watchdog ends the contact")
+        stage.onLinkStart()
+        assertTrue(changed(), "a link start")
+    }
+
+    @Test
     fun theSecondaryInputAddsToThePrimaryInputWithTheSign() {
         val mill = Fixtures.mill()
         val profile = mill.copy(z = mill.z.copy(secondary = InputConfig('w', sign = -1)))

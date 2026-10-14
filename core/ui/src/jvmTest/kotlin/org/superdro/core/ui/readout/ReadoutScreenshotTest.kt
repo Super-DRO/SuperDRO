@@ -73,6 +73,7 @@ class ReadoutScreenshotTest {
                     layout = layout,
                     sidePanelContent = { SidePanelPlaceholder(Res.string.route_sub_datums) },
                     graphicalViewPane = { SidePanelPlaceholder(Res.string.route_graphical_view) },
+                    rpmText = sample.rpm,
                 )
             }
         }
