@@ -12,6 +12,7 @@ import org.kodein.di.bindFactory
 import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
 import org.kodein.di.instance
+import org.superdro.core.connection.CapabilitySource
 import org.superdro.core.connection.ConnectionKeepAlive
 import org.superdro.core.connection.ConnectionManager
 import org.superdro.core.connection.DeviceId
@@ -48,7 +49,7 @@ internal val uiModule = DI.Module("uiModule") {
     bindSingleton { NavigationHolder() }
     bindSingleton<EntryRegistry> { appEntryRegistry() }
     bindSingleton { PresenterContext(dispatcher = Dispatchers.Default, clock = instance()) }
-    bindSingleton<Connections> { ManagerConnections(instance<ConnectionManager>()) }
+    bindSingleton<Connections> { ManagerConnections(instance<ConnectionManager>(), instance<CapabilitySource>(), instance<RequestSender>()) }
 
     bindSingleton<StateFlow<Set<DeviceId>>>(tag = MUTED_MACHINES) {
         val scope = instance<CoroutineScope>(tag = APP_SCOPE)

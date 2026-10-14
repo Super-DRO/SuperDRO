@@ -5,8 +5,10 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import java.io.IOException
+import org.superdro.core.connection.AttachedUsbDevice
 import org.superdro.core.connection.LinkFailure
 import org.superdro.core.connection.LinkFailureException
+import org.superdro.core.connection.selectUsbDevice
 import org.superdro.core.model.AdapterAddress
 
 /** Gives the USB manager of the device, or null when the device has no USB host. */
@@ -19,12 +21,27 @@ internal fun Context.usbManager(): UsbManager? = getSystemService(UsbManager::cl
 internal fun UsbManager.serialOf(device: UsbDevice): String? =
     if (hasPermission(device)) runCatching { device.serialNumber }.getOrNull()?.takeIf { text -> text.isNotBlank() } else null
 
-/** Finds the attached device of [address] (see [UsbIdentity.matches] for the serial number rule). */
+/**
+ * Finds the attached device of [address] with the rule of the capability ([selectUsbDevice]): a
+ * permitted device comes before a device with no permission, and a permitted device with a
+ * different serial number is not the adapter. The device path decides between equal devices.
+ */
 internal fun UsbManager.deviceOf(address: AdapterAddress.UsbSerial): UsbDevice? =
-    deviceList.values.firstOrNull { device ->
-        device.vendorId == address.vendorId &&
-            device.productId == address.productId &&
-            (address.serial == null || serialOf(device).let { serial -> serial == null || serial == address.serial })
+    selectUsbDevice(address, deviceList.values.sortedBy { device -> device.deviceName }) { device ->
+        val permitted = hasPermission(device)
+        AttachedUsbDevice(device.vendorId, device.productId, if (permitted) serialOf(device) else null, permitted)
+    }
+
+/**
+ * Finds the attached device with the device path [deviceKey] when it has the vendor ID and the
+ * product ID of [address]. With no key, it gives [deviceOf]. A key of a device that is not
+ * attached gives null, so that the request does not go to a different device.
+ */
+internal fun UsbManager.deviceOf(address: AdapterAddress.UsbSerial, deviceKey: String?): UsbDevice? =
+    if (deviceKey == null) {
+        deviceOf(address)
+    } else {
+        deviceList[deviceKey]?.takeIf { device -> device.vendorId == address.vendorId && device.productId == address.productId }
     }
 
 /** The Android USB calls of [UsbSerialTransport]. */

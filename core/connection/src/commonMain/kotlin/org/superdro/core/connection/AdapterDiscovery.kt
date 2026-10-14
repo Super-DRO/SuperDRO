@@ -30,10 +30,14 @@ interface AdapterDiscovery {
  * @property detail A second line, for example the Bluetooth address or the USB vendor and product IDs.
  * @property needsPermission True when the user must give a permission before the connect, for
  *   example the USB permission. Until then, a USB address has no serial number.
+ * @property deviceKey The key of the system for one attached device, for example the USB device
+ *   path, or null. Two USB devices with the same vendor ID and product ID have different keys. The
+ *   key is valid only while the device stays attached, so a profile does not keep it.
  */
 data class DiscoveredAdapter(
     val address: AdapterAddress,
     val displayName: String,
     val detail: String? = null,
     val needsPermission: Boolean = false,
+    val deviceKey: String? = null,
 )

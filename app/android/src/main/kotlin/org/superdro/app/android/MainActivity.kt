@@ -238,7 +238,7 @@ class MainActivity : ComponentActivity(), DIAware, FilePickerHost {
             ConnectionRequest.EnableBluetooth -> enableBluetoothLauncher.launch(BluetoothIntents.enableBluetooth())
             ConnectionRequest.OpenBluetoothSettings -> startActivitySafely(BluetoothIntents.openBluetoothSettings())
             is ConnectionRequest.RequestUsbPermission -> lifecycleScope.launch {
-                val granted = usbPermissions.request(request.address)
+                val granted = usbPermissions.request(request.address, request.deviceKey)
                 log.i { "USB permission of ${request.address}: $granted" }
                 refresher.refreshUsb()
             }

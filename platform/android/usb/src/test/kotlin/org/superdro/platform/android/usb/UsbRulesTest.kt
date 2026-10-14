@@ -102,4 +102,27 @@ class UsbRulesTest {
         assertEquals(listOf(AttachedUsbDevice(0x10C4, 0xEA60, null, permitted = false)), again)
         assertEquals(LinkCapability.Unavailable(LinkFailure.PermissionMissing), CapabilityState(attachedUsb = again).capabilityOf(address))
     }
+
+    @Test
+    fun twoAdaptersWithTheSameIdsGiveTwoRowsWithTheirOwnDeviceKey() {
+        val devices = listOf(
+            UsbDeviceInfo(0x10C4, 0xEA60, "Silicon Labs", "CP2102", serial = null, permitted = false, deviceName = "/dev/bus/usb/001/004"),
+            UsbDeviceInfo(0x10C4, 0xEA60, "Silicon Labs", "CP2102", serial = null, permitted = false, deviceName = "/dev/bus/usb/001/005"),
+        )
+        val rows = UsbRules.discoveredAdapters(devices)
+        assertEquals(listOf("/dev/bus/usb/001/004", "/dev/bus/usb/001/005"), rows.map { row -> row.deviceKey })
+        assertEquals(2, rows.toSet().size)
+    }
+
+    @Test
+    fun thePermissionDoesNotChangeTheOrderOfTheDevices() {
+        val first = UsbDeviceInfo(0x10C4, 0xEA60, null, null, serial = "0001", permitted = true, deviceName = "/dev/bus/usb/001/004")
+        val second = UsbDeviceInfo(0x10C4, 0xEA60, null, null, serial = null, permitted = false, deviceName = "/dev/bus/usb/001/005")
+        val other = UsbDeviceInfo(0x0403, 0x6001, null, null, serial = null, permitted = false, deviceName = "/dev/bus/usb/001/006")
+        assertEquals(listOf(other, first, second), listOf(second, first, other).sortedWith(UsbRules.deviceOrder))
+        val address = AdapterAddress.UsbSerial(0x10C4, 0xEA60, serial = "0001")
+        // The device with no permission is first in a different order: the permitted adapter stays available.
+        val attached = UsbRules.attachedDevices(listOf(second, first))
+        assertEquals(LinkCapability.Available, CapabilityState(attachedUsb = attached).capabilityOf(address))
+    }
 }

@@ -1,10 +1,17 @@
 package org.superdro.core.ui.session
 
 import kotlinx.coroutines.flow.StateFlow
+import org.superdro.core.connection.CapabilitySource
+import org.superdro.core.connection.CapabilityState
 import org.superdro.core.connection.ConnectionManager
+import org.superdro.core.connection.ConnectionRequest
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.connection.DeviceRef
 import org.superdro.core.connection.DeviceSession
+import org.superdro.core.connection.LinkCapability
+import org.superdro.core.connection.LinkFailure
+import org.superdro.core.model.AdapterAddress
+import org.superdro.core.ui.tabs.RequestSender
 
 /**
  * The functions of the connection manager that the presenters use. The UI does not select a session
@@ -43,13 +50,24 @@ interface Connections {
     }
 }
 
-/** The [Connections] of the real [ConnectionManager]. */
-class ManagerConnections(private val manager: ConnectionManager) : Connections {
+/**
+ * The [Connections] of the real [ConnectionManager].
+ *
+ * A user connect to a USB adapter with no USB permission also sends the permission request
+ * through [requests] (see [usbPermissionRequest]). The session waits until the grant.
+ */
+class ManagerConnections(
+    private val manager: ConnectionManager,
+    private val capabilities: CapabilitySource? = null,
+    private val requests: RequestSender? = null,
+) : Connections {
 
     override val sessions: StateFlow<Map<DeviceId, DeviceSession>> get() = manager.sessions
 
     override fun connect(device: DeviceRef) {
         manager.connect(device)
+        val state = capabilities?.state?.value ?: return
+        usbPermissionRequest(device.address, state)?.let { request -> requests?.send(request) }
     }
 
     override fun disconnect(id: DeviceId) = manager.disconnect(id)
@@ -60,3 +78,14 @@ class ManagerConnections(private val manager: ConnectionManager) : Connections {
 
     override fun setRecordStream(id: DeviceId, on: Boolean) = manager.setRecordStream(id, on)
 }
+
+/**
+ * Gives the USB permission request of a user connect to [address], or null. The request goes out
+ * only for a USB adapter that is attached with no USB permission.
+ */
+fun usbPermissionRequest(address: AdapterAddress, state: CapabilityState): ConnectionRequest.RequestUsbPermission? =
+    if (address is AdapterAddress.UsbSerial && state.capabilityOf(address) == LinkCapability.Unavailable(LinkFailure.PermissionMissing)) {
+        ConnectionRequest.RequestUsbPermission(address)
+    } else {
+        null
+    }

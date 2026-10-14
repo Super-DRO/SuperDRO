@@ -209,6 +209,39 @@ class AddDevicePresenterTest {
     }
 
     @Test
+    fun eachUsbRowAsksForThePermissionOfItsOwnDeviceAndTheGrantGivesTheSerial() = runTest {
+        val harness = Harness(this)
+        val noSerial = AdapterAddress.UsbSerial(0x10C4, 0xEA60)
+        harness.usb.list.value = listOf(
+            DiscoveredAdapter(noSerial, "TDA-410", "10C4:EA60", needsPermission = true, deviceKey = "/dev/bus/usb/001/004"),
+            DiscoveredAdapter(noSerial, "TDA-420", "10C4:EA60", needsPermission = true, deviceKey = "/dev/bus/usb/001/005"),
+        )
+        runCurrent()
+        val rows = harness.state.sections[1].options
+        assertEquals(2, rows.toSet().size, "Each row is a different device")
+        harness.presenter.selectLink(rows[0])
+        assertEquals(listOf<ConnectionRequest>(ConnectionRequest.RequestUsbPermission(noSerial, "/dev/bus/usb/001/004")), harness.requests.sent)
+        // The grant: the discovery reads the serial number of the TDA-410.
+        val withSerial = noSerial.copy(serial = "0001")
+        harness.usb.list.value = listOf(
+            DiscoveredAdapter(withSerial, "TDA-410", "10C4:EA60", deviceKey = "/dev/bus/usb/001/004"),
+            DiscoveredAdapter(noSerial, "TDA-420", "10C4:EA60", needsPermission = true, deviceKey = "/dev/bus/usb/001/005"),
+        )
+        runCurrent()
+        assertEquals(withSerial, harness.state.selected?.address)
+        harness.presenter.setName("Mill")
+        harness.presenter.connect()
+        runCurrent()
+        val result = assertNotNull(harness.state.result)
+        assertEquals(withSerial, harness.store.machines.loadProfile(result.profileId)?.adapter)
+        // The TDA-420 row asks for the permission of the TDA-420, not of the TDA-410.
+        harness.presenter.back()
+        harness.presenter.selectLink(harness.state.sections[1].options[1])
+        assertEquals(ConnectionRequest.RequestUsbPermission(noSerial, "/dev/bus/usb/001/005"), harness.requests.sent.last())
+        harness.close()
+    }
+
+    @Test
     fun theBluetoothSectionHasTheStateOfThePairedList() = runTest {
         val harness = Harness(this)
         runCurrent()
