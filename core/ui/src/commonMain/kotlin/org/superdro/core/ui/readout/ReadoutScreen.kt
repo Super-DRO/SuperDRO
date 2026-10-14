@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
@@ -52,11 +53,17 @@ const val GRAPHICAL_PANE_TAG: String = "readout-graphical-pane"
 /** The width of a readout pane below which the readout uses the collapsed buttons. */
 private val COLLAPSED_PANE_WIDTH = 600.dp
 
-/** The part of the window width that the readout pane uses in the expanded layout. */
-const val READOUT_PANE_FRACTION: Float = 0.6f
+/**
+ * The part of the window width that the readout column uses in the expanded layout. The readout
+ * column holds the readout and the function grid. The supporting pane gets the remaining width.
+ */
+const val READOUT_PANE_FRACTION: Float = 0.45f
+
+/** The largest part of the body height that the function grid uses below the readout (expanded layout). */
+const val FUNCTION_GRID_MAX_FRACTION: Float = 0.5f
 
 /** The part of the content height that the graphical view uses below or above the readout in portrait. */
-const val GRAPHICAL_PANE_WEIGHT: Float = 0.4f
+const val GRAPHICAL_PANE_WEIGHT: Float = 0.6f
 
 /** The width of the vertical rail: one button of the strip and the gaps. */
 private val RailWidth: Dp = 136.dp
@@ -66,14 +73,16 @@ private val RailWidth: Dp = 136.dp
  * the [state] of the presenter, the value flow of each axis ([axisValue]), and the [events].
  *
  * The layout follows the window class:
- * - Expanded (840 dp and more) in landscape: the readout pane (about 60 % of the width), the
- *   supporting pane with the side panel or the graphical view, and the vertical rail of the
- *   function strip. A portrait window of 840 dp or more uses the medium layout: the app gives
- *   the expanded layout for the landscape tablet and the medium layout for the portrait tablet.
- * - Medium (600 dp to 839 dp): the readout with the full width, the graphical view below or above
- *   it, the side panel tabs with "+", and two rows of function buttons. The side panel opens
- *   as a bottom sheet.
- * - Compact (less than 600 dp): as medium, with the function strip in a bottom sheet.
+ * - Expanded (840 dp and more): the readout column (about 45 % of the width) with the readout
+ *   and the grid of the function strip below it, and the supporting pane with the side panel or
+ *   the graphical view at the full height. A narrow readout column uses the collapsed buttons.
+ *   The window class comes from the width only, thus a portrait window of 840 dp or more also
+ *   uses this layout.
+ * - Medium (600 dp to 839 dp): the readout and the vertical rail of the function strip at its
+ *   right, the graphical view (about 60 % of the height) below or above them, and the side
+ *   panel tabs with "+". The side panel opens as a bottom sheet.
+ * - Compact (less than 600 dp): as medium, with the readout at the full width and the function
+ *   strip in a bottom sheet.
  * - A medium or compact window in landscape (for example a split screen) is not tall enough for
  *   the two rows of buttons: the readout gets the full height and the function strip is the rail.
  *
@@ -130,18 +139,28 @@ private fun ExpandedBody(
     val targets = LocalTouchTargets.current
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val readoutWidth = maxWidth * READOUT_PANE_FRACTION
-        val railWidth = RailWidth * (targets.button / 64.dp)
+        val gridMaxHeight = maxHeight * FUNCTION_GRID_MAX_FRACTION
         Row(Modifier.fillMaxSize()) {
-            ReadoutRows(
-                rows = state.rows,
-                axisValue = axisValue,
-                // The open side panel gives the collapsed readout. A readout pane of less
-                // than 600 dp also uses the collapsed buttons, so that the digits keep a useful size.
-                collapsed = panelOpen || readoutWidth < COLLAPSED_PANE_WIDTH,
-                format = state.readoutFormat,
-                events = events,
-                modifier = Modifier.width(readoutWidth).fillMaxHeight(),
-            )
+            Column(Modifier.width(readoutWidth).fillMaxHeight()) {
+                ReadoutRows(
+                    rows = state.rows,
+                    axisValue = axisValue,
+                    // The open side panel gives the collapsed readout. A readout pane of less
+                    // than 600 dp also uses the collapsed buttons, so that the digits keep a useful size.
+                    collapsed = panelOpen || readoutWidth < COLLAPSED_PANE_WIDTH,
+                    format = state.readoutFormat,
+                    events = events,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                FunctionStrip(
+                    global = state.globalButtons,
+                    functions = state.functions,
+                    events = events,
+                    form = StripForm.Grid,
+                    modifier = Modifier.fillMaxWidth().heightIn(max = gridMaxHeight),
+                )
+            }
             VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Column(Modifier.weight(1f).fillMaxHeight().testTag(SUPPORTING_PANE_TAG)) {
                 // The "+" button is in the row of the tabs, not above the pane: the graphical view
@@ -162,14 +181,6 @@ private fun ExpandedBody(
                     }
                 }
             }
-            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            FunctionStrip(
-                global = state.globalButtons,
-                functions = state.functions,
-                events = events,
-                form = StripForm.Rail,
-                modifier = Modifier.width(railWidth).fillMaxHeight(),
-            )
         }
     }
 }
@@ -185,20 +196,28 @@ private fun PortraitBody(
     modifier: Modifier,
 ) {
     val targets = LocalTouchTargets.current
+    val railWidth = RailWidth * (targets.button / 64.dp)
     val pane = graphicalViewPane.takeIf { state.graphicalViewPlacement != GraphicalViewPlacement.FullScreen }
     Column(modifier.fillMaxWidth()) {
         if (pane != null && state.graphicalViewPlacement == GraphicalViewPlacement.AboveReadout) {
             GraphicalPane(pane, Modifier.weight(GRAPHICAL_PANE_WEIGHT))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
-        ReadoutRows(
-            rows = state.rows,
-            axisValue = axisValue,
-            collapsed = false,
-            format = state.readoutFormat,
-            events = events,
-            modifier = Modifier.weight(1f - if (pane != null) GRAPHICAL_PANE_WEIGHT else 0f).fillMaxWidth(),
-        )
+        // The rail at the right of the readout frees the height below it for the graphical view.
+        Row(Modifier.weight(1f - if (pane != null) GRAPHICAL_PANE_WEIGHT else 0f).fillMaxWidth()) {
+            ReadoutRows(
+                rows = state.rows,
+                axisValue = axisValue,
+                collapsed = false,
+                format = state.readoutFormat,
+                events = events,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+            if (!compact) {
+                VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                FunctionStrip(state.globalButtons, state.functions, events, StripForm.Rail, Modifier.width(railWidth).fillMaxHeight())
+            }
+        }
         if (pane != null && state.graphicalViewPlacement == GraphicalViewPlacement.BelowReadout) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             GraphicalPane(pane, Modifier.weight(GRAPHICAL_PANE_WEIGHT))
@@ -216,9 +235,6 @@ private fun PortraitBody(
                 }
             }
             if (state.sidePanel.addVisible) AddPointButton(events)
-        }
-        if (!compact) {
-            FunctionStrip(state.globalButtons, state.functions, events, StripForm.TwoRows, Modifier.fillMaxWidth())
         }
     }
     if (state.sidePanel.mode != SidePanelMode.Off) {
