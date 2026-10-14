@@ -182,6 +182,15 @@ data class AdapterProfile(
 
         /** `probe_debounce_seconds` 0.2. */
         const val DEFAULT_PROBE_DEBOUNCE_MS: Long = 200L
+
+        /**
+         * Gives the stored form of an adapter identity: the text with no spaces at the ends and
+         * with lower case letters. A blank text gives null. The live link gives a Bluetooth
+         * address and a UUID in lower case. A file can give upper case, for example
+         * `AA:BB:CC:DD:EE:FF`. All writes and finds of [identity] use this function, thus the
+         * two forms are the same identity.
+         */
+        fun normalizeIdentity(identity: String?): String? = identity?.trim()?.lowercase()?.takeIf(String::isNotEmpty)
     }
 }
 

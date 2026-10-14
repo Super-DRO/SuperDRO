@@ -6,6 +6,7 @@
 -- `map_kind` is `Error` or `Backlash`. `seq` keeps the order of the map list.
 -- `error_map_comments_json` keeps the comment lines of the error map (its provenance) as a JSON
 -- list. Schema version 2 adds it (migration 1.sqm).
+-- `identity` is lower case. Migration 2.sqm (schema version 3) changes the stored identities to lower case.
 
 import kotlin.Boolean;
 import kotlin.Int;
@@ -69,8 +70,10 @@ SELECT * FROM adapter_profile ORDER BY alias COLLATE NOCASE, id;
 selectById:
 SELECT * FROM adapter_profile WHERE id = ?;
 
+-- The case of the letters does not matter, the same as `AdapterIdentity.matches`. The repository
+-- writes each identity in lower case (`AdapterProfile.normalizeIdentity`).
 selectByIdentity:
-SELECT * FROM adapter_profile WHERE identity = ? AND identity_source = ? ORDER BY created_on, id;
+SELECT * FROM adapter_profile WHERE identity = ? COLLATE NOCASE AND identity_source = ? ORDER BY created_on, id;
 
 selectAliases:
 SELECT id, alias FROM adapter_profile;

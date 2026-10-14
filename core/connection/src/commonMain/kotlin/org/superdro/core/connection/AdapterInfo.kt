@@ -52,7 +52,10 @@ data class AdapterInfo(
  */
 data class AdapterIdentity(val value: String, val source: IdentitySource) {
 
-    /** True when [identity] is the same identity. The case of the letters does not matter. */
+    /**
+     * True when [identity] is the same identity. The case of the letters does not matter. The
+     * store finds a profile with the same rule (`AdapterRepository.findByIdentity`).
+     */
     fun matches(identity: String?): Boolean = identity != null && identity.equals(value, ignoreCase = true)
 }
 
