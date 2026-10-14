@@ -9,7 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.instance
@@ -63,15 +62,14 @@ class DesktopApp(
     fun start() {
         // The desktop has no notification permission, no battery optimization, and no local network
         // permission. Mark the requests of the first connect as asked, so that no screen asks for them.
-        runBlocking {
-            appSettings.awaitLoaded()
-            appSettings.update { current ->
-                current.copy(
-                    notificationPermissionAsked = true,
-                    batteryExemptionAsked = true,
-                    localNetworkPermissionAsked = true,
-                )
-            }
+        // The update does not wait for the load of the file: the value changes at once, and the
+        // load applies the update again on top of the value of the file.
+        appSettings.update { current ->
+            current.copy(
+                notificationPermissionAsked = true,
+                batteryExemptionAsked = true,
+                localNetworkPermissionAsked = true,
+            )
         }
         log.w { DesktopSecretStore.WARNING }
         requestJob = appScope.launch {
