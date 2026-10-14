@@ -153,8 +153,19 @@ class PlungeWatcher(hysteresisUm: Double = PlungeDetector.HYSTERESIS_UM) {
     /**
      * Adds one sample of the absolute positions [zUm], [xUm], and [yUm]. Gives the plunge when
      * this sample completes a valid plunge, else null.
+     *
+     * [lowestZUm] is the lowest absolute Z since the last sample. The display shows only some
+     * samples, so a fast move can have a lower Z between two shown samples. When [lowestZUm] is
+     * lower than [zUm], the watcher first adds it as a sample at the same X and Y. Thus the
+     * bottom of the plunge is the true bottom. NaN (or the default) adds no sample.
      */
-    fun update(zUm: Double, xUm: Double, yUm: Double): Plunge? {
+    fun update(zUm: Double, xUm: Double, yUm: Double, lowestZUm: Double = zUm): Plunge? {
+        // The two samples give one plunge at most: after an up edge, the higher zUm gives no edge.
+        val lower = if (lowestZUm < zUm) step(lowestZUm, xUm, yUm) else null
+        return step(zUm, xUm, yUm) ?: lower
+    }
+
+    private fun step(zUm: Double, xUm: Double, yUm: Double): Plunge? {
         when (val edge = detector.update(zUm)) {
             is PlungeEdge.Down -> {
                 startX = xUm

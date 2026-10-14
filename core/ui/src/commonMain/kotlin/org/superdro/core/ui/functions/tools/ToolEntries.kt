@@ -71,7 +71,7 @@ private fun ToolLibraryEntry(scope: TabEntryScope) {
 private fun ToolEditEntry(scope: TabEntryScope, route: ToolEditRoute) {
     val services = rememberFunctionServices()
     val presenter = rememberPresenter {
-        ToolEditPresenter(scope.deviceId.value, route.toolId, services, scope.readout.frame, scope.readout::positionUnavailable)
+        ToolEditPresenter(scope.deviceId.value, route.toolId, services, scope.readout.frame, scope.readout::positionUnavailable, scope.readout::latestFrame)
     }
     val state by presenter.uiState.collectAsState()
     val coroutines = rememberCoroutineScope()

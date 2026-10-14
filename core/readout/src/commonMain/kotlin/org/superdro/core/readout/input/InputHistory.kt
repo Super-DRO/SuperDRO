@@ -77,6 +77,32 @@ class InputHistory internal constructor() {
         return sum
     }
 
+    /**
+     * Gives the lowest sum `R` of [axis] at the sample times of its inputs after [afterMs]. The
+     * display can skip a sample, so this value can be lower than each shown value. NaN when no
+     * input of the axis has a sample after [afterMs], or when no sum at these times is known.
+     */
+    fun axisLowestAfter(axis: AxisId, afterMs: Long): Double {
+        val terms = axisTerms[axis]?.terms ?: return Double.NaN
+        var lowest = Double.NaN
+        terms.forEach { term ->
+            val history = channel(term.input) ?: return@forEach
+            var index = history.size - 1
+            while (index >= 0) {
+                val time = history.timeAt(index)
+                if (time <= afterMs) break
+                val sum = axisPositionAt(axis, time)
+                if (!sum.isNaN() && (lowest.isNaN() || sum < lowest)) lowest = sum
+                index -= 1
+            }
+        }
+        return lowest
+    }
+
+    /** Gives the time of the newest sample of the inputs of [axis], or null when no input has a sample. */
+    fun axisNewestTime(axis: AxisId): Long? =
+        axisTerms[axis]?.terms.orEmpty().mapNotNull { term -> channel(term.input)?.newestTime }.maxOrNull()
+
     /** Gives the speed of [axis] in units for each second over [spanMs] before [nowMs], or NaN. */
     fun axisSpeed(axis: AxisId, nowMs: Long, spanMs: Long): Double {
         require(spanMs > 0L) { "The span must be more than 0 ms." }

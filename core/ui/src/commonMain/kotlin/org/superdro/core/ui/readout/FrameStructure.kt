@@ -24,8 +24,8 @@ fun ReadoutFrame.sameStructure(other: ReadoutFrame): Boolean =
  * come through.
  *
  * Use the frames of this flow only for their structural parts: the profile, the workspace, the
- * axis states, the units, and the labels. Their readings can be old. To read the live position,
- * read `TabReadout.frame.value`.
+ * axis states, the units, and the labels. Their readings can be old. To read the live position at
+ * an event (a press or a tap), call `TabReadout.latestFrame`.
  */
 fun Flow<ReadoutFrame?>.structure(): Flow<ReadoutFrame?> = distinctUntilChanged { old, new ->
     if (old == null || new == null) old === new else old.sameStructure(new)

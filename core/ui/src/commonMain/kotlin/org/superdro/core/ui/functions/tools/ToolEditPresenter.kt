@@ -63,6 +63,8 @@ data class ToolEditUiState(
  * @param frame The readout of the tab, for the sync buttons of a lathe tool.
  * @param positionUnavailable The check of the position for the sync buttons: null when the session is
  *   `Connected`, else the text.
+ * @param latestFrame Gives the frame with the newest inputs (`TabReadout.latestFrame`). A sync
+ *   button uses it, because [frame] can be one display frame older.
  */
 class ToolEditPresenter(
     private val profileId: String,
@@ -70,6 +72,7 @@ class ToolEditPresenter(
     private val services: FunctionServices,
     private val frame: StateFlow<ReadoutFrame?>,
     private val positionUnavailable: () -> UiText?,
+    private val latestFrame: () -> ReadoutFrame? = { frame.value },
 ) : ScopedPresenter(services.context) {
 
     private val mutable = MutableStateFlow(ToolEditUiState())
@@ -152,7 +155,7 @@ class ToolEditPresenter(
             mutable.update { it.copy(message = refusal) }
             return
         }
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         val reading = current.reading(axis)
         if (!reading.hasValue) return
         val value = ToolRules.syncValue(reading.value, reading.toolOffset)

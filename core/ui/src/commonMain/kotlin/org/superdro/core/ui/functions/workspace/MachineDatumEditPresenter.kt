@@ -60,6 +60,8 @@ data class MachineDatumEditUiState(
  * position. The name has 1 to 15 characters.
  *
  * @param datumId The datum to edit, or null for a new datum.
+ * @param latestFrame Gives the frame with the newest inputs (`TabReadout.latestFrame`). A sync
+ *   button uses it, because [frame] can be one display frame older.
  */
 class MachineDatumEditPresenter(
     private val profileId: String,
@@ -67,6 +69,7 @@ class MachineDatumEditPresenter(
     private val services: FunctionServices,
     private val frame: StateFlow<ReadoutFrame?>,
     private val positionUnavailable: () -> UiText?,
+    private val latestFrame: () -> ReadoutFrame? = { frame.value },
 ) : ScopedPresenter(services.context) {
 
     private val mutable = MutableStateFlow(MachineDatumEditUiState())
@@ -135,7 +138,7 @@ class MachineDatumEditPresenter(
             mutable.update { it.copy(message = refusal) }
             return
         }
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         val value = MachineDatums.machinePosition(current, axis)
         if (!value.isFinite()) return
         mutable.update { state ->

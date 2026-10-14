@@ -121,7 +121,7 @@ class RotatePartPresenter(private val readout: TabReadout) : Presenter {
 
     /** "Rotate": gives true when the rotation is stored and the sheet closes. */
     fun onRotate(): Boolean {
-        val frame = readout.frame.value ?: return false
+        val frame = readout.latestFrame() ?: return false
         val state = mutable.value
         val degrees = degreesOf(if (state.source == RotationSource.Typed) state.angleText else state.offsetText)
         if (degrees == null || abs(degrees) > PartRotationTransform.ANGLE_LIMIT_DEGREES) {

@@ -160,7 +160,6 @@ enum class OfflineLabel { Offline, Reconnecting }
  * The status strip: the units, ABS or INC, the active tool, the active sub-datum, the RPM,
  * the adapter state, and the "Measurement" chip.
  *
- * @property rpmText The RPM text of the tachometer, or null when the tachometer is off.
  * @property offline The label while the session is not online, or null.
  */
 @Immutable
@@ -169,7 +168,6 @@ data class StatusStripUiState(
     val mode: GlobalModeState = GlobalModeState.Absolute,
     val toolName: String? = null,
     val subDatumName: String? = null,
-    val rpmText: String? = null,
     val link: LinkStatus = LinkStatus.Disconnected,
     val measurementMode: Boolean = false,
     val offline: OfflineLabel? = null,

@@ -376,7 +376,7 @@ class ReadoutPresenterTest {
         harness.presenter.onPresetSelected(1400.0)
         advanceUntilIdle()
         assertEquals("1400", harness.text(AxisId.Tachometer))
-        assertEquals("1400", harness.presenter.uiState.value.status.rpmText)
+        assertEquals("1400", harness.presenter.rpmText.value)
     }
 
     @Test

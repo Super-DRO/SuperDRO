@@ -39,6 +39,7 @@ import org.superdro.core.resources.drawing_problems_explanation
 import org.superdro.core.resources.drawing_technical_details
 import org.superdro.core.resources.ic_error
 import org.superdro.core.resources.ic_info
+import org.superdro.core.ui.components.uniqueKeys
 import org.superdro.core.ui.navigation.ScreenScaffold
 import org.superdro.core.ui.theme.AccentButtons
 import org.superdro.core.ui.theme.LocalTouchTargets
@@ -87,7 +88,9 @@ fun DrawingProblemsScreen(problems: List<DrawingProblem>, detailsShown: Boolean 
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
                 LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag(DRAWING_PROBLEM_LIST_TAG), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    items(problems) { problem ->
+                    val keys = uniqueKeys(problems) { problem -> "${problem.code}|${problem.message}" }
+                    items(problems.size, key = { index -> keys[index] }) { index ->
+                        val problem = problems[index]
                         Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                             Text(problem.code, style = MaterialTheme.typography.labelLarge, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.error)
                             Text(problem.message, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurface)

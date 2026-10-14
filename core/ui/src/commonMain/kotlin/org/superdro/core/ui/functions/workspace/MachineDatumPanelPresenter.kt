@@ -103,7 +103,7 @@ class MachineDatumPanelPresenter(
             messages(refusal)
             return
         }
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         when (val plan = MachineDatums.plan(frame, datum)) {
             is MachineDatumPlan.PositionNotAvailable -> local.update { it.copy(problem = positionNotAvailable()) }
             is MachineDatumPlan.Apply -> if (plan.noOp) {
@@ -120,7 +120,7 @@ class MachineDatumPanelPresenter(
         val pending = local.value.apply ?: return
         local.update { it.copy(apply = null) }
         val datum = datums.value.orEmpty().firstOrNull { it.id == pending.datumId } ?: return
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         when (val plan = MachineDatums.plan(frame, datum)) {
             is MachineDatumPlan.PositionNotAvailable -> local.update { it.copy(problem = positionNotAvailable()) }
             is MachineDatumPlan.Apply -> readout.apply(plan.result, UiText.of(Res.string.ws_datum_undo_apply, datum.name))
@@ -151,7 +151,7 @@ class MachineDatumPanelPresenter(
             messages(refusal)
             return
         }
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val name = nextName(datums.value.orEmpty())
         val datum = MachineDatums.capture(frame, name)
         if (datum == null) {

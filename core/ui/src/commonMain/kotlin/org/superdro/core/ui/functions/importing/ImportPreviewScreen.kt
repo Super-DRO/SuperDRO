@@ -64,6 +64,7 @@ import org.superdro.core.resources.import_writing
 import org.superdro.core.resources.import_nothing
 import org.superdro.core.store.files.ImportOperation
 import org.superdro.core.store.files.RowAction
+import org.superdro.core.ui.components.uniqueKeys
 import org.superdro.core.ui.functions.common.ChoiceRow
 import org.superdro.core.ui.functions.common.ErrorBlock
 import org.superdro.core.ui.functions.common.ErrorBox
@@ -129,7 +130,8 @@ fun ImportPreviewScreen(state: ImportUiState, events: ImportPreviewEvents, modif
                             else -> if (state.warnings.isEmpty()) {
                                 item { Empty() }
                             } else {
-                                items(state.warnings) { warning -> ProblemLine(warning, Res.drawable.ic_warning) }
+                                val keys = uniqueKeys(state.warnings) { warning -> warning.hashCode().toString() }
+                                items(state.warnings.size, key = { index -> keys[index] }) { index -> ProblemLine(state.warnings[index], Res.drawable.ic_warning) }
                             }
                         }
                     }

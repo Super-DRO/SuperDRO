@@ -162,6 +162,32 @@ class GraphicalTabPresenterTest {
     }
 
     @Test
+    fun aShortDipBetweenTwoThrottledFramesIsTheBottomOfThePlunge() = runTest {
+        val f = fixture()
+        try {
+            f.tab.setSwitch(GraphicalSwitch.AutomaticSubDatum, true)
+            advanceUntilIdle()
+            f.harness.moveTo(100L, z = -6_000L)
+            // The input stage gets the bottom of the plunge, but the throttle of the session does
+            // not publish it: no frame shows −12000 µm.
+            f.harness.session.stage.onAxisCount('z', -12_000L, 108L)
+            f.harness.moveTo(116L, z = -1_000L)
+            assertEquals(-1_000.0, f.harness.readout.frame.value!!.reading(AxisId.Z).absolute)
+            val point = f.harness.workspace().subDatums.single()
+            assertEquals(-12_000.0, point.z)
+            // A dip after the down edge is the bottom too, not the lowest shown Z.
+            f.harness.moveTo(200L, x = 1_000L)
+            f.harness.moveTo(300L, z = -11_000L)
+            f.harness.session.stage.onAxisCount('z', -11_480L, 308L)
+            f.harness.moveTo(316L, z = -11_200L)
+            f.harness.moveTo(400L, z = 0L)
+            assertEquals(listOf(-12_000.0, -11_480.0), f.harness.workspace().subDatums.map { it.z })
+        } finally {
+            f.close()
+        }
+    }
+
+    @Test
     fun aPlungeWithAMotionOfXOrYGivesNoAction() = runTest {
         val f = fixture()
         try {

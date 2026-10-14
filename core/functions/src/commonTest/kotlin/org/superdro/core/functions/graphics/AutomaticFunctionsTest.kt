@@ -163,6 +163,31 @@ class AutomaticFunctionsTest {
     }
 
     @Test
+    fun theLowestZBetweenTwoSamplesIsTheBottomOfThePlunge() {
+        // The dip to −12000 µm is between two shown samples: it makes the down edge and the bottom.
+        val watcher = PlungeWatcher()
+        assertNull(watcher.update(0.0, 0.0, 0.0))
+        assertNull(watcher.update(-6_000.0, 0.0, 0.0))
+        assertEquals(Plunge(-12_000.0), watcher.update(-1_000.0, 0.0, 0.0, lowestZUm = -12_000.0))
+        // The deeper Z after the down edge is the bottom, not the lowest shown Z.
+        val deeper = PlungeWatcher()
+        assertNull(deeper.update(0.0, 0.0, 0.0))
+        assertNull(deeper.update(-11_000.0, 0.0, 0.0))
+        assertNull(deeper.update(-11_200.0, 0.0, 0.0, lowestZUm = -11_480.0))
+        assertEquals(Plunge(-11_480.0), deeper.update(0.0, 0.0, 0.0, lowestZUm = -11_200.0))
+        // A lower Z that is far above the bottom gives the up edge by itself.
+        val retract = PlungeWatcher()
+        assertNull(retract.update(0.0, 0.0, 0.0))
+        assertNull(retract.update(-12_000.0, 0.0, 0.0))
+        assertEquals(Plunge(-12_000.0), retract.update(0.0, 0.0, 0.0, lowestZUm = -1_000.0))
+        // NaN adds no sample.
+        val none = PlungeWatcher()
+        assertNull(none.update(0.0, 0.0, 0.0))
+        assertNull(none.update(-6_000.0, 0.0, 0.0, lowestZUm = Double.NaN))
+        assertNull(none.update(-1_000.0, 0.0, 0.0, lowestZUm = Double.NaN))
+    }
+
+    @Test
     fun thePlungeFunctionsRunOnlyOnAMillOutOfTheMeasurementMode() {
         assertTrue(PlungeWatcher.isActive(MachineType.VerticalMill, MachineMode.Cutting, automaticZero = true, automaticSubDatum = false))
         assertTrue(PlungeWatcher.isActive(MachineType.HorizontalMill, MachineMode.Cutting, automaticZero = false, automaticSubDatum = true))

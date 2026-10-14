@@ -94,7 +94,7 @@ class AddGuidePresenter(private val tab: GraphicalTabPresenter) : Presenter {
 
     /** The sync button: the absolute position of the axis. */
     fun onSync() {
-        val frame = tab.readout.frame.value ?: return
+        val frame = tab.readout.latestFrame() ?: return
         val axis = mutable.value.axis
         val reading = frame.reading(axis)
         if (!reading.hasValue) return
@@ -103,7 +103,7 @@ class AddGuidePresenter(private val tab: GraphicalTabPresenter) : Presenter {
 
     /** "Add Guide": gives true when the guide is stored and the dialog closes. */
     fun onAdd(): Boolean {
-        val frame = tab.readout.frame.value ?: return false
+        val frame = tab.readout.latestFrame() ?: return false
         val state = mutable.value
         val post = frame.postProcessor(state.axis)
         val reading = frame.reading(state.axis)

@@ -152,6 +152,33 @@ class ThreadCutTest {
     }
 
     @Test
+    fun aFastPassWithFewPositionsInsideTheLengthStillCounts() {
+        // zMin = −15500, zMax = 0. The display rate gives only these positions of one pass.
+        var state = ThreadCut.arm(ThreadCutState(), "t1")
+        state = ThreadCut.update(spec, state, 4800.0, 2000.0)
+        state = ThreadCut.update(spec, state, 4800.0, -16000.0)
+        assertEquals(9600.0, state.record.deepestUm, "a line over all of the length is a pass")
+        assertEquals(ThreadStroke(), state.stroke)
+        // The return move with the tool out of the thread does not change the record.
+        state = ThreadCut.update(spec, state, 5000.0, 1000.0)
+        assertEquals(9600.0, state.record.deepestUm)
+        // A deeper pass with one position inside the length near each end.
+        state = ThreadCut.update(spec, state, 4700.0, -1000.0)
+        state = ThreadCut.update(spec, state, 4700.0, -14000.0)
+        state = ThreadCut.update(spec, state, 4700.0, -17000.0)
+        assertEquals(9400.0, state.record.deepestUm)
+        assertEquals(9600.0, state.record.previousDeepestUm)
+        // A motion outside the length on one side is not a pass.
+        state = ThreadCut.update(spec, state, 4600.0, -17000.0)
+        state = ThreadCut.update(spec, state, 4600.0, -30000.0)
+        assertEquals(9400.0, state.record.deepestUm)
+        // With no Z, the next position starts a new line.
+        state = ThreadCut.update(spec, state, 4600.0, null)
+        state = ThreadCut.update(spec, state, 4600.0, 3000.0)
+        assertEquals(9400.0, state.record.deepestUm)
+    }
+
+    @Test
     fun armingANewThreadStartsThePassRecordAgain() {
         val recorded = ThreadCutState(ThreadPassRecord(9400.0, 9600.0, "t1"), ThreadStroke(-14000.0, -500.0, true))
         assertEquals(ThreadCutState(ThreadPassRecord(9400.0, 9600.0, "t1")), ThreadCut.arm(recorded, "t1"))

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.superdro.core.connection.DeviceId
+import org.superdro.core.connection.DeviceSession
 import org.superdro.core.functions.PointUm
 import org.superdro.core.functions.compensation.CompensationResult
 import org.superdro.core.functions.compensation.ToolCompensation
@@ -150,6 +151,13 @@ class GraphicalTabPresenter(
     private var lastTool: PointUm? = null
     private var lastPlunge: Triple<Double, Double, Double>? = null
 
+    /**
+     * The session and the time of the newest Z sample that the plunge watcher has seen. The next
+     * frame reads the lowest Z of the samples after this time from the input history.
+     */
+    private var plungeSession: DeviceSession? = null
+    private var plungeSampleMs: Long? = null
+
     private val workspaceId: StateFlow<String?> = readout.frame.map { frame -> frame?.workspace?.id }.distinctUntilChanged()
         .stateIn(scope, SharingStarted.Eagerly, readout.frame.value?.workspace?.id)
 
@@ -166,6 +174,9 @@ class GraphicalTabPresenter(
     /** The tool library of the profile, for the lathe tool outline. */
     val tools: StateFlow<List<Tool>> = deps.tools.library(profileId).stateIn(scope, SharingStarted.Eagerly, emptyList())
 
+    /** Keeps the points and the guides of the last scene while only the tool moves. */
+    private val sceneCache = GraphicalSceneCache()
+
     /** The scene of the view, or null until the profile and the workspace load. */
     val scene: StateFlow<GraphicalScene?> = combine(
         readout.frame,
@@ -174,7 +185,7 @@ class GraphicalTabPresenter(
         selectedGuide,
         selectedShapeIndex,
     ) { frame, current, (library, list), guide, shape ->
-        frame?.let { value -> GraphicalSceneBuilder.build(value, current, library, list, guide, shape, threadOutlines::of) }
+        frame?.let { value -> sceneCache.build(value, current, library, list, guide, shape, threadOutlines::of) }
     }.distinctUntilChanged().stateIn(scope, SharingStarted.Eagerly, null)
 
     /** The controls of the view. */
@@ -372,7 +383,7 @@ class GraphicalTabPresenter(
 
     /** "Set Absolute Origin Here": the absolute origin moves to the point, with undo. */
     fun setOriginAt(id: String) {
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val name = frame.workspace.subDatums.firstOrNull { point -> point.id == id }?.name.orEmpty()
         val unavailable = readout.positionUnavailable()
         if (unavailable != null) {
@@ -437,7 +448,7 @@ class GraphicalTabPresenter(
     // ---------------------------------------------------------------------------------------
     // Automatic functions
 
-    private fun runAutomaticFunctions(frame: ReadoutFrame) {
+    private suspend fun runAutomaticFunctions(frame: ReadoutFrame) {
         val plane = PlaneAxes.planeFor(frame.profile.machineType.isLathe, frame.workspace.plane)
         val switches = frame.workspace.graphical
         frame.workspace.proximity?.pointId?.let { pointId ->
@@ -464,17 +475,48 @@ class GraphicalTabPresenter(
         }
     }
 
-    /** The Z plunge detector of the automatic zero and the automatic sub-datum. */
-    private fun runPlungeWatcher(frame: ReadoutFrame, switches: GraphicalSwitches) {
-        if (!PlungeWatcher.isActive(frame.profile.machineType, frame.profile.machineMode, switches.automaticZero, switches.automaticSubDatum)) return
+    /**
+     * The Z plunge detector of the automatic zero and the automatic sub-datum. The frames come at
+     * most one time for each display frame, so the watcher also gets the lowest Z of the samples
+     * between two frames from the input history. Thus a fast retract does not change the bottom.
+     */
+    private suspend fun runPlungeWatcher(frame: ReadoutFrame, switches: GraphicalSwitches) {
+        if (!PlungeWatcher.isActive(frame.profile.machineType, frame.profile.machineMode, switches.automaticZero, switches.automaticSubDatum)) {
+            plungeSampleMs = null
+            return
+        }
         val x = frame.reading(AxisId.X)
         val y = frame.reading(AxisId.Y)
         val z = frame.reading(AxisId.Z)
         if (!x.hasValue || !y.hasValue || !z.hasValue) return
+        val lowest = lowestZSinceLastFrame(frame)
         val sample = Triple(x.absolute, y.absolute, z.absolute)
-        if (sample == lastPlunge) return
+        if (sample == lastPlunge && !(lowest < z.absolute)) return
         lastPlunge = sample
-        plunges.update(z.absolute, x.absolute, y.absolute)?.let { plunge -> onPlunge(frame, plunge, x.absolute, y.absolute, switches) }
+        plunges.update(z.absolute, x.absolute, y.absolute, lowest)?.let { plunge -> onPlunge(frame, plunge, x.absolute, y.absolute, switches) }
+    }
+
+    /**
+     * Gives the lowest absolute Z of the samples after the last frame, from the input history of
+     * the session, or NaN. The first frame of a session (or after a pause of the watcher) only
+     * keeps the time of the newest sample. A time before that time (a new link) starts again.
+     */
+    private suspend fun lowestZSinceLastFrame(frame: ReadoutFrame): Double {
+        val session = deps.connections.sessions.value[deviceId]
+        if (session !== plungeSession) {
+            plungeSession = session
+            plungeSampleMs = null
+        }
+        if (session == null) return Double.NaN
+        val after = plungeSampleMs
+        val (lowestR, newest) = session.readHistory { history ->
+            val newest = history.axisNewestTime(AxisId.Z)
+            val lowest = if (after == null || newest == null || newest < after) Double.NaN else history.axisLowestAfter(AxisId.Z, after)
+            lowest to newest
+        }
+        plungeSampleMs = newest
+        if (lowestR.isNaN()) return Double.NaN
+        return frame.absoluteFor(mapOf(AxisId.Z to lowestR))[AxisId.Z] ?: Double.NaN
     }
 
     private fun onPlunge(frame: ReadoutFrame, plunge: org.superdro.core.functions.graphics.Plunge, x: Double, y: Double, switches: GraphicalSwitches) {
