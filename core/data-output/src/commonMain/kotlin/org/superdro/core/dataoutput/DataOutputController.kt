@@ -275,7 +275,7 @@ class DataOutputController(
                 }
                 launch {
                     RecordScheduler(config.cadence, config.intervalMs, config.maxRateHz, platform.clock)
-                        .run(values, formatter::valueTexts) { current -> send(formatter, current) }
+                        .run(values, formatter::valueTexts) { current, texts -> send(formatter, current, texts) }
                 }
             }
         }
@@ -346,10 +346,10 @@ class DataOutputController(
             sessionScope.launch { output.state.collect { sender -> senderState.value = sender } }
         }
 
-        private fun send(formatter: RecordFormatter, current: OutputValues) {
+        /** Sends one record of [current]. [texts] are the value texts of [current] from the scheduler. */
+        private fun send(formatter: RecordFormatter, current: OutputValues, texts: List<String?>) {
             val number = sequence++
             val timestamp = current.updatedAtEpochMs ?: platform.wallClock.nowEpochMs()
-            val texts = formatter.valueTexts(current)
             statistics.update { value -> value.withRecord() }
             tcp?.publish(formatter.record(texts, timestamp, number).encodeToByteArray())
             mqtt?.publish(OutputRecord(texts, timestamp, number))

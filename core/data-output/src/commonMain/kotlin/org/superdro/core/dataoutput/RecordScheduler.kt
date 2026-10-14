@@ -46,33 +46,38 @@ class RecordScheduler(
     /**
      * Sends the records until the caller cancels the coroutine.
      *
+     * The scheduler makes the value texts of each values object only one time. The same texts go
+     * to [send], so that the sender does not make them again.
+     *
      * @param values The current values.
      * @param texts Gives the value texts of the change check.
-     * @param send Makes and sends one record of the values that it gets.
+     * @param send Makes and sends one record of the values and of their texts.
      */
     suspend fun run(
         values: StateFlow<OutputValues>,
         texts: (OutputValues) -> List<String?>,
-        send: suspend (OutputValues) -> Unit,
+        send: suspend (OutputValues, List<String?>) -> Unit,
     ) {
+        val memo = TextMemo(texts)
         when (cadence) {
             DataOutputCadence.FixedInterval -> while (true) {
                 delay(intervalMs)
-                send(values.value)
+                val current = values.value
+                send(current, memo.of(current))
             }
-            DataOutputCadence.OnChange -> onChange(values, texts, send, withInterval = false)
-            DataOutputCadence.OnChangeAndInterval -> onChange(values, texts, send, withInterval = true)
+            DataOutputCadence.OnChange -> onChange(values, memo, send, withInterval = false)
+            DataOutputCadence.OnChangeAndInterval -> onChange(values, memo, send, withInterval = true)
         }
     }
 
     private suspend fun onChange(
         values: StateFlow<OutputValues>,
-        texts: (OutputValues) -> List<String?>,
-        send: suspend (OutputValues) -> Unit,
+        texts: TextMemo,
+        send: suspend (OutputValues, List<String?>) -> Unit,
         withInterval: Boolean,
     ) = coroutineScope {
         val startAt = clock.nowMs()
-        var lastTexts: List<String?> = texts(values.value)
+        var lastTexts: List<String?> = texts.of(values.value)
         var lastSentAt: Long? = null
         val updates = Channel<Unit>(Channel.CONFLATED)
         val collector = launch { values.collect { updates.trySend(Unit) } }
@@ -88,12 +93,13 @@ class RecordScheduler(
                 if (!updated) {
                     // No record went out for the interval: send the current values.
                     val current = values.value
-                    send(current)
-                    lastTexts = texts(current)
+                    val currentTexts = texts.of(current)
+                    send(current, currentTexts)
+                    lastTexts = currentTexts
                     lastSentAt = clock.nowMs()
                     continue
                 }
-                if (texts(values.value) == lastTexts) continue
+                if (texts.of(values.value) == lastTexts) continue
                 val sentAt = lastSentAt
                 if (sentAt != null) {
                     val waitMs = sentAt + minimumGapMs - clock.nowMs()
@@ -103,14 +109,31 @@ class RecordScheduler(
                 // that a later update gives a new signal.
                 updates.tryReceive()
                 val newest = values.value
-                val newestTexts = texts(newest)
+                val newestTexts = texts.of(newest)
                 if (newestTexts == lastTexts) continue
-                send(newest)
+                send(newest, newestTexts)
                 lastTexts = newestTexts
                 lastSentAt = clock.nowMs()
             }
         } finally {
             collector.cancel()
+        }
+    }
+
+    /**
+     * Keeps the texts of the last values object. [OutputValues] is immutable, thus the same
+     * object always gives the same texts.
+     */
+    private class TextMemo(private val texts: (OutputValues) -> List<String?>) {
+        private var values: OutputValues? = null
+        private var result: List<String?> = emptyList()
+
+        fun of(current: OutputValues): List<String?> {
+            if (current !== values) {
+                result = texts(current)
+                values = current
+            }
+            return result
         }
     }
 }
