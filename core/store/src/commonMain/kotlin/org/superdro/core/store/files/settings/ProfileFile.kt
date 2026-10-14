@@ -102,8 +102,18 @@ class ProfileFileImporter(private val now: () -> Instant = { Clock.System.now() 
         refused(ImportProblem.error(MessageKey.FileFailed, error.message ?: error.toString()), target)
     }
 
-    private fun refused(problem: ImportProblem, target: SettingsTarget) = SettingsImportPreview(
-        null, null, null, target, listOf(problem), emptyList(), ProbeValues(),
+    /**
+     * Gives a preview with one file problem and no settings. A file with a known header keeps its
+     * [source], its profile name, and its export time, so that the preview shows the file type.
+     */
+    private fun refused(
+        problem: ImportProblem,
+        target: SettingsTarget,
+        source: FileSource? = null,
+        fileProfileName: String? = null,
+        exported: String? = null,
+    ) = SettingsImportPreview(
+        source, fileProfileName, exported, target, listOf(problem), emptyList(), ProbeValues(),
         ImportReport(0, emptyList(), emptyList(), emptyList(), emptyList()), null, now,
     )
 
@@ -111,7 +121,7 @@ class ProfileFileImporter(private val now: () -> Instant = { Clock.System.now() 
         val fileProfileName = JsonFiles.text(root["profile"])?.let(JsonFiles::singleLine)?.takeIf(String::isNotEmpty)
         val exported = JsonFiles.text(root["exported"])?.trim()
         val settings = JsonFiles.obj(root["settings"])
-        if (settings == null || settings.isEmpty()) return refused(ImportProblem.error(MessageKey.SettingNoneUsable), target)
+        if (settings == null || settings.isEmpty()) return refused(ImportProblem.error(MessageKey.SettingNoneUsable), target, source, fileProfileName, exported)
 
         val currentProfile = (target as? SettingsTarget.SelectedProfile)?.profile
         val headerMachine = JsonFiles.text(root["machine"])?.let(MachineNames::parse)
