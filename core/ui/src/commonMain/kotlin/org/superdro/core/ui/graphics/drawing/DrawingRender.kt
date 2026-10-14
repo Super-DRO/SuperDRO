@@ -17,7 +17,9 @@ import org.superdro.core.drawing.StrokeColorRole
 import org.superdro.core.drawing.StrokeStyle
 import org.superdro.core.functions.graphics.Vec2
 import org.superdro.core.model.DrawingShape
+import org.superdro.core.ui.graphics.render.ScreenPathCache
 import org.superdro.core.ui.graphics.render.ShapePaths
+import org.superdro.core.ui.graphics.render.drawModelPath
 import org.superdro.core.ui.theme.accentColor
 
 /**
@@ -69,6 +71,9 @@ class DrawingPaths(
     /** The model position of the selected point shape, or null. */
     val selectedPoint: Vec2?
 
+    /** The screen copies of the paths for the current zoom. A pan only moves them. */
+    val screenCache: ScreenPathCache = ScreenPathCache()
+
     init {
         val styles = HashMap<Int, Path>()
         val marks = ArrayList<Pair<Vec2, Int>>()
@@ -105,15 +110,19 @@ const val POINT_MARK_DP: Float = 4f
 fun DrawScope.drawDrawing(paths: DrawingPaths, matrix: Matrix, colors: DrawingStrokeColors, alpha: Float = 1f) {
     if (alpha <= 0f) return
     paths.byStyle.forEach { (style, path) ->
-        val screen = ShapePaths.screenPath(path, matrix)
-        drawPath(screen, styleColor(DrawingStrokeStyles.of(style), colors, alpha), style = stroke(DrawingStrokeStyles.of(style)))
+        val look = DrawingStrokeStyles.of(style)
+        val color = styleColor(look, colors, alpha)
+        val stroke = stroke(look)
+        drawModelPath(paths.screenCache, path, matrix) { screen -> drawPath(screen, color, style = stroke) }
     }
     paths.points.forEach { (point, style) ->
         drawPointMark(matrix.map(Offset(point.x.toFloat(), point.y.toFloat())), styleColor(DrawingStrokeStyles.of(style), colors, alpha), DrawingStrokeStyles.of(style))
     }
     val selectedStyle = DrawingStrokeStyles.SELECTED
     paths.selectedPath?.let { path ->
-        drawPath(ShapePaths.screenPath(path, matrix), styleColor(selectedStyle, colors, alpha), style = stroke(selectedStyle))
+        val color = styleColor(selectedStyle, colors, alpha)
+        val stroke = stroke(selectedStyle)
+        drawModelPath(paths.screenCache, path, matrix) { screen -> drawPath(screen, color, style = stroke) }
     }
     paths.selectedPoint?.let { point ->
         drawPointMark(matrix.map(Offset(point.x.toFloat(), point.y.toFloat())), styleColor(selectedStyle, colors, alpha), selectedStyle)

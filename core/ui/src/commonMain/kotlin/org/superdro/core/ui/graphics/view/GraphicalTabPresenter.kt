@@ -143,6 +143,10 @@ class GraphicalTabPresenter(
     private var undoTimer: Job? = null
     private val snapper = GuideSnapper()
     private val plunges = PlungeWatcher()
+
+    /** The thread outline of the armed thread: a new frame does not build it again. */
+    private val threadOutlines = ThreadOutlineCache()
+
     private var lastTool: PointUm? = null
     private var lastPlunge: Triple<Double, Double, Double>? = null
 
@@ -170,7 +174,7 @@ class GraphicalTabPresenter(
         selectedGuide,
         selectedShapeIndex,
     ) { frame, current, (library, list), guide, shape ->
-        frame?.let { value -> GraphicalSceneBuilder.build(value, current, library, list, guide, shape) }
+        frame?.let { value -> GraphicalSceneBuilder.build(value, current, library, list, guide, shape, threadOutlines::of) }
     }.distinctUntilChanged().stateIn(scope, SharingStarted.Eagerly, null)
 
     /** The controls of the view. */

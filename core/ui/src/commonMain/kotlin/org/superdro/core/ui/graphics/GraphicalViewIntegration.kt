@@ -13,6 +13,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.stringResource
 import org.superdro.core.functions.graphics.PlaneAxes
 import org.superdro.core.resources.Res
@@ -71,15 +74,22 @@ fun graphicalViewParts(scope: TabEntryScope, deps: GraphicsDependencies): Graphi
     val tab = scope.graphicalTab(deps)
     val controls by tab.controls.collectAsState()
     val video = scope.rememberCameraVideo()
-    val videoState = video?.let { presenter -> presenter.state.collectAsState().value }
+    // The frame rate of the video state changes four times each second. The parts use only the
+    // play state and the settings, so they collect only these two values.
+    val videoOverlay by remember(video) {
+        video?.state?.map { state -> CameraSceneOverlay(active = state.active, settings = state.settings) }?.distinctUntilChanged() ?: flowOf(null)
+    }.collectAsState(initial = video?.state?.value?.let { state -> CameraSceneOverlay(active = state.active, settings = state.settings) })
     val cameraShown = controls.display.cameraShown && video != null
     CameraBackdropSync(video, controls.display.cameraShown)
-    val camera = CameraSceneOverlay(active = cameraShown && videoState?.active == true, settings = videoState?.settings ?: CameraViewSettings())
+    val camera = CameraSceneOverlay(active = cameraShown && videoOverlay?.active == true, settings = videoOverlay?.settings ?: CameraViewSettings())
     var deleteDrawing by remember { mutableStateOf(false) }
     var deleteImage by remember { mutableStateOf(false) }
     var export by remember { mutableStateOf(false) }
     var includeHidden by remember { mutableStateOf(false) }
     val measureEvents = remember(measurement) { ControllerMeasurementEvents(measurement) }
+    val measurementMarks = remember(measure.points, measure.plane) {
+        measure.points.map { point -> MeasurementMark(PlaneAxes.toView(measure.plane, point.xUm, point.yUm), point.suspect) }
+    }
 
     LaunchedEffect(measurement) { measurement.notices.collect { text -> scope.showMessage(text) } }
     ReferenceImageRequests(image, scope.navigator, scope::showMessage)
@@ -111,7 +121,7 @@ fun graphicalViewParts(scope: TabEntryScope, deps: GraphicsDependencies): Graphi
         },
         leftPanel = if (measure.modeOn) ({ MeasurementPane(measure, measureEvents) }) else null,
         referenceImage = bitmap?.takeIf { camera.referenceImageShown }?.let { value -> ReferenceLayer(value.bitmap, value.matrix, value.alpha) },
-        measurementMarks = measure.points.map { point -> MeasurementMark(PlaneAxes.toView(measure.plane, point.xUm, point.yUm), point.suspect) },
+        measurementMarks = measurementMarks,
         displayEvents = { base ->
             object : DisplayPaneEvents by base {
                 override fun onDisplay(change: (GraphicalDisplay) -> GraphicalDisplay) {
