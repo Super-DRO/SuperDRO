@@ -167,16 +167,28 @@ class AdapterProfileImporter(
         refused(ImportProblem.error(MessageKey.FileFailed, error.message ?: error.toString()), target)
     }
 
-    private fun refused(problem: ImportProblem, target: AdapterTarget) = AdapterImportPreview(
-        null, null, null, null, target, listOf(problem), emptyList(), ImportReport(0, emptyList(), emptyList(), emptyList(), emptyList()), null,
+    /**
+     * Gives a preview with one file problem and no adapter. A file with a known header keeps its
+     * [source] and the [header] values, so that the preview shows the file type.
+     */
+    private fun refused(problem: ImportProblem, target: AdapterTarget, source: FileSource? = null, header: Header? = null) = AdapterImportPreview(
+        source, header?.name, header?.model, header?.exported, target, listOf(problem), emptyList(),
+        ImportReport(0, emptyList(), emptyList(), emptyList(), emptyList()), null,
     )
 
     /** The parts of one input. */
     private class InputResult(val profile: EncoderProfile?, val problems: List<ImportProblem>)
 
     private fun readTdap(source: FileSource, root: JsonObject, target: AdapterTarget): AdapterImportPreview {
+        val header = Header(
+            name = JsonFiles.text(root["adapter"])?.trim()?.takeIf(String::isNotEmpty),
+            model = JsonFiles.text(root["model"])?.trim()?.takeIf(String::isNotEmpty),
+            identity = JsonFiles.text(root["identity"])?.trim()?.takeIf(String::isNotEmpty),
+            identitySource = JsonFiles.text(root["identity-source"])?.let { text -> TdapNames.parse(text, IdentitySource.entries, TdapNames::identitySource) },
+            exported = JsonFiles.text(root["exported"])?.trim(),
+        )
         val inputs = JsonFiles.array(root["inputs"])
-        if (inputs == null || inputs.isEmpty()) return refused(ImportProblem.error(MessageKey.AdapterNoInputs), target)
+        if (inputs == null || inputs.isEmpty()) return refused(ImportProblem.error(MessageKey.AdapterNoInputs), target, source, header)
         val fileProblems = mutableListOf<ImportProblem>()
         val notImported = mutableListOf<ImportProblem>()
         val results = LinkedHashMap<Char, InputResult>()
@@ -195,13 +207,6 @@ class AdapterProfileImporter(
             results[letter] = readInput(letter, item)
         }
         val probe = JsonFiles.obj(root["probe"])?.let(::readProbe)
-        val header = Header(
-            name = JsonFiles.text(root["adapter"])?.trim()?.takeIf(String::isNotEmpty),
-            model = JsonFiles.text(root["model"])?.trim()?.takeIf(String::isNotEmpty),
-            identity = JsonFiles.text(root["identity"])?.trim()?.takeIf(String::isNotEmpty),
-            identitySource = JsonFiles.text(root["identity-source"])?.let { text -> TdapNames.parse(text, IdentitySource.entries, TdapNames::identitySource) },
-            exported = JsonFiles.text(root["exported"])?.trim(),
-        )
         return build(source, header, results, probe, target, fileProblems, notImported, keepCyclic = true)
     }
 
@@ -209,7 +214,7 @@ class AdapterProfileImporter(
         val adapter = try {
             SuperDroJson.decodeFromJsonElement(AdapterProfile.serializer(), stored)
         } catch (_: Exception) {
-            return refused(ImportProblem.error(MessageKey.FileNotJson), target)
+            return refused(ImportProblem.error(MessageKey.FileNotJson), target, source, Header(null, null, null, null, JsonFiles.text(root["exported"])))
         }
         val results = LinkedHashMap<Char, InputResult>()
         adapter.encoders.forEach { (input, profile) ->
