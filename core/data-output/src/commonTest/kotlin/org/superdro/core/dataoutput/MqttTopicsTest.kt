@@ -56,6 +56,12 @@ class MqttTopicsTest {
             listOf("superdro/m/x_absolute" to "12.7000", "superdro/m/y_absolute" to "", "superdro/m/z_absolute" to "0.0000"),
             MqttTopics.messages(MqttTopicLayout.TopicPerField, "superdro/m", formatter, partial, timestampEnabled = false).texts(),
         )
+        // The kept topics of an output give the same messages.
+        val topics = MqttTopics.FieldTopics("superdro/mill-1", formatter)
+        assertEquals(
+            messages.texts(),
+            MqttTopics.messages(MqttTopicLayout.TopicPerField, "superdro/mill-1", formatter, record, timestampEnabled = true, topics = topics).texts(),
+        )
     }
 
     @Test
