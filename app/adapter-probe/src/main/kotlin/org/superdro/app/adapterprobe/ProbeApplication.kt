@@ -9,8 +9,6 @@ import com.toxicbakery.logging.LogCatSeedling
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.compose.resources.getString
 import org.superdro.app.adapterprobe.ui.AppPresenter
 import org.superdro.app.adapterprobe.ui.ConsolePresenter
 import org.superdro.app.adapterprobe.ui.LinkPresenter
@@ -18,8 +16,6 @@ import org.superdro.app.adapterprobe.ui.Presenters
 import org.superdro.app.adapterprobe.ui.ReportPresenter
 import org.superdro.app.adapterprobe.ui.TestPresenter
 import org.superdro.app.adapterprobe.ui.TestsPresenter
-import org.superdro.core.resources.Res
-import org.superdro.core.resources.probe_notification_channel
 
 /** The application of the probe app. It makes the [ProbeGraph] and the notification channel of the probe. */
 class ProbeApplication : Application() {
@@ -48,7 +44,8 @@ class ProbeApplication : Application() {
         super.onCreate()
         if (BuildConfig.DEBUG && Arbor.forest.isEmpty()) Arbor.sow(LogCatSeedling())
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = runBlocking { getString(Res.string.probe_notification_channel) }
+            // The Android resources hold a copy of strings_probe.xml, so the read does not block the main thread.
+            val name = getString(R.string.probe_notification_channel)
             val channel = NotificationChannel(ProbeService.CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW)
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
         }
