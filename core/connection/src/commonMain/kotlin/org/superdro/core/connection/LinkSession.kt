@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,7 +62,9 @@ import org.superdro.core.util.Clock
  *
  * All state of the session is confined to one coroutine dispatcher with a parallelism of 1. The
  * reader, the writer, the timers, and the requests of the UI run on it, so no two of them change
- * the state at the same time. The link reads and writes run on the link I/O dispatcher.
+ * the state at the same time. The open, the writes, and the close of a link run on the link I/O
+ * dispatcher. The session collects [Transport.incoming] on its own dispatcher: the transport does
+ * its blocking reads on its own thread.
  *
  * One timer loop runs all timers of the session: the reconnect delay, the restart sequence, the
  * queue timers, the 30 s limits, the no-data watchdog, the BEL byte, and the tick of the input
@@ -516,8 +517,10 @@ internal class LinkSession(
 
     private suspend fun reader(current: Link) {
         try {
+            // No flowOn here: each transport does its blocking reads on its own thread. A flowOn
+            // adds a second thread change and buffer for each chunk. Also, when the flow fails,
+            // flowOn drops the chunks in its buffer, so the parser does not get the last bytes.
             current.transport.incoming
-                .flowOn(linkIo)
                 .catch { error ->
                     throw when (error) {
                         is CancellationException, is LinkFailureException -> error
