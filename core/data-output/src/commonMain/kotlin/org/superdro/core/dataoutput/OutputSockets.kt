@@ -1,14 +1,5 @@
 package org.superdro.core.dataoutput
 
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.network.sockets.ServerSocket
-import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.readAvailable
-import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CoroutineDispatcher
 
 /** One TCP connection to a client of the output server. */
@@ -39,7 +30,10 @@ interface ListenSocket {
     /** Waits for the next client. An error ends the accept loop of the server. */
     suspend fun accept(): ByteLink
 
-    /** Closes the socket at once. A second call has no effect. */
+    /**
+     * Closes the socket at once. The port is free when the call returns: a new bind on the port
+     * succeeds, and a new connection to the port fails. A second call has no effect.
+     */
     fun close()
 }
 
@@ -55,54 +49,13 @@ fun interface ListenSocketFactory {
 }
 
 /**
- * The [ListenSocketFactory] of production: Ktor network sockets. Close the factory when the app
- * stops, so that its selector thread stops.
+ * Gives the [ListenSocketFactory] of production: the TCP sockets of the system. The blocking
+ * socket calls run on [dispatcher].
+ *
+ * [ListenSocket.close] releases the port before it returns. Thus a new bind on the same port
+ * immediately after a close succeeds, and the port refuses new connections after the close.
  */
-class KtorListenSocketFactory(dispatcher: CoroutineDispatcher) : ListenSocketFactory, AutoCloseable {
-    private val selector = SelectorManager(dispatcher)
-
-    override suspend fun bind(host: String, port: Int): ListenSocket {
-        val server = aSocket(selector).tcp().bind(host, port) { reuseAddress = true }
-        val boundPort = (server.localAddress as? InetSocketAddress)?.port ?: port
-        return KtorListenSocket(server, host, boundPort)
-    }
-
-    override fun close() {
-        selector.close()
-    }
-}
-
-private class KtorListenSocket(
-    private val server: ServerSocket,
-    override val host: String,
-    override val port: Int,
-) : ListenSocket {
-
-    override suspend fun accept(): ByteLink = KtorByteLink(server.accept())
-
-    override fun close() {
-        server.close()
-    }
-}
-
-private class KtorByteLink(private val socket: Socket) : ByteLink {
-    private val input = socket.openReadChannel()
-    private val output = socket.openWriteChannel(autoFlush = false)
-
-    override val remoteHost: String =
-        (socket.remoteAddress as? InetSocketAddress)?.resolveAddress()?.let(IpText::format) ?: "?"
-
-    override suspend fun read(buffer: ByteArray): Int = input.readAvailable(buffer, 0, buffer.size)
-
-    override suspend fun write(bytes: ByteArray) {
-        output.writeFully(bytes, 0, bytes.size)
-        output.flush()
-    }
-
-    override fun close() {
-        socket.close()
-    }
-}
+expect fun systemListenSockets(dispatcher: CoroutineDispatcher): ListenSocketFactory
 
 /** The text form of an IP address. */
 object IpText {

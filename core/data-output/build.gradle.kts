@@ -45,7 +45,6 @@ kotlin {
 
                 api(libs.kotlinx.coroutines.core)
                 implementation(libs.arbor)
-                implementation(libs.ktor.network)
             }
         }
         val jvmAndAndroidMain by getting {
