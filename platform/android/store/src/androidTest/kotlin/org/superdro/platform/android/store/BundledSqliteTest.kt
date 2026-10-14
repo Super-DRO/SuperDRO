@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.Dispatchers
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.superdro.core.store.BUNDLED_SQLITE_VERSION
@@ -24,7 +25,7 @@ class BundledSqliteTest {
 
     @Test
     fun theDriverReadsTheBundledSqliteVersion() {
-        val driver = AndroidSqlDriverFactory(context, name = null, checkVersion = true).create()
+        val driver = AndroidSqlDriverFactory(context, name = null, checkVersion = true, checkDispatcher = Dispatchers.Unconfined).create()
         try {
             val database = createSuperDroDatabase(driver)
             val version = database.sqliteVersion()
@@ -41,7 +42,7 @@ class BundledSqliteTest {
     fun theSchemaWorksInAFileWithTheForeignKeysOn() {
         val name = "bundled-sqlite-test.db"
         context.deleteDatabase(name)
-        val driver = AndroidSqlDriverFactory(context, name = name).create()
+        val driver = AndroidSqlDriverFactory(context, name = name, checkDispatcher = Dispatchers.Unconfined).create()
         try {
             val database = createSuperDroDatabase(driver)
             assertEquals(6L, database.probeQueries.selectStandardTips().executeAsList().size.toLong())
@@ -70,7 +71,7 @@ class BundledSqliteTest {
         file.parentFile?.mkdirs()
         file.writeBytes(ByteArray(8192) { index -> (index * 31).toByte() })
 
-        val driver = AndroidSqlDriverFactory(context, name = name).create()
+        val driver = AndroidSqlDriverFactory(context, name = name, checkDispatcher = Dispatchers.Unconfined).create()
         try {
             val database = createSuperDroDatabase(driver)
             assertEquals(6, database.probeQueries.selectStandardTips().executeAsList().size)
