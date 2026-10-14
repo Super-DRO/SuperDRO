@@ -79,7 +79,8 @@ import org.superdro.core.util.Clock
  * [currentInputs] gives that snapshot at once. [inputs] gets it at most one time in
  * [DeviceSession.INPUT_PUBLISH_MS]: a change after a quiet period goes out at once (the leading
  * edge), and the last change of a period goes out at the end of the period (the trailing edge).
- * A change of a probe state, of the probe sequence, or of a status goes out at once.
+ * A change of a probe state, of the probe sequence, or of a status goes out at once. The first
+ * change after a link start also goes out at once.
  *
  * Details of the rules:
  * - The `NO_DATA` recovery applies to SPP and TCP. USB, BLE, and the fake link keep the
@@ -452,6 +453,8 @@ internal class LinkSession(
         stage.onLinkStart()
         refreshLatest()
         publishInputs(now)
+        // The first sample of the new link goes out at once: the link start is not a position.
+        lastPublishMs = null
         setState(SessionState.AwaitingData)
         if (detailsOpen) handle(current, current.queue.openAdapterDetails(now))
         updateIdentity(current)

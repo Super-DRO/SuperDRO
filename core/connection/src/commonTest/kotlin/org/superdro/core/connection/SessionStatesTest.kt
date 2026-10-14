@@ -371,9 +371,6 @@ class SessionStatesTest {
         assertTrue(second !== first)
         second.receive("34;X6;")
         runCurrent()
-        // The link start went to the inputs at this time: the sample comes at the end of the period.
-        advanceTimeBy(DeviceSession.INPUT_PUBLISH_MS)
-        runCurrent()
         val x = session.inputs.value.channels.getValue('x')
         assertEquals(6L, x.rawCount)
         assertEquals(12_500L, x.timeMs)
