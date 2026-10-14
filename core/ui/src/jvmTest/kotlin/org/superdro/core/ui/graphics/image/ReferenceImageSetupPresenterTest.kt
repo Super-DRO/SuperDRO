@@ -6,6 +6,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -21,6 +22,7 @@ import org.superdro.core.resources.refimage_fit_three
 import org.superdro.core.resources.refimage_steep_angle
 import org.superdro.core.store.valueOrNull
 import org.superdro.core.ui.graphics.GraphicsHarness
+import org.superdro.core.ui.graphics.RecordingDispatcher
 import org.superdro.core.ui.text.UiText
 
 /**
@@ -40,8 +42,9 @@ class ReferenceImageSetupPresenterTest {
         machine: MachineProfile = MachineProfile.create(MachineType.VerticalMill, "Mill").copy(metricDefault = true),
         width: Int = 400,
         height: Int = 300,
+        fileDispatcher: RecordingDispatcher? = null,
     ): Setup {
-        val harness = GraphicsHarness(this)
+        val harness = GraphicsHarness(this, fileDispatcher)
         harness.start(machine)
         harness.moveTo(100L, x = 12000L, y = 5000L, z = 0L)
         val image = assertNotNull(PlatformImages.decode(TestImages.gridPng(width, height)))
@@ -89,6 +92,26 @@ class ReferenceImageSetupPresenterTest {
             val decoded = assertNotNull(PlatformImages.decode(file))
             assertEquals(400, decoded.width)
             assertEquals(300, decoded.height)
+        } finally {
+            setup.close()
+        }
+    }
+
+    @Test
+    fun applyWritesTheJpegOnTheFileDispatcher() = runTest {
+        val files = RecordingDispatcher(StandardTestDispatcher(testScheduler))
+        val setup = started(fileDispatcher = files)
+        val presenter = setup.presenter
+        try {
+            set(presenter, 0, 100.0, 50.0, "10", "20")
+            set(presenter, 1, 300.0, 250.0, "50", "0")
+            assertEquals(0, files.dispatches)
+            presenter.onApply()
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.closed)
+            assertTrue(files.dispatches > 0, "the JPEG write did not go to the file dispatcher")
+            val stored = assertNotNull(setup.harness.workspace().referenceImage)
+            assertNotNull(setup.harness.store.storeIO.files[stored.fileName])
         } finally {
             setup.close()
         }

@@ -166,13 +166,16 @@ class ReferenceImageController(
     }
 
     private suspend fun load(stored: ReferenceImage): ReferenceImageBitmap? {
-        val raster = cache?.takeIf { (name, _) -> name == stored.fileName }?.second ?: withContext(deps.context.dispatcher) {
-            val bytes = try {
-                if (!deps.storeIO.exists(stored.fileName)) null else deps.storeIO.sourceFor(stored.fileName).buffered().use { source -> source.readByteArray() }
-            } catch (_: Exception) {
-                null
+        val raster = cache?.takeIf { (name, _) -> name == stored.fileName }?.second ?: run {
+            // The file read goes to the file dispatcher, the decode to the dispatcher of the presenters.
+            val bytes = withContext(deps.context.fileDispatcher) {
+                try {
+                    if (!deps.storeIO.exists(stored.fileName)) null else deps.storeIO.sourceFor(stored.fileName).buffered().use { source -> source.readByteArray() }
+                } catch (_: Exception) {
+                    null
+                }
             }
-            bytes?.let { content -> PlatformImages.decode(content) }
+            bytes?.let { content -> withContext(deps.context.dispatcher) { PlatformImages.decode(content) } }
         } ?: return null
         cache = stored.fileName to raster
         val matrix = if (stored.matrix.size >= 9) Matrix3.of(stored.matrix) else Matrix3.IDENTITY

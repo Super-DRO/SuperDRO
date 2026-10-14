@@ -7,6 +7,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -16,14 +17,15 @@ import org.superdro.core.model.ReferenceImage
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.refimage_decode_failed
 import org.superdro.core.ui.graphics.GraphicsHarness
+import org.superdro.core.ui.graphics.RecordingDispatcher
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.util.PickedFile
 
 /** The reference image controller of a tab. */
 class ReferenceImageControllerTest {
 
-    private suspend fun TestScope.started(): Pair<GraphicsHarness, ReferenceImageController> {
-        val harness = GraphicsHarness(this)
+    private suspend fun TestScope.started(fileDispatcher: RecordingDispatcher? = null): Pair<GraphicsHarness, ReferenceImageController> {
+        val harness = GraphicsHarness(this, fileDispatcher)
         harness.start(MachineProfile.create(MachineType.VerticalMill, "Mill").copy(metricDefault = true))
         val controller = ReferenceImageController(harness.deviceId, harness.readout, harness.deps)
         advanceUntilIdle()
@@ -121,6 +123,21 @@ class ReferenceImageControllerTest {
             assertEquals(80, image.height)
             assertEquals(127, image.alpha)
             assertEquals(120, image.bitmap.width)
+        } finally {
+            controller.close()
+            harness.close()
+        }
+    }
+
+    @Test
+    fun theStoredImageIsReadOnTheFileDispatcher() = runTest {
+        val files = RecordingDispatcher(StandardTestDispatcher(testScheduler))
+        val (harness, controller) = started(files)
+        try {
+            val before = files.dispatches
+            storeImage(harness, "images/a.jpg", alpha = 127)
+            assertNotNull(controller.image.value)
+            assertTrue(files.dispatches > before, "the file read did not go to the file dispatcher")
         } finally {
             controller.close()
             harness.close()

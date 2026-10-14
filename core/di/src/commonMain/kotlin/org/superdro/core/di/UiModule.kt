@@ -2,6 +2,7 @@ package org.superdro.core.di
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -47,7 +48,7 @@ internal val uiModule = DI.Module("uiModule") {
     // does not close a presenter.
     bindSingleton { NavigationHolder() }
     bindSingleton<EntryRegistry> { appEntryRegistry() }
-    bindSingleton { PresenterContext(dispatcher = Dispatchers.Default, clock = instance()) }
+    bindSingleton { PresenterContext(dispatcher = Dispatchers.Default, clock = instance(), fileDispatcher = Dispatchers.IO) }
     bindSingleton<Connections> { ManagerConnections(instance<ConnectionManager>(), instance<CapabilitySource>(), instance<RequestSender>()) }
 
     bindSingleton<StateFlow<Set<DeviceId>>>(tag = MUTED_MACHINES) {

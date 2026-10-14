@@ -416,7 +416,9 @@ class ReferenceImageSetupPresenter(
                     val processed = RasterImages.process(source, current.invert, if (current.gray) current.weights else null)
                     PlatformImages.encodeJpeg(processed, ReferenceImageMath.JPEG_QUALITY)
                 }
-                deps.storeIO.sinkFor(fileName).buffered().use { sink -> sink.write(bytes) }
+                withContext(deps.context.fileDispatcher) {
+                    deps.storeIO.sinkFor(fileName).buffered().use { sink -> sink.write(bytes) }
+                }
                 val image = ReferenceImage(fileName = fileName, matrix = fitted.matrix.toList(), alpha = ReferenceImageMath.START_ALPHA)
                 deps.machines.setReferenceImage(workspaceId, image) is StoreResult.Ok
             } catch (error: CancellationException) {
@@ -427,7 +429,7 @@ class ReferenceImageSetupPresenter(
             if (saved) {
                 session.update { state -> state.copy(busy = false, closed = true) }
             } else {
-                deps.storeIO.delete(fileName)
+                withContext(deps.context.fileDispatcher) { deps.storeIO.delete(fileName) }
                 session.update { state -> state.copy(busy = false, message = UiText.of(Res.string.refimage_save_failed)) }
             }
         }
