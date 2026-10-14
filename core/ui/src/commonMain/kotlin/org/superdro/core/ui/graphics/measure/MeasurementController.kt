@@ -61,6 +61,7 @@ import org.superdro.core.ui.navigation.TabEntryScope
 import org.superdro.core.ui.navigation.TabRoute
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.sound.UiSound
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.adapter.probe.ProbeSounds
@@ -193,15 +194,18 @@ class MeasurementController(
         .flatMapLatest { id -> if (id == null) flowOf(0L) else deps.measurementLog.count(id) }
         .stateIn(scope, SharingStarted.Eagerly, 0L)
 
-    /** The state of the mode and of the panel. */
-    val uiState: StateFlow<MeasurementUiState> = combine(readout.frame, session, logCount, helpOpen) { frame, open, count, help ->
+    /**
+     * The state of the mode and of the panel. It uses no live position: only a change of the
+     * structure of the readout or of the set makes it again.
+     */
+    val uiState: StateFlow<MeasurementUiState> = combine(readout.frame.structure(), session, logCount, helpOpen) { frame, open, count, help ->
         stateOf(frame, open, count, help)
     }.stateIn(scope, SharingStarted.Eagerly, MeasurementUiState())
 
     init {
         // A change of the mode, the workspace, the alignment, or the part rotation closes the set.
         scope.launch {
-            readout.frame.collect { frame ->
+            readout.frame.structure().collect { frame ->
                 val context = frame?.let { current ->
                     listOf(current.measurementActive, current.workspace.id, current.workspace.axisAlignment, current.workspace.partRotation, current.workspace.plane)
                 }

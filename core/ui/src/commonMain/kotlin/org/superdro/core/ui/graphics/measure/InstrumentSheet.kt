@@ -40,6 +40,7 @@ import org.superdro.core.ui.graphics.GraphicsDependencies
 import org.superdro.core.ui.graphics.common.LengthTexts
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.theme.AccentButtons
 import org.superdro.core.ui.theme.LocalTouchTargets
 import org.superdro.core.ui.theme.accentTextFieldColors
@@ -94,7 +95,7 @@ class InstrumentPresenter(
     val uiState: StateFlow<InstrumentUiState> = combine(
         deps.probes.library(profileId),
         deps.machines.profile(profileId),
-        readout.frame,
+        readout.frame.structure(),
         selector.state,
     ) { library, profile, frame, probeSelector ->
         val probe = library.firstOrNull { item -> item.id == probeSelector.selectedId }
