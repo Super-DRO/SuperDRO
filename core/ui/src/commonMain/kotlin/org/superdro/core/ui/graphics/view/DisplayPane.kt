@@ -40,6 +40,7 @@ import org.superdro.core.resources.graphics_no_image
 import org.superdro.core.resources.graphics_select_image
 import org.superdro.core.resources.graphics_shown
 import org.superdro.core.resources.graphics_take_photo
+import org.superdro.core.ui.graphics.common.verticalScrollIndicator
 
 /** The test tag of the display pane. */
 const val DISPLAY_PANE_TAG: String = "graphical-display-pane"
@@ -96,8 +97,10 @@ fun DisplayPane(
     modifier: Modifier = Modifier,
     layerList: @Composable (List<DrawingLayer>) -> Unit = { list -> DefaultLayerList(list, events) },
 ) {
+    // The pane scrolls when it does not fit, and the bar at its edge shows that it has more rows.
+    val scroll = rememberScrollState()
     Column(
-        modifier.padding(12.dp).verticalScroll(rememberScrollState()).testTag(DISPLAY_PANE_TAG),
+        modifier.verticalScrollIndicator(scroll).verticalScroll(scroll).padding(12.dp).testTag(DISPLAY_PANE_TAG),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(stringResource(Res.string.graphics_display), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
