@@ -372,8 +372,12 @@ class DataOutputController(
                     delay(WarningRules.STATUS_PERIOD_MS)
                 }
             }
+            // A new error goes into the state at once. A write or a record alone does not make a
+            // new state: the state gets the newest statistics at the next status period.
+            val errors = statistics.map { stats -> stats.lastError }.distinctUntilChanged { old, new -> old === new }
             sessionScope.launch {
-                combine(senderState, listeningAddresses, clientAddresses, statistics, ticks) { sender, listening, clients, stats, _ ->
+                combine(senderState, listeningAddresses, clientAddresses, errors, ticks) { sender, listening, clients, _, _ ->
+                    val stats = statistics.value
                     DataOutputState(
                         transport = config.transport,
                         security = config.security,
