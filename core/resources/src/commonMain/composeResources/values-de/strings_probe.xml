@@ -17,6 +17,10 @@
     <string name="probe_paired_devices">Gekoppelte Geräte</string>
     <string name="probe_no_paired">Kein gekoppeltes Gerät. Koppeln Sie den Adapter in den Bluetooth-Einstellungen.</string>
     <string name="probe_open_bt_settings">Bluetooth-Einstellungen</string>
+    <string name="probe_bt_permission_missing">Die App braucht die Bluetooth-Berechtigung, um die gekoppelten Geräte anzuzeigen.</string>
+    <string name="probe_bt_request_permission">Bluetooth-Berechtigung anfordern</string>
+    <string name="probe_bt_off">Bluetooth ist aus.</string>
+    <string name="probe_bt_turn_on">Bluetooth einschalten</string>
     <string name="probe_usb_devices">Serielle USB-Geräte</string>
     <string name="probe_no_usb">Kein serielles USB-Gerät ist angeschlossen.</string>
     <string name="probe_usb_permission">USB-Berechtigung anfordern</string>

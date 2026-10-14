@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.superdro.core.connection.PairedListState
 import org.superdro.core.model.AuxiliaryType
 import org.superdro.core.model.MachineType
 import org.superdro.core.model.TransportKind
@@ -107,6 +108,9 @@ fun linkOptionTag(option: LinkOption): String = "link:${option.name}"
 /** The test tag of the "Connect" button of the sheet. */
 const val ADD_DEVICE_CONNECT_TAG: String = "add-device-connect"
 
+/** The test tag of the "Pair new adapter" button. */
+const val ADD_DEVICE_PAIR_NEW_TAG: String = "add-device-pair-new"
+
 /** The test tag of the sheet. */
 const val ADD_DEVICE_SHEET_TAG: String = "add-device-sheet"
 
@@ -134,12 +138,14 @@ private fun ColumnScope.LinkStep(state: AddDeviceUiState, presenter: AddDevicePr
         SectionHeader(section.kind)
         when (section.kind) {
             TransportKind.BluetoothSpp -> {
-                if (section.permissionMissing) {
-                    Notice(UiText.of(Res.string.add_device_bluetooth_permission), Res.string.add_device_grant_permission, presenter::grantBluetooth)
-                } else if (section.radioOff) {
-                    Notice(UiText.of(Res.string.add_device_bluetooth_off), Res.string.add_device_turn_on_bluetooth, presenter::enableBluetooth)
+                when (section.paired) {
+                    PairedListState.PermissionMissing ->
+                        Notice(UiText.of(Res.string.add_device_bluetooth_permission), Res.string.add_device_grant_permission, presenter::grantBluetooth)
+                    PairedListState.RadioOff ->
+                        Notice(UiText.of(Res.string.add_device_bluetooth_off), Res.string.add_device_turn_on_bluetooth, presenter::enableBluetooth)
+                    PairedListState.NoPaired -> EmptyText(Res.string.add_device_no_paired)
+                    PairedListState.Paired, null -> Unit
                 }
-                if (section.options.isEmpty() && !section.permissionMissing) EmptyText(Res.string.add_device_no_paired)
                 if (state.rfcommBindHint) {
                     Text(
                         stringResource(Res.string.integration_add_device_rfcomm_hint),
@@ -149,10 +155,12 @@ private fun ColumnScope.LinkStep(state: AddDeviceUiState, presenter: AddDevicePr
                     )
                 }
                 section.options.forEach { option -> LinkRow(option, onClick = { presenter.selectLink(option) }) }
-                OutlinedButton(colors = AccentButtons.outlined(),
-                    onClick = presenter::pairNewAdapter,
-                    modifier = Modifier.heightIn(min = LocalTouchTargets.current.button).padding(vertical = 4.dp),
-                ) { Text(stringResource(Res.string.add_device_pair_new)) }
+                if (section.paired?.readable != false) {
+                    OutlinedButton(colors = AccentButtons.outlined(),
+                        onClick = presenter::pairNewAdapter,
+                        modifier = Modifier.heightIn(min = LocalTouchTargets.current.button).padding(vertical = 4.dp).testTag(ADD_DEVICE_PAIR_NEW_TAG),
+                    ) { Text(stringResource(Res.string.add_device_pair_new)) }
+                }
             }
             else -> {
                 if (section.options.isEmpty()) EmptyText(Res.string.add_device_no_usb)
