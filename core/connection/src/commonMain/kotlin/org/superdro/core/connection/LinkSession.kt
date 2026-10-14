@@ -139,6 +139,9 @@ internal class LinkSession(
     /** The state of one open link: a new parser, a new queue, and a new time offset. */
     private class Link(val number: Int, val transport: Transport, val openedAtMs: Long, var queue: CommandQueue) {
         val parser = AdapterParser()
+
+        /** The messages of one segment. The session uses the list again for each segment. */
+        val messages = ArrayList<AdapterMessage>()
         val pending = HashMap<Long, CompletableDeferred<CommandResult>>()
         val writes = Channel<PendingWrite>(Channel.UNLIMITED)
         var readerJob: Job? = null
@@ -612,9 +615,16 @@ internal class LinkSession(
     }
 
     private suspend fun feed(current: Link, bytes: ByteArray, offset: Int, length: Int, now: Long) {
-        for (message in current.parser.feed(bytes, offset, length, now)) {
-            if (link !== current) return
-            onMessage(current, message, now)
+        val messages = current.messages
+        messages.clear()
+        current.parser.feed(bytes, offset, length, now, messages)
+        try {
+            for (index in messages.indices) {
+                if (link !== current) return
+                onMessage(current, messages[index], now)
+            }
+        } finally {
+            messages.clear()
         }
     }
 
