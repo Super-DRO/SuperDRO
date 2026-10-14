@@ -197,7 +197,8 @@ class TabsFrameUiTest {
             store.tabs.remember(profile.id)
             id = DeviceId(profile.id)
         }
-        val session = FakeDeviceSession(id, "Mill", AdapterAddress.BluetoothSpp("24:6F:28:A1:B2:C3"), SessionState.Connecting(1))
+        // A session in a reconnect series has no tab. (A new session in `Connecting(1)` shows a tab at once.)
+        val session = FakeDeviceSession(id, "Mill", AdapterAddress.BluetoothSpp("24:6F:28:A1:B2:C3"), SessionState.Reconnecting(1, 1_000L, LinkFailure.Refused))
         connections.add(session)
         setContent {
             val state by presenter.uiState.collectAsState()

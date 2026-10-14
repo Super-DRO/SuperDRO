@@ -77,31 +77,37 @@ data class TabStatus(
  * | Session state | Icon | Text | Roles |
  * |---|---|---|---|
  * | `Connected` | filled circle | "Connected" | Connected |
- * | `Connecting` | progress ring | "Connecting" | Reconnect |
+ * | `Connecting(1)` | progress ring | "Connecting" | Reconnect |
+ * | `Connecting(n)`, n > 1 | ring and attempt | "Reconnecting (n)" | Reconnect |
  * | `AwaitingData` | progress ring | "Waiting for data" | Reconnect |
  * | `Reconnecting(n)` | ring and attempt | "Reconnecting (n)" | Reconnect |
  * | `NoData` | warning | "No data" | Reconnect |
  * | `WaitingForDevice`, `Failed` | error | the cause, for example "Bluetooth off" or "Unplugged" | Failure |
  * | `Disconnected` | empty circle | "Offline" | Neutral |
+ *
+ * A `Connecting` state with an attempt number above 1 is a part of the reconnect series. Thus the
+ * status stays "Reconnecting", and the number increases when a new attempt starts.
  */
 object TabStatusRules {
 
     /** Gives the status of a tab with a session in [state]. */
     fun of(state: SessionState): TabStatus = when (state) {
         is SessionState.Connected -> TabStatus(TabStatusIcon.Connected, UiText.of(Res.string.app_status_connected), StatusRoles.Connected)
-        is SessionState.Connecting -> TabStatus(TabStatusIcon.Progress, UiText.of(Res.string.app_status_connecting), StatusRoles.Reconnect)
+        is SessionState.Connecting -> if (state.attempt > 1) {
+            reconnecting(state.attempt)
+        } else {
+            TabStatus(TabStatusIcon.Progress, UiText.of(Res.string.app_status_connecting), StatusRoles.Reconnect)
+        }
         SessionState.AwaitingData -> TabStatus(TabStatusIcon.Progress, UiText.of(Res.string.app_status_awaiting_data), StatusRoles.Reconnect)
-        is SessionState.Reconnecting -> TabStatus(
-            TabStatusIcon.Reconnecting,
-            UiText.of(Res.string.app_status_reconnecting, state.attempt),
-            StatusRoles.Reconnect,
-            attempt = state.attempt,
-        )
+        is SessionState.Reconnecting -> reconnecting(state.attempt)
         SessionState.NoData -> TabStatus(TabStatusIcon.Warning, UiText.of(Res.string.app_status_no_data), StatusRoles.Reconnect)
         is SessionState.WaitingForDevice -> TabStatus(TabStatusIcon.Error, causeText(state.cause), StatusRoles.Failure)
         is SessionState.Failed -> TabStatus(TabStatusIcon.Error, causeText(state.cause), StatusRoles.Failure)
         SessionState.Disconnected -> TabStatus(TabStatusIcon.Offline, UiText.of(Res.string.app_status_offline), StatusRoles.Neutral)
     }
+
+    private fun reconnecting(attempt: Int): TabStatus =
+        TabStatus(TabStatusIcon.Reconnecting, UiText.of(Res.string.app_status_reconnecting, attempt), StatusRoles.Reconnect, attempt = attempt)
 
     /** Gives the short text of the cause of a link failure. */
     fun causeText(cause: LinkFailure): UiText = UiText.of(
