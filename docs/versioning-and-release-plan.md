@@ -287,19 +287,36 @@ gpg --symmetric --cipher-algo AES256 \
 git add signing/upload.keystore.gpg
 ```
 
+Then set the four secrets as organization secrets of `Super-DRO` (section 8). Put each value in
+its own file in `signing/secrets/`, so that the values do not go into the shell history:
+
+```bash
+for name in ANDROID_KEYSTORE_GPG_PASSPHRASE ANDROID_KEYSTORE_PASSWORD \
+            ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+  gh secret set "$name" --org Super-DRO --visibility selected --repos SuperDRO \
+    < "signing/secrets/$name"
+done
+```
+
+The current upload key has the owner `CN=SuperDRO` and this SHA-256 certificate fingerprint:
+`CD:71:56:9E:6C:A1:1F:77:F9:5F:49:E2:84:FB:51:DD:8A:48:6B:5A:6E:94:D7:5B:AA:3E:C6:72:2C:A6:CC:F1`.
+
 Keep a copy of `signing/upload.keystore` and its passwords in a safe location outside the
 repository. If you lose the upload key, an installed app cannot get an update with a new key.
 
 **The `release` environment.** Each job that reads a secret for a signature or a publication declares
-`environment: release`. A repository secret is available to each workflow on each branch. An
-environment secret is available only to a job in that environment. GitHub makes the environment
-at the first run when it does not exist. Before the repository becomes public, give the `release`
-environment required reviewers, so that a maintainer approves each release job.
+`environment: release`. The signature secrets are organization secrets. An organization secret
+is available to each workflow on each branch of the repositories that it selects. An environment
+secret is available only to a job in that environment. GitHub makes the environment at the first
+run when it does not exist. Before the repository becomes public, give the `release` environment
+required reviewers, so that a maintainer approves each release job.
 
 ## 8. Secrets and settings
 
 Each group of secrets has its own gate, so each group enables only its own part of the release.
-Keep these secrets in the `release` environment, not in the repository secrets.
+The Android signature secrets are organization secrets of `Super-DRO` with the visibility
+"selected repositories". Only `Super-DRO/SuperDRO` can read them. Keep `PLAY_SERVICE_ACCOUNT_JSON`
+in the same place when you add it.
 
 | Group | Secrets | Gate (preflight output) | Without the secrets |
 |---|---|---|---|
@@ -316,8 +333,8 @@ Repository settings:
   `GITHUB_TOKEN`. "Read and write permissions" permits them.
 - **Rules for tags.** A tag ruleset that blocks the creation of `v*` tags also blocks
   `release.yml`. If you add such a ruleset, let GitHub Actions bypass it.
-- **Environments > release.** Optional now. Add the secrets there, and add required reviewers
-  before the repository becomes public.
+- **Environments > release.** Optional now. Add required reviewers before the repository
+  becomes public.
 
 ## 9. Cut a release
 

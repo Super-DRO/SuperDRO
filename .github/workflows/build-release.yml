@@ -41,7 +41,7 @@ permissions:
 
 # Secrets: each job that reads a secret for a signature or a publication declares
 # `environment: release`.
-# Keep these secrets in the `release` environment (Settings > Environments > release):
+# These secrets are organization secrets of Super-DRO, visible only to this repository:
 #   ANDROID_KEYSTORE_GPG_PASSPHRASE, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
 #   ANDROID_KEY_PASSWORD, PLAY_SERVICE_ACCOUNT_JSON
 # The upload keystore itself is in the repository as the GPG-encrypted file
