@@ -5,7 +5,9 @@ import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -58,6 +60,18 @@ class MachineRepository(
     private val database: SuperDroDatabase get() = writer.database
 
     private fun now(): Instant = clock.now()
+
+    /**
+     * The scope of the shared workspace flows. A shared flow runs only while it has a collector,
+     * thus the scope has no work when no screen shows a workspace.
+     */
+    private val sharing = CoroutineScope(SupervisorJob() + writer.readDispatcher)
+
+    /** The shared flow of each full workspace, by workspace ID. */
+    private val sharedWorkspaces = SharedFlows<Workspace?>(sharing)
+
+    /** The shared flow of each active workspace, by profile ID. */
+    private val sharedActiveWorkspaces = SharedFlows<Workspace?>(sharing)
 
     // ---------------------------------------------------------------------------------------
     // Profiles
@@ -252,25 +266,36 @@ class MachineRepository(
         }
     }
 
-    /** The full workspace [id]: the state, the axis states, the sub-datums, and the guides. */
-    fun workspace(id: String): Flow<Workspace?> = writer.observe(
-        database.workspaceQueries.selectById(id),
-        database.workspaceQueries.selectAxisStates(id),
-        database.subDatumQueries.selectForWorkspace(id),
-        database.subDatumQueries.selectGuides(id),
-    ) { db -> db.fullWorkspace(id) }
+    /**
+     * The full workspace [id]: the state, the axis states, the sub-datums, and the guides.
+     *
+     * All collectors of one workspace share one read ([SharedFlows]): a change reads the
+     * workspace one time, not one time for each collector.
+     */
+    fun workspace(id: String): Flow<Workspace?> = sharedWorkspaces.get(id) {
+        writer.observe(
+            database.workspaceQueries.selectById(id),
+            database.workspaceQueries.selectAxisStates(id),
+            database.subDatumQueries.selectForWorkspace(id),
+            database.subDatumQueries.selectGuides(id),
+        ) { db -> db.fullWorkspace(id) }
+    }
 
     /**
      * The full active workspace of the profile [profileId]: the workspace of
      * [MachineProfile.activeWorkspaceId], else the first workspace.
+     *
+     * All collectors of one profile share one flow, as in [workspace].
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun activeWorkspace(profileId: String): Flow<Workspace?> = writer.observe(
-        database.machineProfileQueries.selectById(profileId),
-        database.workspaceQueries.selectForProfile(profileId),
-    ) { db -> db.activeWorkspaceId(profileId) }
-        .distinctUntilChanged()
-        .flatMapLatest { id -> if (id == null) flowOf(null) else workspace(id) }
+    fun activeWorkspace(profileId: String): Flow<Workspace?> = sharedActiveWorkspaces.get(profileId) {
+        writer.observe(
+            database.machineProfileQueries.selectById(profileId),
+            database.workspaceQueries.selectForProfile(profileId),
+        ) { db -> db.activeWorkspaceId(profileId) }
+            .distinctUntilChanged()
+            .flatMapLatest { id -> if (id == null) flowOf(null) else workspace(id) }
+    }
 
     /** Reads the full workspace [id] one time. */
     suspend fun loadWorkspace(id: String): Workspace? = writer.read { db -> db.fullWorkspace(id) }
@@ -384,9 +409,25 @@ class MachineRepository(
      * sub-datums, and the guides do not change here: use [renameWorkspace] and the sub-datum
      * functions.
      */
-    suspend fun updateWorkspace(id: String, transform: (Workspace) -> Workspace): StoreResult<Workspace> {
+    suspend fun updateWorkspace(id: String, transform: (Workspace) -> Workspace): StoreResult<Workspace> =
+        changeWorkspace(id, transform) { db -> db.fullWorkspace(id)!! }
+
+    /**
+     * Writes the changed state of the workspace [id] as [updateWorkspace] does, but does not read
+     * the full workspace after the write. Use it when the caller does not use the result.
+     *
+     * @return False when the workspace does not exist.
+     */
+    suspend fun writeWorkspace(id: String, transform: (Workspace) -> Workspace): Boolean =
+        changeWorkspace(id, transform) { } is StoreResult.Ok
+
+    private suspend fun <R> changeWorkspace(
+        id: String,
+        transform: (Workspace) -> Workspace,
+        result: (SuperDroDatabase) -> R,
+    ): StoreResult<R> {
         var oldFile: String? = null
-        val result = writer.write { db ->
+        val written = writer.write { db ->
             val row = db.workspaceQueries.selectById(id).executeAsOneOrNull() ?: return@write StoreResult.Refused(StoreRefusal.NotFound)
             val current = json.workspaceFrom(row, db.workspaceQueries.selectAxisStates(id).executeAsList())
             val next = transform(current)
@@ -403,10 +444,10 @@ class MachineRepository(
                 val old = current.referenceImage?.fileName
                 if (old != null && old.isNotEmpty() && old != next.referenceImage?.fileName) oldFile = old
             }
-            StoreResult.Ok(db.fullWorkspace(id)!!)
+            StoreResult.Ok(result(db))
         }
         oldFile?.let(::deleteFile)
-        return result
+        return written
     }
 
     /** Writes the state of one axis: one row. The offsets stay after a restart. */
