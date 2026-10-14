@@ -44,7 +44,8 @@ class AdapterProfileFileTest {
         assertEquals("id-1", adapter.id)
         assertEquals("Shop Adapter", adapter.alias)
         assertEquals("tda-xxx", adapter.model)
-        assertEquals("24:0A:C4:12:34:58", adapter.identity)
+        // The file has "24:0A:C4:12:34:58". The import writes the identity in lower case, the same as the live link.
+        assertEquals("24:0a:c4:12:34:58", adapter.identity)
         assertEquals(IdentitySource.BtMac, adapter.identitySource)
         assertEquals(ProbeContactType.NormallyClosed, adapter.probeContactType)
         assertEquals(25L, adapter.probeDebounceMs)

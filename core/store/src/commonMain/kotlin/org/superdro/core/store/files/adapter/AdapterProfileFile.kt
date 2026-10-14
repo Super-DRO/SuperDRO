@@ -183,7 +183,7 @@ class AdapterProfileImporter(
         val header = Header(
             name = JsonFiles.text(root["adapter"])?.trim()?.takeIf(String::isNotEmpty),
             model = JsonFiles.text(root["model"])?.trim()?.takeIf(String::isNotEmpty),
-            identity = JsonFiles.text(root["identity"])?.trim()?.takeIf(String::isNotEmpty),
+            identity = AdapterProfile.normalizeIdentity(JsonFiles.text(root["identity"])),
             identitySource = JsonFiles.text(root["identity-source"])?.let { text -> TdapNames.parse(text, IdentitySource.entries, TdapNames::identitySource) },
             exported = JsonFiles.text(root["exported"])?.trim(),
         )
@@ -241,7 +241,13 @@ class AdapterProfileImporter(
             }
             results[letter] = InputResult(checkBacklash(checked, problems), problems)
         }
-        val header = Header(adapter.alias.takeIf(String::isNotEmpty), adapter.model, adapter.identity, adapter.identitySource, JsonFiles.text(root["exported"]))
+        val header = Header(
+            adapter.alias.takeIf(String::isNotEmpty),
+            adapter.model,
+            AdapterProfile.normalizeIdentity(adapter.identity),
+            adapter.identitySource,
+            JsonFiles.text(root["exported"]),
+        )
         val probe = Probe(adapter.probeContactType, adapter.probeDebounceMs, emptyList())
         return build(source, header, results, probe, target, mutableListOf(), mutableListOf(), keepCyclic = false, stored = adapter)
     }
@@ -314,7 +320,7 @@ class AdapterProfileImporter(
                 probeContactType = probe?.contactType ?: existing.probeContactType,
                 probeDebounceMs = probe?.debounceMs ?: existing.probeDebounceMs,
             )
-            stored != null -> stored.copy(id = ids(), alias = name, encoders = encoders)
+            stored != null -> stored.copy(id = ids(), alias = name, identity = header.identity, encoders = encoders)
             else -> AdapterProfile(
                 id = ids(),
                 alias = name,
