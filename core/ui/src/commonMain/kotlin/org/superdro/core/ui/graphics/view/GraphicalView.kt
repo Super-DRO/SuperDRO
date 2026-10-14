@@ -103,6 +103,7 @@ import org.superdro.core.resources.ic_lock
 import org.superdro.core.resources.ic_radio_unchecked
 import org.superdro.core.resources.route_edge_finder
 import org.superdro.core.resources.route_rotate_part
+import org.superdro.core.ui.adaptive.AdaptiveSheet
 import org.superdro.core.ui.graphics.thread.ThreadPanel
 import org.superdro.core.ui.graphics.thread.ThreadPanelEvents
 import org.superdro.core.ui.graphics.thread.ThreadPanelUiState
@@ -124,6 +125,9 @@ fun graphicalPlaneTag(plane: Plane): String = "graphical-plane-${plane.name}"
 
 /** The test tag of the "Re-center" button. */
 const val GRAPHICAL_RECENTER_TAG: String = "graphical-recenter"
+
+/** The test tag of the sheet of the display pane in a short view. */
+const val DISPLAY_SHEET_TAG: String = "graphical-display-sheet"
 
 /** The test tag of the view lock badge. */
 const val GRAPHICAL_LOCK_BADGE_TAG: String = "graphical-lock-badge"
@@ -158,7 +162,8 @@ interface GraphicalViewEvents : GraphicalCanvasEvents, ThreadPanelEvents {
  * @param showFullScreen True for the pane of the readout: the button "Full screen" shows.
  * @param extraTopStrip More buttons of the top strip, for example the measurement mode switch.
  * @param leftPanel A panel at the top left, for example the measurement pane.
- * @param displayPane The display pane, or null when it is closed.
+ * @param displayPane The display pane. It shows when [displayPaneOpen] is true: an overlay at the
+ *   right edge, or a sheet in a short view (for example the pane below the readout in portrait).
  * @param deleteShapeDialog The "Delete Geometry?" dialog of the drawing area for a shape index.
  */
 @Composable
@@ -207,19 +212,24 @@ fun GraphicalView(
                     narrow -> 220.dp
                     else -> 280.dp
                 }
+                // In a short view the left panel (the measurement pane) gets the full height: the
+                // automatic functions go to the right edge, where the display pane is not.
+                val switchesAtRight = short && leftPanel != null
                 Column(
                     Modifier.padding(8.dp).widthIn(max = leftWidth).fillMaxHeight(),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     // A panel can scroll by itself (the measurement pane), so it gets a bounded height.
                     if (leftPanel != null) Box(Modifier.weight(1f, fill = false)) { leftPanel() }
-                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (short || narrow || leftPanel != null) SwitchMenu(controls, events) else SwitchColumn(controls, events)
-                        if (threadPanel != null) ThreadPanel(threadPanel, events, Modifier.width(if (narrow) 220.dp else 280.dp))
-                    }
+                    if (!switchesAtRight) SwitchArea(controls, events, threadPanel, menu = short || narrow || leftPanel != null, narrow = narrow)
                 }
                 Spacer(Modifier.weight(1f))
-                if (displayPane != null && displayPaneOpen) {
+                if (switchesAtRight) {
+                    Column(Modifier.padding(8.dp)) { SwitchArea(controls, events, threadPanel, menu = true, narrow = narrow) }
+                }
+                // A short view opens the display pane as a sheet (see below), because an
+                // overlay in the view shows only the first rows.
+                if (displayPane != null && displayPaneOpen && !short) {
                     Surface(
                         modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 64.dp).width(if (narrow) 260.dp else 320.dp),
                         shape = MaterialTheme.shapes.large,
@@ -227,6 +237,12 @@ fun GraphicalView(
                         tonalElevation = 3.dp,
                     ) { displayPane() }
                 }
+            }
+        }
+        if (displayPane != null && displayPaneOpen && short) {
+            // The sheet closes with the same event as the "Display" chip.
+            AdaptiveSheet(onDismissRequest = events::onDisplayPaneToggle, modifier = Modifier.testTag(DISPLAY_SHEET_TAG), scrollable = false) {
+                displayPane()
             }
         }
         StatusBadges(view, controls, Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp))
@@ -238,6 +254,24 @@ fun GraphicalView(
         }
         ZoomPresets(events, Modifier.align(Alignment.BottomEnd).padding(8.dp))
         Overlays(view, events, deleteShapeDialog)
+    }
+}
+
+/**
+ * The automatic functions (a column of chips, or one chip with a menu when [menu] is true) and
+ * the thread cut panel. The area scrolls when it does not fit.
+ */
+@Composable
+private fun SwitchArea(
+    controls: GraphicalControlsUiState,
+    events: GraphicalViewEvents,
+    threadPanel: ThreadPanelUiState?,
+    menu: Boolean,
+    narrow: Boolean,
+) {
+    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (menu) SwitchMenu(controls, events) else SwitchColumn(controls, events)
+        if (threadPanel != null) ThreadPanel(threadPanel, events, Modifier.width(if (narrow) 220.dp else 280.dp))
     }
 }
 
@@ -561,5 +595,8 @@ internal fun twoDecimals(value: Double): String {
 /** The alpha of the panels above the canvas. */
 private const val PANEL_ALPHA: Float = 0.92f
 
-/** A view lower than this shows the automatic functions in a menu. */
+/**
+ * A view lower than this is short: it shows the automatic functions in a menu, and it opens the
+ * display pane as a sheet.
+ */
 private val SHORT_VIEW_HEIGHT = 560.dp

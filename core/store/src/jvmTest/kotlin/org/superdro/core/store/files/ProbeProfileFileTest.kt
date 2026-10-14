@@ -140,6 +140,22 @@ class ProbeProfileFileTest {
     }
 
     @Test
+    fun anEmptyTdprbFileKeepsItsSourceAndIsNotUsable() {
+        val preview = importer.read(Fixtures.bytes("probes-empty-3.32.00.tdprb"), context)
+        assertEquals(FileSource.TouchDro, preview.source)
+        assertEquals("Bridgeport", preview.fileProfileName)
+        assertEquals("2026-10-11 14:05:33", preview.exported)
+        assertEquals(listOf("The file has no probe profiles."), preview.problems.map { it.describe() })
+        assertFalse(preview.usable)
+        assertTrue(preview.rows.isEmpty())
+        assertTrue(preview.operations.isEmpty())
+
+        val superDro = importer.read("""{"superdro":"probe-profiles","format":1}""", context)
+        assertEquals(FileSource.SuperDro, superDro.source)
+        assertFalse(superDro.usable)
+    }
+
+    @Test
     fun aFileWithNoProfilesOrAnotherKindIsRefused() {
         assertEquals(listOf("The file has no probe profiles."), importer.read("""{"touchdro":"probe-profiles","profiles":[]}""", context).problems.map { it.describe() })
         assertEquals(

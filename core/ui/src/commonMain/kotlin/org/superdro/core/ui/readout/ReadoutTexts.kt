@@ -10,6 +10,7 @@ import org.superdro.core.resources.Res
 import org.superdro.core.resources.app_cause_bluetooth_off
 import org.superdro.core.resources.app_cause_connect_failed
 import org.superdro.core.resources.app_cause_link_lost
+import org.superdro.core.resources.app_cause_no_answer
 import org.superdro.core.resources.app_cause_no_network
 import org.superdro.core.resources.app_cause_permission_missing
 import org.superdro.core.resources.app_cause_unplugged
@@ -152,6 +153,7 @@ object ReadoutTexts {
         LinkFailure.NetworkOff -> Res.string.app_cause_no_network
         LinkFailure.PermissionMissing -> Res.string.app_cause_permission_missing
         LinkFailure.Refused -> Res.string.app_cause_connect_failed
+        LinkFailure.NoAnswer -> Res.string.app_cause_no_answer
         LinkFailure.Lost -> Res.string.app_cause_link_lost
     }
 

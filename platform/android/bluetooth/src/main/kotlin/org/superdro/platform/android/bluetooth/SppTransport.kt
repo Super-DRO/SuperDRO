@@ -28,12 +28,29 @@ import org.superdro.core.model.AdapterAddress
 
 /** One RFCOMM socket. The Android implementation wraps `BluetoothSocket`. */
 internal interface SppSocket : Closeable {
-    /** Connects. Blocks until the link is open. Throws an [IOException] when the connect fails. */
+    /**
+     * Connects. Blocks until the link is open. Throws an [IOException] when the connect fails. The
+     * Android implementation throws an [SppConnectException].
+     */
     fun connect()
 
     val input: InputStream
     val output: OutputStream
 }
+
+/**
+ * The failure of [SppSocket.connect], with the data that [SppRules.connectFailure] uses.
+ *
+ * @property socketErrorCode The `BluetoothSocketException` error code on API 34 and higher, or null.
+ * @property aclConnected True when an ACL link to the adapter came up during the connect, false
+ *   when no ACL link came up, and null when the platform cannot tell.
+ */
+internal class SppConnectException(
+    message: String?,
+    val socketErrorCode: Int?,
+    val aclConnected: Boolean?,
+    cause: Throwable? = null,
+) : IOException(message, cause)
 
 /** The Android Bluetooth calls of [SppTransport]. A JVM unit test gives a fake. */
 internal interface SppPlatform {
@@ -53,7 +70,9 @@ internal interface SppPlatform {
  * - [open] checks the permission, the radio, and the pairing ([LinkFailure.PermissionMissing],
  *   [LinkFailure.RadioOff], [LinkFailure.DeviceGone]). Then it calls `cancelDiscovery()` only with
  *   the permission, makes the insecure RFCOMM socket with the SPP UUID (no reflection), and makes one
- *   `connect()`. A connect failure is [LinkFailure.Refused]. The transport does not try again.
+ *   `connect()`. A connect failure is [LinkFailure.NoAnswer] when the adapter did not answer the
+ *   page, else [LinkFailure.Refused] (see [SppRules.connectFailure]). The transport does not try
+ *   again.
  * - [incoming] makes a read that blocks, with a buffer of [Spp.READ_BUFFER_BYTES], on the link
  *   dispatcher. A `read()` result less than 0, or an exception, is [LinkFailure.Lost]. The read
  *   runs in the scope of the transport: when the collection stops, the flow ends at once, and the
@@ -173,7 +192,8 @@ class SppTransport internal constructor(
             throw LinkFailureException(LinkFailure.PermissionMissing, "The SPP connect to ${address.mac} has no permission.", connectFailure)
         } catch (connectFailure: Exception) {
             closeSocketQuietly()
-            throw LinkFailureException(LinkFailure.Refused, "The SPP connect to ${address.mac} failed.", connectFailure)
+            if (closedByUser) throw LinkFailureException(LinkFailure.Refused, "The SPP transport closed during the connect.", connectFailure)
+            throw LinkFailureException(connectFailureOf(connectFailure), "The SPP connect to ${address.mac} failed.", connectFailure)
         }
         stateLock.withLock {
             if (closedByUser) throw LinkFailureException(LinkFailure.Refused, "The SPP transport closed during the connect.")
@@ -268,6 +288,11 @@ class SppTransport internal constructor(
 
     private fun markLost() {
         if (failure == null) failure = LinkFailure.Lost
+    }
+
+    private fun connectFailureOf(failure: Exception): LinkFailure {
+        val details = failure as? SppConnectException
+        return SppRules.connectFailure(failure.message, details?.socketErrorCode, details?.aclConnected)
     }
 
     private fun closeSocketQuietly() {

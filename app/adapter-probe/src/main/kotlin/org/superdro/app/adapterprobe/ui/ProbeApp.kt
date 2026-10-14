@@ -64,8 +64,8 @@ class Presenters(
     val report: ReportPresenter,
 )
 
-/** The actions of the activity: the share sheet. */
-class ActivityActions(val share: (String) -> Unit, val openBluetoothSettings: () -> Unit)
+/** The actions of the activity: the share sheet, the Bluetooth settings, and the request to turn on Bluetooth. */
+class ActivityActions(val share: (String) -> Unit, val openBluetoothSettings: () -> Unit, val enableBluetooth: () -> Unit)
 
 private val TAB_TITLES: Map<Screen, StringResource> = mapOf(
     Screen.Link to Res.string.probe_tab_link,

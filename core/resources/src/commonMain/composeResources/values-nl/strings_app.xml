@@ -28,6 +28,7 @@
     <string name="app_cause_permission_missing">Toestemming nodig</string>
     <string name="app_cause_connect_failed">Verbinden mislukt</string>
     <string name="app_cause_link_lost">Verbinding verbroken</string>
+    <string name="app_cause_no_answer">Adapter reageert niet</string>
     <string name="app_could_not_restore_link">De verbinding kan niet worden hersteld</string>
     <string name="app_link_bluetooth">Bluetooth</string>
     <string name="app_link_usb">USB</string>

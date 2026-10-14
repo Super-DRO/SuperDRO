@@ -28,6 +28,7 @@ class TabStatusRulesTest {
         check(SessionState.WaitingForDevice(LinkFailure.NetworkOff), TabStatusIcon.Error, "No network", StatusRoles.Failure)
         check(SessionState.WaitingForDevice(LinkFailure.PermissionMissing), TabStatusIcon.Error, "Permission needed", StatusRoles.Failure)
         check(SessionState.Failed(LinkFailure.Refused), TabStatusIcon.Error, "Connect failed", StatusRoles.Failure)
+        check(SessionState.Failed(LinkFailure.NoAnswer), TabStatusIcon.Error, "Adapter not responding", StatusRoles.Failure)
         check(SessionState.Failed(LinkFailure.Lost), TabStatusIcon.Error, "Link lost", StatusRoles.Failure)
         check(SessionState.Disconnected, TabStatusIcon.Offline, "Offline", StatusRoles.Neutral)
     }

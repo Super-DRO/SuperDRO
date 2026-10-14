@@ -10,3 +10,10 @@ captures/
 .cxx/
 *.apk
 *.aab
+__pycache__/
+*.pyc
+
+# Release signing (docs/versioning-and-release-plan.md, section 7). Git tracks only the
+# encrypted upload keystore. The keystore and its passwords stay on the local disk.
+/signing/*
+!/signing/upload.keystore.gpg

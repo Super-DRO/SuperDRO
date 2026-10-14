@@ -2,10 +2,14 @@ package org.superdro.core.ui.readout
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,8 +53,14 @@ enum class StripForm {
     /** A vertical rail at the right edge (landscape). It scrolls when the buttons do not fit. */
     Rail,
 
-    /** A grid of two rows at the bottom (portrait). It scrolls when the buttons do not fit. */
+    /** A grid of two rows (the bottom sheet of a compact window). It scrolls when the buttons do not fit. */
     TwoRows,
+
+    /**
+     * A grid below the readout (expanded layout). The width gives the number of columns: each
+     * column is approximately the width of one button. It scrolls when the buttons do not fit.
+     */
+    Grid,
 }
 
 /** The width of a button of the strip. */
@@ -68,7 +78,8 @@ fun FunctionStrip(
     form: StripForm,
     modifier: Modifier = Modifier,
 ) {
-    val gap = LocalTouchTargets.current.gap
+    val targets = LocalTouchTargets.current
+    val gap = targets.gap
     val items: List<StripItem> = listOf(StripItem.ZeroSet, StripItem.Mode, StripItem.Units) + functions.map(StripItem::Function)
     @Composable
     fun item(entry: StripItem, itemModifier: Modifier) = when (entry) {
@@ -94,8 +105,32 @@ fun FunctionStrip(
                 }
             }
         }
+        StripForm.Grid -> BoxWithConstraints(modifier) {
+            val columns = gridColumns(maxWidth - gap, StripButtonWidth * (targets.button / 64.dp), gap)
+            Column(
+                modifier = Modifier.fillMaxWidth().testTag(FUNCTION_STRIP_TAG).verticalScroll(rememberScrollState()).padding(gap / 2),
+                verticalArrangement = Arrangement.spacedBy(gap),
+            ) {
+                items.chunked(columns).forEach { line ->
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(gap)) {
+                        line.forEach { entry -> item(entry, Modifier.weight(1f).fillMaxHeight()) }
+                        repeat(columns - line.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+        }
     }
 }
+
+/** The smallest number of columns of [StripForm.Grid]. */
+const val MIN_GRID_COLUMNS: Int = 2
+
+/**
+ * Gives the number of columns of [StripForm.Grid] for the inner [width]: the number of buttons
+ * of [buttonWidth] with the [gap] between them that fit, and at least [MIN_GRID_COLUMNS].
+ */
+fun gridColumns(width: Dp, buttonWidth: Dp, gap: Dp): Int =
+    maxOf(MIN_GRID_COLUMNS, ((width + gap) / (buttonWidth + gap)).toInt())
 
 /** One button of the strip. */
 private sealed interface StripItem {
