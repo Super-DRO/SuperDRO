@@ -62,6 +62,41 @@ object SppRules {
         }
 
     /**
+     * The start of the `IOException` message of `BluetoothSocket.connect()` when the Bluetooth stack
+     * closes the socket before the link opens, for example "read failed, socket might closed or
+     * timeout, read ret: -1". The Android source of API 34 has this text. A page timeout gives this
+     * text, but an SDP failure and an RFCOMM refusal also give it.
+     */
+    const val SOCKET_CLOSED_MESSAGE: String = "read failed, socket might closed or timeout"
+
+    /** The value of `BluetoothSocketException.L2CAP_ACL_FAILURE` (API 34): the ACL link did not open. */
+    const val L2CAP_ACL_FAILURE: Int = 2
+
+    /**
+     * Gives the link failure of an RFCOMM connect that failed.
+     *
+     * Android gives no public page-timeout code for an RFCOMM socket. Thus the Android socket
+     * monitors `ACTION_ACL_CONNECTED` for the adapter during the connect. [aclConnected] is true when
+     * an ACL link to the adapter came up, false when no ACL link came up, and null when the platform
+     * cannot tell.
+     *
+     * - The error code [L2CAP_ACL_FAILURE] is [LinkFailure.NoAnswer].
+     * - The message [SOCKET_CLOSED_MESSAGE] with no ACL link is [LinkFailure.NoAnswer]: the adapter
+     *   did not answer the page, because it is off or out of range.
+     * - Each other failure is [LinkFailure.Refused]. This includes a failure after the adapter
+     *   answered, and a failure when the platform cannot tell.
+     *
+     * @param message The message of the exception of `connect()`.
+     * @param socketErrorCode The `BluetoothSocketException` error code on API 34 and higher, or null.
+     */
+    fun connectFailure(message: String?, socketErrorCode: Int?, aclConnected: Boolean?): LinkFailure = when {
+        socketErrorCode == L2CAP_ACL_FAILURE -> LinkFailure.NoAnswer
+        aclConnected != false -> LinkFailure.Refused
+        message?.startsWith(SOCKET_CLOSED_MESSAGE) == true -> LinkFailure.NoAnswer
+        else -> LinkFailure.Refused
+    }
+
+    /**
      * Gives the Bluetooth capability for the SPP and the BLE links: no
      * adapter or a radio that is off is [LinkFailure.RadioOff], and no `BLUETOOTH_CONNECT` is
      * [LinkFailure.PermissionMissing].

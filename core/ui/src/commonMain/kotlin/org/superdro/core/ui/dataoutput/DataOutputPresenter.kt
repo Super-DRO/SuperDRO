@@ -110,10 +110,10 @@ class DataOutputPresenter(
                 profiles = list
                 val current = selected.value?.takeIf { id -> list.any { profile -> profile.id == id } }
                 val next = current ?: requestedProfile?.takeIf { id -> list.any { profile -> profile.id == id } } ?: list.firstOrNull()?.id
-                _uiState.update { state -> state.copy(profiles = list.map { profile -> ProfileChoice(profile.id, profile.name) }) }
+                setState { state -> state.copy(profiles = list.map { profile -> ProfileChoice(profile.id, profile.name) }) }
                 if (next != selected.value) {
                     selected.value = next
-                    if (next == null) _uiState.update { state -> state.copy(loading = false, profileId = null) }
+                    if (next == null) setState { state -> state.copy(loading = false, profileId = null) }
                 } else {
                     list.firstOrNull { profile -> profile.id == next }?.let { profile -> onStoredChanged(profile.dataOutput) }
                 }
@@ -131,10 +131,9 @@ class DataOutputPresenter(
         scope.launch {
             networkInterfaces.interfaces.collect { list ->
                 interfaces = list
-                _uiState.update { state ->
+                setState { state ->
                     state.copy(interfaces = BindInterface.entries.map { bind -> InterfaceChoice(bind, BindAddresses.hosts(list, bind)) })
                 }
-                refresh()
             }
         }
     }
@@ -155,7 +154,7 @@ class DataOutputPresenter(
     private suspend fun load(profileId: String) {
         val profile = profiles.firstOrNull { item -> item.id == profileId } ?: return
         val config = profile.dataOutput
-        _uiState.update { state ->
+        setState { state ->
             state.copy(
                 loading = false,
                 profileId = profileId,
@@ -174,12 +173,11 @@ class DataOutputPresenter(
                 testResult = null,
             )
         }
-        refresh()
         secrets {
             val credentials = runner.mqttCredentials(profileId)
             storedUsername = credentials?.username.orEmpty()
             storedPassword = credentials?.password?.decodeToString().orEmpty()
-            _uiState.update { state ->
+            setState { state ->
                 if (state.profileId != profileId) state else state.copy(mqttUsername = storedUsername, mqttPassword = storedPassword)
             }
         }
@@ -187,13 +185,12 @@ class DataOutputPresenter(
     }
 
     private fun onStoredChanged(config: DataOutputConfig) {
-        _uiState.update { state ->
-            if (state.stored == config) return@update state
+        setState { state ->
+            if (state.stored == config) return@setState state
             // A change of the switch somewhere else changes only the switch of the draft.
             val draft = if (state.draft == state.stored) config else state.draft.copy(enabled = config.enabled)
             state.copy(stored = config, draft = draft)
         }
-        refresh()
     }
 
     // ---------------------------------------------------------------------------------------
@@ -206,11 +203,10 @@ class DataOutputPresenter(
     override fun onEnabledChange(enabled: Boolean) {
         val id = _uiState.value.profileId ?: return
         if (!enabled) {
-            _uiState.update { state -> state.copy(draft = state.draft.copy(enabled = false)) }
+            setState { state -> state.copy(draft = state.draft.copy(enabled = false)) }
             scope.launch {
                 machines.updateProfile(id) { profile -> profile.copy(dataOutput = profile.dataOutput.copy(enabled = false)) }
             }
-            refresh()
             return
         }
         val state = _uiState.value
@@ -240,11 +236,11 @@ class DataOutputPresenter(
      * each second while they show. [onDismissDialog] closes them.
      */
     override fun onShowDiagnostics() {
-        _uiState.update { state -> state.copy(dialog = DataOutputDialog.Diagnostics) }
+        setState { state -> state.copy(dialog = DataOutputDialog.Diagnostics) }
         diagnosticsJob?.cancel()
         diagnosticsJob = scope.launch {
             while (isActive) {
-                _uiState.update { state -> state.copy(diagnostics = diagnosticsOf(state)) }
+                setState { state -> state.copy(diagnostics = diagnosticsOf(state)) }
                 delay(DIAGNOSTICS_PERIOD_MS)
             }
         }
@@ -270,15 +266,13 @@ class DataOutputPresenter(
     /** The text of the port. */
     override fun onPortText(text: String) {
         val port = DataOutputForm.parseInt(text)
-        _uiState.update { state -> state.copy(portText = text, draft = if (port != null) state.draft.copy(port = port) else state.draft) }
-        refresh()
+        setState { state -> state.copy(portText = text, draft = if (port != null) state.draft.copy(port = port) else state.draft) }
     }
 
     /** Selects the security mode. The plain text mode shows the warning first. */
     override fun onSecurity(mode: DataOutputSecurity) {
         val (config, dialog) = DataOutputForm.selectSecurity(_uiState.value.draft, mode)
-        _uiState.update { state -> state.copy(draft = config, dialog = dialog ?: state.dialog) }
-        refresh()
+        setState { state -> state.copy(draft = config, dialog = dialog ?: state.dialog) }
         val id = _uiState.value.profileId
         if (mode == DataOutputSecurity.Psk && id != null && _uiState.value.psk == null) scope.launch { loadPsk(id) }
     }
@@ -286,23 +280,22 @@ class DataOutputPresenter(
     /** The user confirmed the warning "Use only on trusted networks" of the open dialog. */
     override fun onConfirmWarning() {
         when (_uiState.value.dialog) {
-            DataOutputDialog.PlainTextWarning -> _uiState.update { state ->
+            DataOutputDialog.PlainTextWarning -> setState { state ->
                 state.copy(draft = DataOutputForm.confirmPlainText(state.draft), dialog = null)
             }
-            DataOutputDialog.MqttNoTlsWarning -> _uiState.update { state ->
+            DataOutputDialog.MqttNoTlsWarning -> setState { state ->
                 val draft = DataOutputForm.confirmNoTls(state.draft)
                 state.copy(draft = draft, brokerPortText = draft.mqttBrokerPort.toString(), dialog = null)
             }
             else -> return
         }
-        refresh()
     }
 
     /** Closes the open dialog or the diagnostics. A warning that the user does not confirm keeps the old mode. */
     override fun onDismissDialog() {
         diagnosticsJob?.cancel()
         diagnosticsJob = null
-        _uiState.update { state -> state.copy(dialog = null, diagnostics = null) }
+        setState { state -> state.copy(dialog = null, diagnostics = null) }
     }
 
     /** Selects the transport. */
@@ -320,29 +313,27 @@ class DataOutputPresenter(
     /** The text of the broker port. */
     override fun onBrokerPortText(text: String) {
         val port = DataOutputForm.parseInt(text)
-        _uiState.update { state ->
+        setState { state ->
             state.copy(brokerPortText = text, draft = if (port != null) state.draft.copy(mqttBrokerPort = port) else state.draft)
         }
-        refresh()
     }
 
     /** TLS to the broker (the security rules). TLS off shows the warning first. */
     override fun onTls(tls: Boolean) {
         val (config, dialog) = DataOutputForm.selectTls(_uiState.value.draft, tls)
-        _uiState.update { state ->
+        setState { state ->
             state.copy(draft = config, brokerPortText = config.mqttBrokerPort.toString(), dialog = dialog ?: state.dialog)
         }
-        refresh()
     }
 
     /** The MQTT user name (it stays in the `SecretStore`). */
     override fun onUsername(username: String) {
-        _uiState.update { state -> state.copy(mqttUsername = username, credentialsChanged = username != storedUsername || state.mqttPassword != storedPassword) }
+        setState { state -> state.copy(mqttUsername = username, credentialsChanged = username != storedUsername || state.mqttPassword != storedPassword) }
     }
 
     /** The MQTT password. */
     override fun onPassword(password: String) {
-        _uiState.update { state -> state.copy(mqttPassword = password, credentialsChanged = state.mqttUsername != storedUsername || password != storedPassword) }
+        setState { state -> state.copy(mqttPassword = password, credentialsChanged = state.mqttUsername != storedUsername || password != storedPassword) }
     }
 
     /** The MQTT client ID. An empty text gives `superdro-<id>`. */
@@ -384,17 +375,15 @@ class DataOutputPresenter(
     /** The text of the interval. */
     override fun onIntervalText(text: String) {
         val interval = DataOutputForm.parseLong(text)
-        _uiState.update { state ->
+        setState { state ->
             state.copy(intervalText = text, draft = if (interval != null) state.draft.copy(intervalMs = interval) else state.draft)
         }
-        refresh()
     }
 
     /** The text of the rate limit. */
     override fun onMaxRateText(text: String) {
         val rate = DataOutputForm.parseInt(text)
-        _uiState.update { state -> state.copy(maxRateText = text, draft = if (rate != null) state.draft.copy(maxRateHz = rate) else state.draft) }
-        refresh()
+        setState { state -> state.copy(maxRateText = text, draft = if (rate != null) state.draft.copy(maxRateHz = rate) else state.draft) }
     }
 
     /** The switch of a field. */
@@ -403,23 +392,22 @@ class DataOutputPresenter(
     /** The label of a field. A refused character does not go into the label. */
     override fun onFieldLabel(field: DataOutputFieldId, label: String) {
         when (val result = DataOutputForm.editLabel(_uiState.value.draft, field, label)) {
-            is LabelEdit.Accepted -> _uiState.update { state -> state.copy(draft = result.config, labelRefusals = state.labelRefusals - field) }
-            is LabelEdit.Refused -> _uiState.update { state ->
+            is LabelEdit.Accepted -> setState { state -> state.copy(draft = result.config, labelRefusals = state.labelRefusals - field) }
+            is LabelEdit.Refused -> setState { state ->
                 state.copy(
                     labelRefusals = state.labelRefusals +
                         (field to UiText.of(Res.string.data_output_label_character, DataOutputTexts.characterText(result.character))),
                 )
             }
-            LabelEdit.TooLong -> _uiState.update { state ->
+            LabelEdit.TooLong -> setState { state ->
                 state.copy(labelRefusals = state.labelRefusals + (field to UiText.of(Res.string.dataoutput_label_too_long)))
             }
         }
-        refresh()
     }
 
     /** Discards the changes of the draft. */
     override fun onDiscard() {
-        _uiState.update { state ->
+        setState { state ->
             val config = state.stored
             state.copy(
                 draft = config,
@@ -433,7 +421,6 @@ class DataOutputPresenter(
                 labelRefusals = emptyMap(),
             )
         }
-        refresh()
     }
 
     /** "Save": writes the draft and the credentials. */
@@ -448,7 +435,7 @@ class DataOutputPresenter(
     }
 
     private fun save(id: String, config: DataOutputConfig, after: (DataOutputConfig) -> Unit) {
-        _uiState.update { state -> state.copy(saving = true) }
+        setState { state -> state.copy(saving = true) }
         scope.launch {
             val state = _uiState.value
             try {
@@ -460,22 +447,21 @@ class DataOutputPresenter(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
-                _uiState.update { current -> current.copy(saving = false) }
+                setState { current -> current.copy(saving = false) }
                 showMessage(UiText.of(Res.string.dataoutput_secret_error))
                 return@launch
             }
             val result = machines.updateProfile(id) { profile -> profile.copy(dataOutput = config) }
             if (result is StoreResult.Ok) {
-                _uiState.update { current ->
+                setState { current ->
                     current.copy(saving = false, draft = config, stored = config, credentialsChanged = false, mqttUsername = storedUsername)
                 }
                 showMessage(UiText.of(Res.string.dataoutput_saved))
                 after(config)
             } else {
-                _uiState.update { current -> current.copy(saving = false) }
+                setState { current -> current.copy(saving = false) }
                 showMessage(UiText.of(Res.string.dataoutput_save_failed))
             }
-            refresh()
         }
     }
 
@@ -487,16 +473,16 @@ class DataOutputPresenter(
 
     /** "Make a new key": the question first. */
     override fun onNewKey() {
-        _uiState.update { state -> state.copy(dialog = DataOutputDialog.NewKey) }
+        setState { state -> state.copy(dialog = DataOutputDialog.NewKey) }
     }
 
     /** The user confirmed "Make a new key". The old key stops. */
     override fun onConfirmNewKey() {
         val id = _uiState.value.profileId ?: return
-        _uiState.update { state -> state.copy(dialog = null) }
+        setState { state -> state.copy(dialog = null) }
         secrets {
             val key = runner.newPsk(id)
-            _uiState.update { state -> if (state.profileId == id) state.copy(psk = key.shareText()) else state }
+            setState { state -> if (state.profileId == id) state.copy(psk = key.shareText()) else state }
             showMessage(UiText.of(Res.string.dataoutput_psk_new_done))
         }
     }
@@ -504,7 +490,7 @@ class DataOutputPresenter(
     private suspend fun loadPsk(profileId: String) {
         secretsNow {
             val key = runner.psk(profileId, create = true)
-            _uiState.update { state -> if (state.profileId == profileId) state.copy(psk = key?.shareText()) else state }
+            setState { state -> if (state.profileId == profileId) state.copy(psk = key?.shareText()) else state }
         }
     }
 
@@ -516,10 +502,10 @@ class DataOutputPresenter(
         val state = _uiState.value
         val id = state.profileId ?: return
         if (state.testing) return
-        _uiState.update { current -> current.copy(testing = true, testResult = null) }
+        setState { current -> current.copy(testing = true, testResult = null) }
         scope.launch {
             val result = runner.testConnection(id, state.draft)
-            _uiState.update { current ->
+            setState { current ->
                 current.copy(
                     testing = false,
                     testResult = result?.let { value -> TestResultUiState(DataOutputTexts.testResult(value), DataOutputTexts.testPassed(value)) },
@@ -530,20 +516,19 @@ class DataOutputPresenter(
 
     /** The snackbar showed the message [id]. */
     override fun onMessageShown(id: Long) {
-        _uiState.update { state -> if (state.message?.id == id) state.copy(message = null) else state }
+        setState { state -> if (state.message?.id == id) state.copy(message = null) else state }
     }
 
     // ---------------------------------------------------------------------------------------
 
     private fun edit(transform: (DataOutputConfig) -> DataOutputConfig) {
-        _uiState.update { state -> state.copy(draft = transform(state.draft)) }
-        refresh()
+        setState { state -> state.copy(draft = transform(state.draft)) }
     }
 
     private fun showMessage(text: UiText) {
         messageIds += 1
         val id = messageIds
-        _uiState.update { state -> state.copy(message = OutputMessage(id, text)) }
+        setState { state -> state.copy(message = OutputMessage(id, text)) }
     }
 
     private fun secrets(block: suspend () -> Unit) {
@@ -560,12 +545,21 @@ class DataOutputPresenter(
         }
     }
 
-    /** Calculates the derived values: the problems and the status. */
-    private fun refresh() {
+    /**
+     * Changes the UI state with [transform]. The same step calculates the derived values (the
+     * problems and the status). Thus a reader never sees a stored configuration together with the
+     * status of an older configuration. For example, [onStartStop] reads the status: it must not
+     * see the switch on and an old status that cannot start the output.
+     */
+    private fun setState(transform: (DataOutputUiState) -> DataOutputUiState) {
         _uiState.update { state ->
-            state.copy(problems = problemsOf(state), status = statusOf(state))
+            val next = transform(state)
+            next.copy(problems = problemsOf(next), status = statusOf(next))
         }
     }
+
+    /** Calculates the derived values again after a change of the output state. */
+    private fun refresh() = setState { state -> state }
 
     private fun problemsOf(state: DataOutputUiState): List<FormProblem> {
         val id = state.profileId ?: return emptyList()

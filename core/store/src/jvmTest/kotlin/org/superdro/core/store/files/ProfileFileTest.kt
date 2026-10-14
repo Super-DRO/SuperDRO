@@ -137,6 +137,17 @@ class ProfileFileTest {
     }
 
     @Test
+    fun aProfileFileWithNoSettingsKeepsItsSourceAndIsNotUsable() {
+        val text = """{"superdro": "profile", "format": 1, "exported": "2026-10-11 14:30:05", "profile": "South Bend", "settings": {}}"""
+        val preview = importer.read(text.encodeToByteArray(), SettingsTarget.NewProfile)
+        assertEquals(FileSource.SuperDro, preview.source)
+        assertEquals("South Bend", preview.fileProfileName)
+        assertEquals("2026-10-11 14:30:05", preview.exported)
+        assertEquals(listOf("The file has no setting that the import can use."), preview.problems.map { it.describe() })
+        assertFalse(preview.usable)
+    }
+
+    @Test
     fun aSettingsFileIsNotAProfileFile() {
         assertEquals(
             listOf("The file contains “settings”. This import needs “profile”."),

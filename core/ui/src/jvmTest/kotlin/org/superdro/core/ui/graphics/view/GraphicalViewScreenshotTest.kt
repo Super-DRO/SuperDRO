@@ -13,6 +13,10 @@ import org.superdro.core.resources.Res
 import org.superdro.core.resources.route_sub_datums
 import org.superdro.core.ui.ScreenshotRenderer
 import org.superdro.core.ui.adaptive.WindowLayout
+import org.superdro.core.ui.graphics.measure.MeasurementModeToggle
+import org.superdro.core.ui.graphics.measure.MeasurementPane
+import org.superdro.core.ui.graphics.measure.MeasurementSamples
+import org.superdro.core.ui.graphics.measure.RecordingMeasurementEvents
 import org.superdro.core.ui.graphics.thread.ThreadChoice
 import org.superdro.core.ui.graphics.thread.ThreadPanelUiState
 import org.superdro.core.ui.navigation.SidePanelPlaceholder
@@ -106,6 +110,39 @@ class GraphicalViewScreenshotTest {
             val readout = FakeTabReadout(ViewSamples.frame(ViewSamples.mill))
             val presenter = RotatePartPresenter(readout)
             RotatePartSheet(state = presenter.uiState.value.copy(pivot = PivotSource.Custom, pivotXText = "10.000", pivotYText = "-5.000"), presenter = presenter, onClose = {})
+        }
+    }
+
+    @Test
+    fun theDisplaySheetAndTheMeasurementPaneBelowTheReadoutInPortrait() {
+        listOf(false, true).forEach { measure ->
+            both(if (measure) "graphics-view-readout-portrait-measure" else "graphics-view-readout-portrait-display", 800, 1200) {
+                val sample = ReadoutSamples.mill()
+                ReadoutScreen(
+                    state = sample.state.copy(graphicalViewPlacement = GraphicalViewPlacement.BelowReadout),
+                    axisValue = sample::flow,
+                    events = NoReadoutEvents,
+                    layout = WindowLayout.of(800.dp, 1200.dp),
+                    sidePanelContent = { SidePanelPlaceholder(Res.string.route_sub_datums) },
+                    graphicalViewPane = {
+                        val (view, controls) = ViewStates.millView(800.0, 400.0)
+                        val events = RecordingViewEvents()
+                        GraphicalView(
+                            view = view,
+                            controls = controls,
+                            metrics = ViewStates.metrics,
+                            events = events,
+                            showFullScreen = true,
+                            displayPaneOpen = !measure,
+                            extraTopStrip = { if (measure) MeasurementModeToggle(on = true, onToggle = {}) },
+                            leftPanel = if (measure) ({ MeasurementPane(MeasurementSamples.circle, RecordingMeasurementEvents()) }) else null,
+                            displayPane = {
+                                DisplayPane(display = controls.display, hasDrawing = true, layers = controls.drawingLayers, referenceAlpha = 255, events = events)
+                            },
+                        )
+                    },
+                )
+            }
         }
     }
 

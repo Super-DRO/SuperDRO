@@ -78,6 +78,37 @@ class SppTransportTest {
     }
 
     @Test
+    fun aConnectWithNoAnswerFromTheAdapterIsNoAnswer() = realTime {
+        val platform = FakeSppPlatform()
+        platform.socket.connectFailure = SppConnectException(PAGE_TIMEOUT, socketErrorCode = null, aclConnected = false)
+        val failure = assertFailsWith<LinkFailureException> { transport(platform).open() }
+        assertEquals(LinkFailure.NoAnswer, failure.failure)
+        assertEquals(1, platform.socket.connectCount)
+        assertTrue(platform.socket.isClosed)
+    }
+
+    @Test
+    fun aConnectFailureAfterTheAdapterAnsweredIsRefused() = realTime {
+        val platform = FakeSppPlatform()
+        platform.socket.connectFailure = SppConnectException(PAGE_TIMEOUT, socketErrorCode = null, aclConnected = true)
+        assertEquals(LinkFailure.Refused, assertFailsWith<LinkFailureException> { transport(platform).open() }.failure)
+    }
+
+    @Test
+    fun theCloseDuringAConnectWithNoAclLinkIsRefused() = realTime {
+        val platform = FakeSppPlatform()
+        platform.socket.connectBlocks = true
+        platform.socket.blockedConnectFailure = SppConnectException(PAGE_TIMEOUT, socketErrorCode = null, aclConnected = false)
+        val transport = transport(platform)
+        val opening = async { runCatching { transport.open() } }
+        withTimeout(2000) { while (platform.socket.connectCount == 0) delay(5) }
+        transport.close()
+        val failure = withTimeout(3000) { opening.await() }.exceptionOrNull()
+        assertIs<LinkFailureException>(failure)
+        assertEquals(LinkFailure.Refused, failure.failure)
+    }
+
+    @Test
     fun aSecurityExceptionIsPermissionMissing() = realTime {
         val platform = FakeSppPlatform(createFailure = SecurityException("Need android.permission.BLUETOOTH_CONNECT"))
         assertEquals(LinkFailure.PermissionMissing, assertFailsWith<LinkFailureException> { transport(platform).open() }.failure)
@@ -233,6 +264,11 @@ class SppTransportTest {
         val failure = withTimeout(3000) { opening.await() }.exceptionOrNull()
         assertIs<LinkFailureException>(failure)
         assertEquals(LinkFailure.Refused, failure.failure)
+    }
+
+    private companion object {
+        /** The message of `BluetoothSocket.connect()` after a page timeout. */
+        const val PAGE_TIMEOUT = "read failed, socket might closed or timeout, read ret: -1"
     }
 
     /** Runs [block] with real time: the fake socket blocks real threads. */
