@@ -31,7 +31,8 @@ import org.superdro.core.model.MapPoint
  * 9. The statistics, the advice, and the verification.
  *
  * The run time can be long for passes with many unique positions (the periodic error tries up
- * to 2000 periods). Run it away from the main thread.
+ * to 2000 periods). Run it away from the main thread. To stop a build, make the `checkCancelled`
+ * function of [build] throw an exception, for example `{ coroutineContext.ensureActive() }`.
  */
 object ErrorMapBuilder {
 
@@ -41,8 +42,15 @@ object ErrorMapBuilder {
     /**
      * Builds the map from [passes] (pass 1 to pass 5) and the optional [verification] pass.
      * Passes with no pairs are ignored.
+     *
+     * The builder calls [checkCancelled] between the steps and in the long steps. When the
+     * function throws an exception, the build stops and the exception goes to the caller.
      */
-    fun build(passes: List<RecordedPass>, verification: RecordedPass? = null): ErrorMapBuild {
+    fun build(
+        passes: List<RecordedPass>,
+        verification: RecordedPass? = null,
+        checkCancelled: () -> Unit = {},
+    ): ErrorMapBuild {
         val usable = passes.filter { !it.isEmpty }
         if (usable.isEmpty()) return ErrorMapBuild.NotEnoughData
         val deadBand = MapBuilderSteps.deadBand(usable)
@@ -50,13 +58,16 @@ object ErrorMapBuilder {
         val split = MapBuilderSteps.measureSplit(raw)
         val reduced = raw.map { medianByPosition(removeSplit(it, split)) }
         if (reduced.sumOf { it.size } < 2) return ErrorMapBuild.NotEnoughData
+        checkCancelled()
 
         val slope = MapBuilderSteps.slope(reduced.flatten())
         val targets = usable.flatMap { pass -> pass.pairs.map { it.target.toDouble() } }
         val pin = MapBuilderSteps.pin(targets, deadBand?.margin2 ?: 0.0)
         val detrended = reduced.map { pass -> pass.map { MapSample(it.position, it.delta - (it.position - pin) * slope) } }
         val folds = MapBuilderSteps.folds(detrended)
-        val k = MapBuilderSteps.selectK(folds)
+        checkCancelled()
+        val k = MapBuilderSteps.selectK(folds, checkCancelled)
+        checkCancelled()
         val levelNodes = fitNodes(k, detrended.flatten())
         val level = fitValue(levelNodes, pin)
         val leveled = detrended.map { pass -> pass.map { MapSample(it.position, it.delta - level) } }
@@ -64,8 +75,9 @@ object ErrorMapBuilder {
         if (nodes.isEmpty()) return ErrorMapBuild.NotEnoughData
         val frame = MapFrame(pin, level, slope, split?.atMidTravel)
 
+        checkCancelled()
         val heldOut = if (usable.size >= 2) {
-            wholePassResiduals(raw, k, pin)
+            wholePassResiduals(raw, k, pin, checkCancelled)
         } else {
             interleavedResiduals(folds, k)
         }
@@ -74,6 +86,8 @@ object ErrorMapBuilder {
         val rawRange = binMedianRange(all, binWidth)
         val correctedRange = binMedianRange(heldOut, binWidth)
         val repeatability = repeatability(leveled)
+        val periodicError = periodicError(leveled, checkCancelled)
+        checkCancelled()
 
         val statistics = ErrorMapStatistics(
             passCount = usable.size,
@@ -89,7 +103,7 @@ object ErrorMapBuilder {
             samplesPerNode = k,
             violations = MapValidation.validateErrorMap(nodes),
             directionSplitCounts = split?.atMidTravel,
-            periodicError = periodicError(leveled),
+            periodicError = periodicError,
             deadBand = deadBand,
             travelExtremes = travelExtremes(all),
             pinCounts = pin,
@@ -170,9 +184,10 @@ object ErrorMapBuilder {
      * makes the split, the slope, the level, and the nodes again from the other passes, with the
      * same pin and `K`. The residuals of the held-out pass use the formula of the verification.
      */
-    private fun wholePassResiduals(raw: List<PassSamples>, k: Int, pin: Double): List<MapSample> {
+    private fun wholePassResiduals(raw: List<PassSamples>, k: Int, pin: Double, checkCancelled: () -> Unit): List<MapSample> {
         val result = ArrayList<MapSample>()
         for (p in raw.indices) {
+            checkCancelled()
             val training = raw.filterIndexed { index, _ -> index != p }
             val split = MapBuilderSteps.measureSplit(training)
             val reduced = training.map { medianByPosition(removeSplit(it, split)) }.flatten()
@@ -272,18 +287,40 @@ object ErrorMapBuilder {
      *
      * - It needs at least 2 passes with at least 32 samples.
      * - The periods go from `max(4, 2 × median gap)` to `span / 3`. The frequency step is
-     *   `1 / (5 × span)`, with 1 to 2000 steps.
+     *   `1 / (5 × span)`, with 1 to 2000 steps ([periodScan]).
      * - For each pass, the best period has the largest fraction of the variance of a
-     *   least-squares fit `a·sin + b·cos + c`.
+     *   least-squares fit `a·sin + b·cos + c` ([bestPeriod]).
      * - All best periods must be within 10 % of their median. Each pass must have a variance
      *   fraction of 0.1 or more. The mean amplitude must be 1 count or more. The phase coherence
      *   (the length of the mean unit phase vector) must be 0.8 or more.
+     *
+     * The builder calls [checkCancelled] before each part of the scan of each pass.
      */
-    internal fun periodicError(passes: List<List<MapSample>>): PeriodicError? {
+    internal fun periodicError(passes: List<List<MapSample>>, checkCancelled: () -> Unit = {}): PeriodicError? {
         val eligible = passes.filter { it.size >= 32 }
         if (eligible.size < 2) return null
-        val all = eligible.flatten()
-        val unique = all.map { it.position }.distinct().sorted()
+        val scan = periodScan(eligible) ?: return null
+        val bests = eligible.map { pass -> bestPeriod(pass, scan, checkCancelled) ?: return null }
+        val medianPeriod = Stats.median(bests.map { it.period })!!
+        if (bests.any { abs(it.period - medianPeriod) > 0.1 * medianPeriod }) return null
+        if (bests.any { it.fraction < 0.1 }) return null
+        val meanAmplitude = bests.sumOf { it.amplitude } / bests.size
+        if (meanAmplitude < 1.0) return null
+        val coherence = hypot(bests.sumOf { cos(it.phase) } / bests.size, bests.sumOf { sin(it.phase) } / bests.size)
+        if (coherence < 0.8) return null
+        return PeriodicError(medianPeriod, meanAmplitude, bests.sumOf { it.fraction } / bests.size, bests.size)
+    }
+
+    /** The trial frequencies of the periodic error: `fMin + s × step`, for `s` from 0 to `steps − 1`. */
+    internal class PeriodScan(val fMin: Double, val step: Double, val steps: Int)
+
+    /** The best trial period of one pass: the variance fraction, the amplitude, and the phase of its fit. */
+    internal class PeriodBest(val period: Double, val fraction: Double, val amplitude: Double, val phase: Double)
+
+    /** The trial frequencies of the [eligible] passes, or null when the span is too short. */
+    internal fun periodScan(eligible: List<List<MapSample>>): PeriodScan? {
+        val unique = eligible.flatten().map { it.position }.distinct().sorted()
+        if (unique.isEmpty()) return null
         val gaps = (1 until unique.size).map { unique[it] - unique[it - 1] }
         val span = unique.last() - unique.first()
         if (span <= 0.0) return null
@@ -295,31 +332,121 @@ object ErrorMapBuilder {
         val nominalStep = 1.0 / (5.0 * span)
         val steps = (floor((fMax - fMin) / nominalStep).toLong() + 1).coerceIn(1, 2000).toInt()
         val step = if (steps > 1) (fMax - fMin) / (steps - 1) else 0.0
-        data class Best(val period: Double, val fraction: Double, val amplitude: Double, val phase: Double)
-        val bests = eligible.map { pass ->
-            var best: Best? = null
-            for (s in 0 until steps) {
-                val f = fMin + s * step
-                val fit = sineFit(pass, f) ?: continue
-                if (best == null || fit.first > best.fraction) {
-                    best = Best(1.0 / f, fit.first, fit.second, fit.third)
-                }
-            }
-            best ?: return null
-        }
-        val medianPeriod = Stats.median(bests.map { it.period })!!
-        if (bests.any { abs(it.period - medianPeriod) > 0.1 * medianPeriod }) return null
-        if (bests.any { it.fraction < 0.1 }) return null
-        val meanAmplitude = bests.sumOf { it.amplitude } / bests.size
-        if (meanAmplitude < 1.0) return null
-        val coherence = hypot(bests.sumOf { cos(it.phase) } / bests.size, bests.sumOf { sin(it.phase) } / bests.size)
-        if (coherence < 0.8) return null
-        return PeriodicError(medianPeriod, meanAmplitude, bests.sumOf { it.fraction } / bests.size, bests.size)
+        return PeriodScan(fMin, step, steps)
     }
 
     /**
-     * Fits `y = a·sin(2πfx) + b·cos(2πfx) + c` with least squares. Gives (variance fraction,
-     * amplitude `hypot(a, b)`, phase `atan2(b, a)`), or null for a singular system.
+     * The limit of a well-conditioned fit: the smallest eigenvalue of the covariance matrix of
+     * `(sin, cos)` divided by the number of samples. Below it, [bestPeriod] calculates the fit
+     * of that frequency directly.
+     */
+    private const val WELL_CONDITIONED: Double = 1e-3
+
+    /**
+     * Fits `y = a·sin(2πfx) + b·cos(2πfx) + c` with least squares at each trial frequency of
+     * [scan]. Gives the frequency with the largest variance fraction (the first one of equal
+     * values), or null when each system is singular.
+     *
+     * The normal equations need these sums at each frequency `f`: `Σ e^(iφ)`, `Σ y·e^(iφ)`, and
+     * `Σ e^(2iφ)`, with `φ = 2πfx`. [NonUniformFourier] calculates them for all frequencies
+     * together, because `φ = 2π·fMin·x + 2π·s·(step·x)` at the frequency number `s`. Then
+     * `Σ sin² = (n − Σ cos 2φ) / 2`, `Σ cos² = (n + Σ cos 2φ) / 2`, and
+     * `Σ sin·cos = Σ sin 2φ / 2`.
+     *
+     * The fit uses `y − mean(y)`. Then `c` goes out of the system, and `a` and `b` come from the
+     * 2 × 2 covariance matrix of `(sin, cos)`. The variance fraction is
+     * `(a·Σ(y − mean)·sin + b·Σ(y − mean)·cos) / Σ(y − mean)²`, with no second pass over the
+     * samples. These identities are true only for a well-conditioned system. For a frequency with
+     * an ill-conditioned system (see [WELL_CONDITIONED], for example the frequency `1 / (2 × gap)`
+     * of samples with a constant gap), the scan uses [sineFit], with `sin` and `cos` of each
+     * sample.
+     *
+     * The builder calls [checkCancelled] before each part of the scan.
+     */
+    internal fun bestPeriod(samples: List<MapSample>, scan: PeriodScan, checkCancelled: () -> Unit = {}): PeriodBest? {
+        val n = samples.size
+        if (n == 0) return null
+        val count = n.toDouble()
+        var sum = 0.0
+        for (sample in samples) sum += sample.delta
+        val mean = sum / count
+        val y = DoubleArray(n) { samples[it].delta - mean }
+        var total = 0.0
+        for (v in y) total += v * v
+        val turns = DoubleArray(n)
+        val doubleTurns = DoubleArray(n)
+        val baseRe = DoubleArray(n)
+        val baseIm = DoubleArray(n)
+        val doubleRe = DoubleArray(n)
+        val doubleIm = DoubleArray(n)
+        for (i in 0 until n) {
+            val x = samples[i].position
+            turns[i] = NonUniformFourier.frac(scan.step * x)
+            doubleTurns[i] = NonUniformFourier.frac(2.0 * scan.step * x)
+            val base = 2.0 * PI * NonUniformFourier.frac(scan.fMin * x)
+            baseRe[i] = cos(base)
+            baseIm[i] = sin(base)
+            val twice = 2.0 * PI * NonUniformFourier.frac(2.0 * scan.fMin * x)
+            doubleRe[i] = cos(twice)
+            doubleIm[i] = sin(twice)
+        }
+        checkCancelled()
+        val single = NonUniformFourier.sums(
+            turns,
+            listOf(baseRe, DoubleArray(n) { y[it] * baseRe[it] }),
+            listOf(baseIm, DoubleArray(n) { y[it] * baseIm[it] }),
+            scan.steps,
+        )
+        checkCancelled()
+        val double = NonUniformFourier.sums(doubleTurns, listOf(doubleRe), listOf(doubleIm), scan.steps)
+        checkCancelled()
+        var found = false
+        var bestFrequency = 0.0
+        var bestFraction = 0.0
+        var bestAmplitude = 0.0
+        var bestPhase = 0.0
+        for (s in 0 until scan.steps) {
+            val f = scan.fMin + s * scan.step
+            val sc = single[0][s]
+            val ss = single[1][s]
+            val syc = single[2][s]
+            val sys = single[3][s]
+            // The covariance matrix of (sin, cos). The fit of y − mean(y) needs only this 2 × 2 system.
+            val varS = (count - double[0][s]) / 2.0 - ss * ss / count
+            val varC = (count + double[0][s]) / 2.0 - sc * sc / count
+            val cov = double[1][s] / 2.0 - ss * sc / count
+            val smallest = (varS + varC) / 2.0 - hypot((varS - varC) / 2.0, cov)
+            val fraction: Double
+            val amplitude: Double
+            val phase: Double
+            if (smallest < WELL_CONDITIONED * count) {
+                val fit = sineFit(samples, f) ?: continue
+                fraction = fit.first
+                amplitude = fit.second
+                phase = fit.third
+            } else {
+                val det = varS * varC - cov * cov
+                val a = (varC * sys - cov * syc) / det
+                val b = (varS * syc - cov * sys) / det
+                fraction = if (total <= 0.0) 0.0 else (a * sys + b * syc) / total
+                amplitude = hypot(a, b)
+                phase = atan2(b, a)
+            }
+            if (!found || fraction > bestFraction) {
+                found = true
+                bestFrequency = f
+                bestFraction = fraction
+                bestAmplitude = amplitude
+                bestPhase = phase
+            }
+        }
+        return if (found) PeriodBest(1.0 / bestFrequency, bestFraction, bestAmplitude, bestPhase) else null
+    }
+
+    /**
+     * Fits `y = a·sin(2πfx) + b·cos(2πfx) + c` with least squares at one frequency, with `sin`
+     * and `cos` of each sample. Gives (variance fraction, amplitude `hypot(a, b)`, phase
+     * `atan2(b, a)`), or null for a singular system.
      */
     private fun sineFit(samples: List<MapSample>, frequency: Double): Triple<Double, Double, Double>? {
         val w = 2.0 * PI * frequency
