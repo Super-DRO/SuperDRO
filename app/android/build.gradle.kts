@@ -59,13 +59,9 @@ android {
             // With no keystore, the release build stays unsigned.
             signingConfigs.findByName("release")?.let { signingConfig = it }
         }
-
-        create("benchmark") {
-            isDebuggable = false
-            isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-        }
+        // The baselineProfile plugin makes the build types nonMinifiedRelease and
+        // benchmarkRelease from release, with the same R8 rules. Thus this file declares no
+        // benchmark build type of its own.
     }
 
     compileOptions {
@@ -92,9 +88,7 @@ android {
             project.layout.buildDirectory.dir("copiedRes").get().asFile.path
         )
         // The debug adapter is bound for each build type: src/debug imports the module of
-        // core:fake-adapter, src/release binds NoDebugAdapter. The benchmark type is a release
-        // build, so it uses the release copy.
-        getByName("benchmark").kotlin.directories.add("src/release/kotlin")
+        // core:fake-adapter, src/release binds NoDebugAdapter.
     }
 }
 

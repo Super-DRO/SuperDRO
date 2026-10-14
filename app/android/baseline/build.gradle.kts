@@ -24,11 +24,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        create("benchmark") {
-            matchingFallbacks += listOf("release")
-        }
-    }
+    // The baselineProfile plugin makes the build types nonMinifiedRelease and benchmarkRelease.
+    // They agree with the build types of the same names in app:android.
 
     targetProjectPath = ":app:android"
 }
