@@ -28,8 +28,8 @@ class WindowHolder {
 /**
  * Makes the DI graph of the desktop app: the common graph, the desktop
  * platform module (after the common graph, with the override of the `StoreIOProvider`), and the
- * app module. The graph opens the database file at once: the connection manager, the keep-alive
- * controller, and the demo profiles are eager singletons.
+ * app module. The graph opens the database file at once: the keep-alive controller and its
+ * connection manager are eager singletons. The graph makes the demo profiles in the background.
  *
  * @param store The files of the app.
  * @param serialPorts The serial ports of the system. A test gives a fake.

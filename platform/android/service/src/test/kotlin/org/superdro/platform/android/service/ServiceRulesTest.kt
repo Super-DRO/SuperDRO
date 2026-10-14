@@ -69,4 +69,12 @@ class ServiceRulesTest {
         assertFalse(BootStart.start { throw IllegalStateException("ForegroundServiceStartNotAllowedException") })
         assertFalse(BootStart.start { throw SecurityException("connectedDevice") })
     }
+
+    @Test
+    fun theTextsGoOutAgainOnlyInTheForegroundAndBeforeAStop() {
+        assertTrue(ConnectionServiceRules.repostsAfterTexts(inForeground = true, stopped = false))
+        assertFalse(ConnectionServiceRules.repostsAfterTexts(inForeground = false, stopped = false))
+        assertFalse(ConnectionServiceRules.repostsAfterTexts(inForeground = true, stopped = true))
+        assertFalse(ConnectionServiceRules.repostsAfterTexts(inForeground = false, stopped = true))
+    }
 }

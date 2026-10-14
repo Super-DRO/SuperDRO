@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -46,7 +47,7 @@ class MachineRepositoryDeviceTest {
     }
 
     private fun <T> withRepository(block: suspend (MachineRepository) -> T): T {
-        val driver = AndroidSqlDriverFactory(context, name = name).create()
+        val driver = AndroidSqlDriverFactory(context, name = name, checkDispatcher = Dispatchers.Unconfined).create()
         return try {
             runBlocking { block(MachineRepository(StoreWriter(createSuperDroDatabase(driver)), storeIO)) }
         } finally {

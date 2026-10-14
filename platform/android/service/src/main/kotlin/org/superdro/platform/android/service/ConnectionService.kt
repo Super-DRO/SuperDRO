@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.kodein.di.DI
 import org.kodein.di.DIAware
@@ -70,6 +69,7 @@ class ConnectionService : Service() {
     private var restoring = false
     private var restoreJob: Job? = null
     private var stopped = false
+    private var inForeground = false
     private var lastStartId = 0
 
     override fun onCreate() {
@@ -78,17 +78,10 @@ class ConnectionService : Service() {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         wakeLock = WakeLockController(PowerManagerWakeLock(this))
         fallbackTitle = applicationInfo.loadLabel(packageManager).toString()
-        // The first notification must go out at once in onStartCommand. The texts come from the
-        // assets of core:resources, a short read. A failure leaves the label of the app.
-        runBlocking {
-            withTimeoutOrNull(TEXT_TIMEOUT_MS) {
-                ConnectionNotificationChannel.create(this@ConnectionService, texts.channelName())
-                disconnectAllText = texts.disconnectAll()
-            }
-        }
-        if (disconnectAllText.isEmpty()) {
-            ConnectionNotificationChannel.create(this, fallbackTitle)
-        }
+        // The first notification must go out at once in onStartCommand. Thus the channel and the
+        // first notification use the label of the app, and the texts load in the background.
+        ConnectionNotificationChannel.createIfMissing(this, fallbackTitle)
+        loadTexts()
         collectSummary()
         collectWakeLock()
         log.i { "Service created" }
@@ -137,6 +130,24 @@ class ConnectionService : Service() {
         serviceState.onDestroyed(token)
         log.i { "Service destroyed" }
         super.onDestroy()
+    }
+
+    /**
+     * Loads the texts of `core:resources` on `Dispatchers.IO`: a read of the assets. Then the
+     * channel gets its name, and the notification gets the action text. A failure leaves the
+     * label of the app.
+     */
+    private fun loadTexts() {
+        scope.launch {
+            val loaded = NotificationTexts.load(texts, Dispatchers.IO)
+            if (loaded == null) {
+                log.w { "The texts of the notification did not load" }
+                return@launch
+            }
+            ConnectionNotificationChannel.create(this@ConnectionService, loaded.channelName)
+            disconnectAllText = loaded.disconnectAll
+            if (ConnectionServiceRules.repostsAfterTexts(inForeground, stopped)) notifySafely(notification())
+        }
     }
 
     private fun collectSummary() {
@@ -205,6 +216,7 @@ class ConnectionService : Service() {
             notification(),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE,
         )
+        inForeground = true
         serviceState.onForeground(token)
         true
     } catch (error: IllegalStateException) {
@@ -227,6 +239,7 @@ class ConnectionService : Service() {
     private fun stopNow() {
         if (stopped) return
         stopped = true
+        inForeground = false
         serviceState.onStopping(token)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf(lastStartId)
@@ -245,8 +258,6 @@ class ConnectionService : Service() {
 
     companion object {
         private val log = Arbor.tag("ConnectionService")
-
-        private const val TEXT_TIMEOUT_MS = 2000L
 
         /** Gives an explicit intent for this service with [action]. */
         fun intent(context: Context, action: String): Intent =

@@ -29,15 +29,20 @@ interface Presenter : AutoCloseable {
 }
 
 /**
- * The context of the presenters: the dispatcher of their scopes and the clock of their timers.
- * `core:di` binds one value. A test gives a test dispatcher and a clock of the virtual time.
+ * The context of the presenters: the dispatcher of their scopes, the dispatcher of their blocking
+ * file IO, and the clock of their timers. `core:di` binds one value. A test gives a test dispatcher
+ * and a clock of the virtual time.
  *
  * @property dispatcher The context of each presenter scope.
  * @property clock A monotonic clock in milliseconds, for example the time of the app start.
+ * @property fileDispatcher The context of a blocking read or write of a file. `core:di` gives
+ *   `Dispatchers.IO`. The default is [dispatcher], so a test with a test dispatcher keeps the
+ *   virtual time.
  */
 class PresenterContext(
     val dispatcher: CoroutineContext = Dispatchers.Default,
     val clock: Clock = MonotonicClock(),
+    val fileDispatcher: CoroutineContext = dispatcher,
 )
 
 /**
