@@ -112,6 +112,9 @@ internal class LinkSession(
     private val _device = MutableStateFlow(initial)
     private val _state = MutableStateFlow<SessionState>(SessionState.Disconnected)
     private val _inputs = MutableStateFlow(InputSnapshot.EMPTY)
+    // No DROP_OLDEST: each probe event is a measurement, and a collector must not lose an old one
+    // with no notice. The session gives the events with tryEmit, so that a collector that stops
+    // cannot stop the parse. See emitProbes.
     private val _probeEvents = MutableSharedFlow<ProbeEvent>(extraBufferCapacity = PROBE_BUFFER)
     private val _samples = MutableSharedFlow<ChannelValue>(
         extraBufferCapacity = DeviceSession.SAMPLE_BUFFER,
@@ -177,6 +180,7 @@ internal class LinkSession(
     private var restartState = AdapterRestartState.Idle
     private var restartNeeded: Set<InputChannel> = emptySet()
     private var adapterRestarts = 0
+    private var droppedProbeEvents = 0L
     private var busy: Set<InputChannel> = emptySet()
     private var detailsOpen = false
     private var values = AdapterValues()
@@ -598,7 +602,7 @@ internal class LinkSession(
 
     // The inbound data.
 
-    private suspend fun onChunk(current: Link, bytes: ByteArray) {
+    private fun onChunk(current: Link, bytes: ByteArray) {
         val now = clock.nowMs()
         current.sink?.write(RecordedChunk(now - current.openedAtMs, bytes.copyOf()))
         // Each segment ends at `;`, so a state change in a message applies before the next message.
@@ -614,7 +618,7 @@ internal class LinkSession(
         if (link === current) _inputs.value = stage.snapshot
     }
 
-    private suspend fun feed(current: Link, bytes: ByteArray, offset: Int, length: Int, now: Long) {
+    private fun feed(current: Link, bytes: ByteArray, offset: Int, length: Int, now: Long) {
         val messages = current.messages
         messages.clear()
         current.parser.feed(bytes, offset, length, now, messages)
@@ -628,7 +632,7 @@ internal class LinkSession(
         }
     }
 
-    private suspend fun onMessage(current: Link, message: AdapterMessage, now: Long) {
+    private fun onMessage(current: Link, message: AdapterMessage, now: Long) {
         if (message.isValid) {
             current.lastValidMs = now
             when (_state.value) {
@@ -697,8 +701,21 @@ internal class LinkSession(
         poke()
     }
 
-    private suspend fun emitProbes(events: List<ProbeEvent>) {
-        events.forEach { event -> _probeEvents.emit(event) }
+    /**
+     * Gives [events] to the collectors with no wait. The buffer holds [PROBE_BUFFER] events for the
+     * slowest collector. Only a collector that stopped fills it. Then the session drops the new
+     * event and logs it: the readout positions must not stop for a collector that stopped.
+     */
+    private fun emitProbes(events: List<ProbeEvent>) {
+        for (index in events.indices) {
+            val event = events[index]
+            if (!_probeEvents.tryEmit(event)) {
+                droppedProbeEvents += 1
+                if (droppedProbeEvents % PROBE_DROP_LOG_INTERVAL == 1L) {
+                    log.w { "$id: probe event ${event.sequence} dropped: a collector is $PROBE_BUFFER events late ($droppedProbeEvents dropped)" }
+                }
+            }
+        }
     }
 
     // The command queue.
@@ -906,7 +923,7 @@ internal class LinkSession(
         return maxOf(current.lastWriteMs ?: since, since) + timing.belPeriodMs
     }
 
-    private suspend fun runDue(now: Long) {
+    private fun runDue(now: Long) {
         restartCloseAtMs?.let { at ->
             if (at <= now) {
                 restartCloseAtMs = null
@@ -1036,6 +1053,7 @@ internal class LinkSession(
         val NO_DATA_RECOVERY_KINDS: Set<TransportKind> = setOf(TransportKind.BluetoothSpp, TransportKind.Tcp)
 
         private const val PROBE_BUFFER = 1024
+        private const val PROBE_DROP_LOG_INTERVAL = 256L
         private const val MESSAGE_BUFFER = 256
         private const val EVENT_BUFFER = 64
         private const val MAX_RUNS_AT_ONE_TIME = 1000
