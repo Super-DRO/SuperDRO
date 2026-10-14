@@ -20,6 +20,7 @@ class TabStatusRulesTest {
     fun eachStateHasAnIconATextAndRoles() = runTest {
         check(SessionState.Connected(0L), TabStatusIcon.Connected, "Connected", StatusRoles.Connected)
         check(SessionState.Connecting(1), TabStatusIcon.Progress, "Connecting", StatusRoles.Reconnect)
+        check(SessionState.Connecting(3), TabStatusIcon.Reconnecting, "Reconnecting (3)", StatusRoles.Reconnect)
         check(SessionState.AwaitingData, TabStatusIcon.Progress, "Waiting for data", StatusRoles.Reconnect)
         check(SessionState.Reconnecting(2, 5_000L, LinkFailure.Lost), TabStatusIcon.Reconnecting, "Reconnecting (2)", StatusRoles.Reconnect)
         check(SessionState.NoData, TabStatusIcon.Warning, "No data", StatusRoles.Reconnect)
@@ -36,6 +37,8 @@ class TabStatusRulesTest {
     @Test
     fun theReconnectingStatusKeepsTheAttemptNumber() {
         assertEquals(4, TabStatusRules.of(SessionState.Reconnecting(4, 0L, LinkFailure.Refused)).attempt)
+        assertEquals(3, TabStatusRules.of(SessionState.Connecting(3)).attempt)
+        assertEquals(null, TabStatusRules.of(SessionState.Connecting(1)).attempt)
         assertEquals(null, TabStatusRules.of(SessionState.Connected(0L)).attempt)
     }
 }

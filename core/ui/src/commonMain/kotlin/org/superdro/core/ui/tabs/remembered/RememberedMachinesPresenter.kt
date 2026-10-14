@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.connection.DeviceRef
+import org.superdro.core.connection.LinkFailure
+import org.superdro.core.connection.SessionState
 import org.superdro.core.model.AdapterAddress
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.TransportKind
@@ -21,6 +23,8 @@ import org.superdro.core.store.repository.MachineRepository
 import org.superdro.core.ui.presenter.PresenterContext
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.session.Connections
+import org.superdro.core.ui.tabs.TabStatus
+import org.superdro.core.ui.tabs.TabStatusRules
 
 /** The state of a remembered machine in the pane. */
 enum class MachineLinkState {
@@ -39,6 +43,11 @@ enum class MachineLinkState {
  *
  * @property transport The link type of the profile, or null when the profile has no link.
  * @property address The address text, or null when the profile has no link.
+ * @property link The status of a session that tries to connect ([MachineLinkState.Offline] with
+ *   the session in `Connecting`, `Reconnecting`, `WaitingForDevice`, or `Failed`), for example
+ *   "Reconnecting (3)" or "Bluetooth off". Null in each other case: the pane then shows [state].
+ * @property lastCause The cause of the last failure while the session connects again, or null.
+ *   The status of `WaitingForDevice` and `Failed` shows the cause, so this value is then null.
  */
 @Immutable
 data class RememberedMachineRow(
@@ -47,6 +56,8 @@ data class RememberedMachineRow(
     val transport: TransportKind?,
     val address: String?,
     val state: MachineLinkState,
+    val link: TabStatus? = null,
+    val lastCause: LinkFailure? = null,
 )
 
 /**
@@ -63,7 +74,9 @@ data class RememberedMachinesUiState(
 /**
  * The presenter of the remembered machines pane: one row for each remembered
  * machine with its name, link type, address, and state
- * ("online", "offline", or "paused"), and the actions Connect, Pause, Edit, and Remove.
+ * ("online", "offline", or "paused"), and the actions Connect, Pause, Edit, and Remove. While the
+ * session of an offline machine tries to connect, the row shows the status of the session (for
+ * example "Reconnecting (3)") and the cause of the last failure, not "offline".
  *
  * "Remove" asks first. It stops the session and removes the machine from the remembered list. The
  * machine profile stays in the machine profiles.
@@ -79,6 +92,9 @@ class RememberedMachinesPresenter(
     private val state = MutableStateFlow(RememberedMachinesUiState())
     private var profiles: Map<String, MachineProfile> = emptyMap()
 
+    /** The cause of the last failure of each session, until the session is online or stops. */
+    private val causes = HashMap<DeviceId, LinkFailure>()
+
     /** The state of the pane. */
     val uiState: StateFlow<RememberedMachinesUiState> = state.asStateFlow()
 
@@ -93,23 +109,46 @@ class RememberedMachinesPresenter(
         scope.launch {
             combine(tabStore.state, machines.profiles(), sessionStates) { tabs, profileList, states ->
                 profiles = profileList.associateBy { profile -> profile.id }
+                rememberCauses(states)
                 tabs.remembered.map { machine ->
                     val profile = profiles[machine.profileId]
                     val sessionState = states[DeviceId(machine.profileId)]
+                    val linkState = when {
+                        machine.paused -> MachineLinkState.Paused
+                        sessionState?.isOnline == true -> MachineLinkState.Online
+                        else -> MachineLinkState.Offline
+                    }
+                    val trying = linkState == MachineLinkState.Offline && sessionState != null && sessionState != SessionState.Disconnected
+                    val reconnects = sessionState is SessionState.Connecting || sessionState is SessionState.Reconnecting
                     RememberedMachineRow(
                         profileId = machine.profileId,
                         name = profile?.name ?: machine.profileId,
                         transport = profile?.adapter?.kind,
                         address = profile?.adapter?.let(::addressText),
-                        state = when {
-                            machine.paused -> MachineLinkState.Paused
-                            sessionState?.isOnline == true -> MachineLinkState.Online
-                            else -> MachineLinkState.Offline
-                        },
+                        state = linkState,
+                        link = if (trying) sessionState?.let(TabStatusRules::of) else null,
+                        lastCause = if (trying && reconnects) causes[DeviceId(machine.profileId)] else null,
                     )
                 }
             }.collect { rows ->
                 state.update { old -> old.copy(rows = rows, confirmRemove = old.confirmRemove?.let { open -> rows.firstOrNull { it.profileId == open.profileId } }) }
+            }
+        }
+    }
+
+    /**
+     * Keeps the cause of the last failure of each session. A session that is online, or that the
+     * user stopped, has no last cause.
+     */
+    private fun rememberCauses(states: Map<DeviceId, SessionState>) {
+        causes.keys.retainAll(states.keys)
+        states.forEach { (id, state) ->
+            when (state) {
+                is SessionState.Reconnecting -> causes[id] = state.cause
+                is SessionState.WaitingForDevice -> causes[id] = state.cause
+                is SessionState.Failed -> causes[id] = state.cause
+                is SessionState.Connecting -> Unit
+                else -> causes.remove(id)
             }
         }
     }

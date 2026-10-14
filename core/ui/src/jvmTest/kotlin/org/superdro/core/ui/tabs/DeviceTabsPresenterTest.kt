@@ -53,7 +53,8 @@ class DeviceTabsPresenterTest {
     fun aTabShowsWhileItsSessionIsOnline() = runTest {
         val harness = Harness(this)
         val mill = harness.machine("Mill")
-        val session = harness.session(mill, "Mill", SessionState.Connecting(1))
+        // A session that is already in a reconnect series when the presenter sees it has no tab.
+        val session = harness.session(mill, "Mill", SessionState.Reconnecting(1, 1_000L, LinkFailure.Refused))
         runCurrent()
         assertEquals(emptyList(), harness.names)
         session.state.value = SessionState.AwaitingData
@@ -269,7 +270,7 @@ class DeviceTabsPresenterTest {
         val mill = harness.machine("Mill")
         val lathe = harness.machine("Lathe", MachineType.Lathe)
         harness.session(mill, "Mill", SessionState.Connected(0L))
-        val latheSession = harness.session(lathe, "Lathe", SessionState.Connecting(1))
+        val latheSession = harness.session(lathe, "Lathe", SessionState.Reconnecting(1, 1_000L, LinkFailure.Refused))
         runCurrent()
         harness.store.tabs.select(lathe.value)
         runCurrent()
@@ -310,6 +311,109 @@ class DeviceTabsPresenterTest {
         harness.store.machines.renameProfile(mill.value, "Bridgeport")
         runCurrent()
         assertEquals(listOf("Bridgeport"), harness.names)
+        harness.close()
+    }
+
+    @Test
+    fun aNewSessionShowsATabWhileItConnects() = runTest {
+        val harness = Harness(this)
+        val mill = harness.machine("Mill")
+        val session = harness.session(mill, "Mill", SessionState.Connecting(1))
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+        assertEquals(mill, harness.presenter.uiState.value.selected)
+        val tab = harness.presenter.uiState.value.tabs.single()
+        assertEquals("Connecting", tab.status.text.english())
+        assertEquals(false, tab.inGrace)
+        // A Bluetooth connect can take a long time. The tab stays while the first attempt runs.
+        advanceTimeBy(40_000L)
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+        assertEquals(emptyList(), messages(harness))
+        harness.close()
+    }
+
+    @Test
+    fun aNewSessionThatCannotConnectHidesItsTabAfterTheGraceTimeWithAMessage() = runTest {
+        val harness = Harness(this)
+        val mill = harness.machine("Mill")
+        val session = harness.session(mill, "Mill", SessionState.Connecting(1))
+        runCurrent()
+        advanceTimeBy(30_000L)
+        session.state.value = SessionState.Reconnecting(1, 31_000L, LinkFailure.Refused)
+        runCurrent()
+        val tab = harness.presenter.uiState.value.tabs.single()
+        assertEquals("Reconnecting (1)", tab.status.text.english())
+        assertTrue(tab.inGrace)
+        assertEquals(emptyList(), messages(harness), "No message while the tab shows the status")
+        advanceTimeBy(1_000L)
+        session.state.value = SessionState.Connecting(2)
+        runCurrent()
+        assertEquals("Reconnecting (2)", harness.presenter.uiState.value.tabs.single().status.text.english())
+        advanceTimeBy(8_999L)
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+        advanceTimeBy(1L)
+        runCurrent()
+        assertEquals(emptyList(), harness.names)
+        assertEquals(listOf("Mill: Could not connect. SuperDRO tries again in the background."), messages(harness))
+        // The session continues to try. The tab does not come back until the session is online.
+        session.state.value = SessionState.Reconnecting(2, 70_000L, LinkFailure.Refused)
+        runCurrent()
+        session.state.value = SessionState.Connecting(3)
+        runCurrent()
+        assertEquals(emptyList(), harness.names)
+        session.state.value = SessionState.AwaitingData
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+        harness.close()
+    }
+
+    @Test
+    fun aNewSessionThatComesOnlineAfterAFailureKeepsItsTab() = runTest {
+        val harness = Harness(this)
+        val mill = harness.machine("Mill")
+        val session = harness.session(mill, "Mill", SessionState.Connecting(1))
+        runCurrent()
+        session.state.value = SessionState.WaitingForDevice(LinkFailure.RadioOff)
+        runCurrent()
+        assertEquals("Bluetooth off", harness.presenter.uiState.value.tabs.single().status.text.english())
+        advanceTimeBy(4_000L)
+        session.state.value = SessionState.Connecting(1)
+        runCurrent()
+        session.state.value = SessionState.Connected(5_000L)
+        runCurrent()
+        advanceTimeBy(20_000L)
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+        assertEquals(false, harness.presenter.uiState.value.tabs.single().inGrace)
+        assertEquals(emptyList(), messages(harness))
+        // After the session was online, a link loss has the rules of a lost link.
+        session.state.value = SessionState.Reconnecting(1, 26_000L, LinkFailure.Lost)
+        runCurrent()
+        advanceTimeBy(10_000L)
+        runCurrent()
+        assertEquals(emptyList(), harness.names)
+        assertEquals(listOf("Mill: Reconnecting", "Mill: Could not restore the link"), messages(harness))
+        harness.close()
+    }
+
+    @Test
+    fun aConnectOfAPausedMachineShowsItsTabAtOnceAndADisconnectHidesIt() = runTest {
+        val harness = Harness(this)
+        val mill = harness.machine("Mill")
+        val session = harness.session(mill, "Mill", SessionState.Disconnected)
+        runCurrent()
+        assertEquals(emptyList(), harness.names)
+        session.state.value = SessionState.Connecting(1)
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+        session.state.value = SessionState.Disconnected
+        runCurrent()
+        assertEquals(emptyList(), harness.names)
+        advanceTimeBy(20_000L)
+        runCurrent()
+        assertEquals(emptyList(), messages(harness))
         harness.close()
     }
 }
