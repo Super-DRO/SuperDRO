@@ -98,8 +98,14 @@ class ErrorMapWizard(
     fun offer(target: Long, reference: Long, timeMs: Long): Boolean =
         recorder?.offer(target, reference, timeMs) ?: false
 
-    /** Gives the pass that records now, or null. */
+    /**
+     * Gives the pass that records now, or null. This function copies all the pairs. Use
+     * [currentSize] for the number of pairs.
+     */
     fun currentPass(): RecordedPass? = recorder?.snapshot()
+
+    /** The number of pairs of the pass that records now, or 0. This property does not copy the pairs. */
+    val currentSize: Int get() = recorder?.size ?: 0
 
     /**
      * Stops the pass that records ("Stop"). Gives the recorded pass, or null. A pass with no

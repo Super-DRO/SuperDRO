@@ -55,7 +55,9 @@ interface DeviceSession {
     /**
      * Each accepted probe activation with the positions that the input stage latched in stream
      * order. The flow is buffered and not conflated, so that two closures close together
-     * are both delivered.
+     * are both delivered. The buffer holds 1024 events for the slowest collector. When a
+     * collector is more late, the session drops the new events and logs them, so that the parse
+     * of the positions does not stop.
      */
     val probeEvents: SharedFlow<ProbeEvent>
 

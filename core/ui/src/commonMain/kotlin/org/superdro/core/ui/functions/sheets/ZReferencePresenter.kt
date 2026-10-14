@@ -19,6 +19,7 @@ import org.superdro.core.ui.functions.common.LengthFieldState
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.ReadoutPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.text.toUiText
 
@@ -52,6 +53,9 @@ data class ZReferenceUiState(
  *
  * "Apply" is disabled when Z is not enabled or the session is not `Connected`. The automatic mode
  * is a part of the graphics area.
+ *
+ * The state uses no live position: only a change of the profile, the workspace, or the session
+ * makes it again. "Apply" reads the live frame of the readout.
  */
 class ZReferencePresenter(
     private val readout: TabReadout,
@@ -59,6 +63,8 @@ class ZReferencePresenter(
 ) : ScopedPresenter(services.context) {
 
     private val mutable = MutableStateFlow(ZReferenceUiState())
+
+    /** The last frame with a new structure. Its readings can be old. */
     private var frame: ReadoutFrame? = null
     private var session: SessionState? = null
     private var initialized = false
@@ -68,7 +74,7 @@ class ZReferencePresenter(
 
     init {
         scope.launch {
-            combine(readout.frame, readout.sessionState) { current, state -> current to state }.collect { (current, state) ->
+            combine(readout.frame.structure(), readout.sessionState) { current, state -> current to state }.collect { (current, state) ->
                 frame = current
                 session = state
                 if (current == null) return@collect
@@ -117,7 +123,8 @@ class ZReferencePresenter(
      * write of the profile, so the write ends before the sheet closes.
      */
     suspend fun onApply(): Boolean {
-        val current = frame ?: return false
+        if (frame == null) return false
+        val current = readout.frame.value ?: return false
         val state = mutable.value
         val desired = state.desiredZ.valueUm
         if (desired != null && desired.isNaN()) {

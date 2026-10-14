@@ -1,6 +1,7 @@
 package org.superdro.app.android
 
 import android.app.Application
+import android.os.StrictMode
 import com.toxicbakery.logging.Arbor
 import com.toxicbakery.logging.LogCatSeedling
 import org.kodein.di.DI
@@ -37,9 +38,31 @@ class SuperDroApplication : Application(), DIAware {
     override fun onCreate() {
         super.onCreate()
         if (CameraProcess.isAuxiliary(this)) return
+        if (BuildConfig.DEBUG) enableStrictMode()
         // The Arbor logs: Logcat in a debug build. The log screen adds its own seedling.
         if (BuildConfig.DEBUG) Arbor.sow(LogCatSeedling())
         log.d { "Application started, version ${BuildConfig.VERSION_NAME}" }
+    }
+
+    /**
+     * The StrictMode policies of a debug build. Logcat shows each disk read and each disk write
+     * on the main thread, and each closable object that the app did not close. A release build
+     * does not call this function, so R8 removes it.
+     */
+    private fun enableStrictMode() {
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectDiskReads()
+                .detectDiskWrites()
+                .penaltyLog()
+                .build(),
+        )
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder()
+                .detectLeakedClosableObjects()
+                .penaltyLog()
+                .build(),
+        )
     }
 
     private companion object {

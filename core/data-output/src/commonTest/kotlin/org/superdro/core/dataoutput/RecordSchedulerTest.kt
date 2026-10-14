@@ -29,7 +29,7 @@ class RecordSchedulerTest {
         val sent = mutableListOf<Pair<Long, Double?>>()
         val scheduler = RecordScheduler(cadence, intervalMs, maxRateHz, Clock { testScheduler.currentTime })
         backgroundScope.launch {
-            scheduler.run(values, formatter::valueTexts) { current -> sent += testScheduler.currentTime to current.xAbsolute }
+            scheduler.run(values, formatter::valueTexts) { current, _ -> sent += testScheduler.currentTime to current.xAbsolute }
         }
         runCurrent()
         return Run(values, sent)
@@ -142,6 +142,40 @@ class RecordSchedulerTest {
         assertEquals(1, run.sent.size)
         at(333)
         run.expect(0L to 1000.0, 333L to 2000.0)
+    }
+
+    @Test
+    fun eachValuesObjectGetsItsTextsOnlyOneTimeAndTheSendGetsTheSameTexts() = runTest {
+        for (cadence in DataOutputCadence.entries) {
+            val values = MutableStateFlow(OutputValues(xAbsolute = 0.0, yAbsolute = 0.0, zAbsolute = 0.0))
+            val formatted = mutableListOf<OutputValues>()
+            val sent = mutableListOf<Pair<OutputValues, List<String?>>>()
+            val scheduler = RecordScheduler(cadence, 100L, 20, Clock { testScheduler.currentTime })
+            val job = backgroundScope.launch {
+                scheduler.run(
+                    values,
+                    { current -> formatted += current; formatter.valueTexts(current) },
+                ) { current, texts -> sent += current to texts }
+            }
+            runCurrent()
+            values.value = values.value.copy(xAbsolute = 1000.0)
+            runCurrent()
+            advanceTimeBy(30L)
+            values.value = values.value.copy(xAbsolute = 2000.0)
+            advanceTimeBy(300L)
+            runCurrent()
+            job.cancel()
+            assertTrue(sent.isNotEmpty(), "$cadence")
+            sent.forEach { (current, texts) -> assertEquals(formatter.valueTexts(current), texts, "$cadence") }
+            // Each values object goes to the text function at most one time.
+            assertEquals(formatted.size, formatted.map { current -> IdentityKey(current) }.toSet().size, "$cadence")
+        }
+    }
+
+    /** Compares the values objects by identity. */
+    private class IdentityKey(val value: Any) {
+        override fun equals(other: Any?): Boolean = other is IdentityKey && other.value === value
+        override fun hashCode(): Int = value.hashCode()
     }
 
     @Test

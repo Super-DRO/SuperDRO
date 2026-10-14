@@ -23,6 +23,9 @@ class FakeProbeAppScenariosTest {
         runCurrent()
         advanceTimeBy(30_999)
         runCurrent()
+        // The record gets the chunks in batches. The close of the link gives the last batch.
+        h.manager.disconnectAll()
+        runCurrent()
         // The readout frames: the answers to the start queries of the session are other chunks.
         val chunks = h.records.getValue(1).filter { chunk -> chunk.bytes.decodeToString().contains('X') }
         val probe = chunks.associate { chunk ->
@@ -40,8 +43,6 @@ class FakeProbeAppScenariosTest {
         val closures = probe.entries.zipWithNext().count { (a, b) -> a.value == 0 && b.value == 1 && b.key in 20_000L until 30_000L }
         assertEquals(10, closures)
         assertEquals(30_000L, TimedProbe.T09.cycleMs)
-        h.manager.disconnectAll()
-        runCurrent()
     }
 
     @Test

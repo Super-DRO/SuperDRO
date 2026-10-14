@@ -2,6 +2,7 @@ package org.superdro.core.ui.camera
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -43,6 +44,7 @@ fun CrosshairOverlay(
     modifier: Modifier = Modifier,
 ) {
     val measurer = rememberTextMeasurer()
+    val labelStyle = remember(color) { TextStyle(color = color, fontSize = 11.sp) }
     Canvas(modifier.testTag(CROSSHAIRS_TAG)) {
         val layout: CrosshairLayout = Crosshairs.layout(
             viewWidth = size.width.toDouble(),
@@ -59,7 +61,6 @@ fun CrosshairOverlay(
         drawLine(color, Offset(center.x - halfWidth, center.y), Offset(center.x + halfWidth, center.y), stroke)
         drawLine(color, Offset(center.x, center.y - halfHeight), Offset(center.x, center.y + halfHeight), stroke)
         val inch = DP_PER_INCH * density
-        val labelStyle = TextStyle(color = color, fontSize = 11.sp)
         layout.ticks.forEach { tick: CrosshairTick ->
             val half = (tick.level.lengthOfXdpi * inch / 2.0).toFloat()
             val offset = tick.offsetPx.toFloat()

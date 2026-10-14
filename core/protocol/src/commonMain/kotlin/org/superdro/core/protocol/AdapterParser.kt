@@ -57,17 +57,26 @@ class AdapterParser(val timeBase: TimeBase = TimeBase()) {
 
     /** Parses [length] bytes of [bytes] from [offset] that arrived at [arrivalTimeMs]. */
     fun feed(bytes: ByteArray, offset: Int, length: Int, arrivalTimeMs: Long): List<AdapterMessage> {
+        val messages = ArrayList<AdapterMessage>()
+        feed(bytes, offset, length, arrivalTimeMs, messages)
+        return messages
+    }
+
+    /**
+     * Parses [length] bytes of [bytes] from [offset] that arrived at [arrivalTimeMs] and adds the
+     * complete messages to [out], in their order. The parser does not clear [out]. A caller that
+     * parses a high rate of chunks can use one list again for each chunk.
+     */
+    fun feed(bytes: ByteArray, offset: Int, length: Int, arrivalTimeMs: Long, out: MutableList<AdapterMessage>) {
         require(offset >= 0 && length >= 0 && offset + length <= bytes.size) {
             "The range $offset + $length is not in a buffer of ${bytes.size} bytes."
         }
         arrivalMs = arrivalTimeMs
-        val messages = ArrayList<AdapterMessage>()
         for (index in offset until offset + length) {
             val code = bytes[index].toInt() and 0xFF
             if (code < FIRST_PRINTABLE || code > LAST_PRINTABLE) continue
-            accept(code.toChar(), messages)
+            accept(code.toChar(), out)
         }
-        return messages
     }
 
     /** Parses the UTF-8 bytes of [text]. Each byte that is not printable ASCII is dropped (rule 1). */

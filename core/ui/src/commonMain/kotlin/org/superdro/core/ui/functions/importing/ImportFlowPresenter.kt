@@ -51,10 +51,12 @@ import org.superdro.core.store.files.settings.SettingsImporter
 import org.superdro.core.store.files.settings.SettingsTarget
 import org.superdro.core.store.files.subdatum.SubDatumCsvImporter
 import org.superdro.core.store.files.subdatum.SubDatumImportContext
+import org.superdro.core.store.files.subdatum.SubDatumImportPlan
 import org.superdro.core.store.files.subdatum.SubDatumImportPreview
 import org.superdro.core.store.files.subdatum.SubDatumItem
 import org.superdro.core.store.files.tool.ToolCsvImporter
 import org.superdro.core.store.files.tool.ToolImportContext
+import org.superdro.core.store.files.tool.ToolImportPlan
 import org.superdro.core.store.files.tool.ToolImportPreview
 import org.superdro.core.ui.functions.common.LengthTexts
 import org.superdro.core.ui.functions.common.loadString
@@ -344,7 +346,7 @@ class ImportFlowPresenter(
     // The writes
 
     private suspend fun writeTools(current: Pending.Tools): Outcome {
-        val plan = current.preview.plan(current.operation ?: current.preview.defaultOperation ?: ImportOperation.AddAsNew)
+        val plan = current.plan(current.operation ?: current.preview.defaultOperation ?: ImportOperation.AddAsNew)
         if (plan.deleteIds.isNotEmpty()) services.tools.deleteTools(plan.deleteIds)
         services.tools.saveTools(profileId, plan.add + plan.update)
         val message = plan.finishedMessage
@@ -353,7 +355,7 @@ class ImportFlowPresenter(
 
     /** Writes the plan of a sub-datum file in one transaction: the delete (REPLACE_ALL), the points, and the guides. */
     private suspend fun writeSubDatums(current: Pending.SubDatums): Outcome {
-        val plan = current.preview.plan(current.operation ?: current.preview.defaultOperation ?: ImportOperation.AddAsNew)
+        val plan = current.plan(current.operation ?: current.preview.defaultOperation ?: ImportOperation.AddAsNew)
         services.machines.applySubDatumImport(current.workspaceId, plan)
         val message = plan.finishedMessage
         return Outcome(message.key.toUiText(*message.args.toTypedArray()), plan.report)
@@ -439,7 +441,7 @@ class ImportFlowPresenter(
             is Pending.Tools -> {
                 val operation = next.operation ?: next.preview.defaultOperation
                 next.operation = operation
-                val plan = next.preview.plan(operation ?: ImportOperation.AddAsNew)
+                val plan = next.plan(operation ?: ImportOperation.AddAsNew)
                 val format = next.profile.display.readoutFormat
                 base(next, next.preview.problems, next.preview.usable, next.preview.metadata.source, next.preview.metadata.profile, next.preview.metadata.exported).copy(
                     toImport = plan.preview.toImport.map { row -> toolRow(row, next.profile.metricDefault, format) },
@@ -452,7 +454,7 @@ class ImportFlowPresenter(
             is Pending.SubDatums -> {
                 val operation = next.operation ?: next.preview.defaultOperation
                 next.operation = operation
-                val plan = next.preview.plan(operation ?: ImportOperation.AddAsNew)
+                val plan = next.plan(operation ?: ImportOperation.AddAsNew)
                 val metric = next.preview.metric
                 base(next, next.preview.problems, next.preview.usable, next.preview.metadata.source, next.preview.metadata.profile, next.preview.metadata.exported).copy(
                     toImport = plan.preview.toImport.map { row -> subDatumRow(row, metric) },
@@ -576,6 +578,10 @@ class ImportFlowPresenter(
 
         class Tools(fileName: String, val preview: ToolImportPreview, val profile: MachineProfile) : Pending(fileName, ImportKind.ToolCsv) {
             override val operations: List<ImportOperation> get() = preview.operations
+            private val plans = HashMap<ImportOperation, ToolImportPlan>()
+
+            /** The plan of [operation]. The preview and the write use the same plan, thus it is calculated one time. */
+            fun plan(operation: ImportOperation): ToolImportPlan = plans.getOrPut(operation) { preview.plan(operation) }
         }
 
         class SubDatums(
@@ -586,6 +592,10 @@ class ImportFlowPresenter(
             val workspaceId: String,
         ) : Pending(fileName, ImportKind.SubDatumCsv) {
             override val operations: List<ImportOperation> get() = preview.operations
+            private val plans = HashMap<ImportOperation, SubDatumImportPlan>()
+
+            /** The plan of [operation]. The preview and the write use the same plan, thus it is calculated one time. */
+            fun plan(operation: ImportOperation): SubDatumImportPlan = plans.getOrPut(operation) { preview.plan(operation) }
         }
 
         class Settings(

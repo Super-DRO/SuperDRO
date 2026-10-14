@@ -45,6 +45,25 @@ data class ToolOutline(val geometry: ToolGeometry, val anchor: PointUm)
 data class ThreadOutline(val polylines: List<List<PointUm>>)
 
 /**
+ * Keeps the thread outline of the last thread spec. A new readout frame with the same armed
+ * thread then gives the same [ThreadOutline] and builds no polylines. The scene flow of one tab
+ * is its only user.
+ */
+class ThreadOutlineCache {
+    private var spec: ThreadSpec? = null
+    private var outline: ThreadOutline? = null
+
+    /** Gives the thread outline of [spec] ([GraphicalSceneBuilder.threadOutline]). */
+    fun of(spec: ThreadSpec): ThreadOutline? {
+        if (spec != this.spec) {
+            outline = GraphicalSceneBuilder.threadOutline(spec)
+            this.spec = spec
+        }
+        return outline
+    }
+}
+
+/**
  * The content of the graphical view at one time, in model µm. The view
  * position (h, v) has the vertical sign of the plane. The canvas draws the layers of the
  * scene in the draw order; the hit test uses the same values.
@@ -138,6 +157,7 @@ class GraphicalSceneCache {
         threads: List<ThreadSpec> = emptyList(),
         selectedGuideId: String? = null,
         selectedShape: Int? = null,
+        threadOutlines: (ThreadSpec) -> ThreadOutline? = GraphicalSceneBuilder::threadOutline,
     ): GraphicalScene {
         val plane = PlaneAxes.planeFor(frame.profile.machineType.isLathe, frame.workspace.plane)
         val nextKey = GraphicalSceneBuilder.structureKey(frame, plane, threads, selectedGuideId)
@@ -145,7 +165,7 @@ class GraphicalSceneCache {
         val next = if (cached != null && nextKey == key) {
             cached
         } else {
-            GraphicalSceneBuilder.structureOf(nextKey).also { value ->
+            GraphicalSceneBuilder.structureOf(nextKey, threadOutlines).also { value ->
                 key = nextKey
                 structure = value
             }
@@ -170,6 +190,7 @@ object GraphicalSceneBuilder {
      * @param threads The threads of the workspace, for the armed thread outline.
      * @param selectedGuideId The guide that the view selected, or null.
      * @param selectedShape The index of the selected drawing shape, or null.
+     * @param threadOutlines Gives the thread outline of a spec, for example [ThreadOutlineCache.of].
      */
     fun build(
         frame: ReadoutFrame,
@@ -178,10 +199,11 @@ object GraphicalSceneBuilder {
         threads: List<ThreadSpec> = emptyList(),
         selectedGuideId: String? = null,
         selectedShape: Int? = null,
+        threadOutlines: (ThreadSpec) -> ThreadOutline? = ::threadOutline,
     ): GraphicalScene {
         val plane = PlaneAxes.planeFor(frame.profile.machineType.isLathe, frame.workspace.plane)
         val key = structureKey(frame, plane, threads, selectedGuideId)
-        return assemble(frame, plane, structureOf(key), drawing, tools, selectedShape)
+        return assemble(frame, plane, structureOf(key, threadOutlines), drawing, tools, selectedShape)
     }
 
     /**
@@ -202,7 +224,7 @@ object GraphicalSceneBuilder {
     }
 
     /** Gives the structure of the scene from [key]. This is the slow part with many sub-datums. */
-    internal fun structureOf(key: StructureKey): SceneStructure {
+    internal fun structureOf(key: StructureKey, threadOutlines: (ThreadSpec) -> ThreadOutline? = ::threadOutline): SceneStructure {
         val plane = key.plane
         val armed = key.armed
         val restrictedIds = armed?.let { spec -> ThreadPoints.cornerSubDatums(spec, key.subDatums).mapTo(HashSet()) { point -> point.id } }
@@ -227,7 +249,7 @@ object GraphicalSceneBuilder {
             ghostGuides = ghostGuides,
             selection = selection,
             restricted = restrictedIds != null,
-            threadOutline = armed?.let(::threadOutline),
+            threadOutline = armed?.let(threadOutlines),
         )
     }
 

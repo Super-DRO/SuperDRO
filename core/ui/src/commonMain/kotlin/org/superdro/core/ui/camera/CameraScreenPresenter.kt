@@ -33,9 +33,6 @@ import org.superdro.core.ui.text.UiText
  * @property metric True when the X axis shows mm: the unit of the typed distance.
  * @property probes The camera probe profiles of the machine.
  * @property probe The camera profile of the point under the crosshairs, or null.
- * @property pointX The X of the point under the crosshairs in the readout format, or null.
- * @property pointY The Y of the point under the crosshairs, or null.
- * @property unit The unit of [pointX] and [pointY], or null.
  */
 @Immutable
 data class CameraScreenUiState(
@@ -45,8 +42,20 @@ data class CameraScreenUiState(
     val metric: Boolean = true,
     val probes: List<ProbeProfile> = emptyList(),
     val probe: ProbeProfile? = null,
-    val pointX: String? = null,
-    val pointY: String? = null,
+)
+
+/**
+ * The point under the crosshairs. It changes with each readout frame, so it has its own flow:
+ * only the point section of the camera screen collects it.
+ *
+ * @property x The X of the point in the readout format, or null.
+ * @property y The Y of the point, or null.
+ * @property unit The unit of [x] and [y], or null.
+ */
+@Immutable
+data class CameraPointUiState(
+    val x: String? = null,
+    val y: String? = null,
     val unit: DisplayUnit? = null,
 )
 
@@ -67,10 +76,14 @@ class CameraScreenPresenter(
 
     private val serial = (context.dispatcher as? CoroutineDispatcher)?.limitedParallelism(1) ?: context.dispatcher
     private val _state = MutableStateFlow(CameraScreenUiState())
+    private val _point = MutableStateFlow(CameraPointUiState())
     private var chosenProbeId: String? = null
 
     /** The state of the screen. */
     val state: StateFlow<CameraScreenUiState> = _state.asStateFlow()
+
+    /** The point under the crosshairs. */
+    val point: StateFlow<CameraPointUiState> = _point.asStateFlow()
 
     init {
         scope.launch(serial) {
@@ -180,14 +193,13 @@ class CameraScreenPresenter(
         val frame = readout.frame.value
         val probe = _state.value.probe
         val point = frame?.let { value -> CameraCrosshairPoint.of(value, probe) }
-        _state.update { current ->
-            current.copy(
-                metric = frame?.metric(AxisId.X) ?: current.metric,
-                pointX = point?.xUm?.let { x -> CameraCrosshairPoint.text(frame, AxisId.X, x) },
-                pointY = point?.yUm?.let { y -> CameraCrosshairPoint.text(frame, AxisId.Y, y) },
-                unit = frame?.converter(AxisId.X)?.unit,
-            )
-        }
+        // The screen state changes only with the unit; the point changes with each frame.
+        _state.update { current -> current.copy(metric = frame?.metric(AxisId.X) ?: current.metric) }
+        _point.value = CameraPointUiState(
+            x = point?.xUm?.let { x -> CameraCrosshairPoint.text(frame, AxisId.X, x) },
+            y = point?.yUm?.let { y -> CameraCrosshairPoint.text(frame, AxisId.Y, y) },
+            unit = frame?.converter(AxisId.X)?.unit,
+        )
     }
 
     companion object {

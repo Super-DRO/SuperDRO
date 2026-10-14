@@ -9,6 +9,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.superdro.core.model.SidePanelMode
 import org.superdro.core.resources.Res
@@ -158,8 +160,9 @@ private fun AddPointEntry(scope: TabEntryScope, route: AddCurrentPointRoute) {
 
 @Composable
 private fun ShapeMenuEntry(scope: TabEntryScope, route: ShapeMenuRoute) {
-    val frame by scope.readout.frame.collectAsState()
-    val lathe = frame?.profile?.machineType?.isLathe == true
+    // Only a change of the machine type recomposes the sheet, not each frame.
+    val lathe by remember(scope) { scope.readout.frame.map { frame -> frame?.profile?.machineType?.isLathe == true }.distinctUntilChanged() }
+        .collectAsState(scope.readout.frame.value?.profile?.machineType?.isLathe == true)
     ShapeMenuSheet(
         lathe = lathe,
         onSelect = { item ->
@@ -184,8 +187,10 @@ private fun SubDatumEditEntry(scope: TabEntryScope, route: SubDatumEditRoute) {
     val tab = scope.functionTab(services)
     AttachUndoHost(tab.undo)
     val presenter = rememberPresenter { SubDatumEditPresenter(route.subDatumId, services, scope.readout) }
-    val frame by scope.readout.frame.collectAsState()
-    LaunchedEffect(frame != null) { frame?.let(presenter::load) }
+    // Only the first frame loads the sheet, so a frame does not recompose the entry.
+    val ready by remember(scope) { scope.readout.frame.map { frame -> frame != null }.distinctUntilChanged() }
+        .collectAsState(scope.readout.frame.value != null)
+    LaunchedEffect(ready) { scope.readout.frame.value?.let(presenter::load) }
     val state by presenter.uiState.collectAsState()
     val coroutines = rememberCoroutineScope()
     val events = remember(presenter, scope) {

@@ -1,6 +1,8 @@
 package org.superdro.core.store.files.subdatum
 
 import kotlin.math.abs
+import kotlin.math.floor
+import kotlin.math.max
 import kotlin.time.Clock
 import kotlin.time.Instant
 import org.superdro.core.model.AxisId
@@ -136,8 +138,17 @@ class SubDatumImportPreview internal constructor(
         val add = mutableListOf<SubDatum>()
         val updates = LinkedHashMap<String, SubDatum>()
         val addGuides = mutableListOf<Guide>()
-        val earlier = mutableListOf<SubDatumItem>()
         val matchOperation = operation == ImportOperation.AddNewOnly || operation == ImportOperation.MergeMatching
+        // The grids find the possible matches of a row without a test of each earlier row and each
+        // sub-datum. The result is the same as the result of a test of each one.
+        val pointCell = SubDatumMatch.pointCell(rows)
+        val earlierPoints = PointGrid(pointCell)
+        val earlierLines = LineGrid(SubDatumMatch.lineCell(rows))
+        // The sub-datums of the workspace, with the updates of the earlier rows. An update does not
+        // change the coordinates, thus the grid of the workspace stays correct.
+        val workspace = context.subDatums.toMutableList()
+        val workspaceGrid = PointGrid(pointCell)
+        if (matchOperation) workspace.forEach(workspaceGrid::add)
 
         rows.forEach { row ->
             val item = row.item
@@ -145,15 +156,21 @@ class SubDatumImportPreview internal constructor(
                 previewRows += PreviewRow(row.row, row.name, RowAction.Skip, null, row.problems)
                 return@forEach
             }
-            if (matchOperation && earlier.any { other -> SubDatumMatch.sameItem(item, other) }) {
+            if (matchOperation && SubDatumMatch.isDuplicate(item, earlierPoints, earlierLines)) {
                 val problems = row.problems + ImportProblem.error(MessageKey.DuplicatePoint, row = row.row)
                 previewRows += PreviewRow(row.row, row.name, RowAction.Skip, null, problems)
                 return@forEach
             }
-            earlier += item
+            if (matchOperation) {
+                when (item) {
+                    is SubDatumItem.Point -> earlierPoints.add(item.subDatum)
+                    is SubDatumItem.Line -> earlierLines.add(item.guide)
+                }
+            }
             when (item) {
                 is SubDatumItem.Point -> {
-                    val match = if (matchOperation) SubDatumMatch.nearest(item, context.subDatums.map { s -> updates[s.id] ?: s }) else null
+                    val matchIndex = if (matchOperation) SubDatumMatch.nearestIndex(item, workspaceGrid) else null
+                    val match = matchIndex?.let(workspace::get)
                     when {
                         match == null -> {
                             add += item.subDatum
@@ -170,6 +187,7 @@ class SubDatumImportPreview internal constructor(
                                 updatedOn = time,
                             )
                             updates[match.id] = merged
+                            if (matchIndex != null) workspace[matchIndex] = merged
                             previewRows += PreviewRow(row.row, row.name, RowAction.Update, SubDatumItem.Point(merged, item.tolerance), row.problems)
                         }
                     }
@@ -228,6 +246,62 @@ internal object SubDatumMatch {
         candidates.filter { candidate -> matches(item.subDatum, item.tolerance, candidate) }
             .minByOrNull { candidate -> squares(item.subDatum, candidate) }
 
+    /**
+     * The index in [grid] of the matching point with the smallest sum of squares, or null. When
+     * two points have the same sum, the point with the lower index wins, as in [nearest].
+     */
+    fun nearestIndex(item: SubDatumItem.Point, grid: PointGrid): Int? {
+        var best: Int? = null
+        var bestSquares = 0.0
+        grid.forEachCandidate(item) { index, candidate ->
+            if (!matches(item.subDatum, item.tolerance, candidate)) return@forEachCandidate
+            val value = squares(item.subDatum, candidate)
+            val current = best
+            if (current == null || value < bestSquares || (value == bestSquares && index < current)) {
+                best = index
+                bestSquares = value
+            }
+        }
+        return best
+    }
+
+    /** True when an earlier row of the file has the same point or guide as [item]. */
+    fun isDuplicate(item: SubDatumItem, points: PointGrid, lines: LineGrid): Boolean {
+        var found = false
+        when (item) {
+            is SubDatumItem.Point -> points.forEachCandidate(item) { _, other ->
+                if (!found && matches(item.subDatum, item.tolerance, other)) found = true
+            }
+            is SubDatumItem.Line -> lines.forEachCandidate(item) { other ->
+                if (!found && sameGuide(item, other)) found = true
+            }
+        }
+        return found
+    }
+
+    /** The cell size of the point grid: two times the largest point tolerance of the file, in µm. */
+    fun pointCell(rows: List<SubDatumRow>): Double = cellOf(
+        rows.mapNotNull { row -> row.item as? SubDatumItem.Point }
+            .flatMap { point -> listOf(point.tolerance.x, point.tolerance.y, point.tolerance.z) }
+            .map { tolerance -> tolerance ?: 0.0 },
+    )
+
+    /** The cell size of the guide grid: two times the largest guide tolerance of the file, in µm. */
+    fun lineCell(rows: List<SubDatumRow>): Double =
+        cellOf(rows.mapNotNull { row -> (row.item as? SubDatumItem.Line)?.toleranceUm })
+
+    private fun cellOf(tolerances: List<Double>): Double {
+        var largest = 0.0
+        for (tolerance in tolerances) {
+            if (tolerance.isNaN()) return Double.NaN
+            largest = max(largest, tolerance)
+        }
+        return max(2.0 * largest, MIN_CELL_UM)
+    }
+
+    /** The minimum cell size, in µm. */
+    private const val MIN_CELL_UM: Double = 1.0
+
     private fun squares(a: SubDatum, b: SubDatum): Double =
         listOf(a.x to b.x, a.y to b.y, a.z to b.z).sumOf { (first, second) ->
             if (first == null || second == null) 0.0 else (first - second) * (first - second)
@@ -240,6 +314,108 @@ internal object SubDatumMatch {
         item is SubDatumItem.Point && other is SubDatumItem.Point -> matches(item.subDatum, item.tolerance, other.subDatum)
         item is SubDatumItem.Line && other is SubDatumItem.Line -> sameGuide(item, other.guide)
         else -> false
+    }
+}
+
+/**
+ * A grid of points with cells of [cellUm] µm on each axis. A point goes into the cell of its
+ * coordinates and of its set of axes. Each tolerance of a query must be not more than half of a
+ * cell. Then a matching point is in the cell of the query or in an adjacent cell. A point or a
+ * query that the grid cannot hold (a value that is not finite) uses a test of all points.
+ */
+internal class PointGrid(private val cellUm: Double) {
+
+    private data class Cell(val axes: Int, val x: Long, val y: Long, val z: Long)
+
+    private val points = ArrayList<SubDatum>()
+    private val cells = HashMap<Cell, MutableList<Int>>()
+    private val loose = ArrayList<Int>()
+    private val usable = cellUm.isFinite() && cellUm > 0.0
+
+    /** Adds a point. Its index is the number of points before it. */
+    fun add(point: SubDatum) {
+        val index = points.size
+        points += point
+        val cell = if (usable) cellOf(point) else null
+        if (cell == null) loose += index else cells.getOrPut(cell) { ArrayList() } += index
+    }
+
+    /**
+     * Gives each point that can match [query] to [action], with its index. The order is not
+     * defined. Each point that matches is in the result.
+     */
+    fun forEachCandidate(query: SubDatumItem.Point, action: (Int, SubDatum) -> Unit) {
+        val center = if (usable && fits(query.tolerance)) cellOf(query.subDatum) else null
+        if (center == null) {
+            points.forEachIndexed(action)
+            return
+        }
+        for (index in loose) action(index, points[index])
+        val xs = neighbors(center.axes and X_BIT != 0, center.x)
+        val ys = neighbors(center.axes and Y_BIT != 0, center.y)
+        val zs = neighbors(center.axes and Z_BIT != 0, center.z)
+        for (x in xs) for (y in ys) for (z in zs) {
+            cells[Cell(center.axes, x, y, z)]?.forEach { index -> action(index, points[index]) }
+        }
+    }
+
+    private fun neighbors(present: Boolean, value: Long): List<Long> =
+        if (present) listOf(value - 1, value, value + 1).distinct() else listOf(0L)
+
+    private fun fits(tolerance: PointTolerance): Boolean =
+        listOf(tolerance.x, tolerance.y, tolerance.z).all { value -> value == null || value <= cellUm / 2.0 }
+
+    private fun cellOf(point: SubDatum): Cell? {
+        val values = listOf(point.x, point.y, point.z)
+        if (values.any { value -> value != null && !value.isFinite() }) return null
+        var axes = 0
+        if (point.x != null) axes = axes or X_BIT
+        if (point.y != null) axes = axes or Y_BIT
+        if (point.z != null) axes = axes or Z_BIT
+        return Cell(axes, index(point.x), index(point.y), index(point.z))
+    }
+
+    private fun index(value: Double?): Long = if (value == null) 0L else floor(value / cellUm).toLong()
+
+    private companion object {
+        const val X_BIT = 1
+        const val Y_BIT = 2
+        const val Z_BIT = 4
+    }
+}
+
+/**
+ * A grid of guides with cells of [cellUm] µm on each axis. The rules are the rules of [PointGrid].
+ */
+internal class LineGrid(private val cellUm: Double) {
+
+    private val guides = ArrayList<Guide>()
+    private val cells = HashMap<Pair<AxisId, Long>, MutableList<Guide>>()
+    private val loose = ArrayList<Guide>()
+    private val usable = cellUm.isFinite() && cellUm > 0.0
+
+    /** Adds a guide. */
+    fun add(guide: Guide) {
+        guides += guide
+        if (usable && guide.valueUm.isFinite()) {
+            cells.getOrPut(guide.axis to floor(guide.valueUm / cellUm).toLong()) { ArrayList() } += guide
+        } else {
+            loose += guide
+        }
+    }
+
+    /** Gives each guide that can match [query] to [action]. Each guide that matches is in the result. */
+    fun forEachCandidate(query: SubDatumItem.Line, action: (Guide) -> Unit) {
+        val value = query.guide.valueUm
+        if (!usable || !value.isFinite() || !(query.toleranceUm <= cellUm / 2.0)) {
+            guides.forEach(action)
+            return
+        }
+        loose.forEach(action)
+        val center = floor(value / cellUm).toLong()
+        listOf(center - 1, center, center + 1).distinct().forEach { cell ->
+            cells[query.guide.axis to cell]?.forEach(action)
+        }
     }
 }
 

@@ -19,6 +19,7 @@ import org.superdro.core.model.MachineType
 import org.superdro.core.model.Tool
 import org.superdro.core.model.ToolKind
 import org.superdro.core.ui.functions.FunctionsHarness
+import org.superdro.core.ui.functions.subscribe
 import org.superdro.core.ui.text.UiText
 
 /** The presenters of the tool library, the tool edit sheet, and the tool panel. */
@@ -112,6 +113,7 @@ class ToolPresentersTest {
         harness.start(MachineProfile.create(MachineType.Lathe, "Lathe"))
         addTool(Tool(kind = ToolKind.Lathe, name = "OD", xOffsetUm = 500.0, zOffsetUm = -250.0))
         val panel = ToolPanelPresenter(harness.profile.id, harness.services, harness.presenter)
+        subscribe(panel.uiState)
         advanceUntilIdle()
         val row = panel.uiState.value.rows.single()
         assertFalse(row.active)

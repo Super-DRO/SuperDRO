@@ -8,6 +8,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -129,7 +130,34 @@ class DataOutputControllerTest {
         assertEquals(2, client.writes.size)
         assertEquals(client.writes[0].decodeToString(), client.writes[1].decodeToString())
         assertEquals(DataOutputStatus.Sending, setup.controller.state.value.status)
+        // The state after the stop has the complete statistics.
+        setup.controller.requestStop()
         assertEquals(2L, setup.controller.state.value.statistics?.sent)
+    }
+
+    @Test
+    fun theStateGetsTheStatisticsAtEachStatusPeriodAndNotAtEachWrite() = runTest {
+        val setup = setup(plain.copy(intervalMs = 100L))
+        setup.online()
+        setup.controller.requestStart()
+        runCurrent()
+        val client = setup.sockets.open.single().connect()
+        runCurrent()
+        val states = mutableListOf<DataOutputState>()
+        backgroundScope.launch { setup.controller.state.collect { state -> states += state } }
+        runCurrent()
+        states.clear()
+        advanceTimeBy(WarningRules.STATUS_PERIOD_MS * 3 + 50L)
+        runCurrent()
+        assertEquals(30, client.writes.size)
+        // One state for each status period, not one state for each of the 30 writes.
+        assertEquals(3, states.size)
+        val counts = states.map { state -> state.statistics?.sent ?: 0L }
+        assertEquals(counts.sorted(), counts)
+        assertTrue(counts.last() >= 29L)
+        setup.controller.requestStop()
+        assertEquals(30L, setup.controller.state.value.statistics?.sent)
+        assertEquals(30L, setup.controller.state.value.statistics?.records)
     }
 
     @Test
@@ -168,13 +196,14 @@ class DataOutputControllerTest {
         runCurrent()
         advanceTimeBy(1500L)
         runCurrent()
-        assertEquals(3L, setup.controller.state.value.statistics?.records)
         val client = setup.sockets.open.single().connect()
         runCurrent()
         advanceTimeBy(500L)
         runCurrent()
         assertTrue(client.receivedText.startsWith("{\"timestamp\":\"2026-10-11T14:03:22.517Z\",\"sequence\":3,"))
         setup.controller.requestStop()
+        // The output made 3 records with no client and 1 record for the client.
+        assertEquals(4L, setup.controller.state.value.statistics?.records)
         setup.controller.requestStart()
         runCurrent()
         val again = setup.sockets.open.single().connect()

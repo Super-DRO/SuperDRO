@@ -63,4 +63,10 @@ object BleLinkDefaults {
 
     /** The wait before a chunk goes again after the engine refused it for a full queue. */
     const val BACKPRESSURE_RETRY_MS: Long = 10L
+
+    /**
+     * The notifications that wait for the collector of [BleTransport.incoming]. At a fast BLE
+     * link of some hundred notifications each second, this is more than one second of data.
+     */
+    const val NOTIFICATION_QUEUE: Int = 2048
 }

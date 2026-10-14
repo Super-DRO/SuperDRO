@@ -27,6 +27,7 @@ import org.superdro.core.ui.functions.common.LengthFieldState
 import org.superdro.core.ui.functions.tools.ToolTexts
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.text.toUiText
 
@@ -37,6 +38,9 @@ data class ToolChoice(val id: String, val name: String, val detail: UiText)
 /**
  * The common state of the three compensation sheets: the tools of the library and the selected
  * tool (null: a custom value).
+ *
+ * The state uses no live position: only a change of the library, the profile, or the workspace
+ * makes it again.
  */
 abstract class CompensationPresenter<S>(
     protected val readout: TabReadout,
@@ -46,6 +50,8 @@ abstract class CompensationPresenter<S>(
 
     protected val mutable = MutableStateFlow(initial)
     protected var tools: List<Tool> = emptyList()
+
+    /** The last frame with a new structure. Its readings can be old. */
     protected var frame: ReadoutFrame? = null
     private var initialized = false
 
@@ -54,7 +60,7 @@ abstract class CompensationPresenter<S>(
 
     init {
         scope.launch {
-            combine(services.tools.library(readout.deviceId.value), readout.frame) { library, current -> library to current }
+            combine(services.tools.library(readout.deviceId.value), readout.frame.structure()) { library, current -> library to current }
                 .collect { (library, current) ->
                     tools = library
                     frame = current

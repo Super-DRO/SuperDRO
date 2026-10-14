@@ -53,6 +53,9 @@ sealed interface ReviewLoad {
 /**
  * Reads the wizard session of [input] of the adapter profile of the tab [deviceId] and builds the
  * map with the map builder of `core:functions`. Gives null when there is no session.
+ *
+ * The build runs on [AdapterUiDeps.buildContext]. When the caller stops, the build stops. The
+ * last build stays in memory, so a second screen for the same session does not build again.
  */
 suspend fun AdapterUiDeps.loadReview(deviceId: DeviceId, input: Char): WizardReview? {
     val adapter = tabAdapter(deviceId).first() ?: return null
@@ -61,7 +64,7 @@ suspend fun AdapterUiDeps.loadReview(deviceId: DeviceId, input: Char): WizardRev
     if (session.isEmpty) return null
     val passes = session.passes.map { it.toPass() }.filter { !it.isEmpty }
     val verification = session.verification?.toPass()
-    return WizardReview(adapter, session, passes, verification, ErrorMapBuilder.build(passes, verification))
+    return WizardReview(adapter, session, passes, verification, reviewBuilds.build(session, passes, verification))
 }
 
 /**
@@ -85,7 +88,7 @@ data class ErrorMapReportUiState(
 /**
  * The presenter of the report screen of the error map wizard. It reads the session file
  * that the wizard wrote at "Review Map" and builds the map with [ErrorMapBuilder] away from the UI
- * thread (the dispatcher of the presenter context).
+ * thread ([loadReview]).
  *
  * "Save Map" is active only when [ErrorMapReport.canSave] is true: 2 passes or more, at least 1
  * node, and an improvement ratio of 1.0 or more. The save writes the map with the
