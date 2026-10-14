@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -56,6 +58,7 @@ import org.superdro.core.ui.graphics.common.LengthInput
 import org.superdro.core.ui.graphics.common.evaluateLength
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 
 /**
@@ -203,8 +206,15 @@ class ReferenceImageSetupPresenter(
     /** The image of the canvas: the image after rotate and flip, with no color change. */
     val bitmap: StateFlow<ImageBitmap?> = mutableBitmap.asStateFlow()
 
-    /** The state of the screen. */
-    val uiState: StateFlow<ReferenceImageSetupUiState> = combine(session, readout.frame) { current, frame -> stateOf(current, frame) }
+    /**
+     * The state of the screen. Only a change of the session, the profile, or the workspace makes the
+     * fit, the sub-datum list, and the color matrix again. Each frame changes only the two live
+     * values.
+     */
+    val uiState: StateFlow<ReferenceImageSetupUiState> = combine(
+        combine(session, readout.frame.structure()) { current, frame -> stateOf(current, frame) },
+        readout.frame.map(::liveValues).distinctUntilChanged(),
+    ) { state, live -> state.copy(horizontalValue = live.first, verticalValue = live.second) }
         .stateIn(scope, SharingStarted.Eagerly, stateOf(session.value, readout.frame.value))
 
     init {
@@ -558,6 +568,13 @@ class ReferenceImageSetupPresenter(
         val reading = frame.reading(axis)
         val current = if (reading.hasValue) frame.postProcessor(axis).toShown(reading.absolute) else 0.0
         return evaluateLength(text, frame.metric(axis), current)
+    }
+
+    /** The live values of the horizontal and the vertical plane axis as shown texts. */
+    private fun liveValues(frame: ReadoutFrame?): Pair<String, String> {
+        if (frame == null) return "" to ""
+        val (horizontal, vertical) = axesOf(frame)
+        return liveText(frame, horizontal) to liveText(frame, vertical)
     }
 
     private fun liveText(frame: ReadoutFrame, axis: AxisId): String {

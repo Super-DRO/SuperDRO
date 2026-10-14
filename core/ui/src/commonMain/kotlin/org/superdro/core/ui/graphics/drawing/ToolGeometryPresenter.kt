@@ -34,6 +34,7 @@ import org.superdro.core.ui.graphics.GraphicsDependencies
 import org.superdro.core.ui.graphics.dxfImportSettings
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 
 /**
@@ -90,8 +91,8 @@ class ToolGeometryPresenter(
     private val library: StateFlow<List<Tool>?> = deps.tools.library(readout.deviceId.value)
         .stateIn(scope, SharingStarted.Eagerly, null)
 
-    /** The state of the screen. */
-    val uiState: StateFlow<ToolGeometryUiState> = combine(local, library, readout.frame) { state, tools, frame ->
+    /** The state of the screen. The readout gives only the unit and the format, so a move does not make it again. */
+    val uiState: StateFlow<ToolGeometryUiState> = combine(local, library, readout.frame.structure()) { state, tools, frame ->
         val tool = tools?.firstOrNull { item -> item.id == toolId }
         val geometry = state.imported ?: tool?.geometry
         ToolGeometryUiState(

@@ -27,6 +27,7 @@ import org.superdro.core.ui.functions.common.FunctionServices
 import org.superdro.core.ui.functions.common.UndoOffers
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.text.toUiText
 
@@ -65,6 +66,9 @@ data class MachineDatumPanelUiState(
  *   instrument offset. A is stored when the angular axis is on.
  * - Delete with undo for 10 s.
  *
+ * The rows use no live position: only a change of the datums, the profile, or the workspace makes
+ * them again. [uiState] runs only while the panel collects it.
+ *
  * @param messages Shows a short message (the message line of the readout).
  */
 class MachineDatumPanelPresenter(
@@ -78,8 +82,8 @@ class MachineDatumPanelPresenter(
     private val local = MutableStateFlow(Local())
     private val datums = services.machines.machineDatums(profileId).stateIn(scope, SharingStarted.Eagerly, null)
 
-    /** The UI state of the tab. */
-    val uiState: StateFlow<MachineDatumPanelUiState> = combine(datums, readout.frame, local) { list, frame, ui ->
+    /** The UI state of the tab. It runs only while a collector is present. */
+    val uiState: StateFlow<MachineDatumPanelUiState> = combine(datums, readout.frame.structure(), local) { list, frame, ui ->
         if (list == null) {
             MachineDatumPanelUiState()
         } else {
@@ -90,7 +94,7 @@ class MachineDatumPanelPresenter(
                 problem = ui.problem,
             )
         }
-    }.stateIn(scope, SharingStarted.Eagerly, MachineDatumPanelUiState())
+    }.stateIn(scope, SharingStarted.WhileSubscribed(), MachineDatumPanelUiState())
 
     /** A tap on the datum [id]: the confirmation of "Set Absolute Origin to Machine Datum". */
     fun onTap(id: String) {

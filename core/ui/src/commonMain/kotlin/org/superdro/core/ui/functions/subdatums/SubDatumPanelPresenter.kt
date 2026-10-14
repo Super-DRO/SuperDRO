@@ -41,6 +41,7 @@ import org.superdro.core.ui.functions.common.SubDatumBlocker
 import org.superdro.core.ui.functions.common.UndoOffers
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.graphics.view.OperatorFrame
 
@@ -123,6 +124,9 @@ sealed interface AddPointOutcome {
  * The changes of the offsets (the activation, "Set Absolute Origin Here") go through the readout
  * of the tab, with the undo. The delete of points goes through the store, with the undo of
  * [undo] for 10 s.
+ *
+ * The state uses no live position: only a change of the profile or of the workspace makes it
+ * again. [uiState] runs only while the panel collects it.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SubDatumPanelPresenter(
@@ -135,15 +139,22 @@ class SubDatumPanelPresenter(
     private val local = MutableStateFlow(Local())
 
     private val transformUndo = readout.frame
+        .structure()
         .map { frame -> frame?.workspace?.id }
         .distinctUntilChanged()
         .flatMapLatest { id -> if (id == null) flowOf(null) else services.machines.transformUndo(id) }
         .stateIn(scope, SharingStarted.Eagerly, null)
 
-    /** The UI state of the panel. */
-    val uiState: StateFlow<SubDatumPanelUiState> = combine(readout.frame, local, transformUndo) { frame, ui, undoCopy ->
+    /** The UI state of the panel. It runs only while a collector is present. */
+    val uiState: StateFlow<SubDatumPanelUiState> = combine(readout.frame.structure(), local, transformUndo) { frame, ui, undoCopy ->
         if (frame == null) SubDatumPanelUiState() else stateOf(frame, ui, undoCopy)
-    }.stateIn(scope, SharingStarted.Eagerly, SubDatumPanelUiState())
+    }.stateIn(scope, SharingStarted.WhileSubscribed(), SubDatumPanelUiState())
+
+    /** The state of the panel now. It does not need a collector of [uiState]. */
+    private fun currentState(): SubDatumPanelUiState {
+        val frame = readout.frame.value ?: return SubDatumPanelUiState()
+        return stateOf(frame, local.value, transformUndo.value)
+    }
 
     // -----------------------------------------------------------------------------------------
     // The rows
@@ -204,7 +215,10 @@ class SubDatumPanelPresenter(
     }
 
     /** Selects all shown rows. */
-    fun onSelectAll() = local.update { state -> state.copy(selecting = true, selected = uiState.value.rows.mapTo(LinkedHashSet()) { it.id }) }
+    fun onSelectAll() {
+        val ids = currentState().rows.mapTo(LinkedHashSet()) { it.id }
+        local.update { state -> state.copy(selecting = true, selected = ids) }
+    }
 
     /** "Deselect": clears the selection and leaves the selection mode. */
     fun onDeselect() = local.update { state -> state.copy(selecting = false, selected = emptySet()) }
@@ -299,7 +313,7 @@ class SubDatumPanelPresenter(
 
     private fun navigate(pick: (List<SubDatumRowUi>, Int) -> SubDatumRowUi?) {
         val frame = readout.frame.value ?: return
-        val points = uiState.value.rows.filter { !it.guide }
+        val points = currentState().rows.filter { !it.guide }
         val index = points.indexOfFirst { it.id == frame.workspace.activeSubDatumId }
         val target = pick(points, index) ?: return
         if (target.id == frame.workspace.activeSubDatumId) return
@@ -335,7 +349,7 @@ class SubDatumPanelPresenter(
 
     /** A long press on the filter button: with the filter on, show all; else hide all tags and the untagged points. */
     fun onFilterLongPress() {
-        val tags = uiState.value.filterRows.mapNotNull { it.tag }
+        val tags = currentState().filterRows.mapNotNull { it.tag }
         local.update { state ->
             val on = state.hiddenTags.isNotEmpty() || state.hideUntagged
             if (on) {
@@ -367,7 +381,7 @@ class SubDatumPanelPresenter(
      */
     fun onExport(messages: (UiText) -> Unit) {
         val frame = readout.frame.value ?: return
-        val shownIds = uiState.value.rows.mapTo(HashSet()) { it.id }
+        val shownIds = currentState().rows.mapTo(HashSet()) { it.id }
         val points = frame.workspace.subDatums.filter { it.id in shownIds }
         val guides = frame.workspace.guides.filter { it.id in shownIds }
         val selected = selection()
