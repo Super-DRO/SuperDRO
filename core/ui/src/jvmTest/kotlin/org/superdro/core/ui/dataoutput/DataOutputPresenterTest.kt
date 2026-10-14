@@ -7,7 +7,10 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.superdro.core.connection.ConnectionRequest
 import org.superdro.core.connection.PermissionKind
@@ -250,6 +253,43 @@ class DataOutputPresenterTest {
         screen.settle()
         assertNull(screen.state.dialog)
         assertTrue(screen.harness.sockets.open.isEmpty(), "\"Stop the output\" stops an On demand output.")
+    }
+
+    @Test
+    fun theScreenStateChangesOnlyWithTheShownStatusAndKeepsTheProblemsOfTheSameDraft() = run(
+        prepare = {
+            profile { stored ->
+                stored.copy(
+                    dataOutput = DataOutputConfig(
+                        enabled = true,
+                        activation = DataOutputActivation.AlwaysOn,
+                        security = DataOutputSecurity.PlainText,
+                        plainTextConfirmed = true,
+                        intervalMs = 100L,
+                    ),
+                )
+            }
+        },
+    ) { screen, _ ->
+        val client = screen.harness.sockets.open.single().connect()
+        screen.settle()
+        // An invalid text gives a problem. The status changes must keep the same problems.
+        screen.presenter.onIntervalText("x")
+        screen.settle()
+        val problems = screen.state.problems
+        assertEquals(1, problems.size)
+        val states = mutableListOf<DataOutputUiState>()
+        backgroundScope.launch { screen.presenter.uiState.collect { state -> states += state } }
+        runCurrent()
+        states.clear()
+        advanceTimeBy(3000L)
+        runCurrent()
+        val records = client.receivedText.lines().count { line -> line.isNotEmpty() }
+        assertTrue(records >= 29, "$records records")
+        // About one screen state for each status period, not one for each record.
+        assertTrue(states.size <= 4, "${states.size} states")
+        assertTrue((screen.state.status.sent ?: 0L) >= 20L)
+        assertTrue(states.all { state -> state.problems === problems }, "The validation did not run again.")
     }
 
     private fun <T : Any> assertNotNotNull(value: T?): T = assertNotNull(value)

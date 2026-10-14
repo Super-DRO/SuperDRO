@@ -4,6 +4,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.datetime.TimeZone
 import org.superdro.core.connection.AdapterInfo
@@ -214,6 +215,7 @@ class AdapterFixture(scope: TestScope) {
         wallClock = store.wallClock,
         timeZone = TimeZone.UTC,
         appVersion = "1.0.0",
+        buildContext = StandardTestDispatcher(scope.testScheduler),
     )
 
     /** Adds [session] to the fake connections and gives it. */

@@ -9,7 +9,10 @@ import org.superdro.core.model.TransportKind
  * transport and a new parser state.
  *
  * Rules for an implementation:
- * 1. A read that blocks runs on the link dispatcher of the platform module, in a `channelFlow`.
+ * 1. The session collects [incoming] on its own dispatcher, with no change of thread. Thus
+ *    [incoming] must not block the collector. A read that blocks runs on a thread of the
+ *    transport (for example the link dispatcher of the platform module) and gives its chunks
+ *    through a channel. A suspending read (for example a Ktor socket) can run in the collector.
  * 2. [close] closes the socket. This stops a blocked read.
  * 3. A failure is a [LinkFailureException]. The transport does not try again.
  *

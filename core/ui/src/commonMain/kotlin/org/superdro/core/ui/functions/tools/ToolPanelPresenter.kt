@@ -11,6 +11,7 @@ import org.superdro.core.resources.tools_undo_clear
 import org.superdro.core.ui.functions.common.FunctionServices
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 
 /** The tool panel of the side panel. */
@@ -22,6 +23,9 @@ data class ToolPanelUiState(val loaded: Boolean = false, val rows: List<ToolRowU
  * the tools of the library, sorted by name. A tap activates a tool. A tap on the active tool
  * clears it. The change goes through the readout of the tab, so the snackbar shows "Undo" for
  * 10 s.
+ *
+ * The state uses no live position: only a change of the library, the profile, or the workspace
+ * makes it again. [uiState] runs only while the panel collects it.
  */
 class ToolPanelPresenter(
     private val profileId: String,
@@ -31,8 +35,8 @@ class ToolPanelPresenter(
 
     private val library = services.tools.library(profileId).stateIn(scope, SharingStarted.Eagerly, null)
 
-    /** The UI state of the panel. */
-    val uiState: StateFlow<ToolPanelUiState> = combine(library, readout.frame) { tools, frame ->
+    /** The UI state of the panel. It runs only while a collector is present. */
+    val uiState: StateFlow<ToolPanelUiState> = combine(library, readout.frame.structure()) { tools, frame ->
         if (tools == null || frame == null) {
             ToolPanelUiState()
         } else {
@@ -51,7 +55,7 @@ class ToolPanelPresenter(
                 },
             )
         }
-    }.stateIn(scope, SharingStarted.Eagerly, ToolPanelUiState())
+    }.stateIn(scope, SharingStarted.WhileSubscribed(), ToolPanelUiState())
 
     /** A tap on the tool [id]: activate it, or clear it when it is the active tool. */
     fun onTap(id: String) {

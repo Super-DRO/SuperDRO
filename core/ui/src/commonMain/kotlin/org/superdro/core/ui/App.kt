@@ -17,6 +17,7 @@ import org.kodein.di.instance
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.model.ThemeMode
 import org.superdro.core.store.json.AppSettingsStore
+import org.superdro.core.store.json.TabStore
 import org.superdro.core.ui.adaptive.LocalWindowLayout
 import org.superdro.core.ui.adaptive.currentWindowLayout
 import org.superdro.core.ui.navigation.AddDeviceRoute
@@ -41,12 +42,15 @@ import org.superdro.core.ui.theme.AppTheme
  * - The theme follows the app settings: the theme mode and "Large buttons".
  * - The window size class selects the layout.
  * - The sound controller knows when the app is visible, for the link tones.
+ * - When the app stops, the JSON stores write their pending updates.
  * - The one snackbar host shows the messages of the entries in sequence.
  */
 @Composable
 fun App(modifier: Modifier = Modifier) {
     val di = LocalDI.current
-    val settings by rememberInstance<AppSettingsStore>().settings.collectAsState()
+    val settingsStore = rememberInstance<AppSettingsStore>()
+    val tabStore = rememberInstance<TabStore>()
+    val settings by settingsStore.settings.collectAsState()
     val tabs = rememberInstance<DeviceTabsPresenter>()
     val holder = rememberInstance<NavigationHolder>()
     val registry = rememberInstance<EntryRegistry>()
@@ -56,7 +60,13 @@ fun App(modifier: Modifier = Modifier) {
     }
     LifecycleStartEffect(sounds) {
         sounds.onForeground()
-        onStopOrDispose { sounds.onBackground() }
+        onStopOrDispose {
+            sounds.onBackground()
+            // The JSON stores coalesce their writes. The app can stop in the background, thus the
+            // pending updates go to the files now.
+            settingsStore.flush()
+            tabStore.flush()
+        }
     }
     val snackbar = remember { SnackbarHostState() }
     val messages = remember { mutableStateListOf<AppMessage>() }

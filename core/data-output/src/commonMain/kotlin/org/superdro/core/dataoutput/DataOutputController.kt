@@ -275,7 +275,7 @@ class DataOutputController(
                 }
                 launch {
                     RecordScheduler(config.cadence, config.intervalMs, config.maxRateHz, platform.clock)
-                        .run(values, formatter::valueTexts) { current -> send(formatter, current) }
+                        .run(values, formatter::valueTexts) { current, texts -> send(formatter, current, texts) }
                 }
             }
         }
@@ -346,12 +346,13 @@ class DataOutputController(
             sessionScope.launch { output.state.collect { sender -> senderState.value = sender } }
         }
 
-        private fun send(formatter: RecordFormatter, current: OutputValues) {
+        /** Sends one record of [current]. [texts] are the value texts of [current] from the scheduler. */
+        private fun send(formatter: RecordFormatter, current: OutputValues, texts: List<String?>) {
             val number = sequence++
             val timestamp = current.updatedAtEpochMs ?: platform.wallClock.nowEpochMs()
-            val texts = formatter.valueTexts(current)
             statistics.update { value -> value.withRecord() }
-            tcp?.publish(formatter.record(texts, timestamp, number).encodeToByteArray())
+            // The server makes the bytes only when a client is connected.
+            tcp?.publish { formatter.record(texts, timestamp, number).encodeToByteArray() }
             mqtt?.publish(OutputRecord(texts, timestamp, number))
         }
 
@@ -372,8 +373,12 @@ class DataOutputController(
                     delay(WarningRules.STATUS_PERIOD_MS)
                 }
             }
+            // A new error goes into the state at once. A write or a record alone does not make a
+            // new state: the state gets the newest statistics at the next status period.
+            val errors = statistics.map { stats -> stats.lastError }.distinctUntilChanged { old, new -> old === new }
             sessionScope.launch {
-                combine(senderState, listeningAddresses, clientAddresses, statistics, ticks) { sender, listening, clients, stats, _ ->
+                combine(senderState, listeningAddresses, clientAddresses, errors, ticks) { sender, listening, clients, _, _ ->
+                    val stats = statistics.value
                     DataOutputState(
                         transport = config.transport,
                         security = config.security,

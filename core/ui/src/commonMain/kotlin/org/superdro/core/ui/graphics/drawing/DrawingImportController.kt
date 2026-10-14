@@ -49,6 +49,8 @@ import org.superdro.core.ui.text.UiText
  *
  * @property fileName The display name of the picked file.
  * @property warnings The warnings of the converter. The status line shows the first one.
+ * @property start The first state of "Set Up Drawing". The default calculates it where the
+ *   pending drawing is made: the import makes it on its dispatcher, not on the main thread.
  */
 @Immutable
 data class PendingDrawing(
@@ -56,6 +58,7 @@ data class PendingDrawing(
     val format: DrawingFormat,
     val document: WireframeDocument,
     val warnings: List<DrawingProblem> = emptyList(),
+    val start: DrawingSetupStart = DrawingSetupStart.of(document),
 )
 
 /** One event of the drawing import for the entry that shows it. [id] changes for each new event. */
@@ -141,11 +144,15 @@ class DrawingImportController(
 
     private fun importNow(fileName: String, bytes: ByteArray) {
         val result = DrawingImporter.import(bytes, deps.dxfImportSettings(), now = deps.wallClock.now())
+        // The first state of "Set Up Drawing" is calculated here, on the dispatcher of the import.
+        val pending = (result as? DrawingImportResult.Imported)?.let { imported ->
+            PendingDrawing(fileName, imported.format, imported.document, imported.warnings)
+        }
         mutable.update { state ->
             val base = state.copy(busy = false)
             when (result) {
                 is DrawingImportResult.Imported -> base.copy(
-                    pending = PendingDrawing(fileName, result.format, result.document, result.warnings),
+                    pending = pending,
                     problems = emptyList(),
                     event = DrawingEvent.Navigate(++nextEventId, DrawingSetupRoute),
                 )

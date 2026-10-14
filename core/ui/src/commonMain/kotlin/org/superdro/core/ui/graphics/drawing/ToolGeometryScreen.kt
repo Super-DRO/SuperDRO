@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -259,7 +258,7 @@ private fun Thumbnail(state: ToolGeometryUiState, modifier: Modifier) {
                     maxOf(0.0, box.maxX * factor), maxOf(0.0, box.maxY * factor),
                 )
                 val matrix = ShapePaths.composeMatrix(view.matrix())
-                fill?.let { model -> drawPath(ShapePaths.screenPath(model, matrix).apply { fillType = PathFillType.EvenOdd }, scheme.primaryContainer) }
+                fill?.let { model -> drawPath(ShapePaths.screenPath(model, matrix), scheme.primaryContainer) }
                 drawPath(ShapePaths.screenPath(path, matrix), scheme.onPrimaryContainer, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
                 val origin = view.toScreen(0.0, 0.0)
                 val center = Offset(origin.x.toFloat(), origin.y.toFloat())

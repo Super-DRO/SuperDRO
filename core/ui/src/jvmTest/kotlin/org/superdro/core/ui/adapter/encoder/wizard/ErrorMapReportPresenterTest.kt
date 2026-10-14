@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -68,6 +69,27 @@ class ErrorMapReportPresenterTest {
                 "Save Map deletes the session file.",
             )
             presenter.close()
+        }
+    }
+
+    @Test
+    fun aSecondScreenOfTheSameSessionUsesTheSameBuild() = runTest {
+        withAdapter { fixture, adapter ->
+            fixture.store(adapter, WizardTestData.goodSession(adapter.id))
+            val first = ErrorMapReportPresenter(device, 'x', fixture.deps)
+            advanceUntilIdle()
+            val report = assertNotNull(first.uiState.value.report)
+            first.close()
+            val second = ErrorMapReportPresenter(device, 'x', fixture.deps)
+            advanceUntilIdle()
+            assertSame(report, second.uiState.value.report, "The second screen does not build again.")
+            second.close()
+
+            fixture.store(adapter, WizardTestData.onePassSession(adapter.id))
+            val changed = ErrorMapReportPresenter(device, 'x', fixture.deps)
+            advanceUntilIdle()
+            assertEquals(1, assertNotNull(changed.uiState.value.report).statistics.passCount, "A changed session builds again.")
+            changed.close()
         }
     }
 

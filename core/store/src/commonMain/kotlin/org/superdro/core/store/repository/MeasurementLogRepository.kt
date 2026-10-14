@@ -6,6 +6,9 @@ import app.cash.sqldelight.coroutines.mapToOne
 import com.toxicbakery.logging.Arbor
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import org.superdro.core.model.MeasurementLogEntry
@@ -27,10 +30,32 @@ class MeasurementLogRepository(
 ) {
     private val database get() = writer.database
 
-    /** The log entries of the workspace in the order of the sequence. A row that does not decode is skipped. */
-    fun entries(workspaceId: String): Flow<List<MeasurementLogEntry>> =
-        database.measurementLogQueries.selectForWorkspace(workspaceId).asFlow().mapToList(writer.readDispatcher)
-            .map { rows -> rows.mapNotNull { row -> entryFrom(row) } }
+    /**
+     * The log entries of the workspace in the order of the sequence. A row that does not decode is
+     * skipped.
+     *
+     * The flow keeps the decoded entry of each row. A change of the log decodes only the new and
+     * the changed rows, not all rows. The decode runs on the read dispatcher.
+     */
+    fun entries(workspaceId: String): Flow<List<MeasurementLogEntry>> = flow {
+        var decoded = emptyMap<String, DecodedRow>()
+        emitAll(
+            database.measurementLogQueries.selectForWorkspace(workspaceId).asFlow().mapToList(writer.readDispatcher)
+                .map { rows ->
+                    val next = HashMap<String, DecodedRow>(rows.size)
+                    val entries = rows.mapNotNull { row ->
+                        val known = decoded[row.id]?.takeIf { known -> known.row == row } ?: DecodedRow(row, entryFrom(row))
+                        next[row.id] = known
+                        known.entry
+                    }
+                    decoded = next
+                    entries
+                },
+        )
+    }.flowOn(writer.readDispatcher)
+
+    /** One row and its decoded entry, or null when the row does not decode. */
+    private class DecodedRow(val row: Measurement_log, val entry: MeasurementLogEntry?)
 
     /** The number of log entries of the workspace. */
     fun count(workspaceId: String): Flow<Long> =

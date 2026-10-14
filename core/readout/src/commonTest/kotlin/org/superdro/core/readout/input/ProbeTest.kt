@@ -93,6 +93,22 @@ class ProbeTest {
     }
 
     @Test
+    fun aListOfEventsDoesNotChangeAfterTheNextCall() {
+        val stage = onlyXStage()
+        stage.onAxisCount('x', 100L, 1000L)
+        stage.onBinaryInput('p', 1, 1050L)
+        stage.onBinaryInput('p', 0, 1060L)
+        val first = stage.onAxisCount('x', 200L, 1100L)
+        stage.onBinaryInput('p', 1, 1150L)
+        val second = stage.onAxisCount('x', 300L, 1200L)
+        val none = stage.onAxisCount('x', 400L, 1300L)
+        assertEquals(listOf(1L), first.map { event -> event.sequence })
+        assertEquals(listOf(2L), second.map { event -> event.sequence })
+        assertEquals(emptyList(), none)
+        assertEquals(250.0, second.single().axisPositions.getValue(AxisId.X))
+    }
+
+    @Test
     fun aGapOfMoreThan500MsWithACountChangeMarksTheAxisNotComplete() {
         val stage = onlyXStage()
         stage.onAxisCount('x', 100L, 1000L)

@@ -1,9 +1,13 @@
 package org.superdro.core.ui.functions.patterns
 
 import kotlin.math.atan2
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.superdro.core.functions.arc.AngleReference
@@ -32,10 +36,13 @@ import org.superdro.core.functions.patterns.PatternTexts
 import org.superdro.core.functions.patterns.PositionReference
 import org.superdro.core.functions.patterns.PositionSource
 import org.superdro.core.functions.patterns.StepAndRepeat
+import org.superdro.core.functions.patterns.SubDatumNames
 import org.superdro.core.model.AxisId
+import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.Plane
 import org.superdro.core.model.SubDatum
 import org.superdro.core.model.Units
+import org.superdro.core.model.Workspace
 import org.superdro.core.readout.ReadoutFrame
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.fn_value_not_number
@@ -57,6 +64,7 @@ import org.superdro.core.ui.functions.common.PreviewPoint
 import org.superdro.core.ui.functions.common.SubDatumBlocker
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.text.toUiText
 import org.superdro.core.ui.graphics.view.OperatorFrame
@@ -76,9 +84,16 @@ import org.superdro.core.ui.graphics.view.OperatorFrame
  * new point goes through the inverse display transform ([OperatorFrame.toStored]) before the
  * save, so that the graphical view shows it where the user made it.
  *
+ * The live position: the presenter reads each readout frame only while the state uses the live
+ * position. That is the source "Current", or a step and repeat with a rotation that follows the
+ * angular encoder. Else only a change of the profile or of the workspace makes the state again.
+ * The points, the preview, and the point rows change only when the inputs, the profile, the
+ * workspace, or the origin change.
+ *
  * @param stepSourceIds The sub-datums of the step and repeat. An empty list repeats all
  *   sub-datums of the workspace.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class PatternPresenter(
     val kind: PatternKind,
     private val readout: TabReadout,
@@ -96,16 +111,36 @@ class PatternPresenter(
      */
     val uiState: StateFlow<PatternUiState> = state.asStateFlow()
 
+    /** The last state and the values that made it. */
+    private var lastState: Pair<StateKey, PatternUiState>? = null
+
+    /** The last points, preview, and point rows. */
+    private var lastGeometry: Geometry? = null
+
+    /** The parts of the state that only the workspace changes. */
+    private var lastWorkspaceParts: WorkspaceParts? = null
+
     init {
         readout.frame.value?.let(::initialize)
         refresh()
         scope.launch {
-            readout.frame.collect { frame ->
-                if (frame != null) initialize(frame)
-                refresh()
-            }
+            // Each frame while the state uses the live position, else each change of the structure.
+            combine(inputs, readout.frame.structure()) { current, frame -> current != null && frame != null && usesLivePosition(frame, current) }
+                .distinctUntilChanged()
+                .flatMapLatest { live -> if (live) readout.frame else readout.frame.structure() }
+                .collect { frame ->
+                    if (frame != null) initialize(frame)
+                    refresh()
+                }
         }
     }
+
+    /**
+     * True when the state uses the live position: the source "Current", or a step and repeat
+     * with a rotation that follows the angular encoder.
+     */
+    private fun usesLivePosition(frame: ReadoutFrame, current: PatternInputs): Boolean =
+        current.source == PositionSource.Current || (kind == PatternKind.StepAndRepeat && frame.angularLocked)
 
     /** Makes the state of the screen from the frame, the inputs, and the local state. */
     private fun refresh() {
@@ -297,6 +332,38 @@ class PatternPresenter(
 
     private class Computation(val result: PatternResult?, val errors: List<UiText>, val group: PatternGroup?)
 
+    /** All values that the state uses. The same values give the same state. */
+    private data class StateKey(
+        val profile: MachineProfile,
+        val workspace: Workspace,
+        val inputs: PatternInputs,
+        val local: Local,
+        val currentPoint: AxisPoint?,
+        val rotationArcSec: Double,
+        val sourceError: UiText?,
+    )
+
+    /** All values that the points use. */
+    private data class GeometryKey(
+        val profile: MachineProfile,
+        val workspace: Workspace,
+        val inputs: PatternInputs,
+        val origin: AxisPoint,
+        val rotationArcSec: Double,
+    )
+
+    /** The points of the inputs, their preview, and the point rows. */
+    private class Geometry(
+        val key: GeometryKey,
+        val pointCount: Int,
+        val preview: List<PreviewPoint>,
+        val origin: PreviewPoint?,
+        val rows: List<PointRowUiState>,
+    )
+
+    /** The sub-datum choices and the number of the sources of the step and repeat of [workspace]. */
+    private class WorkspaceParts(val workspace: Workspace, val choices: List<SubDatumChoice>, val sourceCount: Int)
+
     private fun edit(change: PatternInputs.() -> PatternInputs) {
         inputs.update { current -> current?.change() }
         updateLocal { state -> if (state.errors == null) state else state.copy(errors = null) }
@@ -366,38 +433,24 @@ class PatternPresenter(
     }
 
     private fun stateOf(frame: ReadoutFrame, current: PatternInputs, ui: Local): PatternUiState {
+        val live = current.source == PositionSource.Current
+        val currentPoint = if (live) currentDisplay(frame) else null
+        val sourceError = if (kind.hasPosition && live) readout.positionUnavailable() else null
+        val key = StateKey(frame.profile, frame.workspace, current, ui, currentPoint, rotationOf(frame), sourceError)
+        lastState?.let { (oldKey, old) -> if (oldKey == key) return old }
+        return buildState(frame, current, ui, currentPoint, sourceError).also { built -> lastState = key to built }
+    }
+
+    private fun buildState(frame: ReadoutFrame, current: PatternInputs, ui: Local, currentPoint: AxisPoint?, sourceError: UiText?): PatternUiState {
         val profile = frame.profile
         val machineType = profile.machineType
         val lathe = machineType.isLathe
-        val computation = compute(frame, current)
-        val group = computation.group
+        val geometry = geometryOf(frame, current)
+        val workspaceParts = workspacePartsOf(frame)
         val plane = previewPlane(frame, current)
         val horizontal = PlaneAxes.horizontal(plane)
         val vertical = PlaneAxes.vertical(plane)
-        val sign = PlaneAxes.verticalSign(plane)
-        val points = group?.points.orEmpty()
-        val names = if (group != null && points.isNotEmpty()) {
-            PatternBatch.create(frame.workspace, group, 0L).subDatums.map { point -> point.name }
-        } else {
-            emptyList()
-        }
-        val preview = points.mapIndexed { index, point ->
-            PreviewPoint((point.ofAxis(horizontal) ?: 0.0), sign * (point.ofAxis(vertical) ?: 0.0), (index + 1).toString())
-        }
-        val origin = if (kind.hasPosition) {
-            val o = origin(frame, current)
-            PreviewPoint(o.ofAxis(horizontal) ?: 0.0, sign * (o.ofAxis(vertical) ?: 0.0))
-        } else {
-            null
-        }
-        val format = profile.display.readoutFormat
-        fun text(axis: AxisLetter, value: Double?): String =
-            if (value == null) "" else LengthTexts.format(value * scaleOf(frame, axis), metricOf(frame, axis), format)
-        val rows = points.take(MAX_POINT_ROWS).mapIndexed { index, point ->
-            PointRowUiState(names.getOrElse(index) { "" }, text(AxisLetter.X, point.x), text(AxisLetter.Y, point.y), text(AxisLetter.Z, point.z))
-        }
         val showPosition = kind.hasPosition
-        val currentPoint = currentDisplay(frame)
         val positionRows = if (!showPosition) {
             emptyList()
         } else {
@@ -407,7 +460,7 @@ class PatternPresenter(
                 val field = when (current.source) {
                     PositionSource.Custom -> stored
                     PositionSource.Zero -> LengthFieldState.of(0.0, stored.metric)
-                    PositionSource.Current -> LengthFieldState.of(currentPoint.of(axis)?.let { value -> value * scaleOf(frame, axis) }, stored.metric)
+                    PositionSource.Current -> LengthFieldState.of(currentPoint?.of(axis)?.let { value -> value * scaleOf(frame, axis) }, stored.metric)
                 }
                 PositionRowUiState(
                     axis = axis,
@@ -423,7 +476,7 @@ class PatternPresenter(
         return PatternUiState(
             kind = kind,
             loaded = true,
-            title = titleOf(frame),
+            title = titleOf(frame, workspaceParts.sourceCount),
             machineType = machineType,
             prefix = current.prefix,
             prefixDefault = defaultPrefix(),
@@ -433,29 +486,76 @@ class PatternPresenter(
             source = current.source,
             positionTitle = if (showPosition) positionTitleOf(current.reference) else null,
             positionRows = positionRows,
-            sourceError = if (showPosition && current.source == PositionSource.Current) readout.positionUnavailable() else null,
+            sourceError = sourceError,
             reference = current.reference,
             referenceLabels = referenceLabels(),
-            subDatums = if (showPosition) frame.workspace.subDatums.map { point -> SubDatumChoice(point.id, point.name) } else emptyList(),
+            subDatums = workspaceParts.choices,
             subDatumId = current.subDatumId,
             fields = fieldsOf(frame, current),
             angles = current.angles.anglesArcSec.map { arcSec -> arcSec / Units.ARCSEC_PER_DEGREE },
             angleError = current.angleError,
             cutType = current.cutType,
             angleReference = current.angleReference,
-            preview = preview,
-            previewOrigin = origin,
+            preview = geometry.preview,
+            previewOrigin = geometry.origin,
             hAxis = labelOf(frame, horizontal.letter()),
             vAxis = labelOf(frame, vertical.letter()),
-            pointRows = rows,
-            pointCount = points.size,
+            pointRows = geometry.rows,
+            pointCount = geometry.pointCount,
             errors = ui.errors,
             blocked = ui.blocked,
             closeAfterBlocked = ui.closeAfterBlocked,
             created = ui.created,
-            sourceCount = if (kind == PatternKind.StepAndRepeat) sources(frame).size else null,
+            sourceCount = if (kind == PatternKind.StepAndRepeat) workspaceParts.sourceCount else null,
         )
     }
+
+    /**
+     * The points of the inputs, their preview, and the point rows. They change only when the
+     * inputs, the profile, the workspace, the origin, or the source rotation change. The rows
+     * show the names that "Create" gives: `"<group name> - <n>"` after the last ordinal.
+     */
+    private fun geometryOf(frame: ReadoutFrame, current: PatternInputs): Geometry {
+        val key = GeometryKey(frame.profile, frame.workspace, current, origin(frame, current), rotationOf(frame))
+        lastGeometry?.let { old -> if (old.key == key) return old }
+        val group = compute(frame, current).group
+        val plane = previewPlane(frame, current)
+        val horizontal = PlaneAxes.horizontal(plane)
+        val vertical = PlaneAxes.vertical(plane)
+        val sign = PlaneAxes.verticalSign(plane)
+        val points = group?.points.orEmpty()
+        val preview = points.mapIndexed { index, point ->
+            PreviewPoint((point.ofAxis(horizontal) ?: 0.0), sign * (point.ofAxis(vertical) ?: 0.0), (index + 1).toString())
+        }
+        val origin = if (kind.hasPosition) {
+            val o = key.origin
+            PreviewPoint(o.ofAxis(horizontal) ?: 0.0, sign * (o.ofAxis(vertical) ?: 0.0))
+        } else {
+            null
+        }
+        val format = frame.profile.display.readoutFormat
+        fun text(axis: AxisLetter, value: Double?): String =
+            if (value == null) "" else LengthTexts.format(value * scaleOf(frame, axis), metricOf(frame, axis), format)
+        val groupName = group?.groupName.orEmpty()
+        val first = SubDatumNames.lastOrdinal(frame.workspace) + 1
+        val rows = points.take(MAX_POINT_ROWS).mapIndexed { index, point ->
+            PointRowUiState(SubDatumNames.patternName(groupName, first + index), text(AxisLetter.X, point.x), text(AxisLetter.Y, point.y), text(AxisLetter.Z, point.z))
+        }
+        return Geometry(key, points.size, preview, origin, rows).also { built -> lastGeometry = built }
+    }
+
+    /** The parts of the state that only the workspace changes. */
+    private fun workspacePartsOf(frame: ReadoutFrame): WorkspaceParts {
+        val workspace = frame.workspace
+        lastWorkspaceParts?.let { old -> if (old.workspace === workspace) return old }
+        val choices = if (kind.hasPosition) workspace.subDatums.map { point -> SubDatumChoice(point.id, point.name) } else emptyList()
+        val sourceCount = if (kind == PatternKind.StepAndRepeat) sources(frame).size else 0
+        return WorkspaceParts(workspace, choices, sourceCount).also { built -> lastWorkspaceParts = built }
+    }
+
+    /** The source rotation of the step and repeat, else 0. The rotation can follow the angular encoder. */
+    private fun rotationOf(frame: ReadoutFrame): Double =
+        if (kind == PatternKind.StepAndRepeat) sourceRotationArcSec(frame) else 0.0
 
     /** The checks and the points of the current inputs. */
     private fun compute(frame: ReadoutFrame, current: PatternInputs): Computation {
@@ -619,13 +719,13 @@ class PatternPresenter(
         }
     }
 
-    private fun titleOf(frame: ReadoutFrame): UiText {
+    private fun titleOf(frame: ReadoutFrame, sourceCount: Int): UiText {
         val machineType = frame.profile.machineType
         return when (kind) {
             PatternKind.HoleCircle -> HoleCircle.title(machineType)
             PatternKind.ArbitraryHoleCircle -> ArbitraryHoleCircle.title()
             PatternKind.HoleGrid -> HoleGrid.title(machineType)
-            PatternKind.StepAndRepeat -> StepAndRepeat.title(if (stepSourceIds.isEmpty()) null else sources(frame).size)
+            PatternKind.StepAndRepeat -> StepAndRepeat.title(if (stepSourceIds.isEmpty()) null else sourceCount)
             PatternKind.EquidistantArray -> EquidistantArray.title(machineType)
             PatternKind.ArcCut -> ArcCut.title()
         }.toUiText()

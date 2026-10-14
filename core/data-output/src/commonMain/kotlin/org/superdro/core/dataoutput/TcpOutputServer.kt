@@ -100,6 +100,14 @@ class TcpOutputServer(
 
     /** Puts [record] into the slot of each client. A record that a client did not get yet goes away. */
     fun publish(record: ByteArray) {
+        current?.publish { record }
+    }
+
+    /**
+     * Puts the bytes of [record] into the slot of each client. The server calls [record] only when
+     * one or more clients are connected, and only one time for all clients.
+     */
+    fun publish(record: () -> ByteArray) {
         current?.publish(record)
     }
 
@@ -112,8 +120,11 @@ class TcpOutputServer(
         @Volatile
         private var closed = false
 
-        fun publish(record: ByteArray) {
-            clientList.value.forEach { client -> client.slot.trySend(record) }
+        fun publish(record: () -> ByteArray) {
+            val clients = clientList.value
+            if (clients.isEmpty()) return
+            val bytes = record()
+            clients.forEach { client -> client.slot.trySend(bytes) }
         }
 
         /**

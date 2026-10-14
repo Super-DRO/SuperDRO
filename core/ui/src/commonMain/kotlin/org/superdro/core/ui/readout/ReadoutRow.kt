@@ -32,7 +32,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -80,6 +80,7 @@ import org.superdro.core.resources.readout_unit_degrees
 import org.superdro.core.resources.readout_unit_divisions
 import org.superdro.core.resources.readout_value_semantics
 import org.superdro.core.resources.readout_value_state_semantics
+import org.superdro.core.ui.presenter.collectLiveState
 import org.superdro.core.ui.theme.LocalReadoutTypography
 import org.superdro.core.ui.theme.LocalTouchTargets
 
@@ -174,7 +175,9 @@ fun ReadoutRow(
     events: ReadoutEvents,
     modifier: Modifier = Modifier,
 ) {
-    val current by value.collectAsState()
+    // The delegate reads the value only in the content of the box: a new value does not
+    // recompose this function.
+    val current by value.collectLiveState()
     val gap = LocalTouchTargets.current.gap
     BoxWithConstraints(modifier.testTag(rowTag(row.axis))) {
         // The slider and the state line take a part of a short row only, so that the digits keep
@@ -209,11 +212,21 @@ fun ReadoutRow(
             val buttons = if (collapsed) row.collapsedButtons else row.buttons
             if (row.kind == RowKind.Tachometer) {
                 Spacer(Modifier.width(gap))
-                TachometerButton(row.label, current, events)
+                TachometerButton(row.label, surfaceSpeed = current.surfaceSpeed, metric = current.metric, events = events)
             } else if (buttons.isNotEmpty()) {
                 Spacer(Modifier.width(gap))
                 Row(horizontalArrangement = Arrangement.spacedBy(gap), verticalAlignment = Alignment.CenterVertically) {
-                    buttons.forEach { mode -> ActionButton(row, mode, current, events) }
+                    buttons.forEach { mode ->
+                        ActionButton(
+                            row = row,
+                            mode = mode,
+                            incremental = current.incremental,
+                            metric = current.metric,
+                            divisions = current.divisions,
+                            held = current.held,
+                            events = events,
+                        )
+                    }
                 }
             }
         }
@@ -274,26 +287,31 @@ fun ValueBox(
     }
     val stateText = ReadoutTexts.stateText(value.state)?.let { text -> stringResource(text) }
     val unit = stringResource(ReadoutTexts.unitSymbol(value.unit))
-    val description = if (value.state == ValueState.Error || value.state == ValueState.NoInput) {
-        stringResource(Res.string.readout_state_semantics, label, stateText.orEmpty())
-    } else {
-        val valueText = stringResource(Res.string.readout_value_semantics, label, value.text, stringResource(ReadoutTexts.unitName(value.unit)))
-        if (stateText == null) valueText else stringResource(Res.string.readout_value_state_semantics, valueText, stateText)
-    }
-    val alpha = if (value.state == ValueState.Pending) pulseAlpha() else 1f
+    val unitName = stringResource(ReadoutTexts.unitName(value.unit))
+    // The templates have no live argument, so their resources load one time. The semantics
+    // block puts the live value into them only when the semantics need the text.
+    val templates = ValueSemanticsTemplates(
+        value = stringResource(Res.string.readout_value_semantics),
+        state = stringResource(Res.string.readout_state_semantics),
+        valueState = stringResource(Res.string.readout_value_state_semantics),
+    )
+    val text = value.text
+    val state = value.state
+    // Only the draw phase reads the pulse, so the pulse does not recompose the box.
+    val pulse = if (state == ValueState.Pending) rememberPulseAlpha() else null
     Column(
         modifier = modifier
             .testTag(valueTag(value.axis))
             .clickable(onClick = onClick)
             .clearAndSetSemantics {
-                contentDescription = description
+                contentDescription = ValueSemantics.description(templates, label, state, text, unitName, stateText)
                 role = Role.Button
                 onClick {
                     onClick()
                     true
                 }
             }
-            .graphicsLayer { this.alpha = alpha },
+            .graphicsLayer { alpha = pulse?.value ?: 1f },
     ) {
         val showDigits = value.state != ValueState.Error && value.state != ValueState.NoInput
         Box(Modifier.fillMaxWidth().height(stateLineHeight)) {
@@ -392,20 +410,31 @@ private fun StateChip(state: ValueState, text: String, color: Color, height: Dp,
     }
 }
 
+/** The alpha of the pulse of a value that is not live. Read it only in the draw phase. */
 @Composable
-private fun pulseAlpha(): Float {
+private fun rememberPulseAlpha(): State<Float> {
     val transition = rememberInfiniteTransition()
-    val alpha by transition.animateFloat(
+    return transition.animateFloat(
         initialValue = 1f,
         targetValue = PULSE_MIN_ALPHA,
         animationSpec = infiniteRepeatable(tween(PULSE_MS), RepeatMode.Reverse),
     )
-    return alpha
 }
 
-/** One action button of an axis with its mode. */
+/**
+ * One action button of an axis with its mode. The button gets only the flags of the value that
+ * it shows, so that it does not recompose for a new position.
+ */
 @Composable
-fun ActionButton(row: ReadoutRowUiState, mode: AxisButtonMode, value: AxisValueUiState, events: ReadoutEvents) {
+fun ActionButton(
+    row: ReadoutRowUiState,
+    mode: AxisButtonMode,
+    incremental: Boolean,
+    metric: Boolean,
+    divisions: Boolean,
+    held: Boolean,
+    events: ReadoutEvents,
+) {
     val angular = row.kind == RowKind.Angular
     val text: String
     val name: String
@@ -416,14 +445,14 @@ fun ActionButton(row: ReadoutRowUiState, mode: AxisButtonMode, value: AxisValueU
             name = stringResource(Res.string.readout_button_zero)
         }
         AxisButtonMode.ToggleIncremental -> {
-            text = stringResource(if (value.incremental) Res.string.readout_button_inc else Res.string.readout_button_abs)
+            text = stringResource(if (incremental) Res.string.readout_button_inc else Res.string.readout_button_abs)
             name = text
-            active = value.incremental
+            active = incremental
         }
         AxisButtonMode.ToggleUnits -> {
             text = when {
-                angular -> stringResource(if (value.divisions) Res.string.readout_unit_divisions else Res.string.readout_unit_degrees)
-                else -> stringResource(ReadoutTexts.unitSymbol(if (value.metric) DisplayUnit.Millimeter else DisplayUnit.Inch))
+                angular -> stringResource(if (divisions) Res.string.readout_unit_divisions else Res.string.readout_unit_degrees)
+                else -> stringResource(ReadoutTexts.unitSymbol(if (metric) DisplayUnit.Millimeter else DisplayUnit.Inch))
             }
             name = "${stringResource(Res.string.readout_button_units)} $text"
         }
@@ -437,8 +466,8 @@ fun ActionButton(row: ReadoutRowUiState, mode: AxisButtonMode, value: AxisValueU
         }
         AxisButtonMode.Hold -> {
             text = stringResource(Res.string.readout_button_hold)
-            name = stringResource(if (value.held) Res.string.readout_button_hold_set else Res.string.readout_button_hold)
-            active = value.held
+            name = stringResource(if (held) Res.string.readout_button_hold_set else Res.string.readout_button_hold)
+            active = held
         }
     }
     val longPress: (() -> Unit)? = when (mode) {
@@ -462,12 +491,12 @@ fun ActionButton(row: ReadoutRowUiState, mode: AxisButtonMode, value: AxisValueU
 
 /** The RPM or SFM button of the tachometer row. */
 @Composable
-private fun TachometerButton(label: String, value: AxisValueUiState, events: ReadoutEvents) {
-    val other = if (value.surfaceSpeed) DisplayUnit.Rpm else if (value.metric) DisplayUnit.MetersPerMinute else DisplayUnit.SurfaceFeetPerMinute
+private fun TachometerButton(label: String, surfaceSpeed: Boolean, metric: Boolean, events: ReadoutEvents) {
+    val other = if (surfaceSpeed) DisplayUnit.Rpm else if (metric) DisplayUnit.MetersPerMinute else DisplayUnit.SurfaceFeetPerMinute
     DroButton(
         onClick = events::onTachometerToggle,
         contentDescription = stringResource(Res.string.readout_button_cd, label, stringResource(Res.string.readout_button_surface_speed)),
-        style = if (value.surfaceSpeed) DroButtonStyle.Active else DroButtonStyle.Primary,
+        style = if (surfaceSpeed) DroButtonStyle.Active else DroButtonStyle.Primary,
         modifier = Modifier.testTag("readout-tachometer-toggle"),
     ) {
         Text(stringResource(ReadoutTexts.unitSymbol(other)), style = MaterialTheme.typography.titleMedium, maxLines = 1)

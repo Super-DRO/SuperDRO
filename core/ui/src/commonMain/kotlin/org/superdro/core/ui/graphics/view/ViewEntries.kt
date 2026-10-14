@@ -36,6 +36,7 @@ import org.superdro.core.ui.navigation.SubDatumEditRoute
 import org.superdro.core.ui.navigation.TabEntryScope
 import org.superdro.core.ui.navigation.TabRoute
 import org.superdro.core.ui.navigation.ThreadSetupRoute
+import org.superdro.core.ui.presenter.collectLiveState
 import org.superdro.core.ui.presenter.rememberPresenter
 import org.superdro.core.ui.rememberInstance
 import org.superdro.core.ui.text.UiText
@@ -121,7 +122,7 @@ fun GraphicalViewHost(
         GraphicalViewPresenter(tab, parts.pointTapInterceptor)
     }
     val metrics = rememberScreenMetrics()
-    val view by presenter.uiState.collectAsState()
+    val view by presenter.uiState.collectLiveState()
     val controls by tab.controls.collectAsState()
     val paneOpen by presenter.displayPaneOpen.collectAsState()
     val threadPanel by tab.threadCut.panel.collectAsState()

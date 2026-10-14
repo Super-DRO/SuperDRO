@@ -6,11 +6,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.superdro.core.drawing.DrawingConversion
 import org.superdro.core.functions.drawing.DrawingPlacement
+import org.superdro.core.functions.drawing.NmBox
 import org.superdro.core.functions.drawing.ShapeGeometry
 import org.superdro.core.functions.drawing.SnapGroup
 import org.superdro.core.functions.drawing.SnapKind
@@ -25,6 +28,7 @@ import org.superdro.core.model.AxisId
 import org.superdro.core.model.Drawing
 import org.superdro.core.model.DrawingShape
 import org.superdro.core.model.DrawingSource
+import org.superdro.core.drawing.WireframeDocument
 import org.superdro.core.model.Plane
 import org.superdro.core.model.ReadoutFormat
 import org.superdro.core.readout.NumberPattern
@@ -89,6 +93,31 @@ data class SnapGroupUiState(val kind: SnapKind, val label: UiText, val shown: Bo
 data class SnapMark(val h: Double, val v: Double, val picked: Boolean)
 
 /**
+ * The first state of "Set Up Drawing" for one file: the placement of the file shapes, the
+ * preview, the snap groups, and the marks. The import calculates it on its dispatcher, so that
+ * the presenter does not calculate it on the main thread.
+ */
+@Immutable
+class DrawingSetupStart internal constructor(
+    internal val placement: DrawingPlacement,
+    internal val preview: List<DrawingShape>,
+    internal val groups: List<SnapGroup>,
+    internal val marks: List<SnapMark>,
+    internal val extents: NmBox?,
+) {
+    companion object {
+        /** Calculates the first state of the shapes of [document]. */
+        fun of(document: WireframeDocument): DrawingSetupStart = of(DrawingPlacement.load(DrawingConversion.toShapes(document)))
+
+        internal fun of(placement: DrawingPlacement): DrawingSetupStart {
+            val preview = placement.previewShapes()
+            val groups = SnapPoints.extract(placement.shapes)
+            return DrawingSetupStart(placement, preview, groups, DrawingSetupPresenter.marksOf(placement, groups, null), ShapeGeometry.extents(preview))
+        }
+    }
+}
+
+/**
  * The state of "Set Up Drawing".
  *
  * @property horizontalAxis The axis on the horizontal of the plane (X, or Z on a lathe).
@@ -144,10 +173,16 @@ class DrawingSetupPresenter(
 
     private data class Card(val xText: String = "", val yText: String = "", val drawingPoint: Vec2? = null, val error: UiText? = null)
 
+    /**
+     * The state of the presenter. [marks] and [extents] come from the other fields: [change]
+     * calculates them again only when the placement, the groups, the pick, or the preview change.
+     */
     private data class Local(
         val placement: DrawingPlacement,
         val preview: List<DrawingShape>,
         val groups: List<SnapGroup>,
+        val marks: List<SnapMark>,
+        val extents: NmBox?,
         val cards: List<Card> = listOf(Card(), Card()),
         val picked: SnapPoint? = null,
         val message: UiText? = null,
@@ -156,49 +191,59 @@ class DrawingSetupPresenter(
         val view: PreviewViewport = PreviewViewport(),
     )
 
-    private val fileShapes: List<DrawingShape> = DrawingConversion.toShapes(pending.document)
+    /** The values of the readout frame that the screen shows. Other changes of the frame do not make a new state. */
+    private data class Live(
+        val horizontalAxis: AxisId,
+        val verticalAxis: AxisId,
+        val plane: Plane,
+        val metric: Boolean,
+        val format: ReadoutFormat,
+        val horizontalValue: String,
+        val verticalValue: String,
+    )
 
-    private val local = MutableStateFlow(initial(DrawingPlacement.load(fileShapes)))
+    private val local = MutableStateFlow(initial(pending.start))
 
     /** The state of the screen. */
-    val uiState: StateFlow<DrawingSetupUiState> = combine(local, readout.frame) { state, frame -> uiStateOf(state, frame) }
-        .stateIn(scope, SharingStarted.Eagerly, uiStateOf(local.value, readout.frame.value))
+    val uiState: StateFlow<DrawingSetupUiState> =
+        combine(local, readout.frame.map(::liveOf).distinctUntilChanged()) { state, live -> uiStateOf(state, live) }
+            .stateIn(scope, SharingStarted.Eagerly, uiStateOf(local.value, liveOf(readout.frame.value)))
 
     // ---------------------------------------------------------------------------------------
     // The preview
 
     /** The preview has the size [width] × [height] px. The first size fits the drawing. */
     fun onPreviewSize(width: Double, height: Double) {
-        local.update { state ->
+        change { state ->
             val resized = state.view.resize(width, height)
-            state.copy(view = if (resized.fitted) resized else fitted(resized, state.preview))
+            state.copy(view = if (resized.fitted) resized else fitted(resized, state.extents))
         }
     }
 
     /** A drag of the preview by ([dx], [dy]) px. */
-    fun onPreviewPan(dx: Double, dy: Double) = local.update { state -> state.copy(view = state.view.pan(dx, dy)) }
+    fun onPreviewPan(dx: Double, dy: Double) = change { state -> state.copy(view = state.view.pan(dx, dy)) }
 
     /** A pinch of the preview by [factor] about ([focusX], [focusY]). */
     fun onPreviewZoom(factor: Double, focusX: Double, focusY: Double) =
-        local.update { state -> state.copy(view = state.view.zoom(factor, focusX, focusY)) }
+        change { state -> state.copy(view = state.view.zoom(factor, focusX, focusY)) }
 
     /** A double tap: fit the drawing and the workspace origin. */
-    fun onPreviewFit() = local.update { state -> state.copy(view = fitted(state.view, state.preview)) }
+    fun onPreviewFit() = change { state -> state.copy(view = fitted(state.view, state.extents)) }
 
     /**
      * A tap on the preview at ([x], [y]) px. [density] is the pixels for each dp. The pick fills
      * the next free card with the predicted machine position.
      */
     fun onPreviewTap(x: Double, y: Double, density: Double) {
-        local.update { state ->
+        change { state ->
             val model = state.view.toModel(x, y)
             val placement = state.placement
             val drawingNm = (model.rotated(-placement.rotationRad) - placement.offsetUm) * NM_PER_UM
             val toleranceNm = SnapPoints.PICK_TOLERANCE_DP * density / state.view.scale * NM_PER_UM
             val pick = SnapPoints.pick(state.groups, drawingNm.x, drawingNm.y, toleranceNm)
-                ?: return@update state.copy(picked = null)
+                ?: return@change state.copy(picked = null)
             val free = placement.references.indexOfFirst { reference -> reference == null }
-            if (free < 0) return@update state.copy(picked = pick)
+            if (free < 0) return@change state.copy(picked = pick)
             val point = Vec2(pick.x.toDouble(), pick.y.toDouble())
             val (h, v) = axisValues(placement.predictMachine(point))
             val cards = state.cards.toMutableList()
@@ -223,10 +268,10 @@ class DrawingSetupPresenter(
     fun onMirrorVertical() = step { placement -> placement.mirrorVertical() }
 
     private fun step(change: (DrawingPlacement) -> DrawingPlacement) {
-        local.update { state ->
-            if (state.busy) return@update state
+        change { state ->
+            if (state.busy) return@change state
             val placement = change(state.placement)
-            if (placement == state.placement) return@update state
+            if (placement == state.placement) return@change state
             // The picks of the free cards belong to the old shapes: they go.
             val cards = state.cards.mapIndexed { index, card ->
                 if (placement.references[index] == null) card.copy(drawingPoint = null) else card
@@ -263,24 +308,24 @@ class DrawingSetupPresenter(
 
     /** "Set" makes the card [index] a reference. "Clear" on a set card removes the reference. */
     fun onCardSet(index: Int) {
-        local.update { state ->
-            if (state.busy) return@update state
+        change { state ->
+            if (state.busy) return@change state
             val placement = state.placement
             if (placement.references[index] != null) {
                 val cards = state.cards.toMutableList()
                 cards[index] = Card()
-                return@update state.copy(placement = placement.clearReference(index), cards = cards)
+                return@change state.copy(placement = placement.clearReference(index), cards = cards)
             }
             val card = state.cards[index]
             val point = card.drawingPoint
-                ?: return@update state.withCardError(index, UiText.of(Res.string.drawingui_needs_pick, index + 1))
+                ?: return@change state.withCardError(index, UiText.of(Res.string.drawingui_needs_pick, index + 1))
             val metric = metric()
             val h = evaluateLength(card.xText, metric)
             val v = evaluateLength(card.yText, metric)
-            if (h is LengthInput.Invalid) return@update state.withCardError(index, h.error)
-            if (v is LengthInput.Invalid) return@update state.withCardError(index, v.error)
+            if (h is LengthInput.Invalid) return@change state.withCardError(index, h.error)
+            if (v is LengthInput.Invalid) return@change state.withCardError(index, v.error)
             if (h !is LengthInput.Value || v !is LengthInput.Value) {
-                return@update state.withCardError(index, UiText.of(Res.string.drawingui_needs_values, index + 1))
+                return@change state.withCardError(index, UiText.of(Res.string.drawingui_needs_values, index + 1))
             }
             val plane = plane()
             val view = PlaneAxes.toView(plane, h.um, v.um)
@@ -304,16 +349,17 @@ class DrawingSetupPresenter(
 
     /** "Reset": the drawing is back to the file as loaded, with the default placement. */
     fun onReset() {
-        local.update { state ->
-            if (state.busy) return@update state
-            initial(state.placement.reset()).copy(view = fitted(state.view, state.placement.reset().previewShapes()), message = UiText.of(Res.string.drawingui_reset_done))
+        change { state ->
+            if (state.busy) return@change state
+            val start = initial(DrawingSetupStart.of(state.placement.reset()))
+            start.copy(view = fitted(state.view, start.extents), message = UiText.of(Res.string.drawingui_reset_done))
         }
     }
 
     /** "Cancel": the screen closes and the pending drawing goes. */
     fun onCancel() {
         controller?.clearPending()
-        local.update { state -> state.copy(done = true) }
+        change { state -> state.copy(done = true) }
     }
 
     /**
@@ -328,7 +374,7 @@ class DrawingSetupPresenter(
         val frame = readout.frame.value ?: return
         val workspaceId = frame.workspace.id
         val plane = plane()
-        local.update { current -> current.copy(busy = true, message = null) }
+        change { current -> current.copy(busy = true, message = null) }
         scope.launch {
             val drawing = Drawing(
                 workspaceId = workspaceId,
@@ -338,7 +384,7 @@ class DrawingSetupPresenter(
                 createdOn = deps.wallClock.now(),
             )
             if (deps.drawings.replaceDrawing(drawing) !is StoreResult.Ok) {
-                local.update { current -> current.copy(busy = false, message = UiText.of(Res.string.drawingui_apply_failed)) }
+                change { current -> current.copy(busy = false, message = UiText.of(Res.string.drawingui_apply_failed)) }
                 return@launch
             }
             val groups = keepFlags(placed.snapGroups, state.groups)
@@ -347,18 +393,35 @@ class DrawingSetupPresenter(
             val added = subDatums.isEmpty() || deps.machines.addSubDatums(workspaceId, subDatums) is StoreResult.Ok
             controller?.clearPending()
             controller?.showMessage(UiText.of(if (added) Res.string.drawingui_applied else Res.string.drawingui_sub_datums_failed))
-            local.update { current -> current.copy(busy = false, done = true) }
+            change { current -> current.copy(busy = false, done = true) }
         }
     }
 
     /** The screen showed the message. */
-    fun onMessageShown() = local.update { state -> state.copy(message = null) }
+    fun onMessageShown() = change { state -> state.copy(message = null) }
 
     // ---------------------------------------------------------------------------------------
     // Private parts
 
-    private fun initial(placement: DrawingPlacement): Local =
-        Local(placement = placement, preview = placement.previewShapes(), groups = SnapPoints.extract(placement.shapes))
+    private fun initial(start: DrawingSetupStart): Local =
+        Local(placement = start.placement, preview = start.preview, groups = start.groups, marks = start.marks, extents = start.extents)
+
+    /** Changes the state with [transform] and calculates the marks and the extents again when necessary. */
+    private fun change(transform: (Local) -> Local) {
+        local.update { state ->
+            val next = transform(state)
+            val marksChanged = next.placement !== state.placement || next.groups !== state.groups || next.picked != state.picked
+            val previewChanged = next.preview !== state.preview
+            if (!marksChanged && !previewChanged) {
+                next
+            } else {
+                next.copy(
+                    marks = if (marksChanged) marksOf(next.placement, next.groups, next.picked) else next.marks,
+                    extents = if (previewChanged) ShapeGeometry.extents(next.preview) else next.extents,
+                )
+            }
+        }
+    }
 
     private fun Local.withCardError(index: Int, error: UiText): Local {
         val list = cards.toMutableList()
@@ -366,26 +429,25 @@ class DrawingSetupPresenter(
         return copy(cards = list)
     }
 
-    private fun updateCard(index: Int, change: (Card) -> Card) {
-        local.update { state ->
+    private fun updateCard(index: Int, edit: (Card) -> Card) {
+        change { state ->
             val cards = state.cards.toMutableList()
-            cards[index] = change(cards[index])
+            cards[index] = edit(cards[index])
             state.copy(cards = cards)
         }
     }
 
-    private fun updateGroup(index: Int, change: (SnapGroup) -> SnapGroup) {
-        local.update { state ->
-            if (index !in state.groups.indices) return@update state
+    private fun updateGroup(index: Int, edit: (SnapGroup) -> SnapGroup) {
+        change { state ->
+            if (index !in state.groups.indices) return@change state
             val groups = state.groups.toMutableList()
-            groups[index] = change(groups[index])
+            groups[index] = edit(groups[index])
             val picked = state.picked?.takeIf { pick -> groups.any { group -> group.shown && pick in group.points } }
             state.copy(groups = groups, picked = picked)
         }
     }
 
-    private fun fitted(view: PreviewViewport, shapes: List<DrawingShape>): PreviewViewport {
-        val box = ShapeGeometry.extents(shapes)
+    private fun fitted(view: PreviewViewport, box: NmBox?): PreviewViewport {
         if (box == null) return view.fit(-MIN_FIT_UM, -MIN_FIT_UM, MIN_FIT_UM, MIN_FIT_UM)
         // The box holds the workspace origin, so the user sees where the drawing goes.
         return view.fit(
@@ -419,7 +481,8 @@ class DrawingSetupPresenter(
 
     private fun format(um: Double): String = LengthTexts.format(um, metric(), readoutFormat())
 
-    private fun uiStateOf(state: Local, frame: ReadoutFrame?): DrawingSetupUiState {
+    private fun liveOf(frame: ReadoutFrame?): Live {
+        val plane = plane(frame)
         val (hAxis, vAxis) = axes(frame)
         val metric = metric(frame)
         val format = readoutFormat(frame)
@@ -427,22 +490,22 @@ class DrawingSetupPresenter(
             val reading = frame?.reading(axis) ?: return ""
             return LengthTexts.format(reading.absolute, metric, format)
         }
+        return Live(hAxis, vAxis, plane, metric, format, live(hAxis), live(vAxis))
+    }
+
+    private fun uiStateOf(state: Local, live: Live): DrawingSetupUiState {
+        val metric = live.metric
+        val format = live.format
         val placement = state.placement
-        val marks = state.groups.filter { group -> group.shown }.flatMap { group ->
-            group.points.map { point ->
-                val machine = placement.predictMachine(Vec2(point.x.toDouble(), point.y.toDouble()))
-                SnapMark(machine.x, machine.y, picked = point == state.picked)
-            }
-        }
         return DrawingSetupUiState(
             fileName = pending.fileName,
-            horizontalAxis = hAxis,
-            verticalAxis = vAxis,
+            horizontalAxis = live.horizontalAxis,
+            verticalAxis = live.verticalAxis,
             metric = metric,
-            horizontalValue = live(hAxis),
-            verticalValue = live(vAxis),
+            horizontalValue = live.horizontalValue,
+            verticalValue = live.verticalValue,
             previewShapes = state.preview,
-            marks = marks,
+            marks = state.marks,
             view = state.view,
             cards = state.cards.mapIndexed { index, card ->
                 ReferenceCardUiState(
@@ -456,7 +519,7 @@ class DrawingSetupPresenter(
             },
             groups = state.groups.map { group -> SnapGroupUiState(group.kind, groupLabel(group, metric, format), group.shown, group.createSubDatums) },
             banner = bannerOf(placement.unitCheck(), metric, format),
-            status = statusOf(state, frame),
+            status = statusOf(state, live),
             message = state.message,
             busy = state.busy,
             done = state.done,
@@ -464,13 +527,13 @@ class DrawingSetupPresenter(
     }
 
     /** Gives the status line. The lengths have the unit and the readout format of the profile. */
-    private fun statusOf(state: Local, frame: ReadoutFrame?): UiText {
-        val metric = metric(frame)
-        val format = readoutFormat(frame)
+    private fun statusOf(state: Local, live: Live): UiText {
+        val metric = live.metric
+        val format = live.format
         val unit = unitOf(metric)
         fun length(um: Double): String = LengthTexts.format(um, metric, format)
         val shapes = state.preview
-        val box = ShapeGeometry.extents(shapes)
+        val box = state.extents
         var status = if (box == null) {
             UiText.of(Res.string.drawingui_status_count, shapes.size)
         } else {
@@ -491,7 +554,7 @@ class DrawingSetupPresenter(
         pending.warnings.firstOrNull()?.let { warning -> status = UiText.of(Res.string.drawingui_status_warning, status, warning.message) }
         state.picked?.let { pick ->
             val machine = state.placement.predictMachine(Vec2(pick.x.toDouble(), pick.y.toDouble()))
-            val sign = PlaneAxes.verticalSign(plane(frame))
+            val sign = PlaneAxes.verticalSign(live.plane)
             status = UiText.of(
                 Res.string.drawingui_status_picked,
                 status,
@@ -505,6 +568,15 @@ class DrawingSetupPresenter(
 
     companion object {
         private const val NM_PER_UM: Double = 1000.0
+
+        /** Gives the marks of the shown groups at their predicted machine positions. */
+        internal fun marksOf(placement: DrawingPlacement, groups: List<SnapGroup>, picked: SnapPoint?): List<SnapMark> =
+            groups.filter { group -> group.shown }.flatMap { group ->
+                group.points.map { point ->
+                    val machine = placement.predictMachine(Vec2(point.x.toDouble(), point.y.toDouble()))
+                    SnapMark(machine.x, machine.y, picked = point == picked)
+                }
+            }
         private const val UM_PER_MM: Double = 1000.0
         private const val MIN_FIT_UM: Double = 10_000.0
         private val ONE_DECIMAL = NumberPattern("0.0")

@@ -7,7 +7,8 @@ import org.superdro.core.debugadapter.NoDebugAdapter
 
 /**
  * The release bindings. The fake adapter is only in the debug source set, so this build binds
- * NoDebugAdapter. The benchmark build type also compiles this file.
+ * NoDebugAdapter. The profile build types of the baselineProfile plugin use src/profile in place
+ * of this file.
  */
 internal val debugModule = DI.Module("debugModule") {
     bindSingleton<DebugAdapter> { NoDebugAdapter }

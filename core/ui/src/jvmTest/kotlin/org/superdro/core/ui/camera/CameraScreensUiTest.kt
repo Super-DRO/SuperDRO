@@ -183,7 +183,7 @@ class CameraScreensUiTest {
             Themed {
                 val videoState by video.state.collectAsState()
                 val screenState by screen.state.collectAsState()
-                CameraScreen(videoState, screenState, events, onBack = {})
+                CameraScreen(videoState, screenState, screen.point, events, onBack = {})
             }
         }
         settle(ui)

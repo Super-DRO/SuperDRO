@@ -251,6 +251,32 @@ class DrawingSetupPresenterTest {
     }
 
     @Test
+    fun aMoveOfAnotherAxisKeepsTheStateAndAPanKeepsTheMarks() = runTest {
+        withSetup { setup ->
+            val presenter = setup.presenter
+            setup.harness.moveTo(100L, x = 12_000L, y = 3_000L, z = 0L)
+            advanceUntilIdle()
+            val before = presenter.uiState.value
+            assertTrue(before.marks.isNotEmpty())
+            // Z is not an axis of the plane: the state does not change.
+            setup.harness.moveTo(200L, x = 12_000L, y = 3_000L, z = 5_000L)
+            advanceUntilIdle()
+            assertTrue(before === presenter.uiState.value, "A Z move makes no new state.")
+            // A pan changes the view only: the marks and the groups stay the same lists.
+            presenter.onPreviewPan(10.0, 5.0)
+            advanceUntilIdle()
+            val panned = presenter.uiState.value
+            assertTrue(before.view != panned.view)
+            assertTrue(before.marks === panned.marks, "A pan does not calculate the marks again.")
+            // A mirror calculates the marks again.
+            presenter.onMirrorHorizontal()
+            advanceUntilIdle()
+            assertTrue(panned.marks !== presenter.uiState.value.marks)
+            assertEquals(panned.marks.size, presenter.uiState.value.marks.size)
+        }
+    }
+
+    @Test
     fun onALatheTheMachinePointHasTheVerticalSignOfThePlane() = runTest {
         withSetup(MachineProfile.create(MachineType.Lathe, "Lathe").copy(metricDefault = true)) { setup ->
             val presenter = setup.presenter

@@ -28,11 +28,16 @@ data class RecordedPass(
     /** True when the pass has no pair. */
     val isEmpty: Boolean get() = pairs.isEmpty()
 
+    /** The row data. The pass is immutable, thus the first call calculates it, and the next calls use it again. */
+    private val cachedRowInfo: PassRowInfo? by lazy(LazyThreadSafetyMode.PUBLICATION) { calculateRowInfo() }
+
     /**
      * Gives the data of the pass row "N samples · 0 – farthest – end": the target
      * counts relative to the first pair of the pass. Null for an empty pass.
      */
-    fun rowInfo(): PassRowInfo? {
+    fun rowInfo(): PassRowInfo? = cachedRowInfo
+
+    private fun calculateRowInfo(): PassRowInfo? {
         if (pairs.isEmpty()) return null
         val start = pairs.first().target
         var farthest = 0L

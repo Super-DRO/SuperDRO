@@ -135,8 +135,17 @@ data class OutputStatistics(
         sent = if (success) sent + 1 else sent,
         failed = if (success) failed else failed + 1,
         lastSuccessAtMs = if (success) nowMs else lastSuccessAtMs,
-        recentFailures = (recentFailures + !success).takeLast(RECENT_COUNT),
+        recentFailures = recentWith(!success),
     )
+
+    /** Gives the last [RECENT_COUNT] results after [failure], in one new list. */
+    private fun recentWith(failure: Boolean): List<Boolean> {
+        val first = (recentFailures.size + 1 - RECENT_COUNT).coerceAtLeast(0)
+        val result = ArrayList<Boolean>(recentFailures.size + 1 - first)
+        for (index in first until recentFailures.size) result.add(recentFailures[index])
+        result.add(failure)
+        return result
+    }
 
     /** Gives the statistics with the error [error]. */
     fun withError(error: DataOutputError): OutputStatistics = copy(lastError = error)

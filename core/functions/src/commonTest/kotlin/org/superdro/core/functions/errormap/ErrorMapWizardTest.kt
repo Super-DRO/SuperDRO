@@ -131,4 +131,26 @@ class ErrorMapWizardTest {
         )
         assertNotNull(ErrorMapWizardSession.decode("""{"format":1,"adapterId":"a","input":"X"}"""))
     }
+
+    @Test
+    fun theCurrentSizeIsTheSizeOfTheCurrentPass() {
+        val wizard = ErrorMapWizard("a1", 'x')
+        assertEquals(0, wizard.currentSize)
+        wizard.selectReference('w')
+        wizard.startPass()
+        for (i in 0 until 7L) wizard.offer(i, i, i + 1)
+        assertEquals(wizard.currentPass()?.pairs?.size, wizard.currentSize)
+        assertEquals(7, wizard.currentSize)
+        wizard.stop()
+        assertEquals(0, wizard.currentSize)
+    }
+
+    @Test
+    fun theRowInfoOfAPassIsCalculatedOneTime() {
+        val pass = RecordedPass(listOf(SamplePair(10, 0, 1), SamplePair(40, 0, 2), SamplePair(-20, 0, 3), SamplePair(15, 0, 4)))
+        val first = pass.rowInfo()
+        assertEquals(PassRowInfo(4, 30, 5), first)
+        assertTrue(first === pass.rowInfo(), "The second call gives the same object.")
+        assertEquals(pass, pass.copy(), "The cache is not a part of the equality.")
+    }
 }

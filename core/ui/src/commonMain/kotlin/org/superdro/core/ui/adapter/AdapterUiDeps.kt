@@ -1,6 +1,8 @@
 package org.superdro.core.ui.adapter
 
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Clock
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -18,6 +20,7 @@ import org.superdro.core.store.files.ExportContext
 import org.superdro.core.store.repository.AdapterRepository
 import org.superdro.core.store.repository.MachineRepository
 import org.superdro.core.store.repository.ProbeRepository
+import org.superdro.core.ui.adapter.encoder.wizard.ReviewBuilds
 import org.superdro.core.ui.presenter.PresenterContext
 import org.superdro.core.ui.session.Connections
 import org.superdro.core.ui.sound.SoundController
@@ -34,6 +37,7 @@ import org.superdro.core.util.FilePicker
  * @property wallClock The wall clock of the dates (calibration date, export time, last seen).
  * @property timeZone The time zone of the local times (the firmware date, the export files).
  * @property appVersion The version text of the export files.
+ * @property buildContext The dispatcher of long calculations: the build of the error map.
  */
 class AdapterUiDeps(
     val connections: Connections,
@@ -46,7 +50,11 @@ class AdapterUiDeps(
     val wallClock: Clock = Clock.System,
     val timeZone: TimeZone = TimeZone.currentSystemDefault(),
     val appVersion: String = AppVersion.NAME,
+    val buildContext: CoroutineContext = Dispatchers.Default,
 ) {
+
+    /** The map builds of the error map review screens, with the last result. */
+    internal val reviewBuilds: ReviewBuilds = ReviewBuilds(buildContext)
 
     /** The session of [device], or null while the device has no session. */
     fun session(device: DeviceId): Flow<DeviceSession?> =
