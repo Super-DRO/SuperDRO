@@ -1,0 +1,415 @@
+# Build Release. This is the second of the two release workflows
+# (docs/versioning-and-release-plan.md, sections 5 and 6). release.yml starts it with
+# `gh workflow run` for a new tag. The version comes from the tag through the git describe
+# resolver of composite (resolveProjectVersion()). Nobody edits a version. The workflow builds
+# each target and publishes:
+#   - the desktop installers (.deb, .msi, .dmg)                   -> GitHub Release (section 6.1)
+#   - the Android AAB and APK, and the adapter probe APK          -> GitHub Release (section 6.2)
+#   - the Android AAB                                             -> Google Play internal track,
+#                                                                    only with the Play secret
+#
+# The `push: tags` trigger is only a safety net, for a tag that somebody pushed with a personal
+# access token. The usual start is the workflow_dispatch from release.yml. A tag that the
+# GITHUB_TOKEN pushed does not start `push`, so a tag does not build two times (section 5).
+#
+# The JDK: gradle/gradle-daemon-jvm.properties makes the Gradle daemon run on a JetBrains JDK 21,
+# and jpackage makes the runtime of the desktop installers from that JDK. Each job that runs
+# Gradle installs that JDK with setup-java, so that Gradle does not download it through foojay.
+name: Build Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The tag to build (for example v26.42.1). The default is the ref of this run."
+        required: false
+        default: ""
+  push:
+    tags:
+      - 'v*'   # safety net, see the top of this file
+
+# One group for each tag. A new run does not cancel a publish in progress.
+concurrency:
+  group: build-release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+# The workflow token is read-only. Only create-release gets contents: write. A build job runs
+# third-party Gradle plugins and dependencies, and must not push a branch or a tag, or edit a
+# Release.
+permissions:
+  contents: read
+
+# Secrets: each job that reads a secret for a signature or a publication declares
+# `environment: release`.
+# Keep these secrets in the `release` environment (Settings > Environments > release):
+#   ANDROID_KEYSTORE_GPG_PASSPHRASE, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+#   ANDROID_KEY_PASSWORD, PLAY_SERVICE_ACCOUNT_JSON
+# The upload keystore itself is in the repository as the GPG-encrypted file
+# signing/upload.keystore.gpg (section 7).
+# Before the repository becomes public, give the `release` environment required reviewers, so
+# that a maintainer approves each release job.
+
+jobs:
+  # ---------------------------------------------------------------------------------------------
+  # Find the tag and the version one time, and find which optional secrets exist. A job-level
+  # `if:` cannot read a secret, so this job gives each result as a job output.
+  # ---------------------------------------------------------------------------------------------
+  preflight:
+    name: Preflight (version and secrets)
+    runs-on: ubuntu-latest
+    environment: release   # reads the secrets of the signature to find them
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+      version: ${{ steps.resolve.outputs.version }}
+      version_code: ${{ steps.resolve.outputs.version_code }}
+      has_android_signing: ${{ steps.secrets.outputs.has_android_signing }}
+      has_play: ${{ steps.secrets.outputs.has_play }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          # This job runs only Python from this repository. The token is read-only, and the next
+          # step uses the credentials to fetch main.
+
+      - name: Refuse a tag that is not on main
+        # release.yml makes tags only on main. But a tag that somebody pushed, or a manual run of
+        # this workflow, can name each commit. Build and publish only reviewed code.
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD FETCH_HEAD; then
+            echo "::error::Refusing to build: $(git rev-parse HEAD) is not on main."
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Find the version from the tag
+        id: resolve
+        # The ref comes in through env. A `${{ }}` value in `run:` goes into the script before bash
+        # reads it, and a workflow_dispatch input is text that the user controls.
+        env:
+          REF: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          # Bash [[ =~ ]] examines the full string. grep examines each line, so a value with more
+          # lines could add a line to $GITHUB_OUTPUT. The anchors also refuse a branch name or a
+          # different v* tag.
+          if [[ ! "$REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Refusing to build '$REF': not a v<year>.<week>.<count> release tag."
+            exit 1
+          fi
+          VERSION="${REF#v}"
+          CODE="$(python3 -c "import os, sys; sys.path.insert(0, 'scripts'); import cut_version; print(cut_version.version_code(os.environ['REF'][1:]))")"
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Building $REF: version $VERSION, code $CODE"
+
+      - name: Find the optional secrets
+        id: secrets
+        env:
+          ANDROID_KEYSTORE_GPG_PASSPHRASE: ${{ secrets.ANDROID_KEYSTORE_GPG_PASSPHRASE }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          emit() { echo "$1=$2" >> "$GITHUB_OUTPUT"; echo "$1=$2"; }
+          all_set() { for v in "$@"; do [ -n "$v" ] || return 1; done; }
+
+          # The gate needs the encrypted keystore in the tag and all four secrets. A tag from
+          # before the file has no keystore, and an empty password stops the build late, in the
+          # Gradle task that signs.
+          [ -f signing/upload.keystore.gpg ] \
+            && all_set "${ANDROID_KEYSTORE_GPG_PASSPHRASE:-}" "${ANDROID_KEYSTORE_PASSWORD:-}" \
+                       "${ANDROID_KEY_ALIAS:-}" "${ANDROID_KEY_PASSWORD:-}" \
+            && emit has_android_signing true || emit has_android_signing false
+
+          all_set "${PLAY_SERVICE_ACCOUNT_JSON:-}" && emit has_play true || emit has_play false
+
+  # ---------------------------------------------------------------------------------------------
+  # Desktop: one runner for each system. jpackage makes only the installer of its own system.
+  # The installers are not signed (section 7).
+  # ---------------------------------------------------------------------------------------------
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    needs: preflight
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest      # .deb
+          - os: windows-latest     # .msi
+          - os: macos-latest       # .dmg
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        # git-bash on the Windows runner, so that each step has the same commands.
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0          # git describe needs the tag for the version (section 4)
+          fetch-tags: true
+          ref: ${{ needs.preflight.outputs.ref }}
+          # The build runs third-party Gradle plugins. Do not keep the token in .git/config.
+          persist-credentials: false
+
+      # The JetBrains JDK. See "The JDK" at the top of this file.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: 'jetbrains'
+          java-version: '21'
+
+      # Gradle configures all projects, also the Android projects, for a desktop task. Thus each
+      # desktop runner needs the Android SDK.
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+          # The default package list of the action asks for the old package 'tools', which the
+          # SDK repository does not have. AGP installs the platform and the build tools.
+          packages: 'platform-tools'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          # A tag is not main, so a release run only reads the caches. Only a run on main writes
+          # them (validation.yml).
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Package the desktop installer
+        run: |
+          ./gradlew :app:desktop:packageDistributionForCurrentOS \
+            --stacktrace -Dorg.gradle.console=plain
+
+      - name: Stage the installer
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          find app/desktop/build/compose/binaries -type f \
+            \( -name '*.deb' -o -name '*.msi' -o -name '*.dmg' \) -exec cp -v {} dist/ \;
+          echo "Staged for ${{ matrix.os }}:"; ls -la dist/
+
+      - name: Upload the desktop artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-${{ matrix.os }}
+          path: dist/
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------------------------
+  # Android: the release AAB and APK of SuperDRO, and the release APK of the adapter probe. They
+  # are signed with the upload key when the keystore and its secrets exist (section 7).
+  # ---------------------------------------------------------------------------------------------
+  android:
+    name: Android (AAB and APK)
+    needs: preflight
+    runs-on: ubuntu-latest
+    environment: release   # reads the upload keystore secrets
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ needs.preflight.outputs.ref }}
+          # The build runs third-party Gradle plugins. Do not keep the token in .git/config.
+          persist-credentials: false
+
+      # The JetBrains JDK. See "The JDK" at the top of this file.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: 'jetbrains'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+          # The default package list of the action asks for the old package 'tools', which the
+          # SDK repository does not have. AGP installs the platform and the build tools.
+          packages: 'platform-tools'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          # A tag is not main, so a release run only reads the caches.
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      # This step must come before the build. The release `signingConfig` exists only when
+      # ANDROID_KEYSTORE_FILE names the decrypted keystore (section 7). gpg reads the passphrase
+      # from stdin, because a --passphrase flag puts it in the process list.
+      - name: Decrypt the upload keystore
+        if: needs.preflight.outputs.has_android_signing == 'true'
+        env:
+          ANDROID_KEYSTORE_GPG_PASSPHRASE: ${{ secrets.ANDROID_KEYSTORE_GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ANDROID_KEYSTORE_GPG_PASSPHRASE" | gpg --batch --yes --quiet \
+            --pinentry-mode loopback --passphrase-fd 0 \
+            --output "$RUNNER_TEMP/upload.keystore" --decrypt signing/upload.keystore.gpg
+          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.keystore" >> "$GITHUB_ENV"
+
+      - name: Build the release bundle and APKs
+        env:
+          # The release `signingConfig` of app:android and app:adapter-probe reads these values.
+          # With no keystore, the AAB and the APKs are unsigned, and the Play upload does not run.
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew :app:android:bundleRelease :app:android:assembleRelease \
+            :app:adapter-probe:assembleRelease \
+            --stacktrace -Dorg.gradle.console=plain
+
+      # Each APK must have the version of the tag. A dirty tree or a wrong checkout gives a `-dev`
+      # version (section 4), and this step then stops the release.
+      - name: Check the APK versions
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+          VERSION_CODE: ${{ needs.preflight.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          AAPT2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
+          status=0
+          for apk in app/android/build/outputs/apk/release/*.apk \
+                     app/adapter-probe/build/outputs/apk/release/*.apk; do
+            # Read all the output, then keep the first line. `| head -1` closes the pipe early,
+            # and with pipefail the SIGPIPE of aapt2 then stops the step.
+            badging="$("$AAPT2" dump badging "$apk")"
+            line="${badging%%$'\n'*}"
+            echo "$apk: $line"
+            case "$line" in
+              *"versionCode='$VERSION_CODE' versionName='$VERSION'"*) ;;
+              *) echo "::error::$apk does not have version $VERSION, code $VERSION_CODE."; status=1 ;;
+            esac
+          done
+          exit "$status"
+
+      # Fixed names, so that each asset of the Release shows the app and the version. An unsigned
+      # APK gets `-unsigned` in its name, because Android cannot install it.
+      - name: Stage the AAB and the APKs
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+          SIGNED: ${{ needs.preflight.outputs.has_android_signing }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          suffix=""
+          [ "$SIGNED" = "true" ] || suffix="-unsigned"
+          copy_one() {
+            local files=($1)
+            if [ "${#files[@]}" -ne 1 ]; then
+              echo "::error::Expected one file for $1, found ${#files[@]}."
+              exit 1
+            fi
+            cp -v "${files[0]}" "dist/$2"
+          }
+          mkdir -p dist
+          copy_one 'app/android/build/outputs/bundle/release/*.aab' "superdro-${VERSION}${suffix}.aab"
+          copy_one 'app/android/build/outputs/apk/release/*.apk' "superdro-${VERSION}${suffix}.apk"
+          copy_one 'app/adapter-probe/build/outputs/apk/release/*.apk' \
+            "superdro-adapter-probe-${VERSION}${suffix}.apk"
+          echo "Staged Android artifacts:"; ls -la dist/
+
+      - name: Upload the Android artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: dist/
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------------------------
+  # The GitHub Release. It is a full release (not a draft, not a prerelease), and it is the latest
+  # release.
+  # ---------------------------------------------------------------------------------------------
+  create-release:
+    name: Publish the GitHub Release
+    needs: [preflight, desktop, android]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write   # make the GitHub Release and upload the assets
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Put the assets in one directory
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          # The outputs of all runners go into one directory. If two files have the same name, one
+          # replaces the other, and the Release has no copy of it. Stop the job instead.
+          # fail_on_unmatched_files does not find this problem, because it examines only the glob.
+          collision=0
+          while IFS= read -r -d '' file; do
+            name="$(basename "$file")"
+            if [ -e "release-assets/$name" ]; then
+              echo "::error::Two release assets have the name '$name' (second: $file)."
+              collision=1
+              continue
+            fi
+            cp -v "$file" "release-assets/$name"
+          done < <(find artifacts -type f -print0 | sort -z)
+          if [ "$collision" -ne 0 ]; then
+            exit 1
+          fi
+          echo "Release assets:"; ls -la release-assets/
+
+      - name: Make the GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ needs.preflight.outputs.ref }}
+          name: ${{ needs.preflight.outputs.version }}
+          # Notes from the commits after the previous tag.
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          make_latest: true
+          fail_on_unmatched_files: true
+          files: release-assets/*
+
+  # ---------------------------------------------------------------------------------------------
+  # Google Play, internal track. The job runs only when the Play secret exists and the AAB is
+  # signed with the upload key (section 6.2).
+  # ---------------------------------------------------------------------------------------------
+  publish-play:
+    name: Publish to Google Play
+    needs: [preflight, android]
+    if: needs.preflight.outputs.has_play == 'true' && needs.preflight.outputs.has_android_signing == 'true'
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Download the Android artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: android
+          path: dist
+
+      - name: Write the Play service account
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/play.json"
+
+      # The step names exactly one file. Only the SuperDRO app goes to Play. The adapter probe is
+      # a test tool, and it is only on the GitHub Release.
+      - name: Upload the AAB to Play (internal)
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1
+        with:
+          serviceAccountJson: ${{ runner.temp }}/play.json
+          packageName: org.superdro
+          releaseFiles: dist/superdro-${{ needs.preflight.outputs.version }}.aab
+          track: internal
+          status: completed
