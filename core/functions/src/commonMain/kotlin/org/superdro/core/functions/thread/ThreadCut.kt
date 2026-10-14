@@ -68,10 +68,17 @@ data class ThreadStroke(
     val latched: Boolean = false,
 )
 
-/** The state of the pass recorder: the record and the stroke. */
+/** One position of the pass recorder in µm: the absolute X value and the Z value. */
+data class ThreadPosition(val xUm: Double, val zUm: Double)
+
+/**
+ * The state of the pass recorder: the record, the stroke, and the last position, or null when
+ * the last Z was not known.
+ */
 data class ThreadCutState(
     val record: ThreadPassRecord = ThreadPassRecord(),
     val stroke: ThreadStroke = ThreadStroke(),
+    val last: ThreadPosition? = null,
 )
 
 /**
@@ -243,24 +250,56 @@ object ThreadCut {
      * [Zmin, Zmax] or not finite resets the stroke. A pass counts when Z moves inside the thread
      * length over the band 25 % to 75 %. The record changes only for a larger depth, so a spring
      * pass at the same depth does not change it.
+     *
+     * The positions come at the display rate, not for each sample. Thus the motion from the last
+     * position ([ThreadCutState.last]) to this position is a straight line: when it crosses an
+     * end of the thread length, the part of the line inside the length also counts. A fast pass
+     * over a short thread with no position inside the length still counts.
      */
     fun update(spec: ThreadSpec, state: ThreadCutState, xUm: Double, zUm: Double?): ThreadCutState {
         val zMin = min(spec.startZUm, spec.stopZUm)
         val zMax = max(spec.startZUm, spec.stopZUm)
-        val length = zMax - zMin
-        if (zUm == null || !zUm.isFinite() || zUm < zMin || zUm > zMax) {
-            return state.copy(stroke = ThreadStroke())
-        }
-        var stroke = state.stroke.copy(minZUm = min(state.stroke.minZUm, zUm), maxZUm = max(state.stroke.maxZUm, zUm))
+        if (zUm == null || !zUm.isFinite()) return state.copy(stroke = ThreadStroke(), last = null)
+        val here = ThreadPosition(xUm, zUm)
+        val inside = zUm in zMin..zMax
+        var stroke = state.stroke
         var record = state.record
-        if (!stroke.latched && stroke.minZUm <= zMin + 0.25 * length && stroke.maxZUm >= zMin + 0.75 * length && xUm.isFinite()) {
-            stroke = stroke.copy(latched = true)
-            val diameter = 2.0 * abs(xUm)
-            val deepest = record.deepestUm?.takeIf { it.isFinite() }
-            if (deepest == null || depthUm(spec, diameter) > depthUm(spec, deepest)) {
-                record = ThreadPassRecord(deepestUm = diameter, previousDeepestUm = deepest, threadId = spec.id)
+        val previous = state.last
+        if (previous != null) {
+            val previousInside = previous.zUm in zMin..zMax
+            val low = max(min(previous.zUm, zUm), zMin)
+            val high = min(max(previous.zUm, zUm), zMax)
+            if ((!previousInside || !inside) && low <= high) {
+                // The line crossed an end of the length. The X of the cut is the X of the position
+                // inside the length, or the X at the middle of the length for a line over all of it.
+                val x = when {
+                    previousInside -> previous.xUm
+                    inside -> xUm
+                    else -> previous.xUm + (xUm - previous.xUm) * ((zMin + zMax) / 2.0 - previous.zUm) / (zUm - previous.zUm)
+                }
+                val crossed = latch(spec, stroke.copy(minZUm = min(stroke.minZUm, low), maxZUm = max(stroke.maxZUm, high)), record, x, zMin, zMax)
+                stroke = crossed.stroke
+                record = crossed.record
             }
         }
-        return ThreadCutState(record, stroke)
+        if (!inside) return ThreadCutState(record, ThreadStroke(), here)
+        val next = latch(spec, stroke.copy(minZUm = min(stroke.minZUm, zUm), maxZUm = max(stroke.maxZUm, zUm)), record, xUm, zMin, zMax)
+        return ThreadCutState(next.record, next.stroke, here)
+    }
+
+    /** Latches the pass of [stroke] with the X value [xUm] when the stroke covers the band 25 % to 75 %. */
+    private fun latch(spec: ThreadSpec, stroke: ThreadStroke, record: ThreadPassRecord, xUm: Double, zMin: Double, zMax: Double): ThreadCutState {
+        val length = zMax - zMin
+        if (stroke.latched || stroke.minZUm > zMin + 0.25 * length || stroke.maxZUm < zMin + 0.75 * length || !xUm.isFinite()) {
+            return ThreadCutState(record, stroke)
+        }
+        val diameter = 2.0 * abs(xUm)
+        val deepest = record.deepestUm?.takeIf { it.isFinite() }
+        val next = if (deepest == null || depthUm(spec, diameter) > depthUm(spec, deepest)) {
+            ThreadPassRecord(deepestUm = diameter, previousDeepestUm = deepest, threadId = spec.id)
+        } else {
+            record
+        }
+        return ThreadCutState(next, stroke.copy(latched = true))
     }
 }
