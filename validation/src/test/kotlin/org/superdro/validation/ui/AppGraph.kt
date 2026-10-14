@@ -4,8 +4,11 @@ import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import java.io.File
 import java.nio.file.Files
+import java.util.Collections
 import java.util.Properties
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.kodein.di.DI
@@ -38,6 +41,8 @@ import org.superdro.core.store.repository.AdapterRepository
 import org.superdro.core.store.repository.MachineRepository
 import org.superdro.core.store.valueOrNull
 import org.superdro.core.ui.navigation.NavigationHolder
+import org.superdro.core.ui.presenter.PresenterContext
+import org.superdro.core.ui.tabs.DeviceTabsPresenter
 
 /**
  * The full DI graph of `core:di` for `App()` on the JVM: the
@@ -48,6 +53,17 @@ import org.superdro.core.ui.navigation.NavigationHolder
  */
 class AppGraph(debug: Boolean = true) : AutoCloseable {
     val folder: File = Files.createTempDirectory("superdro-ui-app").toFile()
+
+    @Volatile
+    private var closed = false
+    private val presenterErrors = Collections.synchronizedList(ArrayList<Throwable>())
+
+    /**
+     * Receives the uncaught errors of the presenter scopes. Before [close], it keeps each error, and
+     * [close] fails with them. After [close], it ignores them: a presenter can do a database read
+     * after the test removed the database, and this error must not go to the next test.
+     */
+    private val presenterErrorHandler = CoroutineExceptionHandler { _, error -> if (!closed) presenterErrors += error }
     private val driver: SqlDriver = JdbcSqliteDriver(
         "jdbc:sqlite:${File(folder, "superdro.db").absolutePath}",
         Properties().apply { setProperty("foreign_keys", "true") },
@@ -59,6 +75,9 @@ class AppGraph(debug: Boolean = true) : AutoCloseable {
         bindSingleton<SqlDriver> { driver }
         bindProvider<StoreIOProvider>(overrides = true) { StoreIOProviderJvm(File(folder, "files")) }
         bindSingleton<DebugAdapter>(overrides = true) { if (debug) FakeDebugAdapter() else NoDebugAdapter }
+        bindSingleton<PresenterContext>(overrides = true) {
+            PresenterContext(dispatcher = Dispatchers.Default + presenterErrorHandler, clock = instance())
+        }
     }
 
     val manager: ConnectionManager = di.direct.instance()
@@ -78,10 +97,17 @@ class AppGraph(debug: Boolean = true) : AutoCloseable {
         }
     }
 
+    private val scenarios = HashSet<String>()
+
     /**
      * Stores a machine with an adapter profile whose encoder profiles the user set (no setup
      * reminder), remembers it, and connects it to the fake scenario [scenario]. The fake adapter
      * gives 25400 counts per inch (1 µm for each count).
+     *
+     * Each machine of one graph must use a different scenario. Each scenario reports its own adapter
+     * identity. When two machines report the same identity, the identity rules can show the "new
+     * adapter" prompt on one tab. The time of the identity checks decides this. The modal prompt
+     * then stops the clicks of a test. For a second machine, use the scenario `commands`.
      */
     fun connect(
         id: String,
@@ -90,6 +116,7 @@ class AppGraph(debug: Boolean = true) : AutoCloseable {
         scenario: String = "still",
         configure: (MachineProfile) -> MachineProfile = { it },
     ) = runBlocking {
+        require(scenarios.add(scenario)) { "The scenario $scenario has a machine already. Give each machine its own scenario." }
         val encoders = AdapterProfile().encoders.mapValues { (_, encoder) -> encoder.copy(calibration = Calibration(status = CalibrationStatus.UserSet)) }
         val adapter = adapters.saveAdapterProfile(AdapterProfile(alias = "$name adapter", model = "tda-fake", encoders = encoders)).valueOrNull()
         val address = AdapterAddress.Fake(scenario)
@@ -106,10 +133,21 @@ class AppGraph(debug: Boolean = true) : AutoCloseable {
         manager.connect(DeviceRef(DeviceId(id), name, address))
     }
 
+    /**
+     * Stops the graph before it removes the temporary folder. First the presenters close: the
+     * presenters of all back stacks and the tabs presenter. Then the sessions and the app scope
+     * stop. A presenter error that occurred before the close makes the test fail.
+     */
     override fun close() {
+        closed = true
+        holder.retainTabs(emptyList())
+        holder.clear()
+        holder.presenters.keys.forEach(holder.presenters::close)
+        di.direct.instance<DeviceTabsPresenter>().close()
         manager.close()
         di.direct.instance<CoroutineScope>(tag = APP_SCOPE).cancel()
         runCatching { driver.close() }
         folder.deleteRecursively()
+        presenterErrors.firstOrNull()?.let { error -> throw AssertionError("A presenter failed while the test ran.", error) }
     }
 }

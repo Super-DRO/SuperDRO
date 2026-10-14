@@ -37,7 +37,7 @@ private val log = Arbor.tag("DataOutput")
  *
  * @property networkInterfaces The interfaces and their addresses.
  * @property secretStore The encrypted store of the PSK and the MQTT credentials.
- * @property listenSockets The TCP sockets (production: [KtorListenSocketFactory]).
+ * @property listenSockets The TCP sockets (production: [systemListenSockets]).
  * @property mqttConnector The MQTT client (production: [defaultMqttConnector]).
  * @property pskSecurity Makes the PSK mode of a key (production: [pskStreamSecurity]).
  * @property ports The ports of the outputs of this process.
