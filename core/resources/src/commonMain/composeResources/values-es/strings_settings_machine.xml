@@ -150,4 +150,7 @@
     <string name="settings_machine_configuration_commands">Comandos de configuración del adaptador</string>
     <string name="settings_machine_configuration_commands_summary">Activado: SuperDRO puede cambiar los modos de entrada, reiniciar el adaptador y enviar los comandos de referencia. Desactivado: los rechaza.</string>
     <string name="settings_machine_at_once">Cada cambio se aplica de inmediato, también a un adaptador conectado.</string>
+    <string name="settings_machine_no_tab">Esta máquina no tiene pestaña. Cada cambio se guarda en el perfil. La pestaña de esta máquina usa los cambios cuando se abre.</string>
+    <string name="settings_machine_no_adapter_profile">Esta máquina no tiene perfil de adaptador. Conecte el adaptador una vez para crear su perfil.</string>
+    <string name="settings_machine_profile_file_no_tab">Abra una pestaña de esta máquina para exportar o importar un archivo de perfil.</string>
 </resources>

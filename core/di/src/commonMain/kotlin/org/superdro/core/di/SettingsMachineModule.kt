@@ -9,7 +9,7 @@ import org.superdro.core.ui.settings.machine.MachineSettingsPresenter
 
 /**
  * The bindings of the settings area: the machine settings (see [settingsUiModule]). The presenter
- * is a factory of the profile ID of the tab and the snackbar of the frame.
+ * is a factory of the profile ID, the tab flag, and the snackbar of the frame.
  */
 internal val settingsMachineModule = DI.Module("settingsMachineModule") {
     bindFactory<MachineSettingsArgs, MachineSettingsPresenter> { args ->
@@ -21,6 +21,7 @@ internal val settingsMachineModule = DI.Module("settingsMachineModule") {
             appSettings = instance<AppSettingsStore>().settings,
             context = instance(),
             showMessage = args.showMessage,
+            tab = args.tab,
         )
     }
 }

@@ -166,6 +166,9 @@ val SETTINGS_LINK_TYPES: List<TransportKind> = listOf(TransportKind.BluetoothSpp
  *   or null when the profile has no adapter profile.
  * @property linkType The link type that the link group shows: the type of the stored address, or
  *   the type that the user selected and that has no valid address yet.
+ * @property tab True when the screen is in the back stack of the tab of the profile. False when the
+ *   machine profiles screen opened the settings of a profile with no tab: then each change goes
+ *   only into the store, and the screens that need the tab are not available.
  */
 @Immutable
 data class MachineSettingsUiState(
@@ -179,7 +182,20 @@ data class MachineSettingsUiState(
     val tachometerPulses: Double? = null,
     val linkType: TransportKind? = null,
     val typeChange: MachineTypeChangeUiState? = null,
+    val tab: Boolean = true,
 ) {
+    /**
+     * True when the encoder settings and the probe input can open. In a tab they always open (they
+     * show a note when the profile has no adapter profile). With no tab they open only for the
+     * stored adapter profile of the machine profile.
+     */
+    val adapterInputsAvailable: Boolean
+        get() = tab || profile?.adapterProfileId != null
+
+    /** True when the profile file export and import can open: only in the tab of the profile. */
+    val profileFileAvailable: Boolean
+        get() = tab
+
     /** The groups of the machine type of the profile. */
     val groups: List<MachineSettingsGroup>
         get() = MachineSettingsGroup.groupsFor(profile?.machineType ?: MachineType.VerticalMill)

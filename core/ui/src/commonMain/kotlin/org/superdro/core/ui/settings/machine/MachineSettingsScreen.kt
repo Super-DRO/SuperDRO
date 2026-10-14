@@ -79,6 +79,9 @@ import org.superdro.core.resources.settings_machine_configuration_commands_summa
 import org.superdro.core.resources.settings_machine_crosshair
 import org.superdro.core.resources.settings_machine_encoder
 import org.superdro.core.resources.settings_machine_encoder_summary
+import org.superdro.core.resources.settings_machine_no_adapter_profile
+import org.superdro.core.resources.settings_machine_no_tab
+import org.superdro.core.resources.settings_machine_profile_file_no_tab
 import org.superdro.core.resources.settings_machine_font
 import org.superdro.core.resources.settings_machine_font_monospace
 import org.superdro.core.resources.settings_machine_font_system
@@ -238,8 +241,10 @@ interface MachineSettingsNavigation {
 }
 
 /**
- * The machine settings screen of the profile of the tab: one
+ * The machine settings screen of one profile: one
  * group for each part of the profile. Each row shows the stored value and changes it at once.
+ * With no tab ([MachineSettingsUiState.tab] false), a notice shows, and the rows that need the tab
+ * or an adapter profile are disabled with a short note.
  * The composable is stateless: [state] gives each value, and [events] gets each change.
  */
 @Composable
@@ -308,7 +313,7 @@ private fun ColumnScope.GroupContent(
         MachineSettingsGroup.AxisX, MachineSettingsGroup.AxisY, MachineSettingsGroup.AxisZ ->
             LinearAxisGroup(group.axis!!, state, profile, events, navigation)
         MachineSettingsGroup.Angular -> AngularGroup(state, profile, events, navigation)
-        MachineSettingsGroup.Caliper -> CaliperGroup(profile, events, navigation)
+        MachineSettingsGroup.Caliper -> CaliperGroup(state, profile, events, navigation)
         MachineSettingsGroup.Tachometer -> TachometerGroup(state, profile, events, navigation)
         MachineSettingsGroup.Probe -> ProbeGroup(state, profile, events, navigation)
         MachineSettingsGroup.Link -> LinkGroup(state, profile, events)
@@ -320,6 +325,9 @@ private fun ColumnScope.GroupContent(
 
 @Composable
 private fun MachineGroup(state: MachineSettingsUiState, profile: MachineProfile, events: MachineSettingsEvents, navigation: MachineSettingsNavigation) {
+    if (!state.tab) {
+        SettingsNotice(stringResource(Res.string.settings_machine_no_tab), kind = NoticeKind.Info, tag = machineSettingTag("no-tab"))
+    }
     SettingsSection(stringResource(Res.string.settings_machine_section_profile)) {
         TextRow(state, SettingsTextField.Name, Res.string.settings_machine_name, events::setName)
         SettingsDropdown(
@@ -342,8 +350,11 @@ private fun MachineGroup(state: MachineSettingsUiState, profile: MachineProfile,
         )
         SettingsLink(
             title = stringResource(Res.string.route_profile_file),
-            summary = stringResource(Res.string.integration_settings_profile_file_summary),
+            summary = stringResource(
+                if (state.profileFileAvailable) Res.string.integration_settings_profile_file_summary else Res.string.settings_machine_profile_file_no_tab,
+            ),
             onClick = navigation::openProfileFile,
+            enabled = state.profileFileAvailable,
             tag = machineSettingTag("profile-file"),
         )
     }
@@ -619,7 +630,7 @@ private fun LinearAxisGroup(
             onCheckedChange = { on -> events.setInvert(axis, on) },
             tag = machineSettingTag("invert:${axis.name}"),
         )
-        EncoderLink(config.primary.channel, navigation)
+        EncoderLink(config.primary.channel, state, navigation)
     }
     SettingsSection(stringResource(Res.string.settings_machine_section_secondary)) {
         val secondary = config.secondary
@@ -638,7 +649,7 @@ private fun LinearAxisGroup(
                 onCheckedChange = { on -> events.setSecondaryInvert(axis, on) },
                 tag = machineSettingTag("secondary-invert:${axis.name}"),
             )
-            EncoderLink(secondary.channel, navigation)
+            EncoderLink(secondary.channel, state, navigation)
         }
     }
     ActionButtons(axis, profile, events)
@@ -663,14 +674,23 @@ private fun ChannelChoice(channel: Char, tag: String = "channel", onSelect: (Cha
     )
 }
 
-/** The row that opens the encoder settings of the adapter input: the resolution, the hysteresis, and the filter. */
+/**
+ * The row that opens the encoder settings of the adapter input: the resolution, the hysteresis, and
+ * the filter. With no tab and no adapter profile, the row is disabled and shows a note.
+ */
 @Composable
-private fun EncoderLink(channel: Char, navigation: MachineSettingsNavigation) {
+private fun EncoderLink(channel: Char, state: MachineSettingsUiState, navigation: MachineSettingsNavigation) {
     val letter = Channels.normalize(channel)
+    val available = state.adapterInputsAvailable
     SettingsLink(
         title = stringResource(Res.string.settings_machine_encoder),
-        summary = stringResource(Res.string.settings_machine_encoder_summary, letter.uppercaseChar().toString()),
+        summary = if (available) {
+            stringResource(Res.string.settings_machine_encoder_summary, letter.uppercaseChar().toString())
+        } else {
+            stringResource(Res.string.settings_machine_no_adapter_profile)
+        },
         onClick = { navigation.openEncoder(letter) },
+        enabled = available,
         tag = machineSettingTag("encoder:$letter"),
     )
 }
@@ -737,14 +757,14 @@ private fun AngularGroup(state: MachineSettingsUiState, profile: MachineProfile,
             onCheckedChange = { on -> events.setInvert(AxisId.Angular, on) },
             tag = machineSettingTag("invert:Angular"),
         )
-        EncoderLink(angular.primary.channel, navigation)
+        EncoderLink(angular.primary.channel, state, navigation)
     }
     ActionButtons(AxisId.Angular, profile, events)
 }
 
 /** The caliper or micrometer input: only on a lathe (the switch stays on). */
 @Composable
-private fun CaliperGroup(profile: MachineProfile, events: MachineSettingsEvents, navigation: MachineSettingsNavigation) {
+private fun CaliperGroup(state: MachineSettingsUiState, profile: MachineProfile, events: MachineSettingsEvents, navigation: MachineSettingsNavigation) {
     val caliper = profile.caliper
     SettingsSection(stringResource(Res.string.settings_machine_section_caliper)) {
         SettingsSwitch(
@@ -761,7 +781,7 @@ private fun CaliperGroup(profile: MachineProfile, events: MachineSettingsEvents,
             onCheckedChange = { on -> events.setInvert(AxisId.Caliper, on) },
             tag = machineSettingTag("invert:Caliper"),
         )
-        EncoderLink(caliper.input.channel, navigation)
+        EncoderLink(caliper.input.channel, state, navigation)
     }
 }
 
@@ -809,7 +829,7 @@ private fun TachometerGroup(state: MachineSettingsUiState, profile: MachineProfi
                 onCheckedChange = { on -> events.setInvert(AxisId.Tachometer, on) },
                 tag = machineSettingTag("invert:Tachometer"),
             )
-            EncoderLink(Channels.T, navigation)
+            EncoderLink(Channels.T, state, navigation)
         }
     }
 }
@@ -857,8 +877,11 @@ private fun ProbeGroup(state: MachineSettingsUiState, profile: MachineProfile, e
         )
         SettingsLink(
             title = stringResource(Res.string.settings_machine_probe_input),
-            summary = stringResource(Res.string.settings_machine_probe_input_summary),
+            summary = stringResource(
+                if (state.adapterInputsAvailable) Res.string.settings_machine_probe_input_summary else Res.string.settings_machine_no_adapter_profile,
+            ),
             onClick = navigation::openProbeInput,
+            enabled = state.adapterInputsAvailable,
             tag = machineSettingTag("probe-input"),
         )
     }

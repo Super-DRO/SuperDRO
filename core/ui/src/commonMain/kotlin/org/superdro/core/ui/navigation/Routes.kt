@@ -69,6 +69,12 @@ data object BatteryOptimizationRoute : GlobalRoute
 /** Screen, settings: the machine settings of the tab. */
 data object MachineSettingsRoute : TabRoute
 
+/**
+ * Screen, settings: the machine settings of the stored profile [profileId] with no tab. The machine
+ * profiles screen opens it for a profile that has no tab.
+ */
+data class OfflineMachineSettingsRoute(val profileId: String) : GlobalRoute
+
 /** Screen, settings: the calibration wizard. Null [axis]: the first axis that needs it. */
 data class CalibrationWizardRoute(val axis: AxisId? = null) : TabRoute
 

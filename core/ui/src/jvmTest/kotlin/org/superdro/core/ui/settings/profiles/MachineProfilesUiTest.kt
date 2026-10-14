@@ -40,6 +40,7 @@ class MachineProfilesUiTest {
         val connections = FakeConnections()
         val presenter = MachineProfilesPresenter(store.machines, connections, scope.testPresenterContext())
         val deleted = mutableListOf<String>()
+        val settings = mutableListOf<String>()
 
         fun run() = scope.testScheduler.advanceUntilIdle()
 
@@ -57,7 +58,7 @@ class MachineProfilesUiTest {
                 MachineProfilesScreen(
                     state = state,
                     presenter = graph.presenter,
-                    navigation = MachineProfilesNavigation(onDelete = { id -> graph.deleted += id }),
+                    navigation = MachineProfilesNavigation(onDelete = { id -> graph.deleted += id }, onMachineSettings = { id -> graph.settings += id }),
                     onBack = {},
                 )
             }
@@ -117,6 +118,22 @@ class MachineProfilesUiTest {
         onNodeWithTag(ProfilesTags.item("delete")).performClick()
         settle(graph)
         assertEquals(listOf(id), graph.deleted)
+        graph.close()
+    }
+
+    @Test
+    fun theMenuOfAProfileWithNoTabOpensItsMachineSettings() = runComposeUiTest {
+        val graph = Graph(TestScope())
+        var id = ""
+        graph.scope.launch { id = graph.store.machines.createProfile(MachineProfile.create(name = "Imported")).valueOrNull()!!.id }
+        show(graph)
+        assertTrue(graph.connections.sessions.value.isEmpty())
+        onNodeWithTag(ProfilesTags.menu(id)).performClick()
+        settle(graph)
+        onNodeWithTag(ProfilesTags.item("settings")).assertIsDisplayed().performClick()
+        settle(graph)
+        assertEquals(listOf(id), graph.settings)
+        assertNull(graph.presenter.uiState.value.menuFor)
         graph.close()
     }
 
