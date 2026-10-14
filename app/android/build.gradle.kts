@@ -49,6 +49,9 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
+            // R8 removes the resources that no code and no manifest entry refers to. The Compose
+            // resources are assets, so this step does not change them.
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
