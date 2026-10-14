@@ -99,11 +99,8 @@ kotlin {
 
 baselineProfile {
     mergeIntoMain = true
-    // The profile build types contain the fake adapter (see below). The release APK does not,
-    // so its rules have no use in the merged profile.
-    filter {
-        exclude("org.superdro.core.fakeadapter.**")
-    }
+    // The generator removes the rules of the fake adapter (see below) itself. The filter of this
+    // plugin does not apply to the startup profile.
 }
 
 // The build types that the baselineProfile plugin makes from release. The profile generator

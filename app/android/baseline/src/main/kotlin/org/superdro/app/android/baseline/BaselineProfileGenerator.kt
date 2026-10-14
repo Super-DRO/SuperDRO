@@ -31,13 +31,17 @@ class BaselineProfileGenerator {
      * profile, which sets the order of the classes in the DEX files.
      */
     @Test
-    fun startToTheReadout() = rule.collect(packageName = TARGET_PACKAGE, includeInStartupProfile = true) {
+    fun startToTheReadout() = rule.collect(
+        packageName = TARGET_PACKAGE,
+        includeInStartupProfile = true,
+        filterPredicate = ::isReleaseRule,
+    ) {
         startWithDemo()
     }
 
     /** The tab switches, the main functions, the global toggles, and the app settings. */
     @Test
-    fun readoutJourney() = rule.collect(packageName = TARGET_PACKAGE) {
+    fun readoutJourney() = rule.collect(packageName = TARGET_PACKAGE, filterPredicate = ::isReleaseRule) {
         startWithDemo()
 
         // The tab switches between the two demo machines.
@@ -88,6 +92,13 @@ class BaselineProfileGenerator {
         tap(By.text(NOT_NOW), timeoutMs = SHORT_TIMEOUT_MS)
     }
 
+    /**
+     * Gives false for a rule of `core:fake-adapter`. Only the profile build types contain the fake
+     * adapter, so its rules have no use in the release APK. This filter applies to the Baseline
+     * Profile and to the startup profile.
+     */
+    private fun isReleaseRule(line: String): Boolean = FAKE_ADAPTER_PACKAGE !in line
+
     /** Waits for [selector]. Gives false when it does not show in [timeoutMs]. */
     private fun MacrobenchmarkScope.waitFor(selector: BySelector, timeoutMs: Long = TIMEOUT_MS): Boolean =
         device.wait(Until.hasObject(selector), timeoutMs) == true
@@ -114,6 +125,7 @@ class BaselineProfileGenerator {
     private companion object {
         const val TARGET_PACKAGE = "org.superdro"
         const val MAIN_ACTIVITY = "org.superdro.app.android.MainActivity"
+        const val FAKE_ADAPTER_PACKAGE = "org/superdro/core/fakeadapter/"
 
         /** `MainActivity.EXTRA_DEMO`. */
         const val EXTRA_DEMO = "demo"
