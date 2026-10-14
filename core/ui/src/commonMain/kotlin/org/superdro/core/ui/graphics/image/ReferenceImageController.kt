@@ -91,6 +91,9 @@ class ReferenceImageController(
     private var pending: RasterImage? = null
     private var cache: Pair<String, RasterImage>? = null
 
+    /** The bitmap of the last raster. An alpha or a matrix change does not make a new bitmap (up to 64 MB). */
+    private var bitmapCache: Pair<RasterImage, ImageBitmap>? = null
+
     /** The open request to the UI, or null. Call [onRequestHandled] after the UI did it. */
     val request: StateFlow<ReferenceImageRequest?> = mutableRequest.asStateFlow()
 
@@ -176,8 +179,13 @@ class ReferenceImageController(
         } ?: return null
         cache = stored.fileName to raster
         val matrix = if (stored.matrix.size >= 9) Matrix3.of(stored.matrix) else Matrix3.IDENTITY
-        return ReferenceImageBitmap(stored.fileName, PlatformImages.toImageBitmap(raster), raster.width, raster.height, matrix, stored.alpha)
+        return ReferenceImageBitmap(stored.fileName, bitmapOf(raster), raster.width, raster.height, matrix, stored.alpha)
     }
+
+    /** Gives the bitmap of [raster]. Only a new raster (a new file) makes a new bitmap. */
+    private fun bitmapOf(raster: RasterImage): ImageBitmap =
+        bitmapCache?.takeIf { (cached, _) -> cached === raster }?.second
+            ?: PlatformImages.toImageBitmap(raster).also { bitmap -> bitmapCache = raster to bitmap }
 
     private fun nextId(): Long = ids.incrementAndFetch()
 
