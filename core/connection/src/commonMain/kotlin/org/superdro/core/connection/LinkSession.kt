@@ -69,10 +69,10 @@ import org.superdro.core.util.Clock
  *
  * One timer loop runs all timers of the session: the reconnect delay, the restart sequence, the
  * queue timers, the 30 s limits, the no-data watchdog, the BEL byte, and the tick of the input
- * stage, and the trailing publish of [inputs]. At one time, the loop runs them in this order: the
- * trailing publish, the restart close, the reconnect, the 30 s limits and the watchdog, the
- * queue, the BEL byte, and the tick. Thus the state changes before a write at the same time, and
- * a queue write at the same time as the BEL byte goes out first and starts the 500 ms again.
+ * stage. At one time, the loop runs them in this order: the restart close, the reconnect, the
+ * 30 s limits and the watchdog, the queue, the BEL byte, and the tick. Thus the state changes
+ * before a write at the same time, and a queue write at the same time as the BEL byte goes out
+ * first and starts the 500 ms again.
  *
  * The session makes a new [InputSnapshot] only when the stage changed (see
  * [InputStage.revision]): each accepted chunk, not each message, and not a tick with no change.
@@ -80,7 +80,9 @@ import org.superdro.core.util.Clock
  * [DeviceSession.INPUT_PUBLISH_MS]: a change after a quiet period goes out at once (the leading
  * edge), and the last change of a period goes out at the end of the period (the trailing edge).
  * A change of a probe state, of the probe sequence, or of a status goes out at once. The first
- * change after a link start also goes out at once.
+ * change after a link start also goes out at once. The trailing publish has its own small
+ * coroutine with a plain delay: it does not wake the timer loop, because a timeout of the timer
+ * loop costs much more than a delay.
  *
  * Details of the rules:
  * - The `NO_DATA` recovery applies to SPP and TCP. USB, BLE, and the fake link keep the
@@ -157,6 +159,9 @@ internal class LinkSession(
 
     /** The time of the trailing publish of [inputs], or null when no change waits. */
     private var publishAtMs: Long? = null
+
+    /** Wakes the coroutine of the trailing publish. */
+    private val publishWake = Channel<Unit>(Channel.CONFLATED)
 
     override fun currentInputs(): InputSnapshot = latest
 
@@ -293,6 +298,7 @@ internal class LinkSession(
                 .collect { value -> onCapability(value) }
         }
         scope.launch { timerLoop() }
+        scope.launch { trailingPublisher() }
     }
 
     private fun resume(ref: DeviceRef) {
@@ -937,7 +943,6 @@ internal class LinkSession(
         fun consider(value: Long?) {
             if (value != null && (next == null || value < next!!)) next = value
         }
-        consider(publishAtMs)
         consider(restartCloseAtMs)
         val current = _state.value
         if (current is SessionState.Reconnecting) consider(retryAtMs)
@@ -964,7 +969,6 @@ internal class LinkSession(
     }
 
     private fun runDue(now: Long) {
-        publishAtMs?.let { at -> if (at <= now) publishInputs(now) }
         restartCloseAtMs?.let { at ->
             if (at <= now) {
                 restartCloseAtMs = null
@@ -1045,7 +1049,7 @@ internal class LinkSession(
     /**
      * The stage processed a chunk or a tick. A new snapshot goes to [inputs] at once when it
      * changes a probe or a status, or when the last value is [DeviceSession.INPUT_PUBLISH_MS] old
-     * or more. Else the timer loop publishes the newest snapshot at the end of the period.
+     * or more. Else [trailingPublisher] publishes the newest snapshot at the end of the period.
      */
     private fun onStageChanged(now: Long) {
         if (!refreshLatest()) return
@@ -1054,7 +1058,30 @@ internal class LinkSession(
             publishInputs(now)
         } else if (publishAtMs == null) {
             publishAtMs = last + DeviceSession.INPUT_PUBLISH_MS
-            poke()
+            publishWake.trySend(Unit)
+        }
+    }
+
+    /**
+     * Publishes [latest] at [publishAtMs]. A publish before that time (a probe change or a new
+     * link) clears [publishAtMs], and then this coroutine waits for the next wake.
+     */
+    private suspend fun trailingPublisher() {
+        for (wake in publishWake) {
+            while (true) {
+                val at = publishAtMs ?: break
+                val before = clock.nowMs()
+                if (at <= before) {
+                    publishInputs(before)
+                    break
+                }
+                delay(at - before)
+                // A clock that does not follow the delays cannot reach the time: publish now.
+                if (clock.nowMs() == before && publishAtMs != null) {
+                    publishInputs(before)
+                    break
+                }
+            }
         }
     }
 
