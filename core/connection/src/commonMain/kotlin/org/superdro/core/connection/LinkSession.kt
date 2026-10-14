@@ -537,6 +537,7 @@ internal class LinkSession(
                 .collect { bytes -> onChunk(current, bytes) }
             onLinkLost(current, LinkFailure.Lost)
         } catch (error: LinkFailureException) {
+            if (link === current) error.message?.let { text -> log.i { "$id: $text" } }
             onLinkLost(current, error.failure)
         }
     }
