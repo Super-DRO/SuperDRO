@@ -140,8 +140,6 @@ class CommandQueue(
 
     private enum class Due { Activate, WaitEnd, Resend, Send, IdRetry, Limit }
 
-    private class Deadline(val atMs: Long, val due: Due, val operation: Operation? = null)
-
     private enum class Outcome { Keep, Complete, NotHandled }
 
     /** The adapter values with their read states. */
@@ -177,7 +175,15 @@ class CommandQueue(
     val queuedCommands: List<AdapterCommand> get() = queue.map { it.command }
 
     /** The time of the next timer, or null. */
-    val nextTimerAtMs: Long? get() = deadlines().minOfOrNull { it.atMs }
+    val nextTimerAtMs: Long?
+        get() {
+            var next: Long? = null
+            forEachDeadline { atMs, _, _ ->
+                val earliest = next
+                if (earliest == null || atMs < earliest) next = atMs
+            }
+            return next
+        }
 
     private val queue = ArrayDeque<Request>()
     private var current: Request? = null
@@ -288,35 +294,50 @@ class CommandQueue(
 
     private fun advance(nowMs: Long, inclusive: Boolean, out: MutableList<QueueOutput>) {
         while (true) {
-            val due = deadlines()
-                .filter { if (inclusive) it.atMs <= nowMs else it.atMs < nowMs }
-                .minWithOrNull(compareBy<Deadline>({ it.atMs }, { it.due.ordinal }))
-                ?: return
-            when (due.due) {
+            // One pass: the due deadline with the earliest time, then the lowest kind. For equal
+            // values, the first deadline of the pass wins.
+            var dueAtMs = 0L
+            var due: Due? = null
+            var operation: Operation? = null
+            forEachDeadline { atMs, kind, limitOperation ->
+                val isDue = if (inclusive) atMs <= nowMs else atMs < nowMs
+                val best = due
+                if (isDue && (best == null || atMs < dueAtMs || (atMs == dueAtMs && kind.ordinal < best.ordinal))) {
+                    dueAtMs = atMs
+                    due = kind
+                    operation = limitOperation
+                }
+            }
+            when (due ?: return) {
                 Due.Activate -> activate(nowMs)
                 Due.WaitEnd -> timeout(nowMs, out)
                 Due.Resend -> current?.let { request -> write(request, nowMs, out) }
                 Due.Send -> send(nowMs, out)
                 Due.IdRetry -> idRetry(nowMs)
-                Due.Limit -> limit(checkNotNull(due.operation), out)
+                Due.Limit -> limit(checkNotNull(operation), out)
             }
         }
     }
 
-    private fun deadlines(): List<Deadline> {
-        if (!twoWay) return emptyList()
-        val list = ArrayList<Deadline>()
+    /**
+     * Gives each deadline of the queue to [visit]: the time, the kind, and the operation of a
+     * [Due.Limit]. No list is made, because the queue looks for the next deadline at each step.
+     */
+    private inline fun forEachDeadline(visit: (atMs: Long, due: Due, operation: Operation?) -> Unit) {
+        if (!twoWay) return
         val started = startedAtMs
         val activation = activationAtMs
-        if (started == null && activation != null && phase == LinkPhase.Connected) list += Deadline(activation, Due.Activate)
-        current?.waitUntilMs?.let { list += Deadline(it, Due.WaitEnd) }
-        if (phase == LinkPhase.Connected) current?.resendAtMs?.let { list += Deadline(it, Due.Resend) }
+        if (started == null && activation != null && phase == LinkPhase.Connected) visit(activation, Due.Activate, null)
+        current?.waitUntilMs?.let { visit(it, Due.WaitEnd, null) }
+        if (phase == LinkPhase.Connected) current?.resendAtMs?.let { visit(it, Due.Resend, null) }
         if (isActive && current == null && queue.isNotEmpty()) {
-            list += Deadline(lastWriteAtMs?.plus(timing.queueGapMs) ?: Long.MIN_VALUE, Due.Send)
+            visit(lastWriteAtMs?.plus(timing.queueGapMs) ?: Long.MIN_VALUE, Due.Send, null)
         }
-        if (started != null && !idRetryDone) list += Deadline(started + timing.idRetryMs, Due.IdRetry)
-        operations.forEach { list += Deadline(it.deadlineMs, Due.Limit, it) }
-        return list
+        if (started != null && !idRetryDone) visit(started + timing.idRetryMs, Due.IdRetry, null)
+        for (index in operations.indices) {
+            val limitOperation = operations[index]
+            visit(limitOperation.deadlineMs, Due.Limit, limitOperation)
+        }
     }
 
     /** The start queries go in once for each link. */
