@@ -172,7 +172,7 @@ class PatternPresenter(
      * Selects the position source. "Custom" fills each enabled field with the current position.
      */
     fun onSourceChange(source: PositionSource) {
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         edit {
             if (source != PositionSource.Custom) {
                 copy(source = source)
@@ -230,7 +230,7 @@ class PatternPresenter(
      * position of its axis as the base.
      */
     fun onText(input: PatternInput, text: String) {
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         edit {
             if (input.isLength) {
                 val base = baseOf(frame, input)
@@ -280,7 +280,7 @@ class PatternPresenter(
      * in the error box and the screen stays open.
      */
     fun onCreate() {
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val current = inputs.value ?: return
         SubDatumBlocker.message(frame.workspace)?.let { message ->
             updateLocal { state -> state.copy(blocked = message, closeAfterBlocked = false) }

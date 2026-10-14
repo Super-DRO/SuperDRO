@@ -33,6 +33,14 @@ interface TabReadout {
      */
     val frame: StateFlow<ReadoutFrame?>
 
+    /**
+     * Gives the readout model with the newest inputs of the session, or null until the profile
+     * and the workspace load. The session gives [frame] new inputs at most one time for each
+     * display frame, so [frame] can be a little older. An action that uses the position at the
+     * time of a press (for example Zero, Set, Hold, or a new point) uses this function.
+     */
+    fun latestFrame(): ReadoutFrame? = frame.value
+
     /** The state of the session of the tab, or null when the tab has no session. */
     val sessionState: StateFlow<SessionState?>
 

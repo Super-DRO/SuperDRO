@@ -24,11 +24,13 @@ import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
 import org.superdro.core.model.Tool
 import org.superdro.core.model.ToolKind
+import org.superdro.core.readout.ReadoutFrame
 import org.superdro.core.ui.functions.FunctionsHarness
 import org.superdro.core.ui.functions.TestEnvironment
 import org.superdro.core.ui.functions.common.loadString
 import org.superdro.core.ui.readout.FunctionButton
 import org.superdro.core.ui.readout.FunctionStripRules
+import org.superdro.core.ui.readout.TabReadout
 
 /** The presenters of the measure, compensation, Z reference, and projection sheets. */
 class SheetPresentersTest {
@@ -265,6 +267,24 @@ class SheetPresentersTest {
     }
 
     @Test
+    fun theZReferenceApplyUsesTheNewestPositionNotTheShownFrame() = scope.runTest {
+        harness.start(metricMill, states = mapOf(AxisId.Z to AxisState(metric = true)))
+        harness.inputs(AxisId.Z to 1_234.0)
+        // The session has a newer Z than the shown frame: the throttle did not publish it yet.
+        val readout = NewerReadout(harness.presenter, AxisId.Z to 1_534.0)
+        val presenter = ZReferencePresenter(readout, harness.services)
+        advanceUntilIdle()
+        presenter.onSetterHeight("50")
+        presenter.onDesiredZ("1/2")
+        assertTrue(presenter.onApply())
+        advanceUntilIdle()
+        // The shown frame comes with the newer Z: the tool is at A + B.
+        harness.inputs(AxisId.Z to 1_534.0)
+        assertEquals("50.500", harness.readout.text(AxisId.Z))
+        presenter.close()
+    }
+
+    @Test
     fun theZReferenceIsBlockedWithNoZOrNoAdapter() = scope.runTest {
         harness.start(metricMill.copy(z = metricMill.z.copy(enabled = false)))
         val noZ = ZReferencePresenter(harness.presenter, harness.services)
@@ -368,5 +388,16 @@ class SheetPresentersTest {
         )
         presenter.close()
         assertNotNull(ProjectionRules.headTiltProblem(metricMill))
+    }
+}
+
+/**
+ * A [TabReadout] that gives the frame of [base] with the newer sums [newer] from [latestFrame]. The
+ * session has these samples, but the shown frame does not have them yet.
+ */
+private class NewerReadout(private val base: TabReadout, private vararg val newer: Pair<AxisId, Double>) : TabReadout by base {
+    override fun latestFrame(): ReadoutFrame? {
+        val current = base.frame.value ?: return null
+        return ReadoutFrame(current.profile, current.workspace, current.inputs + newer, current.instrument, current.hold, current.projectedAxes)
     }
 }

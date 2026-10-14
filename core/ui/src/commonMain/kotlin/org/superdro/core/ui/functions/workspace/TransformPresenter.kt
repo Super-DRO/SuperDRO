@@ -102,6 +102,9 @@ data class TransformUiState(
  * current position, the origin, a sub-datum, or the typed values. All positions are in the
  * workspace frame. The apply goes through the [TransformRunner]: one transaction, then
  * "Undo" for 10 s.
+ *
+ * @param latestFrame Gives the frame with the newest inputs (`TabReadout.latestFrame`). The
+ *   current position of a press uses it, because [frame] can be one display frame older.
  */
 class TransformPresenter(
     kind: WorkspaceTransformKind,
@@ -109,6 +112,7 @@ class TransformPresenter(
     private val frame: StateFlow<ReadoutFrame?>,
     private val positionUnavailable: () -> UiText?,
     undo: UndoOffers,
+    private val latestFrame: () -> ReadoutFrame? = { frame.value },
 ) : ScopedPresenter(services.context) {
 
     private val runner = TransformRunner(services, undo)
@@ -176,13 +180,13 @@ class TransformPresenter(
     }
 
     /** The current position of [axis] in the workspace frame: `R + H + T + A`, or null. */
-    private fun currentUm(axis: AxisId): Double? = frame.value?.unrotatedAbsolute(axis)?.takeIf { it.isFinite() }
+    private fun currentUm(axis: AxisId): Double? = latestFrame()?.unrotatedAbsolute(axis)?.takeIf { it.isFinite() }
 
     /** "Flip", "Rotate", or "Scale": checks the inputs, then runs the transform. */
     fun onApply() {
         val state = mutable.value
         if (state.busy || !state.loaded) return
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         workspaceOperationsBlocked(current.workspace)?.let { blocked ->
             mutable.update { it.copy(error = blocked) }
             return
@@ -208,7 +212,7 @@ class TransformPresenter(
         mutable.update { it.copy(guideQuestion = null) }
         if (policy == null) return
         val state = mutable.value
-        val current = frame.value ?: return
+        val current = latestFrame() ?: return
         val pivot = pivot(state, current) ?: return
         val transform = transformOf(state, pivot) ?: return
         scope.launch { run(transform, policy) }

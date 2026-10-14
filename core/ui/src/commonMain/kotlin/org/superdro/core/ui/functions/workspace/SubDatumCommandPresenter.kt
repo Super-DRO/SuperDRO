@@ -157,7 +157,7 @@ class SubDatumCommandPresenter(
     fun onConfirm() {
         val state = mutable.value
         if (state.busy || state.done || state.error != null) return
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val point = subDatum(frame) ?: return
         when (state.command) {
             SubDatumCommand.AlignToSpindle -> {

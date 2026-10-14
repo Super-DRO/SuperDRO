@@ -151,7 +151,7 @@ class PairPresenter(
 
     /** "Align A to B": the confirmation with the shift of the plane axes, or the no-op message. */
     fun onMove() {
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         workspaceOperationsBlocked(frame.workspace)?.let { blocked -> return mutable.update { it.copy(error = blocked) } }
         val axes = axes(frame.workspace)
         val (pa, pb) = points(frame) ?: return
@@ -207,7 +207,7 @@ class PairPresenter(
             messages(refusal)
             return
         }
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         workspaceOperationsBlocked(frame.workspace)?.let { blocked -> return mutable.update { it.copy(error = blocked) } }
         val axes = axes(frame.workspace)
         val (pa, pb) = points(frame) ?: return

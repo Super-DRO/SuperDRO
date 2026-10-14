@@ -104,6 +104,22 @@ class InputHistoryTest {
     }
 
     @Test
+    fun theLowestAxisPositionAfterATimeFindsAShortDip() {
+        val stage = InputStage(InputConfiguration(mapOf('z' to Fixtures.linear('z')), InputConfiguration.axisTerms(Fixtures.mill())))
+        stage.onAxisCount('z', 0L, 0L)
+        stage.onAxisCount('z', -6_000L, 16L)
+        stage.onAxisCount('z', -12_000L, 20L)
+        stage.onAxisCount('z', -1_000L, 32L)
+        val history = stage.history
+        assertEquals(-12_000.0, history.axisLowestAfter(AxisId.Z, 16L))
+        assertEquals(-1_000.0, history.axisLowestAfter(AxisId.Z, 20L))
+        assertTrue(history.axisLowestAfter(AxisId.Z, 32L).isNaN(), "no sample after the time")
+        assertTrue(history.axisLowestAfter(AxisId.Y, 0L).isNaN(), "no sample of the axis")
+        assertEquals(32L, history.axisNewestTime(AxisId.Z))
+        assertEquals(null, history.axisNewestTime(AxisId.Y))
+    }
+
+    @Test
     fun aChangeOfTheTermsMakesTheEarlierAxisPositionUnknown() {
         val mill = Fixtures.mill()
         val stage = InputStage(InputConfiguration(mapOf('x' to Fixtures.linear('x'), 'w' to Fixtures.linear('w')), InputConfiguration.axisTerms(mill)))

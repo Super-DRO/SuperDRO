@@ -56,6 +56,30 @@ class ProximityToneRunnerTest {
     }
 
     @Test
+    fun eachNewValueMovesTheEndOfTheSilenceTime() = runTest {
+        val harness = GraphicsHarness(this)
+        try {
+            harness.start()
+            harness.moveTo(10L, x = 5_000L, y = 0L, z = 0L)
+            harness.updateWorkspace { workspace -> ProximityTargets.toggle(workspace, AxisId.X) }
+            harness.session.move('x', 2_000L, 20L)
+            runCurrent()
+            advanceTimeBy(4_000L)
+            harness.session.move('x', 1_000L, 30L)
+            runCurrent()
+            // 8000 ms after the first value and 4000 ms after the last value: the tone continues.
+            advanceTimeBy(4_000L)
+            runCurrent()
+            assertEquals(listOf(0.25, 0.65), harness.sounds.proximityLevels)
+            advanceTimeBy(ProximityWarning.SILENCE_MS - 4_000L)
+            runCurrent()
+            assertEquals(listOf(0.25, 0.65, 0.0), harness.sounds.proximityLevels)
+        } finally {
+            harness.close()
+        }
+    }
+
+    @Test
     fun theLevelFollowsTheDistanceToTheTargetAndStopsAfterTheSilenceTime() = runTest {
         val harness = GraphicsHarness(this)
         try {
