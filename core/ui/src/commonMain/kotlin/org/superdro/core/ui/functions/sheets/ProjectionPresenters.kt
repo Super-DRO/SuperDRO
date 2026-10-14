@@ -41,6 +41,7 @@ import org.superdro.core.ui.functions.common.FunctionServices
 import org.superdro.core.ui.functions.common.NumberFieldState
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 
 /** The rules of the projection sheets. */
@@ -142,6 +143,9 @@ data class CompoundUiState(
  * compound slide (−360° to 360°, each angle
  * has its effect), "Apply to Cross Slide", and "Apply to Carriage". The workspace keeps the
  * projection. The readout shows the warning state while the projection is on.
+ *
+ * The state uses no live position: only a change of the profile or of the workspace makes it
+ * again.
  */
 class CompoundPresenter(
     private val readout: TabReadout,
@@ -149,6 +153,8 @@ class CompoundPresenter(
 ) : ScopedPresenter(services.context) {
 
     private val mutable = MutableStateFlow(CompoundUiState())
+
+    /** The last frame with a new structure. Its readings can be old. */
     private var frame: ReadoutFrame? = null
     private var initialized = false
 
@@ -157,7 +163,7 @@ class CompoundPresenter(
 
     init {
         scope.launch {
-            readout.frame.collect { current ->
+            readout.frame.structure().collect { current ->
                 frame = current
                 if (current == null) return@collect
                 if (!initialized) {
@@ -254,6 +260,9 @@ data class HeadTiltUiState(
  * The presenter of the head tilt sheet "Head Angle Compensation": the tilt angle α toward X and the nod angle β toward Y (−90° to 90°),
  * "Apply to X", and "Apply to Y". The quill input adds to X with `−sin α`, to Y with `−sin β`, and
  * to Z with `sqrt(max(0, 1 − sin²α − sin²β))`. The sheet refuses `sin²α + sin²β > 1`.
+ *
+ * The state uses no live position: only a change of the profile or of the workspace makes it
+ * again.
  */
 class HeadTiltPresenter(
     private val readout: TabReadout,
@@ -261,6 +270,8 @@ class HeadTiltPresenter(
 ) : ScopedPresenter(services.context) {
 
     private val mutable = MutableStateFlow(HeadTiltUiState())
+
+    /** The last frame with a new structure. Its readings can be old. */
     private var frame: ReadoutFrame? = null
     private var initialized = false
 
@@ -269,7 +280,7 @@ class HeadTiltPresenter(
 
     init {
         scope.launch {
-            readout.frame.collect { current ->
+            readout.frame.structure().collect { current ->
                 frame = current
                 if (current == null) return@collect
                 if (!initialized) {

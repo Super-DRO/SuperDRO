@@ -164,7 +164,8 @@ class CameraScreenPresenterTest {
         val state = screen.screen.state.value
         assertEquals(listOf("scope"), state.probes.map { probe -> probe.id })
         // X = 5 mm + 10 mm, Y = −2 mm + 3 mm, in the readout format of a metric mill.
-        assertEquals("15.000" to "1.000", state.pointX to state.pointY)
+        val point = screen.screen.point.value
+        assertEquals("15.000" to "1.000", point.x to point.y)
         screen.stop()
     }
 

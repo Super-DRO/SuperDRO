@@ -2,6 +2,7 @@ package org.superdro.core.ui.readout
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -39,6 +40,8 @@ fun PositionIndicator(
     val lineColor = MaterialTheme.colorScheme.onSurfaceVariant
     val markerColor = MaterialTheme.colorScheme.onSurface
     val toolColor = MaterialTheme.colorScheme.tertiary
+    // One path for the two markers: each draw sets it again, so a draw makes no new path.
+    val marker = remember { Path() }
     Canvas(modifier.clearAndSetSemantics {}) {
         val geometry = PositionSlider.geometry(
             widthPx = size.width.toDouble(),
@@ -59,8 +62,8 @@ fun PositionIndicator(
                 size = Size(bar.width.toFloat(), (bar.bottom - bar.top).toFloat()),
             )
         }
-        drawTriangle(geometry.markerLeft, markerColor)
-        drawTriangle(geometry.markerRight, markerColor)
+        drawTriangle(marker, geometry.markerLeft, markerColor)
+        drawTriangle(marker, geometry.markerRight, markerColor)
     }
 }
 
@@ -73,12 +76,12 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSegment(segment
     )
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTriangle(triangle: Triangle, color: Color) {
-    val path = Path().apply {
-        moveTo(triangle.a.x.toFloat(), triangle.a.y.toFloat())
-        lineTo(triangle.b.x.toFloat(), triangle.b.y.toFloat())
-        lineTo(triangle.c.x.toFloat(), triangle.c.y.toFloat())
-        close()
-    }
+/** Draws [triangle] with [path]. The function clears [path] first. */
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTriangle(path: Path, triangle: Triangle, color: Color) {
+    path.reset()
+    path.moveTo(triangle.a.x.toFloat(), triangle.a.y.toFloat())
+    path.lineTo(triangle.b.x.toFloat(), triangle.b.y.toFloat())
+    path.lineTo(triangle.c.x.toFloat(), triangle.c.y.toFloat())
+    path.close()
     drawPath(path, color)
 }

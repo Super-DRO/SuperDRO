@@ -617,7 +617,7 @@ class ReadoutPresenter(
         val record = local.value.undoRecord?.takeIf { record -> record.id == id } ?: return
         undoTimer?.cancel()
         local.update { state -> if (state.undoRecord?.id == id) state.copy(undo = null, undoRecord = null) else state }
-        scope.launch { machines.updateWorkspace(record.workspaceId) { current -> record.delta.applyTo(current) } }
+        scope.launch { machines.writeWorkspace(record.workspaceId) { current -> record.delta.applyTo(current) } }
     }
 
     /** The snackbar of the undo [id] closed with no "Undo". */
@@ -640,7 +640,7 @@ class ReadoutPresenter(
         if (forward.isEmpty && !writeAll) return
         val workspaceId = current.workspace.id
         scope.launch {
-            machines.updateWorkspace(workspaceId) { stored ->
+            machines.writeWorkspace(workspaceId) { stored ->
                 if (writeAll && transform != null) transform(stored) else forward.applyTo(stored)
             }
         }

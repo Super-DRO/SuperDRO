@@ -26,6 +26,7 @@ import org.superdro.core.resources.fn_blocked_message
 import org.superdro.core.resources.fn_blocker_thread
 import org.superdro.core.resources.sd_deleted
 import org.superdro.core.ui.functions.FunctionsHarness
+import org.superdro.core.ui.functions.subscribe
 import org.superdro.core.ui.functions.TestEnvironment
 import org.superdro.core.ui.functions.common.loadString
 import org.superdro.core.ui.text.UiText
@@ -41,8 +42,10 @@ class SubDatumPanelTest {
     @AfterTest
     fun close() = harness.close()
 
+    /** A new panel presenter. The test collects its state, as the open panel does. */
     private fun panel(): SubDatumPanelPresenter =
         SubDatumPanelPresenter(harness.profile.id, harness.services, harness.presenter, harness.tab.undo)
+            .also { panel -> scope.subscribe(panel.uiState) }
 
     private suspend fun workspaceId(): String = harness.readout.workspace().id
 

@@ -7,8 +7,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.functions.errormap.ErrorMapWizardSession
@@ -82,6 +85,41 @@ class ErrorMapWizardPresenterTest {
             (1L..5L).forEach { time -> session.push(WizardTestData.snapshot(time, 'x' to time * 10, 'w' to time * 10 + 1)) }
             advanceUntilIdle()
             assertEquals(5, presenter.uiState.value.recordingSamples)
+            presenter.close()
+        }
+    }
+
+    @Test
+    fun thePairsPublishTheStateAtMost10TimesInASecond() = runTest {
+        withWizard { fixture, _, session ->
+            val presenter = ErrorMapWizardPresenter(device, 'x', fixture.deps)
+            advanceUntilIdle()
+            session.push(WizardTestData.snapshot(0, 'x' to 0, 'w' to 0))
+            advanceUntilIdle()
+            presenter.onReference('w')
+            presenter.onStartPass()
+            advanceUntilIdle()
+            val states = mutableListOf<ErrorMapWizardUiState>()
+            val watcher = backgroundScope.launch { presenter.uiState.collect { states += it } }
+            runCurrent()
+            states.clear()
+            // 50 pairs in 50 ms of virtual time: one publication at the end of the interval.
+            (1L..50L).forEach { time ->
+                session.push(WizardTestData.snapshot(time, 'x' to time * 10, 'w' to time * 10 + 1))
+                runCurrent()
+                advanceTimeBy(1)
+            }
+            runCurrent()
+            assertEquals(0, states.size, "No publication before the end of the interval.")
+            advanceTimeBy(ErrorMapWizardPresenter.PUBLISH_INTERVAL_MS)
+            runCurrent()
+            assertEquals(1, states.size)
+            assertEquals(50, presenter.uiState.value.recordingSamples)
+            // An event publishes immediately.
+            presenter.onStop()
+            assertNull(presenter.uiState.value.recording)
+            assertEquals(PassRowInfo(50, 490, 490), presenter.uiState.value.passes[0].info)
+            watcher.cancel()
             presenter.close()
         }
     }

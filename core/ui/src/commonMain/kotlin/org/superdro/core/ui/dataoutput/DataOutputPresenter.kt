@@ -17,11 +17,13 @@ import kotlinx.coroutines.launch
 import org.superdro.core.connection.NetworkInterfaceInfo
 import org.superdro.core.connection.NetworkInterfaces
 import org.superdro.core.dataoutput.BindAddresses
+import org.superdro.core.dataoutput.DataOutputError
 import org.superdro.core.dataoutput.DataOutputState
 import org.superdro.core.dataoutput.DataOutputStatus
 import org.superdro.core.dataoutput.DataOutputValidation
 import org.superdro.core.dataoutput.Diagnostics
 import org.superdro.core.dataoutput.OutputRunRule
+import org.superdro.core.dataoutput.StartBlock
 import org.superdro.core.dataoutput.hostAndPort
 import org.superdro.core.model.AngleUnit
 import org.superdro.core.model.BindInterface
@@ -104,6 +106,13 @@ class DataOutputPresenter(
     private var diagnosticsJob: Job? = null
     private var messageIds = 0L
 
+    /** The fields of the last output state that the status shows. */
+    private var statusKey: StatusKey? = null
+    private var statusKnown = false
+
+    /** The last problems and their inputs. The validation runs again only when an input changes. */
+    private var problemCache: Pair<ProblemInputs, List<FormProblem>>? = null
+
     init {
         scope.launch {
             machines.profiles().collect { list ->
@@ -125,7 +134,13 @@ class DataOutputPresenter(
         scope.launch {
             selected.flatMapLatest { id -> if (id == null) flowOf(null) else runner.state(id) }.collect { state ->
                 runtime = state
-                refresh()
+                // The diagnostics read each state. The status changes only with the fields that it shows.
+                val key = state?.let(::StatusKey)
+                if (!statusKnown || key != statusKey) {
+                    statusKnown = true
+                    statusKey = key
+                    refresh()
+                }
             }
         }
         scope.launch {
@@ -549,7 +564,8 @@ class DataOutputPresenter(
      * Changes the UI state with [transform]. The same step calculates the derived values (the
      * problems and the status). Thus a reader never sees a stored configuration together with the
      * status of an older configuration. For example, [onStartStop] reads the status: it must not
-     * see the switch on and an old status that cannot start the output.
+     * see the switch on and an old status that cannot start the output. The problems come from a
+     * cache while their inputs do not change.
      */
     private fun setState(transform: (DataOutputUiState) -> DataOutputUiState) {
         _uiState.update { state ->
@@ -562,6 +578,12 @@ class DataOutputPresenter(
     private fun refresh() = setState { state -> state }
 
     private fun problemsOf(state: DataOutputUiState): List<FormProblem> {
+        val inputs = ProblemInputs(state.profileId, state.draft, state.portText, state.intervalText, state.maxRateText, state.brokerPortText, profiles)
+        problemCache?.let { (cached, problems) -> if (cached == inputs) return problems }
+        return validate(state).also { problems -> problemCache = inputs to problems }
+    }
+
+    private fun validate(state: DataOutputUiState): List<FormProblem> {
         val id = state.profileId ?: return emptyList()
         val draft = state.draft
         val problems = mutableListOf<FormProblem>()
@@ -628,6 +650,44 @@ class DataOutputPresenter(
         val output = runtime ?: return null
         val diagnostics = Diagnostics.of(output, runner.nowMs())
         return diagnosticsUiState(diagnostics, output.status == DataOutputStatus.Warning)
+    }
+
+    /** The inputs of the problems: the draft, the texts of the number fields, and the other profiles (the port owners). */
+    private data class ProblemInputs(
+        val profileId: String?,
+        val draft: DataOutputConfig,
+        val portText: String,
+        val intervalText: String,
+        val maxRateText: String,
+        val brokerPortText: String,
+        val profiles: List<MachineProfile>,
+    )
+
+    /** The fields of a [DataOutputState] that [statusOf] reads. */
+    private data class StatusKey(
+        val running: Boolean,
+        val transport: DataOutputTransport,
+        val listening: List<String>,
+        val status: DataOutputStatus,
+        val block: StartBlock?,
+        val clients: Int,
+        val records: Long?,
+        val sent: Long?,
+        val failed: Long?,
+        val lastError: DataOutputError?,
+    ) {
+        constructor(state: DataOutputState) : this(
+            running = state.running,
+            transport = state.transport,
+            listening = state.listening,
+            status = state.status,
+            block = state.block,
+            clients = state.clients.size,
+            records = state.statistics?.records,
+            sent = state.statistics?.sent,
+            failed = state.statistics?.failed,
+            lastError = state.statistics?.lastError,
+        )
     }
 
     companion object {

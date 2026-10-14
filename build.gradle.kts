@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension
 import org.superdro.composite.util.resolveProjectVersion
 
 plugins {
@@ -21,4 +22,25 @@ plugins {
 val projectVersion = resolveProjectVersion()
 allprojects {
     version = projectVersion
+}
+
+// The Compose compiler options of each module with the Compose compiler plugin. No convention
+// plugin applies Compose, so the root script sets them in one place.
+// - compose-stability.conf: the immutable types of the other modules and of the libraries.
+// - `-PcomposeReports=true` writes the compiler reports and metrics to
+//   build/compose_compiler of each module. A normal build writes none. The build cache can
+//   skip a compile task, so add `--rerun` to the compile task, for example
+//   `./gradlew -PcomposeReports=true :core:ui:compileKotlinJvm --rerun`.
+val composeStabilityFile = layout.projectDirectory.file("compose-stability.conf")
+val composeReports = providers.gradleProperty("composeReports").map { value -> value.toBoolean() }.getOrElse(false)
+subprojects {
+    pluginManager.withPlugin("org.jetbrains.kotlin.plugin.compose") {
+        extensions.configure<ComposeCompilerGradlePluginExtension> {
+            stabilityConfigurationFiles.add(composeStabilityFile)
+            if (composeReports) {
+                reportsDestination.set(layout.buildDirectory.dir("compose_compiler"))
+                metricsDestination.set(layout.buildDirectory.dir("compose_compiler"))
+            }
+        }
+    }
 }

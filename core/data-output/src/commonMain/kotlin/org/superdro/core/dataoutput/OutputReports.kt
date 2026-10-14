@@ -13,6 +13,9 @@ import org.superdro.core.model.DataOutputTransport
  * @property listening The bound addresses as `host:port`.
  * @property clients The addresses of the TCP clients.
  * @property statistics The statistics of the current or the last start, or null before the first start.
+ *   While the output runs, the state gets the newest statistics at each [WarningRules.STATUS_PERIOD_MS],
+ *   at each new error, and at each change of the sender, the addresses, or the clients. After a stop,
+ *   the statistics are complete.
  * @property bindWarning True when the screen must show the warning of "All interfaces".
  */
 data class DataOutputState(

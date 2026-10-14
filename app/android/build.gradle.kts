@@ -49,6 +49,9 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
+            // R8 removes the resources that no code and no manifest entry refers to. The Compose
+            // resources are assets, so this step does not change them.
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -56,13 +59,9 @@ android {
             // With no keystore, the release build stays unsigned.
             signingConfigs.findByName("release")?.let { signingConfig = it }
         }
-
-        create("benchmark") {
-            isDebuggable = false
-            isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-        }
+        // The baselineProfile plugin makes the build types nonMinifiedRelease and
+        // benchmarkRelease from release, with the same R8 rules. Thus this file declares no
+        // benchmark build type of its own.
     }
 
     compileOptions {
@@ -89,9 +88,8 @@ android {
             project.layout.buildDirectory.dir("copiedRes").get().asFile.path
         )
         // The debug adapter is bound for each build type: src/debug imports the module of
-        // core:fake-adapter, src/release binds NoDebugAdapter. The benchmark type is a release
-        // build, so it uses the release copy.
-        getByName("benchmark").kotlin.directories.add("src/release/kotlin")
+        // core:fake-adapter, src/release binds NoDebugAdapter. The profile build types use
+        // src/profile (see profileBuildTypes below).
     }
 }
 
@@ -101,6 +99,36 @@ kotlin {
 
 baselineProfile {
     mergeIntoMain = true
+    // The generator removes the rules of the fake adapter (see below) itself. The filter of this
+    // plugin does not apply to the startup profile.
+}
+
+// The build types that the baselineProfile plugin makes from release. The profile generator
+// starts the app with the demo extra, and the live readout needs the fake adapter for that. Thus
+// these two build types bind the fake adapter (src/profile) in place of NoDebugAdapter
+// (src/release). The plugin copies the release source directories into these build types in its
+// own finalizeDsl callback, which runs before this one. If the order changes, src/release and
+// src/profile both declare debugModule, and the compiler stops the build. The release build type
+// does not change: it has no fake adapter and no new code.
+val profileBuildTypes = setOf("nonMinifiedRelease", "benchmarkRelease")
+
+androidComponents {
+    finalizeDsl { extension ->
+        profileBuildTypes.forEach { name ->
+            extension.sourceSets.getByName(name).kotlin.directories.apply {
+                remove("src/release/kotlin")
+                add("src/profile/kotlin")
+            }
+        }
+    }
+}
+
+// The plugin makes the configurations of the profile build types after this script runs, so the
+// dependencies block cannot name them.
+configurations.matching { configuration ->
+    configuration.name in profileBuildTypes.map { name -> "${name}Implementation" }
+}.configureEach {
+    dependencies.add(project.dependencies.create(projects.core.fakeAdapter))
 }
 
 dependencies {

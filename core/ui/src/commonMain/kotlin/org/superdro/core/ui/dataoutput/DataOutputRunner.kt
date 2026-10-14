@@ -253,11 +253,13 @@ class DataOutputRunner(
     private suspend fun pumpValues(output: ProfileOutput, session: Flow<DeviceSession?>) = coroutineScope {
         val profileId = output.profileId
         val snapshot = session.flatMapLatest { current -> current?.inputs ?: flowOf(InputSnapshot.EMPTY) }
+        // A snapshot with no change of the axis sums keeps the last frame and its readings.
+        val frameCache = DisplayFrameCache()
         val frames = combine(
             machines.profile(profileId).filterNotNull(),
             machines.activeWorkspace(profileId).filterNotNull(),
             snapshot,
-        ) { profile, workspace, inputs -> FrameInputs(DisplayFrames.of(profile, workspace, inputs), inputs) }
+        ) { profile, workspace, inputs -> FrameInputs(frameCache.of(profile, workspace, inputs), inputs) }
         val latest = MutableStateFlow<FrameInputs?>(null)
         launch { frames.collect { value -> latest.value = value } }
 
@@ -287,6 +289,8 @@ class DataOutputRunner(
         var lastFields: OutputValues? = null
         var lastSampleMs: Long? = null
         var changedAtMs = platform.clock.nowMs()
+        // The values depend only on these sources. The same sources give the same values.
+        var lastSources: ValueSources? = null
         combine(latest.filterNotNull(), trigger, ticks, session) { inputs, probe, _, current -> Triple(inputs, probe, current) }
             .collect { (inputs, probe, current) ->
                 val now = platform.clock.nowMs()
@@ -295,7 +299,10 @@ class DataOutputRunner(
                 } else {
                     emptyMap()
                 }
-                val fields = OutputValueSource.values(inputs.frame, inputs.snapshot, feeds, probe, updatedAtEpochMs = null)
+                val sources = ValueSources(inputs.frame, inputs.snapshot.probes, feeds, probe)
+                val same = lastFields?.takeIf { sources.sameAs(lastSources) }
+                val fields = same ?: OutputValueSource.values(inputs.frame, inputs.snapshot, feeds, probe, updatedAtEpochMs = null)
+                lastSources = sources
                 val sampleMs = inputs.snapshot.channels.values.maxOfOrNull { channel -> channel.timeMs }
                 if (fields != lastFields) {
                     // The time stamp is the time of the last value update: the time of a new
@@ -311,6 +318,17 @@ class DataOutputRunner(
     }
 
     private class FrameInputs(val frame: ReadoutFrame, val snapshot: InputSnapshot)
+
+    /** The sources of [OutputValueSource.values]. The frame compares by identity (see [DisplayFrameCache]). */
+    private class ValueSources(
+        val frame: ReadoutFrame,
+        val probes: Map<Char, Boolean>,
+        val feeds: Map<AxisId, Double>,
+        val trigger: ProbeTrigger?,
+    ) {
+        fun sameAs(other: ValueSources?): Boolean =
+            other != null && other.frame === frame && other.probes == probes && other.feeds == feeds && other.trigger == trigger
+    }
 
     companion object {
         /** The period of the new calculation of the feed rates while a feed rate field is on. */

@@ -135,6 +135,31 @@ class DataOutputRunnerTest {
     }
 
     @Test
+    fun aSampleWithTheSameSumsKeepsTheValuesAndTheNextChangeGetsTheTimeOfItsSample() = run { harness ->
+        val profile = harness.profile { stored -> stored.copy(dataOutput = plainAlwaysOn) }
+        val session = harness.session(profile)
+        harness.start()
+        val firstMs = testScheduler.currentTime
+        session.sample(Channels.X, 12700L, firstMs)
+        harness.settle()
+        val first = harness.runner.valuesOf(profile.id)!!.value
+        assertEquals(12700.0, first.xAbsolute)
+
+        advanceTimeBy(100L)
+        session.sample(Channels.X, 12700L, testScheduler.currentTime)
+        harness.settle()
+        assertTrue(first === harness.runner.valuesOf(profile.id)!!.value, "The same sums give no new values.")
+
+        advanceTimeBy(100L)
+        val movedMs = testScheduler.currentTime
+        session.sample(Channels.X, 25400L, movedMs)
+        harness.settle()
+        val moved = harness.runner.valuesOf(profile.id)!!.value
+        assertEquals(25400.0, moved.xAbsolute)
+        assertEquals(DataOutputHarness.WALL_START_MS + movedMs, moved.updatedAtEpochMs)
+    }
+
+    @Test
     fun theFeedRateComesFromThe2000MsWindowAndGoesTo0AtRest() = run { harness ->
         val config = plainAlwaysOn.copy(fields = DataOutputConfig.defaultFields().map { field -> field.copy(enabled = field.id == DataOutputFieldId.XFeedRate) })
         val profile = harness.profile { stored -> stored.copy(dataOutput = config) }

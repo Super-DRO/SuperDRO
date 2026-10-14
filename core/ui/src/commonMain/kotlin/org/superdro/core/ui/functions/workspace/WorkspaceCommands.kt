@@ -47,6 +47,7 @@ import org.superdro.core.resources.ws_undone
 import org.superdro.core.ui.functions.common.FunctionServices
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.readout.TabReadout
+import org.superdro.core.ui.readout.structure
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.text.resolve
 import org.superdro.core.ui.theme.AccentButtons
@@ -95,7 +96,7 @@ class WorkspaceCommandsPresenter(
     private val done = MutableStateFlow(false)
 
     /** The UI state of the dialog. */
-    val uiState: StateFlow<WorkspaceCommandsUiState> = combine(readout.frame, undo, done) { frame, copy, finished ->
+    val uiState: StateFlow<WorkspaceCommandsUiState> = combine(readout.frame.structure(), undo, done) { frame, copy, finished ->
         if (frame == null) {
             WorkspaceCommandsUiState()
         } else {

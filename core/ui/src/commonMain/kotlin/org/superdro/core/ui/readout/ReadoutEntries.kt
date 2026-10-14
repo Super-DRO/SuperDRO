@@ -40,6 +40,7 @@ import org.superdro.core.ui.navigation.TabEntryScope
 import org.superdro.core.ui.navigation.TabNavigator
 import org.superdro.core.ui.navigation.TabRoute
 import org.superdro.core.ui.navigation.TachometerPresetRoute
+import org.superdro.core.ui.presenter.collectLiveState
 import org.superdro.core.ui.presenter.rememberPresenter
 import org.superdro.core.ui.readout.details.AxisDetailsPresenter
 import org.superdro.core.ui.readout.details.AxisDetailsSheet
@@ -148,7 +149,7 @@ private fun KeypadEntry(scope: TabEntryScope, route: KeypadRoute) {
     val readout = scope.readoutPresenter
     val keypad = rememberPresenter { KeypadPresenter(route.axis, readout) }
     val state by keypad.uiState.collectAsState()
-    val value by readout.axisValue(route.axis).collectAsState()
+    val value by readout.axisValue(route.axis).collectLiveState()
     val readoutState by readout.uiState.collectAsState()
     val label = readoutState.rows.firstOrNull { row -> row.axis == route.axis }?.label ?: route.axis.name
     val close = { scope.navigator.pop(route) }
@@ -171,7 +172,7 @@ private fun AxisDetailsEntry(scope: TabEntryScope, route: AxisDetailsRoute) {
     val readout = scope.readoutPresenter
     val details = rememberPresenter { AxisDetailsPresenter(route.axis, readout) }
     val feed by details.feed.collectAsState()
-    val value by readout.axisValue(route.axis).collectAsState()
+    val value by readout.axisValue(route.axis).collectLiveState()
     val readoutState by readout.uiState.collectAsState()
     val row = readoutState.rows.firstOrNull { item -> item.axis == route.axis }
         ?: ReadoutRowUiState(route.axis, route.axis.name, if (route.axis == AxisId.Angular) RowKind.Angular else RowKind.Linear)
