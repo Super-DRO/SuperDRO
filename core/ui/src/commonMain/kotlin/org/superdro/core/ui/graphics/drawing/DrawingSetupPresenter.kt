@@ -298,7 +298,7 @@ class DrawingSetupPresenter(
 
     /** The sync button of the card [index]: the current absolute positions of the two plane axes. */
     fun onCardSync(index: Int) {
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val (hAxis, vAxis) = axes(frame)
         val h = frame.reading(hAxis).absolute
         val v = frame.reading(vAxis).absolute

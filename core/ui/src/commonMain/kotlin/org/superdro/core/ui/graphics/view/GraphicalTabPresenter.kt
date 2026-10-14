@@ -372,7 +372,7 @@ class GraphicalTabPresenter(
 
     /** "Set Absolute Origin Here": the absolute origin moves to the point, with undo. */
     fun setOriginAt(id: String) {
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val name = frame.workspace.subDatums.firstOrNull { point -> point.id == id }?.name.orEmpty()
         val unavailable = readout.positionUnavailable()
         if (unavailable != null) {

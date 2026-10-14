@@ -277,7 +277,7 @@ class MeasurementController(
     fun onSlotTap(index: Int) {
         val open = session.value ?: return
         if (open.armedSlot != index) return
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val refusal = readout.positionUnavailable()
         if (refusal != null) {
             deps.sounds.play(UiSound.Error, deviceId)

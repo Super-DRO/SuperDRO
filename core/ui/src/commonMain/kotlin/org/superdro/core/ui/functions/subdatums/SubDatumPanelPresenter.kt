@@ -295,7 +295,7 @@ class SubDatumPanelPresenter(
             readout.showMessage(refusal)
             return
         }
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val point = frame.workspace.subDatums.firstOrNull { it.id == id } ?: return
         readout.apply(SubDatumOperations.setOriginAt(frame, id), UiText.of(Res.string.sd_undo_origin, point.name))
     }
@@ -418,7 +418,7 @@ class SubDatumPanelPresenter(
      * becomes active.
      */
     suspend fun addCurrentPoint(): AddPointOutcome {
-        val frame = readout.frame.value ?: return AddPointOutcome.Unavailable(UiText.of(Res.string.sd_no_position))
+        val frame = readout.latestFrame() ?: return AddPointOutcome.Unavailable(UiText.of(Res.string.sd_no_position))
         SubDatumBlocker.message(frame.workspace)?.let { message -> return AddPointOutcome.Blocked(message) }
         readout.positionUnavailable()?.let { refusal -> return AddPointOutcome.Unavailable(refusal) }
         val shown = AddPointRule.point(frame) ?: return AddPointOutcome.Unavailable(UiText.of(Res.string.sd_no_position))

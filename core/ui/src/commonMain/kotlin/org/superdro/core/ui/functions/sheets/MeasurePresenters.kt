@@ -158,7 +158,7 @@ class DimensionMeasurePresenter(
 
     /** The zero button: the zero of the caliper with the rule of `short_press_zero_set`. */
     fun onZero(): UiText? {
-        val frame = readout.frame.value ?: return null
+        val frame = readout.latestFrame() ?: return null
         readout.positionUnavailable()?.let { return it }
         readout.apply(ZeroButtons.tap(frame, AxisId.Caliper), UiText.of(Res.string.fns_undo_caliper_zero))
         return null
@@ -166,7 +166,7 @@ class DimensionMeasurePresenter(
 
     /** The zero button, long press: the absolute zero of the caliper. */
     fun onZeroLongPress(): UiText? {
-        val frame = readout.frame.value ?: return null
+        val frame = readout.latestFrame() ?: return null
         readout.positionUnavailable()?.let { return it }
         readout.apply(ZeroButtons.longPress(frame, AxisId.Caliper), UiText.of(Res.string.fns_undo_caliper_absolute_zero))
         return null
@@ -189,7 +189,7 @@ class DimensionMeasurePresenter(
      * the function gives the refusal text, or null.
      */
     fun onCopyToX(): UiText? {
-        val frame = readout.frame.value ?: return null
+        val frame = readout.latestFrame() ?: return null
         readout.positionUnavailable()?.let { return it }
         if (!frame.reading(AxisId.Caliper).hasValue) return null
         readout.apply(CaliperOperations.copyToX(frame), UiText.of(Res.string.fns_undo_copy_to_x, ReadoutPresenter.labelOf(frame.profile, AxisId.X)))

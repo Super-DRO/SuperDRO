@@ -183,7 +183,7 @@ class CameraScreenPresenter(
 
     private fun machinePosition(): MachinePointUm? {
         if (readout.positionUnavailable() != null) return null
-        val frame = readout.frame.value ?: return null
+        val frame = readout.latestFrame() ?: return null
         val x = frame.reading(AxisId.X).takeIf { reading -> reading.hasValue }?.machinePosition ?: return null
         val y = frame.reading(AxisId.Y).takeIf { reading -> reading.hasValue }?.machinePosition ?: return null
         return MachinePointUm(x, y)

@@ -395,7 +395,7 @@ class ReferenceImageSetupPresenter(
             session.update { current -> current.copy(message = text) }
             return
         }
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val (horizontal, vertical) = axesOf(frame)
         readout.applyWorkspace(UiText.of(Res.string.refimage_undo_zero)) { workspace ->
             val first = AxisOperations.setAxis(frame.with(workspace), horizontal, 0.0).workspace
@@ -480,7 +480,7 @@ class ReferenceImageSetupPresenter(
             session.update { current -> current.copy(message = text) }
             return
         }
-        val frame = readout.frame.value ?: return
+        val frame = readout.latestFrame() ?: return
         val axis = if (horizontal) axesOf(frame).first else axesOf(frame).second
         val reading = frame.reading(axis)
         if (!reading.hasValue) return

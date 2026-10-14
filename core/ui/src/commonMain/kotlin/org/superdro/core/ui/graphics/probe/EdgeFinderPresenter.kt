@@ -185,7 +185,7 @@ class EdgeFinderPresenter(
 
     /** A tap on the edge [side]. */
     fun onEdgeTap(side: EdgeSide) {
-        val current = readout.frame.value ?: return
+        val current = readout.latestFrame() ?: return
         // The probe sampler needs a connection; the message line tells it.
         if (!isConnected() && math.value.edge(side).status == EdgeStatus.Unknown) return
         apply(EdgeFinder.tapEdge(math.value, side, currentAbsolute(current, side.axis), probeClosed()))
@@ -193,7 +193,7 @@ class EdgeFinderPresenter(
 
     /** A long press on the edge [side]: capture on `UNKNOWN`, clear on `LOCATED`. */
     fun onEdgeLongPress(side: EdgeSide) {
-        val current = readout.frame.value ?: return
+        val current = readout.latestFrame() ?: return
         apply(EdgeFinder.longPressEdge(math.value, side, currentAbsolute(current, side.axis)))
     }
 
@@ -231,7 +231,7 @@ class EdgeFinderPresenter(
 
     /** The sync button of the Z field: the current absolute Z. */
     fun onZSync() {
-        val current = readout.frame.value ?: return
+        val current = readout.latestFrame() ?: return
         val z = currentAbsolute(current, AxisId.Z) ?: return
         math.update { state -> state.copy(zValueUm = z) }
         local.update { ui -> ui.copy(zText = format(z, current), zError = null) }
@@ -267,7 +267,7 @@ class EdgeFinderPresenter(
      * the profile offset (minus `H`). A second tap clears both. The tap needs a connection.
      */
     fun onCameraCenter() {
-        val current = readout.frame.value ?: return
+        val current = readout.latestFrame() ?: return
         val state = math.value
         if (cameraCenterSet(state)) {
             math.value = state.copy(
@@ -300,7 +300,7 @@ class EdgeFinderPresenter(
      * when the screen closes.
      */
     fun onSetOrigin(): Boolean {
-        val current = readout.frame.value ?: return false
+        val current = readout.latestFrame() ?: return false
         if (!isConnected() || !math.value.canApply) return false
         val positions = AxisId.entries.mapNotNull { axis -> currentAbsolute(current, axis)?.let { value -> axis to value } }.toMap()
         val result = EdgeFinder.setOrigin(math.value, positions)
@@ -328,7 +328,7 @@ class EdgeFinderPresenter(
      * screen stays open. The new sub-datum becomes active when `activate_added_subdatum` is on.
      */
     fun onAddSubDatum(keepEdges: Boolean) {
-        val current = readout.frame.value ?: return
+        val current = readout.latestFrame() ?: return
         if (!math.value.canApply) return
         val profile = current.profile
         val positions = AxisId.entries.mapNotNull { axis -> currentAbsolute(current, axis)?.let { value -> axis to value } }.toMap()

@@ -185,7 +185,7 @@ class AlignAxesPresenter(private val readout: TabReadout, context: PresenterCont
      * are in the same place.
      */
     fun onAlign(): Boolean {
-        val frame = readout.frame.value ?: return false
+        val frame = readout.latestFrame() ?: return false
         val state = edit.value
         if (frame.workspace.plane != Plane.XY) return fail(UiText.of(Res.string.measure_align_xy_only))
         val alignment = when (state.source) {
