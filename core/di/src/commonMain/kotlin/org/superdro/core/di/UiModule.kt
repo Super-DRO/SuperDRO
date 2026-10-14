@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.kodein.di.DI
-import org.kodein.di.bindEagerSingleton
 import org.kodein.di.bindFactory
 import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
@@ -83,11 +82,13 @@ internal val uiModule = DI.Module("uiModule") {
             keepAliveStatus = instance<ConnectionKeepAlive>().status,
         )
     }
-    // The profiles of the demo machines of a debug build.
-    bindEagerSingleton {
+    // The profiles of the demo machines of a debug build. The graph makes the object in the
+    // background: the first frame does not need it.
+    bindSingleton {
         DemoMachines(debugAdapter = instance(), connections = instance(), machines = instance(), adapters = instance())
             .also { demo -> demo.start(instance(tag = APP_SCOPE)) }
     }
+    bindBackgroundStart<DemoMachines>()
     bindProvider {
         AddDevicePresenter(
             connections = instance(),
