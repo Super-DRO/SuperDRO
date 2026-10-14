@@ -9,9 +9,7 @@ import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
 import org.kodein.di.instance
 import org.superdro.core.dataoutput.DataOutputPlatform
-import org.superdro.core.dataoutput.KtorListenSocketFactory
-import org.superdro.core.dataoutput.ListenSocket
-import org.superdro.core.dataoutput.ListenSocketFactory
+import org.superdro.core.dataoutput.systemListenSockets
 import org.superdro.core.ui.dataoutput.DataOutputChipPresenter
 import org.superdro.core.ui.dataoutput.DataOutputPresenter
 import org.superdro.core.ui.dataoutput.DataOutputRunner
@@ -31,7 +29,7 @@ internal val dataOutputDiModule = DI.Module("dataOutputDiModule") {
             // The `NetworkInterfaces` contract gives only bindable addresses (BindAddresses of core:connection).
             networkInterfaces = instance(),
             secretStore = instance(),
-            listenSockets = LazyListenSockets { KtorListenSocketFactory(Dispatchers.IO) },
+            listenSockets = systemListenSockets(Dispatchers.IO),
             clock = instance(),
             secretsDispatcher = Dispatchers.IO,
         )
@@ -52,14 +50,4 @@ internal val dataOutputDiModule = DI.Module("dataOutputDiModule") {
     bindFactory<String, DataOutputChipPresenter> { profileId ->
         DataOutputChipPresenter(profileId = profileId, runner = instance(), machines = instance(), requests = instance(), context = instance())
     }
-}
-
-/**
- * Makes the socket factory at the first bind, so that a graph with no output opens no selector
- * thread (no server socket while the output is off).
- */
-private class LazyListenSockets(create: () -> ListenSocketFactory) : ListenSocketFactory {
-    private val factory by lazy(create)
-
-    override suspend fun bind(host: String, port: Int): ListenSocket = factory.bind(host, port)
 }
