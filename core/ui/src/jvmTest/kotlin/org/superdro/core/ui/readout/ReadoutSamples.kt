@@ -20,8 +20,11 @@ import org.superdro.core.ui.text.UiText
  */
 object ReadoutSamples {
 
-    /** A UI state and the value of each axis. */
-    class Sample(val state: ReadoutUiState, val values: Map<AxisId, AxisValueUiState>) {
+    /** A UI state, the value of each axis, and the RPM text of the status strip. */
+    class Sample(val state: ReadoutUiState, val values: Map<AxisId, AxisValueUiState>, rpmText: String? = "1250") {
+        /** The RPM text of the status strip. */
+        val rpm: StateFlow<String?> = MutableStateFlow(rpmText)
+
         private val flows = AxisId.entries.associateWith { axis -> MutableStateFlow(values[axis] ?: AxisValueUiState(axis)) }
 
         /** The value flow of [axis]. */
@@ -117,7 +120,6 @@ object ReadoutSamples {
                 mode = mode,
                 toolName = toolName,
                 subDatumName = subDatum,
-                rpmText = "1250",
                 link = LinkStatus.Connected,
             ),
             rows = expanded.mapIndexed { index, row -> row.copy(collapsedButtons = collapsed[index].buttons) },

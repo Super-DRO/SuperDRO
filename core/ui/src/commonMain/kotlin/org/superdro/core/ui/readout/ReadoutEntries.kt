@@ -24,7 +24,6 @@ import org.superdro.core.resources.route_machine_datums
 import org.superdro.core.resources.route_sub_datums
 import org.superdro.core.resources.route_tools
 import org.superdro.core.ui.LocalAppSnackbarHostState
-import org.superdro.core.ui.graphics.proximity.ProximityTargets
 import org.superdro.core.ui.navigation.AxisDetailsRoute
 import org.superdro.core.ui.navigation.CalibrationWizardRoute
 import org.superdro.core.ui.navigation.DivisionsRoute
@@ -100,6 +99,7 @@ private fun ReadoutRoot(scope: TabEntryScope, registry: EntryRegistry) {
                 if (graphicalPane != null) graphicalPane(scope) else SidePanelPlaceholder(Res.string.route_graphical_view)
             },
             statusItems = { registry.statusStripItems.forEach { item -> item(scope) } },
+            rpmText = presenter.rpmText,
         )
     }
 }
@@ -176,7 +176,7 @@ private fun AxisDetailsEntry(scope: TabEntryScope, route: AxisDetailsRoute) {
     val row = readoutState.rows.firstOrNull { item -> item.axis == route.axis }
         ?: ReadoutRowUiState(route.axis, route.axis.name, if (route.axis == AxisId.Angular) RowKind.Angular else RowKind.Linear)
     val events = remember(readout, scope) { PresenterReadoutEvents(readout, scope.navigator) }
-    val frame by readout.frame.collectAsState()
+    val proximityAxes by readout.proximityAxes.collectAsState()
     CompositionLocalProvider(LocalReadoutFeedback provides rememberKeyFeedback(scope.deviceId)) {
         AxisDetailsSheet(
             row = row,
@@ -185,7 +185,7 @@ private fun AxisDetailsEntry(scope: TabEntryScope, route: AxisDetailsRoute) {
             events = events,
             onCenterAbsolute = { readout.onCenterAbsolute(route.axis) },
             onDismiss = { scope.navigator.pop(route) },
-            proximityOn = if (row.kind == RowKind.Linear) ProximityTargets.isOn(frame?.workspace, route.axis) else null,
+            proximityOn = if (row.kind == RowKind.Linear) route.axis in proximityAxes else null,
             onProximity = details::onProximityToggle,
         )
     }

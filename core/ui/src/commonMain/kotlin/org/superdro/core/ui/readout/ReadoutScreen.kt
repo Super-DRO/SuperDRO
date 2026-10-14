@@ -70,7 +70,8 @@ private val RailWidth: Dp = 136.dp
 
 /**
  * The readout screen of one tab. It is stateless: it gets
- * the [state] of the presenter, the value flow of each axis ([axisValue]), and the [events].
+ * the [state] of the presenter, the value flow of each axis ([axisValue]), the RPM text
+ * ([rpmText]), and the [events].
  *
  * The layout follows the window class:
  * - Expanded (840 dp and more): the readout column (about 45 % of the width) with the readout
@@ -100,13 +101,14 @@ fun ReadoutScreen(
     sidePanelContent: @Composable (SidePanelMode) -> Unit = {},
     graphicalViewPane: (@Composable () -> Unit)? = null,
     statusItems: @Composable () -> Unit = {},
+    rpmText: StateFlow<String?> = NoRpmText,
 ) {
     // The font of the digits is a setting of the machine profile.
     val typography = readoutTypography(state.readoutFont)
     CompositionLocalProvider(LocalReadoutTypography provides typography) {
         Surface(modifier.fillMaxSize().testTag(READOUT_SCREEN_TAG), color = MaterialTheme.colorScheme.surface) {
             Column(Modifier.fillMaxSize()) {
-                StatusStrip(state.status, trailing = statusItems)
+                StatusStrip(state.status, rpmText = rpmText, trailing = statusItems)
                 state.setupReminder?.let { reminder ->
                     SetupReminderBanner(onSettings = events::onSetupSettings, onCalibrate = { events.onSetupCalibrate(reminder.axis) })
                 }

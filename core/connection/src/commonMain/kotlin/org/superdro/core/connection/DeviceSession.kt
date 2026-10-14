@@ -38,10 +38,23 @@ interface DeviceSession {
     val state: StateFlow<SessionState>
 
     /**
-     * The latest output of the input stage. The flow is conflated: the UI reads the latest value
-     * for each frame. The input stage itself sees each sample in stream order.
+     * The output of the input stage for the display. The flow is conflated: the UI reads the
+     * latest value for each frame. The input stage itself sees each sample in stream order.
+     *
+     * The session publishes a new value at most one time in [INPUT_PUBLISH_MS], and always
+     * publishes the last value at the end of that period. A change of a probe state, of the
+     * probe sequence, or of a channel status goes out at once. Thus the value can be up to
+     * [INPUT_PUBLISH_MS] older than the stage. An action that uses the position at a press reads
+     * [currentInputs].
      */
     val inputs: StateFlow<InputSnapshot>
+
+    /**
+     * Gives the latest output of the input stage with no throttle. Each accepted chunk of the link
+     * changes it. An action that uses the position at the time of a press (for example Zero, Set,
+     * or Hold) reads it. Any thread can call it.
+     */
+    fun currentInputs(): InputSnapshot = inputs.value
 
     /**
      * Each accepted sample of each encoder input (`x y z w u v t`), in stream order, as the input
@@ -114,6 +127,9 @@ interface DeviceSession {
     companion object {
         /** The buffer of [samples]: about 30 s of 7 inputs at 20 frames each second. */
         const val SAMPLE_BUFFER: Int = 4096
+
+        /** The shortest time between two values of [inputs]: about one display frame. */
+        const val INPUT_PUBLISH_MS: Long = 16L
 
         private val NO_SAMPLES: SharedFlow<ChannelValue> = MutableSharedFlow<ChannelValue>().asSharedFlow()
     }

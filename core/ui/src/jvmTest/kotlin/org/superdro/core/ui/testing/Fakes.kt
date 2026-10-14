@@ -58,6 +58,11 @@ class FakeDeviceSession(
     override val device = MutableStateFlow(DeviceRef(id, name, address))
     override val state = MutableStateFlow(initialState)
     override val inputs = MutableStateFlow(InputSnapshot.EMPTY)
+
+    /** A newer snapshot that the session did not publish to [inputs] yet, or null. */
+    var unpublished: InputSnapshot? = null
+
+    override fun currentInputs(): InputSnapshot = unpublished ?: inputs.value
     override val probeEvents: SharedFlow<ProbeEvent> = MutableSharedFlow()
     override val adapterInfo = MutableStateFlow(AdapterInfo())
     override val history: InputHistory = InputStage().history
