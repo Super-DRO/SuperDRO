@@ -104,6 +104,7 @@ import org.superdro.core.ui.adapter.common.StatusKind
 import org.superdro.core.ui.adapter.common.StatusLine
 import org.superdro.core.ui.adapter.common.ValueRow
 import org.superdro.core.ui.adapter.encoder.EncoderFormat
+import org.superdro.core.ui.components.uniqueKeys
 import org.superdro.core.ui.navigation.ScreenScaffold
 import org.superdro.core.ui.text.resolve
 import org.superdro.core.ui.theme.AccentButtons
@@ -310,7 +311,8 @@ private fun PointsTable(state: MapEditorUiState, events: MapEditorEvents) {
         }
         HorizontalDivider()
         LazyColumn(Modifier.widthIn(max = 640.dp).fillMaxWidth().weight(1f)) {
-            itemsIndexed(state.rows) { index, row ->
+            val keys = uniqueKeys(state.rows) { row -> row.position.toString() }
+            itemsIndexed(state.rows, key = { index, _ -> keys[index] }) { index, row ->
                 Row(
                     Modifier
                         .fillMaxWidth()

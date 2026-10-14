@@ -8,11 +8,6 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.compose.resources.getString
-import org.superdro.core.resources.Res
-import org.superdro.core.resources.probe_app_name
-import org.superdro.core.resources.probe_notification_text
 
 /**
  * The foreground service of the type `connectedDevice`. It holds the process while a test
@@ -24,7 +19,8 @@ class ProbeService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val texts = runBlocking { getString(Res.string.probe_app_name) to getString(Res.string.probe_notification_text) }
+        // The Android resources hold a copy of strings_probe.xml, so the read does not block the main thread.
+        val texts = getString(R.string.probe_app_name) to getString(R.string.probe_notification_text)
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, ProbeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,

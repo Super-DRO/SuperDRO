@@ -5,7 +5,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -123,6 +125,32 @@ class ReferenceImageControllerTest {
             assertEquals(80, image.height)
             assertEquals(127, image.alpha)
             assertEquals(120, image.bitmap.width)
+        } finally {
+            controller.close()
+            harness.close()
+        }
+    }
+
+    @Test
+    fun anAlphaChangeKeepsTheBitmapAndANewFileMakesANewBitmap() = runTest {
+        val (harness, controller) = started()
+        try {
+            storeImage(harness, "images/a.jpg", alpha = 255)
+            val first = assertNotNull(controller.image.value)
+            controller.setAlpha(127)
+            advanceUntilIdle()
+            val second = assertNotNull(controller.image.value)
+            assertEquals(127, second.alpha)
+            assertSame(first.bitmap, second.bitmap)
+            harness.updateWorkspace { workspace -> workspace.copy(referenceImage = workspace.referenceImage?.copy(matrix = listOf(2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0))) }
+            advanceUntilIdle()
+            val third = assertNotNull(controller.image.value)
+            assertEquals(2.0, third.matrix.m00)
+            assertSame(first.bitmap, third.bitmap)
+            storeImage(harness, "images/b.jpg", alpha = 255)
+            val other = assertNotNull(controller.image.value)
+            assertEquals("images/b.jpg", other.fileName)
+            assertNotSame(first.bitmap, other.bitmap)
         } finally {
             controller.close()
             harness.close()

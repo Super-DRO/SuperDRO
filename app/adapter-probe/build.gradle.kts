@@ -28,7 +28,7 @@ android {
     }
 
     sourceSets {
-        // The manifest label reads @string/probe_app_name. copyStringRes copies it from core:resources.
+        // The manifest label and the notifications read strings_probe.xml. copyStringRes copies it from core:resources.
         getByName("main").res.directories.add(
             project.layout.buildDirectory.dir("copiedRes").get().asFile.path
         )
@@ -117,12 +117,14 @@ val checkReleaseClasspath = tasks.register("checkReleaseClasspath") {
     }
 }
 
-// Only the manifest label reads a string through Android resources (see app:android).
+// The manifest label, the notification channel, and the notification of the probe service read
+// strings through Android resources. Thus the code reads them on the main thread with no block.
+// The copy includes each locale, so that the Android text has the same language as Compose.
 val copyStringRes = tasks.register<Copy>("copyStringRes") {
-    from(rootProject.layout.projectDirectory.dir("core/resources/src/commonMain/composeResources/values")) {
-        include("strings_probe.xml")
+    from(rootProject.layout.projectDirectory.dir("core/resources/src/commonMain/composeResources")) {
+        include("values/strings_probe.xml", "values-*/strings_probe.xml")
     }
-    into(layout.buildDirectory.dir("copiedRes/values"))
+    into(layout.buildDirectory.dir("copiedRes"))
 }
 
 tasks.named("preBuild") {
