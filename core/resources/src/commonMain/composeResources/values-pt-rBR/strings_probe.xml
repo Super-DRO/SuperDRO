@@ -17,6 +17,10 @@
     <string name="probe_paired_devices">Dispositivos pareados</string>
     <string name="probe_no_paired">Nenhum dispositivo pareado. Pareie o adaptador nas configurações de Bluetooth.</string>
     <string name="probe_open_bt_settings">Configurações de Bluetooth</string>
+    <string name="probe_bt_permission_missing">O app precisa da permissão de Bluetooth para mostrar os dispositivos pareados.</string>
+    <string name="probe_bt_request_permission">Pedir a permissão de Bluetooth</string>
+    <string name="probe_bt_off">O Bluetooth está desligado.</string>
+    <string name="probe_bt_turn_on">Ligar o Bluetooth</string>
     <string name="probe_usb_devices">Dispositivos USB serial</string>
     <string name="probe_no_usb">Nenhum dispositivo USB serial está conectado.</string>
     <string name="probe_usb_permission">Pedir a permissão USB</string>

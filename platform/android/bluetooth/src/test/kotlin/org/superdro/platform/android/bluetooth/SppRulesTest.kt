@@ -104,4 +104,35 @@ class SppRulesTest {
         assertEquals(emptyList(), SppRules.manifestPermissions(PermissionKind.BluetoothConnect, 30))
         assertEquals(emptyList(), SppRules.manifestPermissions(PermissionKind.Notifications, 34))
     }
+
+    @Test
+    fun aPageTimeoutWithNoAclLinkIsNoAnswer() {
+        val timeout = "read failed, socket might closed or timeout, read ret: -1"
+        assertEquals(LinkFailure.NoAnswer, SppRules.connectFailure(timeout, socketErrorCode = null, aclConnected = false))
+    }
+
+    @Test
+    fun theSameMessageAfterTheAdapterAnsweredIsRefused() {
+        val closed = "read failed, socket might closed or timeout, read ret: -1"
+        assertEquals(LinkFailure.Refused, SppRules.connectFailure(closed, socketErrorCode = null, aclConnected = true))
+    }
+
+    @Test
+    fun aFailureIsRefusedWhenThePlatformCannotTellAboutTheAclLink() {
+        val timeout = "read failed, socket might closed or timeout, read ret: -1"
+        assertEquals(LinkFailure.Refused, SppRules.connectFailure(timeout, socketErrorCode = null, aclConnected = null))
+    }
+
+    @Test
+    fun aDifferentFailureWithNoAclLinkIsRefused() {
+        assertEquals(LinkFailure.Refused, SppRules.connectFailure("Connection failure, status: 1", null, aclConnected = false))
+        assertEquals(LinkFailure.Refused, SppRules.connectFailure("bt socket connect failed", 18, aclConnected = false))
+        assertEquals(LinkFailure.Refused, SppRules.connectFailure(null, null, aclConnected = false))
+    }
+
+    @Test
+    fun theAclFailureCodeIsNoAnswer() {
+        assertEquals(LinkFailure.NoAnswer, SppRules.connectFailure(null, SppRules.L2CAP_ACL_FAILURE, aclConnected = null))
+        assertEquals(LinkFailure.NoAnswer, SppRules.connectFailure(null, SppRules.L2CAP_ACL_FAILURE, aclConnected = false))
+    }
 }

@@ -83,6 +83,7 @@ import org.superdro.core.ui.theme.Theme
 import org.superdro.core.ui.theme.accentColor
 import org.superdro.core.ui.theme.accentTextFieldColors
 import org.superdro.core.ui.theme.accentFilterChipColors
+import org.superdro.core.ui.graphics.common.verticalScrollIndicator
 
 /** The test tag of the measurement pane. */
 const val MEASUREMENT_PANE_TAG: String = "measure-pane"
@@ -262,7 +263,13 @@ fun MeasurementPane(state: MeasurementUiState, events: MeasurementEvents, modifi
         shape = MaterialTheme.shapes.large,
         tonalElevation = 3.dp,
     ) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // The pane scrolls when it does not fit, for example in the short view below the readout.
+        // The bar at its edge shows that it has more content.
+        val scroll = rememberScrollState()
+        Column(
+            Modifier.verticalScrollIndicator(scroll).verticalScroll(scroll).padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             VerbStrip(state.verb, events)
             state.instrumentName?.let { name ->
                 Text(

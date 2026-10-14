@@ -122,6 +122,17 @@ class AutomaticFunctionsTest {
     }
 
     @Test
+    fun theProximityTargetAtAPointHasTheTwoAxesOfThePlane() {
+        val xy = AutoPointActions.proximityTarget(Plane.XY, "p1")
+        assertEquals(ProximityTarget(AxisId.X, 0.0, absolute = false, secondAxis = AxisId.Y, pointId = "p1"), xy)
+        assertEquals(listOf(AxisId.X, AxisId.Y), xy.axes)
+        assertEquals(listOf(AxisId.Y, AxisId.Z), AutoPointActions.proximityTarget(Plane.YZ, "p1").axes)
+        assertEquals(listOf(AxisId.Z, AxisId.X), AutoPointActions.proximityTarget(Plane.ZX, "p1").axes)
+        // A guide target has one axis.
+        assertEquals(listOf(AxisId.Y), AutoGuideActions.proximityTarget(Guide(axis = AxisId.Y, valueUm = 1234.0)).axes)
+    }
+
+    @Test
     fun thePlungeDetectorHasAHysteresisOf10000Um() {
         val detector = PlungeDetector()
         assertNull(detector.update(0.0))

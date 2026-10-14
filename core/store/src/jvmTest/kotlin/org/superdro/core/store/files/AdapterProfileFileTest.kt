@@ -44,7 +44,8 @@ class AdapterProfileFileTest {
         assertEquals("id-1", adapter.id)
         assertEquals("Shop Adapter", adapter.alias)
         assertEquals("tda-xxx", adapter.model)
-        assertEquals("24:0A:C4:12:34:58", adapter.identity)
+        // The file has "24:0A:C4:12:34:58". The import writes the identity in lower case, the same as the live link.
+        assertEquals("24:0a:c4:12:34:58", adapter.identity)
         assertEquals(IdentitySource.BtMac, adapter.identitySource)
         assertEquals(ProbeContactType.NormallyClosed, adapter.probeContactType)
         assertEquals(25L, adapter.probeDebounceMs)
@@ -184,5 +185,28 @@ class AdapterProfileFileTest {
             importer.read(Fixtures.bytes("settings-3.32.00.tdset"), AdapterTarget.NewAdapter).problems.map { it.describe() },
         )
         assertEquals(listOf("The file has no inputs."), importer.read("""{"touchdro":"adapter-profile","inputs":[]}""", AdapterTarget.NewAdapter).problems.map { it.describe() })
+    }
+
+    @Test
+    fun aTdapFileWithNoInputsKeepsItsSourceAndIsNotUsable() {
+        val text = """{"touchdro":"adapter-profile","format":1,"exported":"2026-10-11 14:30:00","adapter":"Shop Adapter","model":"tda-xxx","inputs":[]}"""
+        val preview = importer.read(text.encodeToByteArray(), AdapterTarget.NewAdapter)
+        assertEquals(FileSource.TouchDro, preview.source)
+        assertEquals("Shop Adapter", preview.adapterName)
+        assertEquals("tda-xxx", preview.model)
+        assertEquals("2026-10-11 14:30:00", preview.exported)
+        assertEquals(listOf("The file has no inputs."), preview.problems.map { it.describe() })
+        assertFalse(preview.usable)
+        assertEquals(null, preview.adapter)
+    }
+
+    @Test
+    fun aSuperDroAdapterFileWithABadContentKeepsItsSourceAndIsNotUsable() {
+        val text = """{"superdro":"adapter-profile","format":1,"exported":"2026-10-11 14:30:00","${AdapterProfileFile.SUPERDRO_CONTENT}":{"encoders":7}}"""
+        val preview = importer.read(text, AdapterTarget.NewAdapter)
+        assertEquals(FileSource.SuperDro, preview.source)
+        assertEquals("2026-10-11 14:30:00", preview.exported)
+        assertEquals(listOf("The app cannot read the file as JSON."), preview.problems.map { it.describe() })
+        assertFalse(preview.usable)
     }
 }

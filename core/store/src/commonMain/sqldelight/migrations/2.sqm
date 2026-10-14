@@ -1,0 +1,7 @@
+-- Schema version 2 to version 3.
+--
+-- An adapter identity is lower case (`AdapterProfile.normalizeIdentity`). An identity that a
+-- `.tdap` import stored before this version can have upper case letters, for example
+-- `AA:BB:CC:DD:EE:FF`. This step changes each stored identity to lower case, with no spaces at
+-- the ends. A blank identity becomes NULL. The schema does not change.
+UPDATE adapter_profile SET identity = NULLIF(lower(trim(identity)), '') WHERE identity IS NOT NULL;

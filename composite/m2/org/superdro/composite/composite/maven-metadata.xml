@@ -3,11 +3,11 @@
   <groupId>org.superdro.composite</groupId>
   <artifactId>composite</artifactId>
   <versioning>
-    <latest>1.0-5e80b039d5fd</latest>
-    <release>1.0-5e80b039d5fd</release>
+    <latest>1.0-b1d9f21725fa</latest>
+    <release>1.0-b1d9f21725fa</release>
     <versions>
-      <version>1.0-5e80b039d5fd</version>
+      <version>1.0-b1d9f21725fa</version>
     </versions>
-    <lastUpdated>20261013042147</lastUpdated>
+    <lastUpdated>20261013234522</lastUpdated>
   </versioning>
 </metadata>

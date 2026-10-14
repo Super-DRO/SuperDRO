@@ -245,7 +245,10 @@ class ReadoutScreenUiTest {
     @Test
     fun theButtonsHaveTheTouchTargetsOfTheShopFloor() = runComposeUiTest {
         val sample = ReadoutSamples.mill()
-        setContent { Themed { ReadoutScreen(sample.state, sample::flow, NoReadoutEvents, layout = landscape) } }
+        // The portrait layout shows all the action buttons of a row. The narrow readout column of
+        // the landscape layout shows only the collapsed buttons.
+        val portrait = WindowLayout.of(800.dp, 1280.dp)
+        setContent { Themed(portrait) { ReadoutScreen(sample.state, sample::flow, NoReadoutEvents, layout = portrait) } }
         listOf(AxisButtonMode.SetZero, AxisButtonMode.ToggleIncremental, AxisButtonMode.ToggleUnits).forEach { mode ->
             onNodeWithTag(actionTag(AxisId.X, mode)).assertWidthIsAtLeast(64.dp).assertHeightIsAtLeast(64.dp)
         }
@@ -292,7 +295,7 @@ class ReadoutFeedbackUiTest {
                 }
             }
         }
-        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.ToggleIncremental)).performClick()
+        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.SetZero)).performClick()
         waitForIdle()
         assertEquals(listOf(org.superdro.core.ui.sound.UiSound.Short), sounds.played)
         onNodeWithTag(ZERO_SET_TAG).performTouchInput { longClick() }

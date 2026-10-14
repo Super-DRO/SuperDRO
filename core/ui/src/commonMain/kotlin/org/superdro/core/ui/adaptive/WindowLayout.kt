@@ -28,8 +28,8 @@ enum class WidthClass {
  *
  * | Window class | Readout | Function strip | Side panel | Graphical view |
  * |---|---|---|---|---|
- * | Expanded and more | Left pane, about 60 % | Vertical rail at the right edge | Supporting pane | Supporting pane, or full screen |
- * | Medium | Full width, top | Two rows at the bottom | Bottom sheet | Below or above the readout, or full screen |
+ * | Expanded and more | Left column, about 45 % | Grid below the readout | Supporting pane | Supporting pane, or full screen |
+ * | Medium | Top, at the left of the rail | Vertical rail at the right of the readout | Bottom sheet | Below or above the readout (about 60 %), or full screen |
  * | Compact | Full width, smaller rows | Bottom sheet from a button | Bottom sheet | Full-screen entry |
  *
  * @property landscape True when the window is wider than tall. A sheet is a dialog in landscape

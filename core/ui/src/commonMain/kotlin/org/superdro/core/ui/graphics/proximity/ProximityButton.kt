@@ -22,8 +22,8 @@ const val PROXIMITY_BUTTON_TAG: String = "axis-details-proximity"
 /** The rules of the proximity warning target. */
 object ProximityTargets {
 
-    /** True when the warning of [axis] is on in [workspace]. */
-    fun isOn(workspace: Workspace?, axis: AxisId): Boolean = workspace?.proximity?.axis == axis
+    /** True when the warning of [axis] is on in [workspace]. A point target has two axes. */
+    fun isOn(workspace: Workspace?, axis: AxisId): Boolean = workspace?.proximity?.axes?.contains(axis) == true
 
     /**
      * Gives [workspace] with the warning of [axis] on (the target 0 on the shown value), or off

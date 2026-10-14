@@ -116,11 +116,15 @@ class TcpOutputServer(
             clientList.value.forEach { client -> client.slot.trySend(record) }
         }
 
-        /** Closes the job, the sockets, and the clients at once. */
+        /**
+         * Closes the sockets, the clients, and the job at once. The server sockets close first, so
+         * that the ports are free before a client sees the end of its stream. The job stops last,
+         * because a cancel of a socket call closes the socket and does not wait for the port.
+         */
         fun close() {
             closed = true
-            job?.cancel()
             closeSockets()
+            job?.cancel()
         }
 
         private fun closeSockets() {
@@ -207,6 +211,8 @@ class TcpOutputServer(
                         } catch (exception: CancellationException) {
                             throw exception
                         } catch (exception: Exception) {
+                            // A stop closes the socket. That is not an accept() error.
+                            checkActive()
                             failure.complete(
                                 DataOutputError(DataOutputErrorType.AcceptFailed, clock.nowMs(), listener.host, listener.port, exception.message),
                             )
@@ -230,6 +236,7 @@ class TcpOutputServer(
                 throw exception
             } catch (exception: Exception) {
                 link.close()
+                if (closed) return
                 onError(DataOutputError(DataOutputErrorType.HandshakeFailed, clock.nowMs(), link.remoteHost, detail = exception.message))
                 return
             }
@@ -252,6 +259,8 @@ class TcpOutputServer(
                             } catch (exception: CancellationException) {
                                 throw exception
                             } catch (exception: Exception) {
+                                // A stop closes the client. That is not a write error.
+                                if (closed) throw ClientClosedException()
                                 onWrite(false)
                                 onError(DataOutputError(DataOutputErrorType.PublishFailed, clock.nowMs(), client.host, detail = exception.message))
                                 throw ClientClosedException()

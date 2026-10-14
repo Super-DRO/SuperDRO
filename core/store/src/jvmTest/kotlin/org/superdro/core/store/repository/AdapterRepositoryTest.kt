@@ -30,6 +30,9 @@ import org.superdro.core.model.ProbeContactType
 import org.superdro.core.store.StoreFixture
 import org.superdro.core.store.StoreRefusal
 import org.superdro.core.store.StoreResult
+import org.superdro.core.store.files.Fixtures
+import org.superdro.core.store.files.adapter.AdapterProfileImporter
+import org.superdro.core.store.files.adapter.AdapterTarget
 import org.superdro.core.store.refusalOrNull
 import org.superdro.core.store.valueOrNull
 
@@ -72,18 +75,43 @@ class AdapterRepositoryTest {
         val profile = adapter().copy(encoders = mapOf('x' to x, 'w' to w))
         store.adapters.saveAdapterProfile(profile)
 
-        assertEquals(profile, store.adapters.loadAdapterProfile(profile.id))
-        assertEquals(profile, store.adapters.adapterProfile(profile.id).first())
+        // The store writes the identity in lower case.
+        val stored = profile.copy(identity = "24:6f:28:a1:b2:c3")
+        assertEquals(stored, store.adapters.loadAdapterProfile(profile.id))
+        assertEquals(stored, store.adapters.adapterProfile(profile.id).first())
         // The list has the encoders but not the maps.
         val summary = store.adapters.adapterProfiles().first().single()
         assertEquals(emptyList(), summary.encoders.getValue('x').errorMap)
         assertEquals(2000.0, summary.encoders.getValue('x').resolution)
-        assertEquals(listOf(profile), store.adapters.findByIdentity("24:6F:28:A1:B2:C3", IdentitySource.BtMac))
+        assertEquals(listOf(stored), store.adapters.findByIdentity("24:6F:28:A1:B2:C3", IdentitySource.BtMac))
 
         // An input that is not in the new profile goes with its maps.
         store.adapters.saveAdapterProfile(profile.copy(encoders = mapOf('w' to w)))
         assertEquals(setOf('w'), store.adapters.loadAdapterProfile(profile.id)!!.encoders.keys)
         assertEquals(0L, store.count("encoder_map_point"))
+    }
+
+    @Test
+    fun aTdapProfileWithAnUpperCaseMacMatchesTheLowerCaseMacOfTheLiveLink() = scope.runTest {
+        // The file has "identity": "24:0A:C4:12:34:58". The live Bluetooth link gives lower case.
+        val imported = checkNotNull(AdapterProfileImporter(ids = { "imported" }).read(Fixtures.bytes("adapter-3.32.00.tdap"), AdapterTarget.NewAdapter).adapter)
+        store.adapters.saveAdapterProfile(imported)
+
+        val found = store.adapters.findByIdentity("24:0a:c4:12:34:58", IdentitySource.BtMac)
+        assertEquals(listOf("imported"), found.map(AdapterProfile::id))
+        assertEquals("24:0a:c4:12:34:58", found.single().identity)
+        assertEquals(5080.0, found.single().encoders.getValue('x').resolution)
+        // The upper case form and a form with spaces find the same profile.
+        assertEquals(listOf("imported"), store.adapters.findByIdentity(" 24:0A:C4:12:34:58 ", IdentitySource.BtMac).map(AdapterProfile::id))
+        assertEquals(emptyList(), store.adapters.findByIdentity("24:0a:c4:12:34:58", IdentitySource.AdapterReported))
+    }
+
+    @Test
+    fun aStoredUpperCaseIdentityMatchesWithNoChangeOfLetterCase() = scope.runTest {
+        // A row that a version before the migration 2.sqm wrote.
+        store.adapters.saveAdapterProfile(adapter())
+        store.driver.execute(null, "UPDATE adapter_profile SET identity = 'AA:BB:CC:DD:EE:FF'", 0)
+        assertEquals(1, store.adapters.findByIdentity("aa:bb:cc:dd:ee:ff", IdentitySource.BtMac).size)
     }
 
     @Test

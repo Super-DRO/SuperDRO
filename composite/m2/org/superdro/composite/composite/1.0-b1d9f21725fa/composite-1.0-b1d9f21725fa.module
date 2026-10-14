@@ -3,7 +3,7 @@
   "component": {
     "group": "org.superdro.composite",
     "module": "composite",
-    "version": "1.0-5e80b039d5fd",
+    "version": "1.0-b1d9f21725fa",
     "attributes": {
       "org.gradle.status": "release"
     }
@@ -27,13 +27,13 @@
       },
       "files": [
         {
-          "name": "composite-1.0-5e80b039d5fd.jar",
-          "url": "composite-1.0-5e80b039d5fd.jar",
-          "size": 40803,
-          "sha512": "6ee79a38d2931e617e95c4dc1125687468f2376517240acc30bda2b170f2b66249cc4e4a4d4292076c1a2a630621ad3f403e5aac52b5295f3b7d93074ffe7884",
-          "sha256": "bc1f223d2b9fc4c5f210cb4f381909301eeb44f83779767a8309e524f3fcf5fa",
-          "sha1": "5b1e79568b7151d52abd0512b1a5419b7599fc45",
-          "md5": "625411cb7c8744481399a530f833ee4e"
+          "name": "composite-1.0-b1d9f21725fa.jar",
+          "url": "composite-1.0-b1d9f21725fa.jar",
+          "size": 40911,
+          "sha512": "906dd662d13cd76268830457de56c14d5fe58362311306858a37e2b53c0a72966989d1b6d8f16847991b1632fdf5ca5169ab9e694c7e59c9537461c3991ebc7a",
+          "sha256": "e0db3458d1f9c1b6ff2a47ebd24379d5fb5e72454844b88a53fad57641522add",
+          "sha1": "ce223aecce38fcb860b07b5711db457706c3ea7f",
+          "md5": "9c2f283a1004ba1a1d960e9ccbe8e6a5"
         }
       ]
     },
@@ -50,13 +50,13 @@
       },
       "files": [
         {
-          "name": "composite-1.0-5e80b039d5fd.jar",
-          "url": "composite-1.0-5e80b039d5fd.jar",
-          "size": 40803,
-          "sha512": "6ee79a38d2931e617e95c4dc1125687468f2376517240acc30bda2b170f2b66249cc4e4a4d4292076c1a2a630621ad3f403e5aac52b5295f3b7d93074ffe7884",
-          "sha256": "bc1f223d2b9fc4c5f210cb4f381909301eeb44f83779767a8309e524f3fcf5fa",
-          "sha1": "5b1e79568b7151d52abd0512b1a5419b7599fc45",
-          "md5": "625411cb7c8744481399a530f833ee4e"
+          "name": "composite-1.0-b1d9f21725fa.jar",
+          "url": "composite-1.0-b1d9f21725fa.jar",
+          "size": 40911,
+          "sha512": "906dd662d13cd76268830457de56c14d5fe58362311306858a37e2b53c0a72966989d1b6d8f16847991b1632fdf5ca5169ab9e694c7e59c9537461c3991ebc7a",
+          "sha256": "e0db3458d1f9c1b6ff2a47ebd24379d5fb5e72454844b88a53fad57641522add",
+          "sha1": "ce223aecce38fcb860b07b5711db457706c3ea7f",
+          "md5": "9c2f283a1004ba1a1d960e9ccbe8e6a5"
         }
       ]
     }

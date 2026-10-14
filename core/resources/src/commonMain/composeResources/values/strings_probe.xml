@@ -18,6 +18,10 @@
     <string name="probe_paired_devices">Paired devices</string>
     <string name="probe_no_paired">No paired device. Pair the adapter in the Bluetooth settings.</string>
     <string name="probe_open_bt_settings">Bluetooth settings</string>
+    <string name="probe_bt_permission_missing">The app needs the Bluetooth permission to show the paired devices.</string>
+    <string name="probe_bt_request_permission">Ask for the Bluetooth permission</string>
+    <string name="probe_bt_off">Bluetooth is off.</string>
+    <string name="probe_bt_turn_on">Turn on Bluetooth</string>
     <string name="probe_usb_devices">USB serial devices</string>
     <string name="probe_no_usb">No USB serial device is attached.</string>
     <string name="probe_usb_permission">Ask for the USB permission</string>

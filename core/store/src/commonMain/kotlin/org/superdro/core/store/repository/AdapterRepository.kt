@@ -97,9 +97,15 @@ class AdapterRepository(
     /** Reads the full adapter profile [id] one time, in one transaction. */
     suspend fun loadAdapterProfile(id: String): AdapterProfile? = writer.read { db -> db.fullAdapterProfile(id) }
 
-    /** The adapter profiles with the identity [identity] of the source [source], oldest first. */
-    suspend fun findByIdentity(identity: String, source: IdentitySource): List<AdapterProfile> = writer.read { db ->
-        db.adapterQueries.selectByIdentity(identity, source).executeAsList().mapNotNull { row -> db.fullAdapterProfile(row.id) }
+    /**
+     * The adapter profiles with the identity [identity] of the source [source], oldest first. The
+     * case of the letters does not matter, the same as `AdapterIdentity.matches`.
+     */
+    suspend fun findByIdentity(identity: String, source: IdentitySource): List<AdapterProfile> {
+        val normalized = AdapterProfile.normalizeIdentity(identity) ?: return emptyList()
+        return writer.read { db ->
+            db.adapterQueries.selectByIdentity(normalized, source).executeAsList().mapNotNull { row -> db.fullAdapterProfile(row.id) }
+        }
     }
 
     /**
@@ -117,7 +123,7 @@ class AdapterRepository(
             id = profile.id,
             alias = profile.alias.trim(),
             model = profile.model,
-            identity = profile.identity,
+            identity = AdapterProfile.normalizeIdentity(profile.identity),
             identity_source = profile.identitySource,
             legacy = profile.legacy,
             last_link_json = profile.lastLink?.let { link -> json.encodeToString(AdapterAddress.serializer(), link) },

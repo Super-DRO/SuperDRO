@@ -29,6 +29,7 @@ import org.superdro.core.resources.app_could_not_restore_link
 import org.superdro.core.resources.connection_adapter_restarted
 import org.superdro.core.resources.connection_identity_differs
 import org.superdro.core.resources.connection_restart_failed
+import org.superdro.core.resources.frame_could_not_connect
 import org.superdro.core.resources.frame_machine_message
 import org.superdro.core.resources.frame_reconnecting
 import org.superdro.core.store.json.TabStore
@@ -46,6 +47,11 @@ import org.superdro.core.ui.text.UiText
  * Rules:
  * - A tab shows while the session of its machine is online (`AwaitingData`, `Connected`, or
  *   `NoData`).
+ * - A tab also shows when a session starts: the session goes to `Connecting(1)` from no session or
+ *   from `Disconnected`. Thus the user sees that a new machine connects. When the first attempt
+ *   fails before the session is online, the grace time starts. After the grace time the tab hides,
+ *   and the snackbar shows "Could not connect". The session continues to try, and the remembered
+ *   machines pane shows its status.
  * - A tab whose session goes offline stays for the grace time of 10 s ([GRACE_MS]). The tab then
  *   shows the status of the session ("Reconnecting (n)", or the cause) and the readout keeps the
  *   last values. After the grace time the tab hides, and the snackbar shows "Could not restore the
@@ -88,7 +94,10 @@ class DeviceTabsPresenter(
     private var tabState: TabState = TabState()
     private var names: Map<String, String> = emptyMap()
     private val visible = LinkedHashSet<DeviceId>()
-    private val online = HashMap<DeviceId, Boolean>()
+    private val lastStates = HashMap<DeviceId, SessionState>()
+
+    /** The tabs of the sessions that started and were not online yet. */
+    private val starting = HashSet<DeviceId>()
     private val graceJobs = HashMap<DeviceId, Job>()
     private var selected: DeviceId? = null
     private var seenStoredSelection: DeviceId? = null
@@ -205,24 +214,32 @@ class DeviceTabsPresenter(
     /** Applies the session states to the visible tabs. Call it under [mutex]. */
     private fun applySessions() {
         val ids = sessions.mapTo(HashSet()) { snapshot -> snapshot.id }
-        (visible.toList() + online.keys.toList()).filter { id -> id !in ids }.forEach { id ->
+        (visible.toList() + lastStates.keys.toList()).filter { id -> id !in ids }.forEach { id ->
             hide(id)
-            online.remove(id)
+            lastStates.remove(id)
         }
         sessions.forEach { snapshot ->
             val id = snapshot.id
-            val wasOnline = online[id] == true
-            val isOnline = snapshot.state.isOnline
-            online[id] = isOnline
+            val state = snapshot.state
+            val before = lastStates.put(id, state)
+            val wasOnline = before?.isOnline == true
             when {
-                isOnline -> {
+                state.isOnline -> {
                     visible += id
+                    starting -= id
+                    graceJobs.remove(id)?.cancel()
+                }
+                state is SessionState.Connecting && (before == null || before == SessionState.Disconnected) -> {
+                    visible += id
+                    starting += id
                     graceJobs.remove(id)?.cancel()
                 }
                 id !in visible -> Unit
-                snapshot.state == SessionState.Disconnected -> hide(id)
+                state == SessionState.Disconnected -> hide(id)
+                // The first attempt of a new session runs: no grace time yet.
+                id in starting && state is SessionState.Connecting && graceJobs[id] == null -> Unit
                 else -> {
-                    if (wasOnline) addMessage(id, linkLostText(snapshot.state))
+                    if (wasOnline) addMessage(id, linkLostText(state))
                     if (graceJobs[id] == null) graceJobs[id] = startGrace(id)
                 }
             }
@@ -241,8 +258,9 @@ class DeviceTabsPresenter(
             val snapshot = sessions.firstOrNull { it.id == id }
             if (snapshot == null || !snapshot.state.isOnline) {
                 if (id in visible) {
+                    val neverOnline = id in starting
                     hide(id)
-                    addMessage(id, UiText.of(Res.string.app_could_not_restore_link))
+                    addMessage(id, UiText.of(if (neverOnline) Res.string.frame_could_not_connect else Res.string.app_could_not_restore_link))
                 }
                 publish()
             }
@@ -251,6 +269,7 @@ class DeviceTabsPresenter(
 
     private fun hide(id: DeviceId) {
         visible -= id
+        starting -= id
         graceJobs.remove(id)?.cancel()
         if (menuFor == id) menuFor = null
     }
@@ -298,7 +317,7 @@ class DeviceTabsPresenter(
                 transport = snapshot.device.transport,
                 state = snapshot.state,
                 status = TabStatusRules.of(snapshot.state),
-                inGrace = !snapshot.state.isOnline,
+                inGrace = id in graceJobs,
             )
         }
         state.value = DeviceTabsUiState(
