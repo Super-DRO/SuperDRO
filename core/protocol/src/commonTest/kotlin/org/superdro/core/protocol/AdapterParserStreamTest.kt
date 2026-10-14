@@ -32,6 +32,30 @@ class AdapterParserStreamTest {
     }
 
     @Test
+    fun oneListUsedAgainForEachChunkGivesTheSameMessages() {
+        val whole = AdapterParser().feed(streamBytes, 1_000L)
+        listOf(1, 2, 7, 64).forEach { size ->
+            val parser = AdapterParser()
+            val out = ArrayList<AdapterMessage>()
+            val messages = mutableListOf<AdapterMessage>()
+            var offset = 0
+            while (offset < streamBytes.size) {
+                val length = minOf(size, streamBytes.size - offset)
+                out.clear()
+                parser.feed(streamBytes, offset, length, 1_000L, out)
+                messages += out
+                offset += length
+            }
+            assertEquals(whole, messages, "Chunks of $size bytes")
+        }
+        // The parser adds to the list and does not clear it.
+        val out = arrayListOf<AdapterMessage>(Unknown("old"))
+        AdapterParser().feed("X5;".encodeToByteArray(), 0, 3, 7L, out)
+        assertEquals(2, out.size)
+        assertEquals(Unknown("old"), out[0])
+    }
+
+    @Test
     fun chunksOf1And2And7And64BytesGiveTheSameMessages() {
         val whole = AdapterParser().feed(streamBytes, 1_000L)
         assertTrue(whole.size > 30)

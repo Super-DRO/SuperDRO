@@ -26,6 +26,14 @@ interface RecordSink {
     /** Writes one chunk. */
     fun write(chunk: RecordedChunk)
 
+    /**
+     * Writes [chunks] in their order. The session gives the chunks of a link in batches. A sink can
+     * do one update for each batch, not for each chunk.
+     */
+    fun writeAll(chunks: List<RecordedChunk>) {
+        for (index in chunks.indices) write(chunks[index])
+    }
+
     /** The link closed. Flush and close the file. */
     fun close()
 }

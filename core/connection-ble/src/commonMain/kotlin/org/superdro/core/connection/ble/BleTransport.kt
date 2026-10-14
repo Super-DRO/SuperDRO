@@ -46,7 +46,9 @@ import org.superdro.core.model.AdapterAddress
  *   large MTU, and turns on the notifications of [NordicUartService.TX_CHARACTERISTIC]. All of this
  *   has the limit [BleLinkDefaults.OPEN_TIMEOUT_MS].
  * - [incoming] gives the payload of each notification, in the order of arrival. The transport
- *   keeps the notifications that arrive before the collection starts.
+ *   keeps the notifications that arrive before the collection starts, up to
+ *   [BleLinkDefaults.NOTIFICATION_QUEUE]. When the collector is so late that the queue is full,
+ *   [incoming] gives the notifications of the queue and then ends with [LinkFailure.Lost].
  * - [write] writes to [NordicUartService.RX_CHARACTERISTIC] in chunks of the MTU less 3 bytes
  *   ([BleChunks]), with the limit [BleLinkDefaults.WRITE_TIMEOUT_MS] for all chunks.
  * - A disconnect that the transport did not ask for ends [incoming] with [LinkFailure.Lost], or
@@ -67,7 +69,13 @@ class BleTransport(
 ) : Transport {
 
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-    private val received = Channel<ByteArray>(Channel.UNLIMITED)
+    // A bounded queue. The notification collector must not suspend: a collector that waits holds
+    // the shared notification flow of the engine, and the engine then drops or holds the
+    // notifications of all devices. A dropped notification makes a gap in the byte stream,
+    // and a gap can join the start of one message to the end of a different message. That gives
+    // a wrong position with no error. Thus a full queue ends the link: the session then opens a
+    // new link with a new parser.
+    private val received = Channel<ByteArray>(BleLinkDefaults.NOTIFICATION_QUEUE)
     private val stateLock = Mutex()
     private val writeLock = Mutex()
 
@@ -291,7 +299,14 @@ class BleTransport(
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             blueFalcon.engine.characteristicNotifications.collect { notification ->
                 if (notification.peripheral.uuid == uuid && notification.characteristic.uuid == NordicUartService.txUuid) {
-                    received.trySend(notification.value.copyOf())
+                    val result = received.trySend(notification.value.copyOf())
+                    if (result.isFailure && !result.isClosed) {
+                        fail(
+                            LinkFailure.Lost,
+                            "The BLE link to ${address.id} ended: ${BleLinkDefaults.NOTIFICATION_QUEUE} notifications " +
+                                "wait for the collector, so the transport cannot keep the next notification.",
+                        )
+                    }
                 }
             }
         }
@@ -327,12 +342,12 @@ class BleTransport(
         }
     }
 
-    private suspend fun fail(cause: LinkFailure) {
+    private suspend fun fail(cause: LinkFailure, message: String = "The BLE link to ${address.id} ended.") {
         stateLock.withLock {
             if (closed || failure != null) return
             failure = cause
         }
-        received.close(LinkFailureException(cause, "The BLE link to ${address.id} ended."))
+        received.close(LinkFailureException(cause, message))
     }
 
     private suspend fun writeChunk(target: BluetoothPeripheral, characteristic: BluetoothCharacteristic, chunk: ByteArray) {

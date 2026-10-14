@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,7 +62,9 @@ import org.superdro.core.util.Clock
  *
  * All state of the session is confined to one coroutine dispatcher with a parallelism of 1. The
  * reader, the writer, the timers, and the requests of the UI run on it, so no two of them change
- * the state at the same time. The link reads and writes run on the link I/O dispatcher.
+ * the state at the same time. The open, the writes, and the close of a link run on the link I/O
+ * dispatcher. The session collects [Transport.incoming] on its own dispatcher: the transport does
+ * its blocking reads on its own thread.
  *
  * One timer loop runs all timers of the session: the reconnect delay, the restart sequence, the
  * queue timers, the 30 s limits, the no-data watchdog, the BEL byte, and the tick of the input
@@ -111,6 +112,9 @@ internal class LinkSession(
     private val _device = MutableStateFlow(initial)
     private val _state = MutableStateFlow<SessionState>(SessionState.Disconnected)
     private val _inputs = MutableStateFlow(InputSnapshot.EMPTY)
+    // No DROP_OLDEST: each probe event is a measurement, and a collector must not lose an old one
+    // with no notice. The session gives the events with tryEmit, so that a collector that stops
+    // cannot stop the parse. See emitProbes.
     private val _probeEvents = MutableSharedFlow<ProbeEvent>(extraBufferCapacity = PROBE_BUFFER)
     private val _samples = MutableSharedFlow<ChannelValue>(
         extraBufferCapacity = DeviceSession.SAMPLE_BUFFER,
@@ -138,11 +142,14 @@ internal class LinkSession(
     /** The state of one open link: a new parser, a new queue, and a new time offset. */
     private class Link(val number: Int, val transport: Transport, val openedAtMs: Long, var queue: CommandQueue) {
         val parser = AdapterParser()
+
+        /** The messages of one segment. The session uses the list again for each segment. */
+        val messages = ArrayList<AdapterMessage>()
         val pending = HashMap<Long, CompletableDeferred<CommandResult>>()
         val writes = Channel<PendingWrite>(Channel.UNLIMITED)
         var readerJob: Job? = null
         var writerJob: Job? = null
-        var sink: RecordSink? = null
+        var sink: QueuedRecordSink? = null
         var lastValidMs: Long = openedAtMs
         var lastWriteMs: Long? = null
         var belPending = false
@@ -173,6 +180,7 @@ internal class LinkSession(
     private var restartState = AdapterRestartState.Idle
     private var restartNeeded: Set<InputChannel> = emptySet()
     private var adapterRestarts = 0
+    private var droppedProbeEvents = 0L
     private var busy: Set<InputChannel> = emptySet()
     private var detailsOpen = false
     private var values = AdapterValues()
@@ -410,7 +418,14 @@ internal class LinkSession(
         // A link that opens ends the restart sequence, also after a failed connect.
         restartState = AdapterRestartState.Idle
         val ref = _device.value
-        current.sink = if (ref.recordStream) recorder.open(id, ref.address, current.number) else null
+        current.sink = if (ref.recordStream) {
+            recorder.open(id, ref.address, current.number)?.let { sink ->
+                // A sink exception is a defect: it goes to onFatal on the session dispatcher.
+                QueuedRecordSink(sink, scope, linkIo, onFailure = { error -> scope.launch { throw error } })
+            }
+        } else {
+            null
+        }
         stage.onLinkStart()
         _inputs.value = stage.snapshot
         setState(SessionState.AwaitingData)
@@ -516,8 +531,10 @@ internal class LinkSession(
 
     private suspend fun reader(current: Link) {
         try {
+            // No flowOn here: each transport does its blocking reads on its own thread. A flowOn
+            // adds a second thread change and buffer for each chunk. Also, when the flow fails,
+            // flowOn drops the chunks in its buffer, so the parser does not get the last bytes.
             current.transport.incoming
-                .flowOn(linkIo)
                 .catch { error ->
                     throw when (error) {
                         is CancellationException, is LinkFailureException -> error
@@ -527,6 +544,7 @@ internal class LinkSession(
                 .collect { bytes -> onChunk(current, bytes) }
             onLinkLost(current, LinkFailure.Lost)
         } catch (error: LinkFailureException) {
+            if (link === current) error.message?.let { text -> log.i { "$id: $text" } }
             onLinkLost(current, error.failure)
         }
     }
@@ -563,7 +581,10 @@ internal class LinkSession(
         current.writes.close()
         current.readerJob?.cancel()
         current.writerJob?.cancel()
-        current.sink?.close()
+        current.sink?.let { sink ->
+            if (sink.dropped > 0) log.w { "$id: the record of link ${current.number} lost ${sink.dropped} chunks: the file writes were too slow" }
+            sink.close()
+        }
         current.sink = null
         closeTransport(current.transport)
         publishInfo()
@@ -592,7 +613,7 @@ internal class LinkSession(
 
     // The inbound data.
 
-    private suspend fun onChunk(current: Link, bytes: ByteArray) {
+    private fun onChunk(current: Link, bytes: ByteArray) {
         val now = clock.nowMs()
         current.sink?.write(RecordedChunk(now - current.openedAtMs, bytes.copyOf()))
         // Each segment ends at `;`, so a state change in a message applies before the next message.
@@ -608,14 +629,21 @@ internal class LinkSession(
         if (link === current) _inputs.value = stage.snapshot
     }
 
-    private suspend fun feed(current: Link, bytes: ByteArray, offset: Int, length: Int, now: Long) {
-        for (message in current.parser.feed(bytes, offset, length, now)) {
-            if (link !== current) return
-            onMessage(current, message, now)
+    private fun feed(current: Link, bytes: ByteArray, offset: Int, length: Int, now: Long) {
+        val messages = current.messages
+        messages.clear()
+        current.parser.feed(bytes, offset, length, now, messages)
+        try {
+            for (index in messages.indices) {
+                if (link !== current) return
+                onMessage(current, messages[index], now)
+            }
+        } finally {
+            messages.clear()
         }
     }
 
-    private suspend fun onMessage(current: Link, message: AdapterMessage, now: Long) {
+    private fun onMessage(current: Link, message: AdapterMessage, now: Long) {
         if (message.isValid) {
             current.lastValidMs = now
             when (_state.value) {
@@ -684,8 +712,21 @@ internal class LinkSession(
         poke()
     }
 
-    private suspend fun emitProbes(events: List<ProbeEvent>) {
-        events.forEach { event -> _probeEvents.emit(event) }
+    /**
+     * Gives [events] to the collectors with no wait. The buffer holds [PROBE_BUFFER] events for the
+     * slowest collector. Only a collector that stopped fills it. Then the session drops the new
+     * event and logs it: the readout positions must not stop for a collector that stopped.
+     */
+    private fun emitProbes(events: List<ProbeEvent>) {
+        for (index in events.indices) {
+            val event = events[index]
+            if (!_probeEvents.tryEmit(event)) {
+                droppedProbeEvents += 1
+                if (droppedProbeEvents % PROBE_DROP_LOG_INTERVAL == 1L) {
+                    log.w { "$id: probe event ${event.sequence} dropped: a collector is $PROBE_BUFFER events late ($droppedProbeEvents dropped)" }
+                }
+            }
+        }
     }
 
     // The command queue.
@@ -893,7 +934,7 @@ internal class LinkSession(
         return maxOf(current.lastWriteMs ?: since, since) + timing.belPeriodMs
     }
 
-    private suspend fun runDue(now: Long) {
+    private fun runDue(now: Long) {
         restartCloseAtMs?.let { at ->
             if (at <= now) {
                 restartCloseAtMs = null
@@ -971,6 +1012,17 @@ internal class LinkSession(
     }
 
     private fun publishInfo() {
+        val queueActive = link?.queue?.isActive == true
+        val old = _adapterInfo.value
+        // The queue calls this at each step. With no change, do not make a new value: the values
+        // of the adapter change only by a new object.
+        if (old.values === values && old.twoWayCommunication == twoWay && old.identity == identity &&
+            old.identityCheck == identityCheck && old.busyChannels == busy && old.restartNeeded == restartNeeded &&
+            old.restart == restartState && old.adapterRestarts == adapterRestarts && old.detailsOpen == detailsOpen &&
+            old.queueActive == queueActive
+        ) {
+            return
+        }
         _adapterInfo.value = AdapterInfo(
             values = values,
             twoWayCommunication = twoWay,
@@ -981,7 +1033,7 @@ internal class LinkSession(
             restart = restartState,
             adapterRestarts = adapterRestarts,
             detailsOpen = detailsOpen,
-            queueActive = link?.queue?.isActive == true,
+            queueActive = queueActive,
         )
     }
 
@@ -1023,6 +1075,7 @@ internal class LinkSession(
         val NO_DATA_RECOVERY_KINDS: Set<TransportKind> = setOf(TransportKind.BluetoothSpp, TransportKind.Tcp)
 
         private const val PROBE_BUFFER = 1024
+        private const val PROBE_DROP_LOG_INTERVAL = 256L
         private const val MESSAGE_BUFFER = 256
         private const val EVENT_BUFFER = 64
         private const val MAX_RUNS_AT_ONE_TIME = 1000

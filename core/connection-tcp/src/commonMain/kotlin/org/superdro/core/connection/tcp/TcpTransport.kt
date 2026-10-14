@@ -66,8 +66,9 @@ internal class KtorTcpConnector(private val selector: SelectorManager) : TcpConn
  *
  * Collect [incoming] one time, after [open]. Each link gets a new transport.
  *
- * @param dispatcher The dispatcher of the connect, the reads, and the writes. The default is
- *   `Dispatchers.IO`. Android can give the link dispatcher of the service.
+ * @param dispatcher The dispatcher of the connect and the writes. The default is `Dispatchers.IO`.
+ *   Android can give the link dispatcher of the service. The reads suspend in the collector of
+ *   [incoming].
  */
 class TcpTransport internal constructor(
     override val address: AdapterAddress.Tcp,
@@ -118,15 +119,16 @@ class TcpTransport internal constructor(
     /** True after [open] stopped to wait for the connect. Guarded by [stateLock]. */
     private var connectAbandoned = false
 
-    // Only the read runs on the dispatcher. Do not use flowOn here. With flowOn, the failure at the
-    // end of the stream cancels the collector before it gets the bytes in the flowOn buffer. The
-    // collector then loses the last bytes before the end of the stream.
+    // The read suspends and does not block: the Ktor selector fills the read channel. Thus the read
+    // runs in the collector, with no change of thread. Do not use flowOn here. With flowOn, the
+    // failure at the end of the stream cancels the collector before it gets the bytes in the flowOn
+    // buffer. The collector then loses the last bytes before the end of the stream.
     override val incoming: Flow<ByteArray> = flow {
         val channel = input ?: if (closed) return@flow else error("Call open() before the collection of incoming.")
         val buffer = ByteArray(TcpLinkDefaults.READ_BUFFER_BYTES)
         while (true) {
             val count = try {
-                withContext(dispatcher) { channel.readAvailable(buffer, 0, buffer.size) }
+                channel.readAvailable(buffer, 0, buffer.size)
             } catch (failure: Throwable) {
                 currentCoroutineContext().ensureActive()
                 if (closed) return@flow

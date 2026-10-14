@@ -45,7 +45,8 @@ data class RecordedLink(
  *
  * Limits: the copy of one link keeps the first [maxBytesPerLink] bytes (the start of a link has
  * the start queries). The app keeps the newest [maxLinks] records. The sessions write from their
- * own threads, so each function is synchronized.
+ * own threads, so each function is synchronized. A session gives the chunks of a link in batches
+ * (`RecordSink.writeAll`), at most one batch each 250 ms. Each batch gives one update of [links].
  *
  * @param clock Gives the start time of each record.
  */
@@ -77,7 +78,12 @@ class RecordedStreams(
         return object : RecordSink {
             override fun write(chunk: RecordedChunk) {
                 inner?.write(chunk)
-                append(record, chunk)
+                append(record, listOf(chunk))
+            }
+
+            override fun writeAll(chunks: List<RecordedChunk>) {
+                inner?.writeAll(chunks)
+                append(record, chunks)
             }
 
             override fun close() {
@@ -97,16 +103,25 @@ class RecordedStreams(
     @Synchronized
     fun chunks(id: Long): List<RecordedChunk> = records.firstOrNull { record -> record.info.id == id }?.chunks?.toList().orEmpty()
 
+    /** Adds [chunks] to the copy of [record], with one update of [links] for all of them. */
     @Synchronized
-    private fun append(record: Record, chunk: RecordedChunk) {
+    private fun append(record: Record, chunks: List<RecordedChunk>) {
         val info = record.info
         if (info.truncated) return
-        if (info.byteCount + chunk.bytes.size > maxBytesPerLink) {
-            record.info = info.copy(truncated = true)
-        } else {
+        var chunkCount = info.chunkCount
+        var byteCount = info.byteCount
+        var truncated = false
+        for (chunk in chunks) {
+            if (byteCount + chunk.bytes.size > maxBytesPerLink) {
+                truncated = true
+                break
+            }
             record.chunks += chunk
-            record.info = info.copy(chunkCount = info.chunkCount + 1, byteCount = info.byteCount + chunk.bytes.size)
+            chunkCount += 1
+            byteCount += chunk.bytes.size
         }
+        if (!truncated && chunkCount == info.chunkCount) return
+        record.info = info.copy(chunkCount = chunkCount, byteCount = byteCount, truncated = truncated)
         publish()
     }
 
