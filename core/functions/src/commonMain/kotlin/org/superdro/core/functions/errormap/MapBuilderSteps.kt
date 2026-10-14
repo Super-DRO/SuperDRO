@@ -447,11 +447,14 @@ object MapBuilderSteps {
      * 4. Best = the `K` with the smallest score. Select the largest `K` with
      *    `score <= best.score + best.SE`.
      * 5. When no `K` has a score: `K = 2` for fewer than 64 samples, else `K = 16`.
+     *
+     * The function calls [checkCancelled] before each `K`.
      */
-    fun selectK(folds: List<List<MapSample>>): Int {
+    fun selectK(folds: List<List<MapSample>>, checkCancelled: () -> Unit = {}): Int {
         data class Score(val k: Int, val score: Double, val se: Double)
         val scores = ArrayList<Score>()
         for (k in K_CANDIDATES) {
+            checkCancelled()
             val residualsByFold = heldOutResiduals(k, folds).filter { it.isNotEmpty() }
             val all = residualsByFold.flatten()
             if (all.size < 20 || residualsByFold.size < 2) continue
