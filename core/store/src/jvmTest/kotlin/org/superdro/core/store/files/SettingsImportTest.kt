@@ -232,6 +232,18 @@ class SettingsImportTest {
     }
 
     @Test
+    fun aTdsetFileWithNoSettingsKeepsItsSourceAndIsNotUsable() {
+        val text = """{"touchdro": "settings", "format": 1, "exported": "2026-10-11 14:30:05", "profile": "Bridgeport", "settings": {}}"""
+        val preview = importer.read(text.encodeToByteArray(), SettingsTarget.NewProfile)
+        assertEquals(FileSource.TouchDro, preview.source)
+        assertEquals("Bridgeport", preview.fileProfileName)
+        assertEquals("2026-10-11 14:30:05", preview.exported)
+        assertEquals(listOf("The file has no setting that the import can use."), texts(preview.problems))
+        assertFalse(preview.usable)
+        assertTrue(preview.rows.isEmpty())
+    }
+
+    @Test
     fun theReportHasATitleASummaryAndSections() {
         val preview = importer.read(tdset(""""usb_baud_rate": "4800", "show_calculators": true, "probe_invert": true"""), SettingsTarget.NewProfile)
         val expected = """

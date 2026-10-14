@@ -62,14 +62,17 @@ class MainScreenLayoutValidationTest {
         // The readout rows are in the order of the figure.
         val tops = rows.map { it.top }
         assertEquals(tops.sorted(), tops, "rows X, Y, Z, α, RPM from the top")
-        // The readout pane is at the left, about 60 % of the width.
+        // The readout column is at the left, about 45 % of the width.
         rows.forEach { row -> assertTrue(near(0f, row.left, 4f), "row at the left edge: $row") }
         val share = rows.maxOf { it.right } / 1280f
-        assertTrue(share in 0.55f..0.65f, "the readout pane has about 60 % of the width: $share")
-        // The supporting pane is between the readout and the rail. The rail is at the right edge.
-        assertTrue(pane.left >= rows.maxOf { it.right } - 2f && pane.right <= strip.left + 2f, "pane $pane, strip $strip")
-        assertTrue(near(1280f, strip.right, 4f), "the strip at the right edge: $strip")
-        assertTrue(strip.height > strip.width, "a vertical rail: $strip")
+        assertTrue(share in 0.40f..0.50f, "the readout column has about 45 % of the width: $share")
+        // The function grid is below the readout, in the readout column.
+        assertTrue(strip.top >= rows.maxOf { it.bottom } - 1f, "the grid below the rows: $strip")
+        assertTrue(near(0f, strip.left, 4f) && strip.right <= pane.left + 2f, "the grid in the readout column: $strip")
+        assertTrue(strip.width > strip.height, "a grid, not a rail: $strip")
+        // The supporting pane is at the right of the readout column, to the right edge, at the full height.
+        assertTrue(pane.left >= rows.maxOf { it.right } - 2f && near(1280f, pane.right, 4f), "pane $pane")
+        assertTrue(near(800f, pane.bottom, 4f) && pane.top <= rows.minOf { it.top } + 1f, "pane at the full height: $pane")
     }
 
     @Test
@@ -81,15 +84,19 @@ class MainScreenLayoutValidationTest {
         val graphical = onNodeWithTag(SAMPLE_GRAPHICAL_TAG).rect()
         assertTrue(near(0f, status.left) && near(800f, status.right), "status strip $status")
         assertTrue(rows.all { it.top >= status.bottom })
-        // Full width rows at the top (medium window class).
-        rows.forEach { row -> assertTrue(near(0f, row.left, 4f) && near(800f, row.right, 4f), "full width row $row") }
+        // The rows are at the top (medium window class), from the left edge to the rail.
+        rows.forEach { row -> assertTrue(near(0f, row.left, 4f) && row.right <= strip.left + 2f, "row $row left of the rail $strip") }
         val tops = rows.map { it.top }
         assertEquals(tops.sorted(), tops)
-        // The function strip is at the bottom, with the full width.
-        assertTrue(near(1280f, strip.bottom, 8f), "strip at the bottom: $strip")
-        assertTrue(strip.top >= rows.maxOf { it.bottom }, "strip below the rows")
-        // The graphical view is below the readout by default.
-        assertTrue(graphical.top >= rows.maxOf { it.bottom } - 1f && graphical.bottom <= strip.top + 1f, "graphical view $graphical")
+        // The function strip is a vertical rail at the right of the rows, at the right edge.
+        assertTrue(near(800f, strip.right, 4f), "the rail at the right edge: $strip")
+        assertTrue(near(rows.minOf { it.top }, strip.top, 8f) && strip.bottom <= rows.maxOf { it.bottom } + 8f, "the rail next to the rows: $strip")
+        assertTrue(strip.height > strip.width, "a vertical rail: $strip")
+        // The graphical view is below the readout by default, with the full width and about 60 % of the height.
+        assertTrue(graphical.top >= rows.maxOf { it.bottom } - 1f && graphical.top >= strip.bottom - 1f, "graphical view $graphical")
+        assertTrue(near(0f, graphical.left, 4f) && near(800f, graphical.right, 4f), "full width graphical view $graphical")
+        val viewShare = graphical.height / (graphical.bottom - rows.minOf { it.top })
+        assertTrue(viewShare in 0.55f..0.65f, "the graphical view has about 60 % of the height: $viewShare")
     }
 
     @Test
@@ -130,10 +137,10 @@ class MainScreenLayoutValidationTest {
     fun large_window_uses_the_expanded_layout() = runWindowTest(1600, 1000) {
         setContent { SampleMainScreen(MainScreenSamples.mill(), dark = false) }
         val strip = onNodeWithTag(FUNCTION_STRIP_TAG).rect()
-        assertTrue(near(1600f, strip.right, 4f) && strip.height > strip.width, "rail at the right edge: $strip")
-        onNodeWithTag(SUPPORTING_PANE_TAG).assertExists()
+        val pane = onNodeWithTag(SUPPORTING_PANE_TAG).rect()
+        assertTrue(near(1600f, pane.right, 4f) && strip.right <= pane.left + 2f, "grid $strip left of the pane $pane")
         val share = rows().maxOf { it.right } / 1600f
-        assertTrue(share in 0.55f..0.65f, "about 60 %: $share")
+        assertTrue(share in 0.40f..0.50f, "about 45 %: $share")
     }
 
     @Test
@@ -181,9 +188,9 @@ class MainScreenLayoutValidationTest {
                 val rows = MainScreenSamples.millRows.filter { it.axis in axes }
                 setContent { SampleMainScreen(MainScreenSamples.mill(rows = rows), dark = false) }
                 val rects = rows(axes)
-                // The readout pane: from the top of the first row to the bottom of the window.
+                // The readout pane: from the top of the first row to the divider above the function grid.
                 val paneTop = rects.first().top
-                val paneHeight = 800f - paneTop
+                val paneHeight = onNodeWithTag(FUNCTION_STRIP_TAG).rect().top - 1f - paneTop
                 val expected = paneHeight / max(3, axes.size)
                 rects.forEach { rect -> assertTrue(near(expected, rect.height, 1.5f), "$axes: row height ${rect.height}, expected $expected") }
             }

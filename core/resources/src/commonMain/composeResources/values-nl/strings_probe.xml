@@ -17,6 +17,10 @@
     <string name="probe_paired_devices">Gekoppelde apparaten</string>
     <string name="probe_no_paired">Geen gekoppeld apparaat. Koppel de adapter in de Bluetooth-instellingen.</string>
     <string name="probe_open_bt_settings">Bluetooth-instellingen</string>
+    <string name="probe_bt_permission_missing">De app heeft de Bluetooth-toestemming nodig om de gekoppelde apparaten te tonen.</string>
+    <string name="probe_bt_request_permission">Bluetooth-toestemming vragen</string>
+    <string name="probe_bt_off">Bluetooth staat uit.</string>
+    <string name="probe_bt_turn_on">Bluetooth inschakelen</string>
     <string name="probe_usb_devices">Seriële USB-apparaten</string>
     <string name="probe_no_usb">Er is geen serieel USB-apparaat aangesloten.</string>
     <string name="probe_usb_permission">USB-toestemming vragen</string>

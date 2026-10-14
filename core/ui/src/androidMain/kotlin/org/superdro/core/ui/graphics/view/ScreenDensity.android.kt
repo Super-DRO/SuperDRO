@@ -8,12 +8,12 @@ import org.superdro.core.functions.graphics.ScreenMetrics
 @Composable
 actual fun rememberScreenMetrics(): ScreenMetrics {
     val metrics = LocalContext.current.resources.displayMetrics
-    return remember(metrics.xdpi, metrics.ydpi, metrics.density) {
-        // Some devices report no physical density. Then the value of the density class applies.
-        val fallback = metrics.densityDpi.toDouble()
-        ScreenMetrics(
-            xdpi = metrics.xdpi.toDouble().takeIf { value -> value > 0.0 } ?: fallback,
-            ydpi = metrics.ydpi.toDouble().takeIf { value -> value > 0.0 } ?: fallback,
+    return remember(metrics.xdpi, metrics.ydpi, metrics.densityDpi, metrics.density) {
+        // Some devices report no physical density, or a wrong value for one axis.
+        ScreenMetrics.fromReported(
+            xdpi = metrics.xdpi.toDouble(),
+            ydpi = metrics.ydpi.toDouble(),
+            densityDpi = metrics.densityDpi.toDouble(),
             density = metrics.density.toDouble(),
         )
     }

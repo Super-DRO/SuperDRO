@@ -6,7 +6,7 @@ package org.superdro.core.connection
  * decides about a retry.
  *
  * The session state that follows:
- * - [Refused] and [Lost] go to `Reconnecting`.
+ * - [Refused], [NoAnswer], and [Lost] go to `Reconnecting`.
  * - [PermissionMissing], [RadioOff], [NetworkOff], and [DeviceGone] go to `WaitingForDevice`.
  *   The session starts again at once when the capability comes back.
  */
@@ -14,6 +14,13 @@ sealed interface LinkFailure {
 
     /** The connect failed or timed out. The TCP connect has a limit of 5000 ms for each attempt. */
     data object Refused : LinkFailure
+
+    /**
+     * The adapter did not answer the connect: for example, it is off or out of range. A Bluetooth
+     * page timeout is this failure. The session tries again with the reconnect policy, as for
+     * [Refused].
+     */
+    data object NoAnswer : LinkFailure
 
     /** A read or a write failed. A Bluetooth write that does not end in 4000 ms is also this failure. */
     data object Lost : LinkFailure

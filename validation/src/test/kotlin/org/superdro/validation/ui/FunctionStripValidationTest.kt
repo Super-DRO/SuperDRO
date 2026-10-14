@@ -24,6 +24,8 @@ import org.superdro.core.model.MachineMode
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
 import org.superdro.core.ui.readout.FUNCTION_STRIP_TAG
+import org.superdro.core.ui.readout.MIN_GRID_COLUMNS
+import org.superdro.core.ui.readout.gridColumns
 import org.superdro.core.ui.readout.FunctionButton
 import org.superdro.core.ui.readout.FunctionButton.AlignAxes
 import org.superdro.core.ui.readout.FunctionButton.AngleMeasure
@@ -252,5 +254,49 @@ class FunctionStripValidationTest {
         assertEquals(2, tops.size, "two rows of buttons: $tops")
         val strip = onNodeWithTag(FUNCTION_STRIP_TAG).fetchSemanticsNode()
         assertNotNull(strip.config.getOrNull(SemanticsProperties.HorizontalScrollAxisRange), "the two rows scroll")
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun expanded_strip_is_a_grid_with_the_columns_of_its_width_in_order() = runComposeUiTest {
+        val functions = millOrder.map { FunctionButtonUiState(it) }
+        setContent {
+            AppTheme(systemInDarkTheme = false) {
+                Box(Modifier.width(540.dp).height(2000.dp)) {
+                    FunctionStrip(GlobalButtonsUiState(), functions, NoReadoutEvents, StripForm.Grid, Modifier.fillMaxWidth())
+                }
+            }
+        }
+        val all = listOf(ZERO_SET_TAG, MODE_TAG, UNITS_TAG) + millOrder.map(::functionTag)
+        val positions = all.map { tag -> onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().positionInRoot }
+        // 540 dp gives 4 columns of buttons of approximately 120 dp.
+        assertEquals(4, positions.map { it.x }.toSet().size, "four columns: $positions")
+        assertEquals((all.size + 3) / 4, positions.map { it.y }.toSet().size, "the rows of the grid: $positions")
+        // The order is from the left to the right, then from the top to the bottom.
+        val order = positions.indices.sortedWith(compareBy({ positions[it].y }, { positions[it].x }))
+        assertEquals(positions.indices.toList(), order, "the grid keeps the order of the strip")
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun grid_scrolls_when_the_buttons_do_not_fit() = runComposeUiTest {
+        val functions = millOrder.map { FunctionButtonUiState(it) }
+        setContent {
+            AppTheme(systemInDarkTheme = false) {
+                Box(Modifier.width(540.dp).height(150.dp)) {
+                    FunctionStrip(GlobalButtonsUiState(), functions, NoReadoutEvents, StripForm.Grid, Modifier.fillMaxWidth())
+                }
+            }
+        }
+        val grid = onNodeWithTag(FUNCTION_STRIP_TAG).fetchSemanticsNode()
+        assertNotNull(grid.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange), "the grid scrolls")
+    }
+
+    @Test
+    fun grid_columns_follow_the_width_with_at_least_two() {
+        assertEquals(4, gridColumns(532.dp, 120.dp, 8.dp))
+        assertEquals(3, gridColumns(500.dp, 120.dp, 8.dp))
+        assertEquals(2, gridColumns(100.dp, 120.dp, 8.dp))
+        assertEquals(MIN_GRID_COLUMNS, gridColumns(0.dp, 120.dp, 8.dp))
     }
 }

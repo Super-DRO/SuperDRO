@@ -1,0 +1,104 @@
+# Release (cut tag). This is the first of the two release workflows
+# (docs/versioning-and-release-plan.md, section 5). A maintainer starts it from the Actions tab.
+# It calculates the next calendar version from the tags, pushes an annotated tag with the
+# GITHUB_TOKEN, and then starts build-release.yml for that tag.
+#
+# GitHub sends no `push` event for a push with the GITHUB_TOKEN. Thus the tag push does not start
+# build-release.yml, and this workflow starts it explicitly with `gh workflow run`.
+#
+# This workflow publishes nothing and reads no secret of a signature.
+name: Release (cut tag)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "The commit to release (branch, tag, or SHA). The default is the ref of this run."
+        required: false
+        default: ""
+
+# Two cuts at the same time can calculate the same count. Thus only one cut runs at a time.
+concurrency:
+  group: release-cut
+  cancel-in-progress: false
+
+# The workflow token is read-only. Only the job that pushes the tag gets the write scopes.
+permissions:
+  contents: read
+
+jobs:
+  cut:
+    name: Calculate, tag, and start the build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the annotated tag
+      actions: write    # start build-release.yml
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          # All history and all tags, so that cut_version.py finds the highest count of the week.
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          # This job pushes the tag with the checkout credentials, so it keeps them. It runs only
+          # Python from this repository and no third-party build code.
+
+      - name: Refuse a ref that is not on main
+        # A release contains only reviewed code. The input can name each branch, tag, or SHA.
+        # Thus this step makes sure that the commit is main or an ancestor of main.
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD FETCH_HEAD; then
+            echo "::error::Refusing to cut a release: $(git rev-parse HEAD) is not on main."
+            exit 1
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Test the release scripts
+        run: python3 -m unittest discover -s scripts/tests
+
+      - name: Configure the git identity
+        # An annotated tag records a tagger, so git needs a name and an email.
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Calculate the version and make the tag
+        id: cut
+        run: python3 scripts/cut_version.py --tag --ref HEAD
+
+      - name: Push the tag
+        # A push with the GITHUB_TOKEN does not start the `push: tags` trigger of build-release.yml.
+        env:
+          TAG: ${{ steps.cut.outputs.tag }}
+        run: git push origin "$TAG"
+
+      - name: Start build-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.cut.outputs.tag }}
+        run: |
+          echo "Starting build-release.yml for $TAG"
+          gh workflow run build-release.yml --ref "$TAG"
+
+      - name: Summary
+        env:
+          VERSION: ${{ steps.cut.outputs.version }}
+          TAG: ${{ steps.cut.outputs.tag }}
+          VERSION_CODE: ${{ steps.cut.outputs.version_code }}
+        run: |
+          {
+            echo "### Release cut"
+            echo ""
+            echo "- **Version:** \`$VERSION\`"
+            echo "- **Tag:** \`$TAG\`"
+            echo "- **versionCode:** \`$VERSION_CODE\`"
+            echo ""
+            echo "build-release.yml started for the tag."
+          } >> "$GITHUB_STEP_SUMMARY"
