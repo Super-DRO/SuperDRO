@@ -1,6 +1,7 @@
 package org.superdro.core.connection
 
 import com.toxicbakery.logging.Arbor
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.ContinuationInterceptor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -68,10 +69,17 @@ import org.superdro.core.util.Clock
  *
  * One timer loop runs all timers of the session: the reconnect delay, the restart sequence, the
  * queue timers, the 30 s limits, the no-data watchdog, the BEL byte, and the tick of the input
- * stage. At one time, the loop runs them in this order: the restart close, the reconnect, the
- * 30 s limits and the watchdog, the queue, the BEL byte, and the tick. Thus the state changes
- * before a write at the same time, and a queue write at the same time as the BEL byte goes out
- * first and starts the 500 ms again.
+ * stage, and the trailing publish of [inputs]. At one time, the loop runs them in this order: the
+ * trailing publish, the restart close, the reconnect, the 30 s limits and the watchdog, the
+ * queue, the BEL byte, and the tick. Thus the state changes before a write at the same time, and
+ * a queue write at the same time as the BEL byte goes out first and starts the 500 ms again.
+ *
+ * The session makes a new [InputSnapshot] only when the stage changed (see
+ * [InputStage.revision]): each accepted chunk, not each message, and not a tick with no change.
+ * [currentInputs] gives that snapshot at once. [inputs] gets it at most one time in
+ * [DeviceSession.INPUT_PUBLISH_MS]: a change after a quiet period goes out at once (the leading
+ * edge), and the last change of a period goes out at the end of the period (the trailing edge).
+ * A change of a probe state, of the probe sequence, or of a status goes out at once.
  *
  * Details of the rules:
  * - The `NO_DATA` recovery applies to SPP and TCP. USB, BLE, and the fake link keep the
@@ -135,6 +143,21 @@ internal class LinkSession(
 
     private val stage = InputStage()
     override val history: InputHistory get() = stage.history
+
+    /** The latest snapshot of the stage. The session writes it, and each thread can read it. */
+    @Volatile
+    private var latest: InputSnapshot = InputSnapshot.EMPTY
+
+    /** The [InputStage.revision] of [latest]. */
+    private var latestRevision = -1L
+
+    /** The time of the last value of [inputs], or null before the first one. */
+    private var lastPublishMs: Long? = null
+
+    /** The time of the trailing publish of [inputs], or null when no change waits. */
+    private var publishAtMs: Long? = null
+
+    override fun currentInputs(): InputSnapshot = latest
 
     /** One write of the session. [bel] marks the BEL byte. */
     private class PendingWrite(val bytes: ByteArray, val bel: Boolean)
@@ -427,7 +450,8 @@ internal class LinkSession(
             null
         }
         stage.onLinkStart()
-        _inputs.value = stage.snapshot
+        refreshLatest()
+        publishInputs(now)
         setState(SessionState.AwaitingData)
         if (detailsOpen) handle(current, current.queue.openAdapterDetails(now))
         updateIdentity(current)
@@ -626,7 +650,7 @@ internal class LinkSession(
             }
         }
         if (start < bytes.size) feed(current, bytes, start, bytes.size - start, now)
-        if (link === current) _inputs.value = stage.snapshot
+        if (link === current) onStageChanged(now)
     }
 
     private fun feed(current: Link, bytes: ByteArray, offset: Int, length: Int, now: Long) {
@@ -814,7 +838,8 @@ internal class LinkSession(
         val configuration = value?.let { InputConfiguration.from(it.machine, it.adapter) } ?: InputConfiguration()
         if (configuration != stage.configuration) {
             stage.reconfigure(configuration)
-            _inputs.value = stage.snapshot
+            refreshLatest()
+            publishInputs(clock.nowMs())
         }
         applyTwoWay()
         updateIdentity(link)
@@ -909,6 +934,7 @@ internal class LinkSession(
         fun consider(value: Long?) {
             if (value != null && (next == null || value < next!!)) next = value
         }
+        consider(publishAtMs)
         consider(restartCloseAtMs)
         val current = _state.value
         if (current is SessionState.Reconnecting) consider(retryAtMs)
@@ -935,6 +961,7 @@ internal class LinkSession(
     }
 
     private fun runDue(now: Long) {
+        publishAtMs?.let { at -> if (at <= now) publishInputs(now) }
         restartCloseAtMs?.let { at ->
             if (at <= now) {
                 restartCloseAtMs = null
@@ -983,7 +1010,8 @@ internal class LinkSession(
         if (open.nextTickMs <= now) {
             open.nextTickMs = now + INPUT_TICK_MS
             emitProbes(stage.onTick(now))
-            if (link === open) _inputs.value = stage.snapshot
+            // A tick with no change (no watchdog, no latch) makes no new snapshot.
+            if (link === open) onStageChanged(now)
         }
     }
 
@@ -1001,6 +1029,56 @@ internal class LinkSession(
     }
 
     // The output flows.
+
+    /** Makes a new [latest] when the stage changed. Gives true for a new snapshot. */
+    private fun refreshLatest(): Boolean {
+        val revision = stage.revision
+        if (revision == latestRevision) return false
+        latestRevision = revision
+        latest = stage.snapshot
+        return true
+    }
+
+    /**
+     * The stage processed a chunk or a tick. A new snapshot goes to [inputs] at once when it
+     * changes a probe or a status, or when the last value is [DeviceSession.INPUT_PUBLISH_MS] old
+     * or more. Else the timer loop publishes the newest snapshot at the end of the period.
+     */
+    private fun onStageChanged(now: Long) {
+        if (!refreshLatest()) return
+        val last = lastPublishMs
+        if (last == null || now - last >= DeviceSession.INPUT_PUBLISH_MS || needsImmediatePublish(_inputs.value, latest)) {
+            publishInputs(now)
+        } else if (publishAtMs == null) {
+            publishAtMs = last + DeviceSession.INPUT_PUBLISH_MS
+            poke()
+        }
+    }
+
+    /** Gives [latest] to [inputs] now. A trailing publish that waits is no longer necessary. */
+    private fun publishInputs(now: Long) {
+        publishAtMs = null
+        lastPublishMs = now
+        _inputs.value = latest
+    }
+
+    /**
+     * True when [next] changes a probe state, the probe sequence, a projection, or the status of
+     * an axis or a channel of [old]. The UI must see such a change with no delay, for example a
+     * short probe contact.
+     */
+    private fun needsImmediatePublish(old: InputSnapshot, next: InputSnapshot): Boolean {
+        if (old.probeSequence != next.probeSequence || old.probes != next.probes) return true
+        if (old.axes.size != next.axes.size || old.channels.size != next.channels.size) return true
+        for (value in next.axes.values) {
+            val before = old.axes[value.axis] ?: return true
+            if (before.status != value.status || before.projected != value.projected) return true
+        }
+        for (value in next.channels.values) {
+            if (old.channels[value.input]?.status != value.status) return true
+        }
+        return false
+    }
 
     private fun setState(value: SessionState) {
         if (_state.value != value) log.d { "$id: $value" }

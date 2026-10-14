@@ -105,6 +105,10 @@ class SessionInputTest {
         assertEquals(1, h.links.links.size)
         h.links.last.receive("X101;")
         runCurrent()
+        // The new setup went to the inputs at this time: the sample waits for the end of the period.
+        assertEquals(1010.0, session.currentInputs().axisValue(AxisId.X))
+        advanceTimeBy(DeviceSession.INPUT_PUBLISH_MS)
+        runCurrent()
         assertEquals(1010.0, session.inputs.value.axisValue(AxisId.X))
         h.manager.disconnect(id)
         runCurrent()
