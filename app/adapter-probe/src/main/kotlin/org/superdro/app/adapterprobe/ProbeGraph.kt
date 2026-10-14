@@ -42,6 +42,7 @@ import org.superdro.core.connection.tcp.TcpAddressRules
 import org.superdro.core.connection.tcp.TcpTransportFactory
 import org.superdro.core.model.AdapterAddress
 import org.superdro.core.model.TransportKind
+import org.superdro.platform.android.bluetooth.BluetoothCapabilityMonitor
 import org.superdro.platform.android.bluetooth.SppAdapterDiscovery
 import org.superdro.platform.android.bluetooth.SppTransportFactory
 import org.superdro.platform.android.network.NetworkRules
@@ -203,6 +204,10 @@ class ProbeGraph(context: Context) {
     val permissions = PermissionBridge()
     val usbRequester = UsbPermissionRequester(app)
     val sppDiscovery = SppAdapterDiscovery(app)
+
+    /** The Bluetooth radio and the `BLUETOOTH_CONNECT` permission. */
+    val bluetoothCapability = BluetoothCapabilityMonitor(app, scope)
+
     val usbDiscovery = UsbSerialDiscovery(app, usbRequester)
     val localNetwork: LocalNetworkAccess = AndroidLocalNetworkAccess(app, permissions)
 
@@ -274,10 +279,14 @@ class ProbeGraph(context: Context) {
 
     /** The run-time permissions of the links and the notification, on this Android version. */
     fun runtimePermissions(): List<String> = buildList {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(Manifest.permission.BLUETOOTH_CONNECT)
+        addAll(bluetoothPermissions())
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
         if (NetworkRules.localNetworkPermissionNeeded(Build.VERSION.SDK_INT)) add(NetworkRules.LOCAL_NETWORK_PERMISSION)
     }
+
+    /** The run-time permission of the paired Bluetooth list on this Android version. */
+    fun bluetoothPermissions(): List<String> =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) listOf(Manifest.permission.BLUETOOTH_CONNECT) else emptyList()
 
     /** True when the app has [permission]. */
     fun granted(permission: String): Boolean = ContextCompat.checkSelfPermission(app, permission) == PackageManager.PERMISSION_GRANTED

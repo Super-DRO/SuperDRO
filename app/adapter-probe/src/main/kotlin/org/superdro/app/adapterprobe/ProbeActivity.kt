@@ -45,6 +45,10 @@ class ProbeActivity : ComponentActivity() {
             openBluetoothSettings = {
                 runCatching { startActivity(BluetoothIntents.openBluetoothSettings()) }.onFailure { log.w(it) { "No Bluetooth settings" } }
             },
+            enableBluetooth = {
+                // The radio broadcast updates the Link screen. The result of the dialog is not necessary.
+                runCatching { startActivity(BluetoothIntents.enableBluetooth()) }.onFailure { log.w(it) { "Bluetooth did not turn on" } }
+            },
         )
         setContent {
             ProbeTheme {
@@ -54,6 +58,12 @@ class ProbeActivity : ComponentActivity() {
                 ProbeApp(application.presenters, actions)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Android sends no broadcast for a permission change, for example a grant in the system settings.
+        (application as ProbeApplication).presenters.link.refresh()
     }
 
     private fun share(graph: ProbeGraph, report: String) {
