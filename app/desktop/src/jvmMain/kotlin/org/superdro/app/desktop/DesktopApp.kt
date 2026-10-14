@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.instance
@@ -18,6 +19,7 @@ import org.superdro.core.connection.ConnectionRequestManager
 import org.superdro.core.connection.toDeviceRef
 import org.superdro.core.debugadapter.DebugAdapter
 import org.superdro.core.store.json.AppSettingsStore
+import org.superdro.core.store.json.TabStore
 import org.superdro.core.di.APP_SCOPE
 import org.superdro.core.di.LINK_IO_DISPATCHER
 import org.superdro.platform.desktop.di.DESKTOP_PLATFORM_SCOPE
@@ -55,6 +57,7 @@ class DesktopApp(
     private val requestHandler: DesktopRequestHandler by instance()
     private val debugAdapter: DebugAdapter by instance()
     private val appSettings: AppSettingsStore by instance()
+    private val tabs: TabStore by instance()
     private val driver: SqlDriver by instance()
 
     private var requestJob: Job? = null
@@ -93,11 +96,21 @@ class DesktopApp(
         log.i { "SuperDRO desktop started${if (options.demo) " in the demo mode" else ""}" }
     }
 
-    /** Stops the links, the monitors, and the database. A second call does nothing. */
+    /**
+     * Writes the pending updates of the JSON files, then stops the links, the monitors, and the
+     * database. A second call does nothing.
+     */
     @Synchronized
     override fun close() {
         if (closed) return
         closed = true
+        // The JSON stores coalesce their writes. Write the last updates before the process stops.
+        runBlocking {
+            withTimeoutOrNull(FLUSH_TIMEOUT_MS) {
+                appSettings.awaitWrites()
+                tabs.awaitWrites()
+            }
+        }
         requestJob?.cancel()
         manager.close()
         platformScope.cancel()
@@ -111,5 +124,8 @@ class DesktopApp(
 
     private companion object {
         val log = Arbor.tag("DesktopApp")
+
+        /** The maximum time of the last write of the JSON files at the close, in ms. */
+        const val FLUSH_TIMEOUT_MS: Long = 2_000
     }
 }

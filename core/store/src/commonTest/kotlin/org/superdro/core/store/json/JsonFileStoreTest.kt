@@ -8,7 +8,10 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.currentTime
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.superdro.core.model.AppSettings
 import org.superdro.core.model.GraphicalViewPlacement
@@ -146,5 +149,62 @@ class JsonFileStoreTest {
         store.markHintShown("hint_zero")
         advanceUntilIdle()
         assertEquals(setOf("hint_zero"), settingsStore().also { it.awaitLoaded() }.state.value.shownHints)
+    }
+
+    @Test
+    fun theUpdatesOfOneIntervalGoIntoOneWrite() = scope.runTest {
+        val store = settingsStore()
+        store.awaitLoaded()
+        // Ten keystrokes, 20 ms apart: 200 ms, less than the write delay.
+        repeat(10) { index ->
+            store.update { it.copy(shownHints = it.shownHints + "k$index") }
+            advanceTimeBy(20)
+            runCurrent()
+        }
+        assertTrue(io.moves.isEmpty(), "No write before the delay.")
+        advanceTimeBy(JsonFileStore.WRITE_DELAY_MS)
+        runCurrent()
+        assertEquals(1, io.moves.size, "One write for ten updates.")
+        assertEquals(10, settingsStore().also { it.awaitLoaded() }.state.value.shownHints.size)
+        // A later update starts a new write.
+        store.update { it.copy(largeButtons = true) }
+        advanceUntilIdle()
+        assertEquals(2, io.moves.size)
+    }
+
+    @Test
+    fun flushWritesImmediately() = scope.runTest {
+        val store = settingsStore()
+        store.awaitLoaded()
+        store.update { it.copy(themeMode = ThemeMode.Dark) }
+        runCurrent()
+        assertTrue(io.moves.isEmpty())
+        store.flush()
+        runCurrent()
+        assertEquals(1, io.moves.size)
+        assertEquals(ThemeMode.Dark, settingsStore().also { it.awaitLoaded() }.state.value.themeMode)
+
+        // awaitWrites also writes immediately, with no virtual time.
+        store.update { it.copy(largeButtons = true) }
+        val before = currentTime
+        store.awaitWrites()
+        assertEquals(before, currentTime)
+        assertEquals(2, io.moves.size)
+        assertTrue(settingsStore().also { it.awaitLoaded() }.state.value.largeButtons)
+    }
+
+    @Test
+    fun aFailedWriteDoesNotStopTheNextWrites() = scope.runTest {
+        val store = settingsStore()
+        store.awaitLoaded()
+        io.failMoves = true
+        store.update { it.copy(largeButtons = true) }
+        advanceUntilIdle()
+        io.failMoves = false
+        store.update { it.copy(themeMode = ThemeMode.Dark) }
+        advanceUntilIdle()
+        val reloaded = settingsStore().also { it.awaitLoaded() }.state.value
+        assertTrue(reloaded.largeButtons)
+        assertEquals(ThemeMode.Dark, reloaded.themeMode)
     }
 }

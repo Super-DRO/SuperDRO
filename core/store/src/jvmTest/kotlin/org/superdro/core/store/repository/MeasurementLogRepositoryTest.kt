@@ -3,7 +3,10 @@ package org.superdro.core.store.repository
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.seconds
@@ -57,5 +60,26 @@ class MeasurementLogRepositoryTest {
         store.driver.execute(null, "INSERT INTO measurement_log VALUES ('bad', '$workspace', 2, 'point', '{not json', '2026-10-12T08:00:00Z')", 0)
         assertEquals(listOf(1), store.logs.entries(workspace).first().map { it.sequence })
         assertEquals(3, store.logs.append(workspace, MeasurementLogEntry(verb = "point")).valueOrNull()!!.sequence)
+    }
+
+    @Test
+    fun anAppendDecodesOnlyTheNewRow() = scope.runTest {
+        val workspace = store.machines.createProfile(MachineProfile.create(name = "Mill")).valueOrNull()!!.activeWorkspaceId
+        val entry = MeasurementLogEntry(verb = "point", title = "Point", results = listOf(LoggedResult("x", value = 1.0)))
+        store.logs.append(workspace, entry.copy(id = "a"))
+        store.logs.append(workspace, entry.copy(id = "b"))
+        val seen = mutableListOf<List<MeasurementLogEntry>>()
+        val job = launch(store.dispatcher) { store.logs.entries(workspace).collect { list -> seen += list } }
+        advanceUntilIdle()
+        store.logs.append(workspace, entry.copy(id = "c"))
+        advanceUntilIdle()
+        store.logs.delete("a")
+        advanceUntilIdle()
+        job.cancel()
+        assertEquals(listOf(listOf("a", "b"), listOf("a", "b", "c"), listOf("b", "c")), seen.map { list -> list.map { it.id } })
+        // The flow keeps the decoded entries: the old rows give the same objects.
+        assertSame(seen[0][0], seen[1][0])
+        assertSame(seen[0][1], seen[1][1])
+        assertSame(seen[1][2], seen[2][1])
     }
 }

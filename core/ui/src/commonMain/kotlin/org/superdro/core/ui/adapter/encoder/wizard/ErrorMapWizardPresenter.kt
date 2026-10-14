@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -142,7 +143,7 @@ class ErrorMapWizardPresenter(
         val reference = current.referenceInput?.let { snapshot.channels[it] }
         if (target != null && firstTarget == null) firstTarget = target.rawCount
         if (reference != null && firstReference == null) firstReference = reference.rawCount
-        publish()
+        schedulePublish()
     }
 
     /**
@@ -160,8 +161,24 @@ class ErrorMapWizardPresenter(
         if (target.timeMs != reference.timeMs || target.timeMs == lastPairTime || current.recording == null) return
         lastPairTime = target.timeMs
         current.offer(target.rawCount, reference.rawCount, target.timeMs)
-        publish()
+        schedulePublish()
     }
+
+    /**
+     * The pairs and the snapshots come at the sample rate of the adapter. Thus they do not publish
+     * the state immediately: the presenter publishes at most one time in [PUBLISH_INTERVAL_MS]
+     * for them. The state is thus never older than [PUBLISH_INTERVAL_MS]. Each event of the user
+     * publishes immediately.
+     */
+    private fun schedulePublish() {
+        if (publishJob?.isActive == true) return
+        publishJob = scope.launch {
+            delay(PUBLISH_INTERVAL_MS)
+            publish()
+        }
+    }
+
+    private var publishJob: Job? = null
 
     /** The last sample of each input, and the time of the last pair. */
     private val latest = HashMap<Char, ChannelValue>()
@@ -181,7 +198,7 @@ class ErrorMapWizardPresenter(
                 liveTarget = target?.let { value -> firstTarget?.let { value - it } },
                 liveReference = reference?.let { value -> firstReference?.let { value - it } },
                 recording = current.recording,
-                recordingSamples = current.currentPass()?.pairs?.size ?: 0,
+                recordingSamples = current.currentSize,
                 passes = List(ErrorMapWizard.MAX_PASSES) { index ->
                     passes.getOrNull(index)?.let { pass -> PassRowUi(pass.rowInfo(), pass.truncated) } ?: PassRowUi(null)
                 },
@@ -348,5 +365,10 @@ class ErrorMapWizardPresenter(
                 deps.adapters.saveWizardSession(id, input, ErrorMapWizardSession.serializer(), session)
             }
         }
+    }
+
+    companion object {
+        /** The minimum time between two publications of the state that pairs cause, in ms (10 Hz). */
+        const val PUBLISH_INTERVAL_MS: Long = 100
     }
 }
