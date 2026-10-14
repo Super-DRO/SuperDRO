@@ -86,8 +86,9 @@ class DeviceTabsValidationTest {
             rig.connections.add(session)
             val tabs = rig.tabs()
             runCurrent()
-            // Offline states before the first link: no tab (online is AwaitingData, Connected, NoData).
-            listOf(SessionState.Disconnected, SessionState.Connecting(1)).forEach { state ->
+            // Offline states before the first link that are not a start: no tab (online is
+            // AwaitingData, Connected, NoData).
+            listOf(SessionState.Disconnected, SessionState.Reconnecting(1, 0L, LinkFailure.Refused)).forEach { state ->
                 session.state.value = state
                 runCurrent()
                 assertEquals(emptyList(), tabs.uiState.value.tabs, "no tab in $state")
@@ -100,6 +101,33 @@ class DeviceTabsValidationTest {
                 assertEquals("Mill", tab.name)
                 assertEquals(DeviceId("mill"), tabs.uiState.value.selected)
             }
+        }
+    }
+
+    @Test
+    fun a_session_that_starts_shows_a_tab_at_once_and_hides_after_the_grace_time_when_it_cannot_connect() = runTest {
+        rig().use { rig ->
+            rig.machine("mill", "Mill")
+            val session = FakeSession("mill", "Mill")
+            rig.connections.add(session)
+            val tabs = rig.tabs()
+            runCurrent()
+            assertEquals(emptyList(), tabs.uiState.value.tabs)
+            session.state.value = SessionState.Connecting(1)
+            runCurrent()
+            val tab = assertNotNull(tabs.uiState.value.tabs.singleOrNull(), "a tab while the new session connects")
+            assertEquals(TabStatusIcon.Progress, tab.status.icon)
+            advanceTimeBy(30_000L)
+            session.state.value = SessionState.Reconnecting(attempt = 1, retryAtMs = 31_000L, cause = LinkFailure.Refused)
+            runCurrent()
+            advanceTimeBy(1_000L)
+            session.state.value = SessionState.Connecting(2)
+            runCurrent()
+            assertEquals(2, tabs.uiState.value.tabs.single().status.attempt)
+            advanceTimeBy(9_001L)
+            runCurrent()
+            assertEquals(emptyList(), tabs.uiState.value.tabs, "the tab hides 10 s after the first failure")
+            assertEquals(1, tabs.uiState.value.messages.size)
         }
     }
 
@@ -458,6 +486,11 @@ class DeviceTabsValidationTest {
                 RememberedMachineRow("a", "Mill A", TransportKind.BluetoothSpp, "00:11:22:33:44:55", MachineLinkState.Online),
                 RememberedMachineRow("b", "Mill B", TransportKind.Tcp, "192.168.4.1:8080", MachineLinkState.Offline),
                 RememberedMachineRow("c", "Lathe C", TransportKind.UsbSerial, "0403:6001", MachineLinkState.Paused),
+                RememberedMachineRow(
+                    "d", "Mill D", TransportKind.BluetoothSpp, "00:11:22:33:44:66", MachineLinkState.Offline,
+                    link = TabStatusRules.of(SessionState.Reconnecting(3, 0L, LinkFailure.Refused)),
+                    lastCause = LinkFailure.Refused,
+                ),
             ),
         )
         val events = object : RememberedMachinesEvents {
@@ -472,7 +505,7 @@ class DeviceTabsValidationTest {
         listOf("online", "offline", "paused").forEach { text ->
             assertTrue(onAllNodesWithText(text, substring = true, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty(), text)
         }
-        listOf("Mill A", "00:11:22:33:44:55", "192.168.4.1:8080").forEach { text ->
+        listOf("Mill A", "00:11:22:33:44:55", "192.168.4.1:8080", "Reconnecting (3)", "Last error: Connect failed").forEach { text ->
             assertTrue(onAllNodesWithText(text, substring = true, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty(), text)
         }
         listOf("Connect", "Pause", "Edit", "Remove").forEach { action ->

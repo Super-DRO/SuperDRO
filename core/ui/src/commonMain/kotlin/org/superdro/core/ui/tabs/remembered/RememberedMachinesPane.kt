@@ -30,6 +30,7 @@ import org.superdro.core.resources.frame_no_link
 import org.superdro.core.resources.frame_no_remembered
 import org.superdro.core.resources.frame_remembered_connect
 import org.superdro.core.resources.frame_remembered_edit
+import org.superdro.core.resources.frame_remembered_last_cause
 import org.superdro.core.resources.frame_remembered_pause
 import org.superdro.core.resources.frame_remembered_remove
 import org.superdro.core.resources.frame_remove_text
@@ -44,7 +45,9 @@ import org.superdro.core.ui.navigation.ScreenScaffold
 import org.superdro.core.ui.tabs.StatusRoles
 import org.superdro.core.ui.tabs.TabStatus
 import org.superdro.core.ui.tabs.TabStatusIcon
+import org.superdro.core.ui.tabs.TabStatusRules
 import org.superdro.core.ui.text.UiText
+import org.superdro.core.ui.text.resolve
 import org.superdro.core.ui.theme.LocalTouchTargets
 import org.superdro.core.ui.transportIcon
 import org.superdro.core.ui.theme.AccentButtons
@@ -108,10 +111,18 @@ private fun RememberedRow(row: RememberedMachineRow, events: RememberedMachinesE
             headlineContent = { Text(row.name, style = MaterialTheme.typography.titleMedium) },
             supportingContent = {
                 val link = row.transport?.let { kind -> stringResource(linkName(kind)) }
-                Text(listOfNotNull(link, row.address).joinToString(" · ").ifEmpty { stringResource(Res.string.frame_no_link) })
+                Column {
+                    Text(listOfNotNull(link, row.address).joinToString(" · ").ifEmpty { stringResource(Res.string.frame_no_link) })
+                    row.lastCause?.let { cause ->
+                        Text(stringResource(Res.string.frame_remembered_last_cause, TabStatusRules.causeText(cause).resolve()))
+                    }
+                }
             },
             leadingContent = row.transport?.let { kind -> { Icon(painterResource(transportIcon(kind)), contentDescription = null) } },
-            trailingContent = { StatusChip(statusOf(row.state), stateText(row.state)) },
+            trailingContent = {
+                val link = row.link
+                if (link != null) StatusChip(link, link.text.resolve()) else StatusChip(statusOf(row.state), stateText(row.state))
+            },
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),

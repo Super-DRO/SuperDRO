@@ -7,7 +7,7 @@ import org.superdro.core.model.TransportKind
 import org.superdro.core.ui.text.UiText
 
 /**
- * One tab of an online machine.
+ * One tab of a machine that is online, or that connects.
  *
  * @property transport The link type: the tab shows its icon (Bluetooth, USB, Wi-Fi, demo).
  * @property state The state of the session.
