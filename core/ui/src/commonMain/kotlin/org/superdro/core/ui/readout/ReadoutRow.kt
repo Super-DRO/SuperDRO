@@ -178,14 +178,17 @@ fun ReadoutRow(
     // The delegate reads the value only in the content of the box: a new value does not
     // recompose this function.
     val current by value.collectLiveState()
-    val gap = LocalTouchTargets.current.gap
+    val baseGap = LocalTouchTargets.current.gap
     BoxWithConstraints(modifier.testTag(rowTag(row.axis))) {
+        val compactRow = maxWidth < 420.dp
+        val gap = if (compactRow) baseGap / 2 else baseGap
+        val horizontalPadding = if (compactRow) 4.dp else 8.dp
         // The slider and the state line take a part of a short row only, so that the digits keep
         // the most height.
         val sliderHeight = (maxHeight * SLIDER_FRACTION).coerceIn(MinSliderHeight, SliderHeight)
         val stateHeight = (maxHeight * STATE_LINE_FRACTION).coerceIn(MinStateLineHeight, StateLineHeight)
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = horizontalPadding, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AxisLabel(row, onClick = { events.onLabelTap(row.axis) })
@@ -205,7 +208,7 @@ fun ReadoutRow(
                         toolSizeUm = current.toolSizeUm,
                         toolOffsetUm = current.toolOffsetUm,
                         metric = current.metric,
-                        modifier = Modifier.fillMaxWidth().padding(end = UnitWidth).height(sliderHeight),
+                        modifier = Modifier.fillMaxWidth().padding(end = if (compactRow) 0.dp else UnitWidth).height(sliderHeight),
                     )
                 }
             }
@@ -299,7 +302,7 @@ fun ValueBox(
     val state = value.state
     // Only the draw phase reads the pulse, so the pulse does not recompose the box.
     val pulse = if (state == ValueState.Pending) rememberPulseAlpha() else null
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .testTag(valueTag(value.axis))
             .clickable(onClick = onClick)
@@ -313,38 +316,51 @@ fun ValueBox(
             }
             .graphicsLayer { alpha = pulse?.value ?: 1f },
     ) {
+        val compactUnit = maxWidth < 260.dp
         val showDigits = value.state != ValueState.Error && value.state != ValueState.NoInput
-        Box(Modifier.fillMaxWidth().height(stateLineHeight)) {
-            if (showDigits && stateText != null) StateChip(value.state, stateText, color, stateLineHeight, Modifier.align(Alignment.CenterStart))
-        }
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-            if (showDigits) {
-                Digits(
-                    value = value,
-                    unit = unit,
-                    format = format,
-                    color = color,
-                    maxWidthPx = constraints.maxWidth.toFloat(),
-                    maxHeightPx = constraints.maxHeight.toFloat(),
-                )
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxSize().padding(end = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    ReadoutTexts.stateIcon(value.state)?.let { icon ->
-                        Icon(painterResource(icon), contentDescription = null, tint = color, modifier = Modifier.size(28.dp))
-                    }
-                    Spacer(Modifier.width(8.dp))
+        Column(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxWidth().height(stateLineHeight)) {
+                if (showDigits && stateText != null) StateChip(value.state, stateText, color, stateLineHeight, Modifier.align(Alignment.CenterStart))
+                if (showDigits && compactUnit) {
                     Text(
-                        stateText.orEmpty(),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = color,
+                        unit,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp),
                     )
+                }
+            }
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                if (showDigits) {
+                    Digits(
+                        value = value,
+                        unit = unit,
+                        showSideUnit = !compactUnit,
+                        format = format,
+                        color = color,
+                        maxWidthPx = constraints.maxWidth.toFloat(),
+                        maxHeightPx = constraints.maxHeight.toFloat(),
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(end = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        ReadoutTexts.stateIcon(value.state)?.let { icon ->
+                            Icon(painterResource(icon), contentDescription = null, tint = color, modifier = Modifier.size(28.dp))
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stateText.orEmpty(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = color,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
@@ -352,7 +368,15 @@ fun ValueBox(
 }
 
 @Composable
-private fun Digits(value: AxisValueUiState, unit: String, format: ReadoutFormat, color: Color, maxWidthPx: Float, maxHeightPx: Float) {
+private fun Digits(
+    value: AxisValueUiState,
+    unit: String,
+    showSideUnit: Boolean,
+    format: ReadoutFormat,
+    color: Color,
+    maxWidthPx: Float,
+    maxHeightPx: Float,
+) {
     val density = LocalDensity.current
     val style = LocalReadoutTypography.current.digits
     val measurer = rememberTextMeasurer()
@@ -361,7 +385,7 @@ private fun Digits(value: AxisValueUiState, unit: String, format: ReadoutFormat,
     val reference = remember(style, density) { style.copy(fontSize = with(density) { referencePx.toSp() }) }
     val templateWidth = remember(reference, template) { measurer.measure(template, reference).size.width.toFloat() }
     val signWidth = remember(reference) { measurer.measure("-", reference).size.width.toFloat() }
-    val unitPx = with(density) { UnitWidth.toPx() }
+    val unitPx = if (showSideUnit) with(density) { UnitWidth.toPx() } else 0f
     val heightPx = maxHeightPx * DIGIT_HEIGHT_FRACTION
     val widthPx = (maxWidthPx - unitPx).coerceAtLeast(0f)
     val fitted = ReadoutGeometry.textSize(heightPx, widthPx, templateWidth * heightPx / referencePx)
@@ -387,13 +411,15 @@ private fun Digits(value: AxisValueUiState, unit: String, format: ReadoutFormat,
             Box(Modifier.widthIn(min = digitsDp), contentAlignment = Alignment.BottomEnd) {
                 Text(value.digits, style = digitsStyle, maxLines = 1, softWrap = false, textAlign = TextAlign.End)
             }
-            Text(
-                unit,
-                style = LocalReadoutTypography.current.unit,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                modifier = Modifier.width(UnitWidth).padding(start = 8.dp),
-            )
+            if (showSideUnit) {
+                Text(
+                    unit,
+                    style = LocalReadoutTypography.current.unit,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    modifier = Modifier.width(UnitWidth).padding(start = 8.dp),
+                )
+            }
         }
     }
 }

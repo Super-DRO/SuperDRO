@@ -68,6 +68,10 @@ data class AppSettings(
     val schemaVersion: Int = SCHEMA_VERSION,
     val themeMode: ThemeMode = ThemeMode.System,
     val graphicalViewInPortrait: GraphicalViewPlacement = GraphicalViewPlacement.BelowReadout,
+    /** The part of the window width that the readout column uses in the expanded layout. */
+    val readoutPaneFraction: Float = 0.45f,
+    /** The part of the content height that the graphical view uses in portrait. */
+    val graphicalPaneWeight: Float = 0.6f,
     /** Large buttons: 25 % larger touch targets. */
     val largeButtons: Boolean = false,
     val muteAllSounds: Boolean = false,
