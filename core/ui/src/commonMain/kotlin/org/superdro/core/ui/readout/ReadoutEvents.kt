@@ -56,6 +56,12 @@ interface ReadoutEvents {
 
     /** "Calibrate" of the setup reminder. */
     fun onSetupCalibrate(axis: AxisId) = Unit
+
+    /** The user dragged the vertical split handle in the expanded layout. */
+    fun onReadoutPaneFractionChange(fraction: Float) = Unit
+
+    /** The user dragged the horizontal split handle in the portrait layout. */
+    fun onGraphicalPaneWeightChange(weight: Float) = Unit
 }
 
 /** The events that do nothing, for the previews and the screenshot tests. */

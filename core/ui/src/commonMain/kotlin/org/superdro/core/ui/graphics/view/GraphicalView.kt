@@ -189,7 +189,9 @@ fun GraphicalView(
 ) {
     BoxWithConstraints(modifier.fillMaxSize().clipToBounds()) {
         val narrow = maxWidth < 600.dp
+        val compactWidth = maxWidth < 460.dp
         val short = maxHeight < SHORT_VIEW_HEIGHT
+        val displayAsSheet = short || compactWidth
         // The camera video goes under the canvas.
         if (backdrop != null) Box(Modifier.fillMaxSize()) { backdrop() }
         GraphicalCanvas(
@@ -227,9 +229,9 @@ fun GraphicalView(
                 if (switchesAtRight) {
                     Column(Modifier.padding(8.dp)) { SwitchArea(controls, events, threadPanel, menu = true, narrow = narrow) }
                 }
-                // A short view opens the display pane as a sheet (see below), because an
-                // overlay in the view shows only the first rows.
-                if (displayPane != null && displayPaneOpen && !short) {
+                // A short or compact-width view opens the display pane as a sheet (see below), because an
+                // overlay in the view shows only the first rows or leaves no room for the canvas.
+                if (displayPane != null && displayPaneOpen && !displayAsSheet) {
                     Surface(
                         modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 64.dp).width(if (narrow) 260.dp else 320.dp),
                         shape = MaterialTheme.shapes.large,
@@ -239,20 +241,36 @@ fun GraphicalView(
                 }
             }
         }
-        if (displayPane != null && displayPaneOpen && short) {
+        if (displayPane != null && displayPaneOpen && displayAsSheet) {
             // The sheet closes with the same event as the "Display" chip.
             AdaptiveSheet(onDismissRequest = events::onDisplayPaneToggle, modifier = Modifier.testTag(DISPLAY_SHEET_TAG), scrollable = false) {
                 displayPane()
             }
         }
-        StatusBadges(view, controls, Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp))
-        if (view.recenterVisible && !view.locked) {
-            FilledTonalButton(
-                onClick = events::onRecenter,
-                modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).heightIn(min = 48.dp).testTag(GRAPHICAL_RECENTER_TAG),
-            ) { Text(stringResource(Res.string.graphics_recenter)) }
+        if (maxWidth >= 520.dp) {
+            StatusBadges(view, controls, Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp))
+            if (view.recenterVisible && !view.locked) {
+                FilledTonalButton(
+                    onClick = events::onRecenter,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).heightIn(min = 48.dp).testTag(GRAPHICAL_RECENTER_TAG),
+                ) { Text(stringResource(Res.string.graphics_recenter)) }
+            }
+            ZoomPresets(events, Modifier.align(Alignment.BottomEnd).padding(8.dp))
+        } else {
+            Column(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                StatusBadges(view, controls, Modifier.align(Alignment.CenterHorizontally))
+                if (view.recenterVisible && !view.locked) {
+                    FilledTonalButton(
+                        onClick = events::onRecenter,
+                        modifier = Modifier.align(Alignment.Start).heightIn(min = 48.dp).testTag(GRAPHICAL_RECENTER_TAG),
+                    ) { Text(stringResource(Res.string.graphics_recenter)) }
+                }
+                ZoomPresets(events, Modifier.align(Alignment.End), wrap = true)
+            }
         }
-        ZoomPresets(events, Modifier.align(Alignment.BottomEnd).padding(8.dp))
         Overlays(view, events, deleteShapeDialog)
     }
 }
@@ -427,9 +445,11 @@ private fun ActionChip(label: String, onClick: () -> Unit, active: Boolean = fal
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ZoomPresets(events: GraphicalViewEvents, modifier: Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+private fun ZoomPresets(events: GraphicalViewEvents, modifier: Modifier, wrap: Boolean = false) {
+    @Composable
+    fun buttons() {
         ZoomPreset.entries.forEach { preset ->
             val description = stringResource(Res.string.graphics_zoom, preset.label)
             OutlinedButton(
@@ -438,6 +458,15 @@ private fun ZoomPresets(events: GraphicalViewEvents, modifier: Modifier) {
                 modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = description },
             ) { Text(preset.label) }
         }
+    }
+    if (wrap) {
+        FlowRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) { buttons() }
+    } else {
+        Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) { buttons() }
     }
 }
 
