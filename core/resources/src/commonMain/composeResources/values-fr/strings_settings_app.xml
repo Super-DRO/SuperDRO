@@ -23,6 +23,9 @@
     <string name="settings_app_view_below">Sous l'affichage</string>
     <string name="settings_app_view_above">Au-dessus de l'affichage</string>
     <string name="settings_app_view_full_screen">Plein écran</string>
+    <string name="settings_app_pane_size_scope">Taille de séparation des volets</string>
+    <string name="settings_app_pane_size_scope_app">Toutes les machines</string>
+    <string name="settings_app_pane_size_scope_machine">Chaque machine</string>
     <string name="settings_app_mute">Couper tous les sons</string>
     <string name="settings_app_mute_summary">Aucun son de touche, aucune tonalité de liaison et aucune tonalité d'alerte.</string>
     <string name="settings_app_mute_scope">Interrupteur muet</string>

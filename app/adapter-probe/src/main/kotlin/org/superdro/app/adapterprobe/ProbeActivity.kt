@@ -68,8 +68,10 @@ class ProbeActivity : ComponentActivity() {
 
     private fun share(graph: ProbeGraph, report: String) {
         lifecycleScope.launch {
-            val title = getString(Res.string.probe_report_share)
-            val file = withContext(Dispatchers.IO) { ProbeShare.zip(this@ProbeActivity, graph, report.ifEmpty { ProbeShare.report(graph) }) }
+            val (title, file) = withContext(Dispatchers.IO) {
+                getString(Res.string.probe_report_share) to
+                    ProbeShare.zip(this@ProbeActivity, graph, report.ifEmpty { ProbeShare.report(graph) })
+            }
             ProbeShare.share(this@ProbeActivity, file, title)
         }
     }

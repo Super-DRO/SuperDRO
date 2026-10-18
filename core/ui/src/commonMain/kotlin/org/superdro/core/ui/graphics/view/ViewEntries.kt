@@ -4,6 +4,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -71,6 +72,7 @@ fun TabEntryScope.graphicalTab(deps: GraphicsDependencies): GraphicalTabPresente
  * The extra parts of the graphical view that the other parts of the graphics area give: the
  * measurement pane, the reference image, the drawing actions, and the dialogs.
  */
+@Stable
 class GraphicalViewParts(
     val pointTapInterceptor: (String) -> Boolean = { false },
     val extraTopStrip: @Composable () -> Unit = {},
@@ -122,7 +124,6 @@ fun GraphicalViewHost(
         GraphicalViewPresenter(tab, parts.pointTapInterceptor)
     }
     val metrics = rememberScreenMetrics()
-    val view by presenter.uiState.collectLiveState()
     val controls by tab.controls.collectAsState()
     val paneOpen by presenter.displayPaneOpen.collectAsState()
     val threadPanel by tab.threadCut.panel.collectAsState()
@@ -132,21 +133,18 @@ fun GraphicalViewHost(
     LaunchedEffect(presenter, parts.camera) { presenter.setCamera(parts.camera) }
     val themeCursor = MaterialTheme.colorScheme.secondary
     GraphicsUndoSnackbar(tab)
-    val shownControls = if (parts.edgeFinderHidden) controls.copy(edgeFinderVisible = false) else controls
-    GraphicalView(
-        view = view,
-        controls = shownControls,
-        metrics = metrics,
-        events = events,
-        modifier = modifier,
-        showFullScreen = !fullScreen,
-        displayPaneOpen = paneOpen,
-        threadPanel = threadPanel,
-        referenceImage = parts.referenceImage,
-        measurementMarks = parts.measurementMarks,
-        extraTopStrip = parts.extraTopStrip,
-        leftPanel = parts.leftPanel,
-        displayPane = {
+    val shownControls = remember(controls, parts.edgeFinderHidden) {
+        if (parts.edgeFinderHidden) controls.copy(edgeFinderVisible = false) else controls
+    }
+    val displayPaneContent = remember<@Composable () -> Unit>(
+        parts.layerList,
+        controls.display,
+        controls.hasDrawing,
+        controls.drawingLayers,
+        controls.referenceAlpha,
+        displayEvents,
+    ) {
+        {
             val layerList = parts.layerList
             if (layerList != null) {
                 DisplayPane(
@@ -166,11 +164,30 @@ fun GraphicalViewHost(
                     events = displayEvents,
                 )
             }
-        },
-        deleteShapeDialog = parts.deleteShapeDialog ?: { _, _, onConfirm, onDismiss -> DefaultDeleteShapeDialog(onConfirm, onDismiss) },
+        }
+    }
+    val deleteShapeDialogContent = remember(parts.deleteShapeDialog) {
+        parts.deleteShapeDialog ?: { _, _, onConfirm, onDismiss -> DefaultDeleteShapeDialog(onConfirm, onDismiss) }
+    }
+    GraphicalView(
+        view = GraphicalViewUiState(),
+        controls = shownControls,
+        metrics = metrics,
+        events = events,
+        modifier = modifier,
+        showFullScreen = !fullScreen,
+        displayPaneOpen = paneOpen,
+        threadPanel = threadPanel,
+        referenceImage = parts.referenceImage,
+        measurementMarks = parts.measurementMarks,
+        extraTopStrip = parts.extraTopStrip,
+        leftPanel = parts.leftPanel,
+        displayPane = displayPaneContent,
+        deleteShapeDialog = deleteShapeDialogContent,
         backdrop = parts.backdrop,
         transparentBackground = parts.camera.transparentBackground,
         cursorColor = if (parts.camera.active) Color(parts.camera.cursorArgb(themeCursor.toArgb().toLong() and 0xFFFFFFFFL)) else null,
+        liveState = presenter.uiState,
     )
     parts.dialogs()
     if (createQuestion) {

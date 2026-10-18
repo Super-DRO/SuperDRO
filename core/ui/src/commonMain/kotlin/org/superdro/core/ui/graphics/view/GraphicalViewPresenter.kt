@@ -96,16 +96,19 @@ class GraphicalViewPresenter(
     private val overlayState = MutableStateFlow<ViewOverlay?>(null)
     private val paneOpen = MutableStateFlow(false)
     private val camera = MutableStateFlow(CameraSceneOverlay())
+    private val _uiState = MutableStateFlow(GraphicalViewUiState())
 
     /** True while the display pane of this view is open. */
     val displayPaneOpen: StateFlow<Boolean> = paneOpen.asStateFlow()
     private val openedOn = tab.deps.wallClock.now()
 
     /** The UI state of this view. */
-    val uiState: StateFlow<GraphicalViewUiState> = combine(tab.scene, viewport, overlayState, camera) { stored, port, overlay, video ->
-        val scene = stored?.let(video::apply)
-        GraphicalViewUiState(scene, port?.let { value -> followed(value, scene) }, overlay)
-    }.distinctUntilChanged().stateIn(scope, SharingStarted.Eagerly, GraphicalViewUiState())
+    val uiState: StateFlow<GraphicalViewUiState> = _uiState.asStateFlow()
+
+    private fun refreshUiState(stored: GraphicalScene? = tab.scene.value) {
+        val scene = stored?.let(camera.value::apply)
+        _uiState.value = GraphicalViewUiState(scene, viewport.value?.let { value -> followed(value, scene) }, overlayState.value)
+    }
 
     /**
      * The state of the camera video behind this view. While the video plays, the
@@ -113,9 +116,16 @@ class GraphicalViewPresenter(
      */
     fun setCamera(overlay: CameraSceneOverlay) {
         camera.value = overlay
+        refreshUiState()
     }
 
     init {
+        refreshUiState()
+        scope.launch {
+            tab.scene.collect { stored ->
+                refreshUiState(stored)
+            }
+        }
         // A new drawing zooms to its extents, when the view is not locked.
         // A drawing that was stored after this view opened is a new import.
         scope.launch {
@@ -136,27 +146,32 @@ class GraphicalViewPresenter(
                 else -> current.resize(widthPx, heightPx)
             }
         }
+        refreshUiState()
     }
 
     /** A drag of the finger by ([dxPx], [dyPx]): pan, and follow mode stops. No pan when the view is locked. */
     fun onDrag(dxPx: Double, dyPx: Double) {
         if (uiState.value.locked) return
         viewport.update { current -> current?.let { value -> followed(value, tab.scene.value).panBy(dxPx, dyPx) } }
+        refreshUiState()
     }
 
     /** A pinch by [factor] about [focus]. */
     fun onPinch(factor: Double, focus: Vec2) {
         viewport.update { current -> current?.let { value -> followed(value, tab.scene.value).pinch(factor, focus) } }
+        refreshUiState()
     }
 
     /** A zoom preset: "5:1", "1:1", or "1:5". */
     fun onZoomPreset(preset: ZoomPreset) {
         viewport.update { current -> current?.let { value -> followed(value, tab.scene.value).zoomTo(preset) } }
+        refreshUiState()
     }
 
     /** "Re-center": follow mode starts again. */
     fun onRecenter() {
         viewport.update { current -> current?.recenter() }
+        refreshUiState()
     }
 
     /** A double tap: zoom to fit the origin, the points, and the tool. */
@@ -165,6 +180,7 @@ class GraphicalViewPresenter(
         val scene = tab.scene.value ?: return
         val tool = scene.tool ?: PointUm(0.0, 0.0)
         viewport.update { current -> current?.zoomToFit(scene.points.map { point -> point.position }, tool) }
+        refreshUiState()
     }
 
     /**
@@ -189,7 +205,10 @@ class GraphicalViewPresenter(
                             else -> Unit
                         }
                     }
-                    GraphTapAction.OpenDirectionPicker -> overlayState.value = ViewOverlay.DirectionPicker(currentDirection())
+                    GraphTapAction.OpenDirectionPicker -> {
+                        overlayState.value = ViewOverlay.DirectionPicker(currentDirection())
+                        refreshUiState()
+                    }
                     GraphTapAction.NoAction -> Unit
                 }
             }
@@ -206,11 +225,13 @@ class GraphicalViewPresenter(
             is SceneHit.Shape -> {
                 val shape = scene.drawing?.shapes?.getOrNull(hit.index) ?: return null
                 overlayState.value = ViewOverlay.DeleteShape(hit.index, shape.type)
+                refreshUiState()
             }
             is SceneHit.Graph -> when (val action = GraphHitTest.longPressAction(hit.hit, actionContext(scene))) {
                 is GraphLongPressAction.OpenSubDatumMenu -> {
                     val subDatum = tab.subDatum(action.subDatumId) ?: return null
                     overlayState.value = ViewOverlay.SubDatumMenu(subDatum.id, subDatum.name, GuideRules.buttonsFor(scene.plane, subDatum), touch)
+                    refreshUiState()
                 }
                 is GraphLongPressAction.OpenPairCommands -> {
                     tab.deps.sounds.play(UiSound.Long, tab.deviceId)
@@ -239,17 +260,20 @@ class GraphicalViewPresenter(
     /** The overlay closed with no action. */
     fun onOverlayClosed() {
         overlayState.value = null
+        refreshUiState()
     }
 
     /** A button of the direction picker. */
     fun onDirection(position: ToolPosition) {
         overlayState.value = null
+        refreshUiState()
         tab.applyDirection(position)
     }
 
     /** "Delete" of the "Delete Geometry?" question. */
     fun onDeleteShapeConfirmed(index: Int, delete: (Int) -> Unit) {
         overlayState.value = null
+        refreshUiState()
         tab.onShapeDeleted()
         delete(index)
     }
@@ -259,6 +283,7 @@ class GraphicalViewPresenter(
         if (scene?.display?.viewLocked == true) return
         val box = ShapeGeometry.extents(tab.drawing.value?.shapes.orEmpty()) ?: return
         viewport.update { current -> current?.zoomToBox(box.minX / NM_PER_UM, box.minY / NM_PER_UM, box.maxX / NM_PER_UM, box.maxY / NM_PER_UM) }
+        refreshUiState()
     }
 
     /** In follow mode (and always when the view is locked), the tool is at the view center. */

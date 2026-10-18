@@ -1,5 +1,8 @@
 package org.superdro.core.ui.readout
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,8 +14,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -22,9 +28,18 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +55,7 @@ import org.superdro.core.ui.adaptive.WindowLayout
 import org.superdro.core.ui.theme.LocalReadoutTypography
 import org.superdro.core.ui.theme.LocalTouchTargets
 import org.superdro.core.ui.theme.readoutTypography
+import kotlin.math.roundToInt
 
 /** The test tag of the readout screen. */
 const val READOUT_SCREEN_TAG: String = "readout-screen"
@@ -50,20 +66,47 @@ const val SUPPORTING_PANE_TAG: String = "readout-supporting-pane"
 /** The test tag of the graphical view pane. */
 const val GRAPHICAL_PANE_TAG: String = "readout-graphical-pane"
 
+/** The test tag of the draggable split handle between the readout and the viewer/supporting pane. */
+const val SPLIT_HANDLE_TAG: String = "readout-split-handle"
+
 /** The width of a readout pane below which the readout uses the collapsed buttons. */
 private val COLLAPSED_PANE_WIDTH = 600.dp
 
 /**
- * The part of the window width that the readout column uses in the expanded layout. The readout
+ * The default part of the window width that the readout column uses in the expanded layout. The readout
  * column holds the readout and the function grid. The supporting pane gets the remaining width.
  */
 const val READOUT_PANE_FRACTION: Float = 0.45f
 
+/** The minimum fraction of the window width that the readout column uses in the expanded layout. */
+const val READOUT_PANE_MIN_FRACTION: Float = 0.25f
+
+/** The maximum fraction of the window width that the readout column uses in the expanded layout. */
+const val READOUT_PANE_MAX_FRACTION: Float = 0.75f
+
+/** The minimum width of the readout column in the expanded layout. */
+val MIN_READOUT_PANE_WIDTH: Dp = 280.dp
+
+/** The minimum width of the supporting pane in the expanded layout. */
+val MIN_SUPPORTING_PANE_WIDTH: Dp = 280.dp
+
 /** The largest part of the body height that the function grid uses below the readout (expanded layout). */
 const val FUNCTION_GRID_MAX_FRACTION: Float = 0.5f
 
-/** The part of the content height that the graphical view uses below or above the readout in portrait. */
+/** The default part of the content height that the graphical view uses below or above the readout in portrait. */
 const val GRAPHICAL_PANE_WEIGHT: Float = 0.6f
+
+/** The minimum height weight of the graphical view in portrait. */
+const val GRAPHICAL_PANE_MIN_WEIGHT: Float = 0.25f
+
+/** The maximum height weight of the graphical view in portrait. */
+const val GRAPHICAL_PANE_MAX_WEIGHT: Float = 0.75f
+
+/** The minimum height of the readout section in portrait. */
+val MIN_READOUT_PANE_HEIGHT: Dp = 180.dp
+
+/** The minimum height of the graphical view section in portrait. */
+val MIN_GRAPHICAL_PANE_HEIGHT: Dp = 180.dp
 
 /** The width of the vertical rail: one button of the strip and the gaps. */
 private val RailWidth: Dp = 136.dp
@@ -128,6 +171,12 @@ fun ReadoutScreen(
     }
 }
 
+private class SplitDragBounds(
+    var totalPx: Float = 0f,
+    var min: Float = 0.25f,
+    var max: Float = 0.75f,
+)
+
 @Composable
 private fun ExpandedBody(
     state: ReadoutUiState,
@@ -138,50 +187,174 @@ private fun ExpandedBody(
     modifier: Modifier,
 ) {
     val panelOpen = state.sidePanel.mode != SidePanelMode.Off
-    val targets = LocalTouchTargets.current
-    BoxWithConstraints(modifier.fillMaxWidth()) {
-        val readoutWidth = maxWidth * READOUT_PANE_FRACTION
-        val gridMaxHeight = maxHeight * FUNCTION_GRID_MAX_FRACTION
-        Row(Modifier.fillMaxSize()) {
-            Column(Modifier.width(readoutWidth).fillMaxHeight()) {
-                ReadoutRows(
-                    rows = state.rows,
-                    axisValue = axisValue,
-                    // The open side panel gives the collapsed readout. A readout pane of less
-                    // than 600 dp also uses the collapsed buttons, so that the digits keep a useful size.
-                    collapsed = panelOpen || readoutWidth < COLLAPSED_PANE_WIDTH,
-                    format = state.readoutFormat,
+    val fractionState = remember { mutableFloatStateOf(state.readoutPaneFraction) }
+    var lastStateFraction by remember { mutableFloatStateOf(state.readoutPaneFraction) }
+    var dragging by remember { mutableStateOf(false) }
+    if (state.readoutPaneFraction != lastStateFraction) {
+        lastStateFraction = state.readoutPaneFraction
+        if (!dragging) {
+            fractionState.floatValue = state.readoutPaneFraction
+        }
+    }
+    val density = LocalDensity.current
+    val containerWidthPx = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width
+    val initialWidth = if (containerWidthPx > 0) with(density) { containerWidthPx.toDp() } else 1280.dp
+    var collapsed by remember(panelOpen) {
+        mutableStateOf(panelOpen || initialWidth * fractionState.floatValue < COLLAPSED_PANE_WIDTH)
+    }
+    val dragBounds = remember { SplitDragBounds(min = READOUT_PANE_MIN_FRACTION, max = READOUT_PANE_MAX_FRACTION) }
+
+    Layout(
+        content = {
+            ExpandedReadoutColumn(
+                state = state,
+                axisValue = axisValue,
+                events = events,
+                collapsed = collapsed,
+            )
+            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Box(Modifier.fillMaxSize().testTag(SUPPORTING_PANE_TAG)) {
+                ExpandedSupportingPane(
+                    sidePanel = state.sidePanel,
                     events = events,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                FunctionStrip(
-                    global = state.globalButtons,
-                    functions = state.functions,
-                    events = events,
-                    form = StripForm.Grid,
-                    modifier = Modifier.fillMaxWidth().heightIn(max = gridMaxHeight),
+                    sidePanelContent = sidePanelContent,
+                    graphicalViewPane = graphicalViewPane,
                 )
             }
-            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Column(Modifier.weight(1f).fillMaxHeight().testTag(SUPPORTING_PANE_TAG)) {
-                // The "+" button is in the row of the tabs, not above the pane: the graphical view
-                // has its zoom presets at the bottom end (no control covers a different one).
-                Row(
-                    Modifier.fillMaxWidth().padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(targets.gap),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    SidePanelTabs(state.sidePanel, events, Modifier.weight(1f))
-                    if (state.sidePanel.addVisible) AddPointButton(events)
-                }
-                Box(Modifier.weight(1f).fillMaxWidth()) {
-                    when {
-                        panelOpen -> sidePanelContent(state.sidePanel.mode)
-                        graphicalViewPane != null -> Box(Modifier.fillMaxSize().testTag(GRAPHICAL_PANE_TAG)) { graphicalViewPane() }
-                        else -> Spacer(Modifier.fillMaxSize())
+            SplitHandle(
+                vertical = true,
+                modifier = Modifier.pointerInput(events) {
+                    detectHorizontalDragGestures(
+                        onDragStart = { dragging = true },
+                        onDragEnd = {
+                            dragging = false
+                            events.onReadoutPaneFractionChange(fractionState.floatValue)
+                        },
+                        onDragCancel = {
+                            dragging = false
+                            events.onReadoutPaneFractionChange(fractionState.floatValue)
+                        },
+                    ) { change, dragAmount ->
+                        change.consume()
+                        val totalPx = dragBounds.totalPx
+                        if (totalPx > 0f) {
+                            val updated = (fractionState.floatValue + dragAmount / totalPx).coerceIn(dragBounds.min, dragBounds.max)
+                            if (updated != fractionState.floatValue) {
+                                fractionState.floatValue = updated
+                            }
+                        }
                     }
-                }
+                },
+            )
+        },
+        modifier = modifier.fillMaxSize(),
+    ) { measurables, constraints ->
+        val totalWidthPx = constraints.maxWidth
+        val totalHeightPx = constraints.maxHeight
+        val totalWidth = totalWidthPx.toDp()
+        val minByDp = if (totalWidth > 0.dp) (MIN_READOUT_PANE_WIDTH / totalWidth) else READOUT_PANE_MIN_FRACTION
+        val maxByDp = if (totalWidth > 0.dp) 1f - (MIN_SUPPORTING_PANE_WIDTH / totalWidth) else READOUT_PANE_MAX_FRACTION
+        val minFraction = maxOf(READOUT_PANE_MIN_FRACTION, minByDp).coerceAtMost(0.5f)
+        val maxFraction = minOf(READOUT_PANE_MAX_FRACTION, maxByDp).coerceAtLeast(minFraction)
+        dragBounds.totalPx = totalWidthPx.toFloat()
+        dragBounds.min = minFraction
+        dragBounds.max = maxFraction
+
+        val clampedFraction = fractionState.floatValue.coerceIn(minFraction, maxFraction)
+        val readoutWidthPx = (totalWidthPx * clampedFraction).roundToInt().coerceIn(0, totalWidthPx)
+        // The open side panel gives the collapsed readout. A readout pane of less
+        // than 600 dp also uses the collapsed buttons, so that the digits keep a useful size.
+        val nextCollapsed = panelOpen || readoutWidthPx < COLLAPSED_PANE_WIDTH.roundToPx()
+        if (collapsed != nextCollapsed) {
+            collapsed = nextCollapsed
+        }
+
+        val dividerPlaceable = measurables[1].measure(Constraints(maxWidth = totalWidthPx, minHeight = totalHeightPx, maxHeight = totalHeightPx))
+        val readoutPlaceable = measurables[0].measure(Constraints.fixed(readoutWidthPx, totalHeightPx))
+        val supportingWidthPx = (totalWidthPx - readoutWidthPx - dividerPlaceable.width).coerceAtLeast(0)
+        val supportingPlaceable = measurables[2].measure(Constraints.fixed(supportingWidthPx, totalHeightPx))
+        val handlePlaceable = measurables[3].measure(Constraints())
+
+        layout(totalWidthPx, totalHeightPx) {
+            readoutPlaceable.placeRelative(0, 0)
+            dividerPlaceable.placeRelative(readoutWidthPx, 0)
+            supportingPlaceable.placeRelative(readoutWidthPx + dividerPlaceable.width, 0)
+            handlePlaceable.placeRelative(
+                x = readoutWidthPx - handlePlaceable.width / 2,
+                y = (totalHeightPx - handlePlaceable.height) / 2,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpandedReadoutColumn(
+    state: ReadoutUiState,
+    axisValue: (AxisId) -> StateFlow<AxisValueUiState>,
+    events: ReadoutEvents,
+    collapsed: Boolean,
+) {
+    Layout(
+        content = {
+            ReadoutRows(
+                rows = state.rows,
+                axisValue = axisValue,
+                collapsed = collapsed,
+                format = state.readoutFormat,
+                events = events,
+                modifier = Modifier.fillMaxSize(),
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            FunctionStrip(
+                global = state.globalButtons,
+                functions = state.functions,
+                events = events,
+                form = StripForm.Grid,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        modifier = Modifier.fillMaxSize(),
+    ) { measurables, constraints ->
+        val widthPx = constraints.maxWidth
+        val heightPx = constraints.maxHeight
+        val maxGridHeightPx = (heightPx * FUNCTION_GRID_MAX_FRACTION).roundToInt().coerceAtLeast(0)
+        val dividerPlaceable = measurables[1].measure(Constraints.fixedWidth(widthPx))
+        val stripPlaceable = measurables[2].measure(Constraints(minWidth = widthPx, maxWidth = widthPx, minHeight = 0, maxHeight = maxGridHeightPx))
+        val rowsHeightPx = (heightPx - dividerPlaceable.height - stripPlaceable.height).coerceAtLeast(0)
+        val rowsPlaceable = measurables[0].measure(Constraints.fixed(widthPx, rowsHeightPx))
+        layout(widthPx, heightPx) {
+            rowsPlaceable.placeRelative(0, 0)
+            dividerPlaceable.placeRelative(0, rowsHeightPx)
+            stripPlaceable.placeRelative(0, rowsHeightPx + dividerPlaceable.height)
+        }
+    }
+}
+
+@Composable
+private fun ExpandedSupportingPane(
+    sidePanel: SidePanelUiState,
+    events: ReadoutEvents,
+    sidePanelContent: @Composable (SidePanelMode) -> Unit,
+    graphicalViewPane: (@Composable () -> Unit)?,
+) {
+    val panelOpen = sidePanel.mode != SidePanelMode.Off
+    val targets = LocalTouchTargets.current
+    Column(Modifier.fillMaxSize()) {
+        // The "+" button is in the row of the tabs, not above the pane: the graphical view
+        // has its zoom presets at the bottom end (no control covers a different one).
+        Row(
+            Modifier.fillMaxWidth().padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(targets.gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SidePanelTabs(sidePanel, events, Modifier.weight(1f))
+            if (sidePanel.addVisible) AddPointButton(events)
+        }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            when {
+                panelOpen -> sidePanelContent(sidePanel.mode)
+                graphicalViewPane != null -> Box(Modifier.fillMaxSize().testTag(GRAPHICAL_PANE_TAG)) { graphicalViewPane() }
+                else -> Spacer(Modifier.fillMaxSize())
             }
         }
     }
@@ -200,29 +373,99 @@ private fun PortraitBody(
     val targets = LocalTouchTargets.current
     val railWidth = RailWidth * (targets.button / 64.dp)
     val pane = graphicalViewPane.takeIf { state.graphicalViewPlacement != GraphicalViewPlacement.FullScreen }
+    val weightState = remember { mutableFloatStateOf(state.graphicalPaneWeight) }
+    var lastStateWeight by remember { mutableFloatStateOf(state.graphicalPaneWeight) }
+    var dragging by remember { mutableStateOf(false) }
+    if (state.graphicalPaneWeight != lastStateWeight) {
+        lastStateWeight = state.graphicalPaneWeight
+        if (!dragging) {
+            weightState.floatValue = state.graphicalPaneWeight
+        }
+    }
+    val above = state.graphicalViewPlacement == GraphicalViewPlacement.AboveReadout
+    val dragBounds = remember { SplitDragBounds(min = GRAPHICAL_PANE_MIN_WEIGHT, max = GRAPHICAL_PANE_MAX_WEIGHT) }
+
     Column(modifier.fillMaxWidth()) {
-        if (pane != null && state.graphicalViewPlacement == GraphicalViewPlacement.AboveReadout) {
-            GraphicalPane(pane, Modifier.weight(GRAPHICAL_PANE_WEIGHT))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-        // The rail at the right of the readout frees the height below it for the graphical view.
-        Row(Modifier.weight(1f - if (pane != null) GRAPHICAL_PANE_WEIGHT else 0f).fillMaxWidth()) {
-            ReadoutRows(
-                rows = state.rows,
-                axisValue = axisValue,
-                collapsed = false,
-                format = state.readoutFormat,
-                events = events,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-            )
-            if (!compact) {
-                VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                FunctionStrip(state.globalButtons, state.functions, events, StripForm.Rail, Modifier.width(railWidth).fillMaxHeight())
+        Layout(
+            content = {
+                PortraitReadoutSection(state, axisValue, events, compact, railWidth)
+                if (pane != null) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Box(Modifier.fillMaxSize().testTag(GRAPHICAL_PANE_TAG)) {
+                        GraphicalPaneContent(pane)
+                    }
+                    SplitHandle(
+                        vertical = false,
+                        modifier = Modifier.pointerInput(events, above) {
+                            detectVerticalDragGestures(
+                                onDragStart = { dragging = true },
+                                onDragEnd = {
+                                    dragging = false
+                                    events.onGraphicalPaneWeightChange(weightState.floatValue)
+                                },
+                                onDragCancel = {
+                                    dragging = false
+                                    events.onGraphicalPaneWeightChange(weightState.floatValue)
+                                },
+                            ) { change, dragAmount ->
+                                change.consume()
+                                val totalPx = dragBounds.totalPx
+                                if (totalPx > 0f) {
+                                    val delta = if (above) dragAmount / totalPx else -dragAmount / totalPx
+                                    val updated = (weightState.floatValue + delta).coerceIn(dragBounds.min, dragBounds.max)
+                                    if (updated != weightState.floatValue) {
+                                        weightState.floatValue = updated
+                                    }
+                                }
+                            }
+                        },
+                    )
+                }
+            },
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+        ) { measurables, constraints ->
+            val totalWidthPx = constraints.maxWidth
+            val totalHeightPx = constraints.maxHeight
+            if (measurables.size == 1) {
+                val readoutPlaceable = measurables[0].measure(Constraints.fixed(totalWidthPx, totalHeightPx))
+                layout(totalWidthPx, totalHeightPx) {
+                    readoutPlaceable.placeRelative(0, 0)
+                }
+            } else {
+                val totalHeight = totalHeightPx.toDp()
+                val minByDp = if (totalHeight > 0.dp) (MIN_GRAPHICAL_PANE_HEIGHT / totalHeight) else GRAPHICAL_PANE_MIN_WEIGHT
+                val maxByDp = if (totalHeight > 0.dp) 1f - (MIN_READOUT_PANE_HEIGHT / totalHeight) else GRAPHICAL_PANE_MAX_WEIGHT
+                val minWeight = maxOf(GRAPHICAL_PANE_MIN_WEIGHT, minByDp).coerceAtMost(0.5f)
+                val maxWeight = minOf(GRAPHICAL_PANE_MAX_WEIGHT, maxByDp).coerceAtLeast(minWeight)
+                dragBounds.totalPx = totalHeightPx.toFloat()
+                dragBounds.min = minWeight
+                dragBounds.max = maxWeight
+
+                val clampedWeight = weightState.floatValue.coerceIn(minWeight, maxWeight)
+                val dividerPlaceable = measurables[1].measure(Constraints.fixedWidth(totalWidthPx))
+                val graphicalHeightPx = (totalHeightPx * clampedWeight).roundToInt().coerceIn(0, totalHeightPx)
+                val readoutHeightPx = (totalHeightPx - graphicalHeightPx - dividerPlaceable.height).coerceAtLeast(0)
+                val readoutPlaceable = measurables[0].measure(Constraints.fixed(totalWidthPx, readoutHeightPx))
+                val graphicalPlaceable = measurables[2].measure(Constraints.fixed(totalWidthPx, graphicalHeightPx))
+                val handlePlaceable = measurables[3].measure(Constraints())
+                val splitY = if (above) graphicalHeightPx else readoutHeightPx
+
+                layout(totalWidthPx, totalHeightPx) {
+                    if (above) {
+                        graphicalPlaceable.placeRelative(0, 0)
+                        dividerPlaceable.placeRelative(0, graphicalHeightPx)
+                        readoutPlaceable.placeRelative(0, graphicalHeightPx + dividerPlaceable.height)
+                    } else {
+                        readoutPlaceable.placeRelative(0, 0)
+                        dividerPlaceable.placeRelative(0, readoutHeightPx)
+                        graphicalPlaceable.placeRelative(0, readoutHeightPx + dividerPlaceable.height)
+                    }
+                    handlePlaceable.placeRelative(
+                        x = (totalWidthPx - handlePlaceable.width) / 2,
+                        y = splitY - handlePlaceable.height / 2,
+                    )
+                }
             }
-        }
-        if (pane != null && state.graphicalViewPlacement == GraphicalViewPlacement.BelowReadout) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            GraphicalPane(pane, Modifier.weight(GRAPHICAL_PANE_WEIGHT))
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Row(
@@ -247,6 +490,67 @@ private fun PortraitBody(
     if (compact && state.functionSheetOpen) {
         ModalBottomSheet(onDismissRequest = { events.onFunctionSheet(false) }) {
             FunctionStrip(state.globalButtons, state.functions, events, StripForm.TwoRows, Modifier.fillMaxWidth().padding(bottom = 24.dp))
+        }
+    }
+}
+
+@Composable
+private fun PortraitReadoutSection(
+    state: ReadoutUiState,
+    axisValue: (AxisId) -> StateFlow<AxisValueUiState>,
+    events: ReadoutEvents,
+    compact: Boolean,
+    railWidth: Dp,
+) {
+    Row(Modifier.fillMaxSize()) {
+        ReadoutRows(
+            rows = state.rows,
+            axisValue = axisValue,
+            collapsed = false,
+            format = state.readoutFormat,
+            events = events,
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+        )
+        if (!compact) {
+            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            FunctionStrip(state.globalButtons, state.functions, events, StripForm.Rail, Modifier.width(railWidth).fillMaxHeight())
+        }
+    }
+}
+
+@Composable
+private fun GraphicalPaneContent(pane: @Composable () -> Unit) {
+    pane()
+}
+
+@Composable
+private fun SplitHandle(vertical: Boolean, modifier: Modifier = Modifier) {
+    val touchWidth = if (vertical) SplitHandleTouchThickness else SplitHandleTouchLength
+    val touchHeight = if (vertical) SplitHandleTouchLength else SplitHandleTouchThickness
+    val pillWidth = if (vertical) SplitHandlePillThickness else SplitHandlePillLength
+    val pillHeight = if (vertical) SplitHandlePillLength else SplitHandlePillThickness
+    Box(
+        modifier = modifier
+            .size(width = touchWidth, height = touchHeight)
+            .testTag(SPLIT_HANDLE_TAG),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            modifier = Modifier.size(width = pillWidth, height = pillHeight),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            tonalElevation = 4.dp,
+            shadowElevation = 2.dp,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                val gripWidth = if (vertical) 2.dp else 24.dp
+                val gripHeight = if (vertical) 24.dp else 2.dp
+                Box(
+                    Modifier
+                        .size(width = gripWidth, height = gripHeight)
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape),
+                )
+            }
         }
     }
 }
@@ -297,3 +601,8 @@ private fun GraphicalPane(pane: @Composable () -> Unit, modifier: Modifier) {
 
 /** The height of the side panel in its bottom sheet (portrait). */
 private val SidePanelSheetHeight: Dp = 420.dp
+
+private val SplitHandleTouchThickness: Dp = 48.dp
+private val SplitHandleTouchLength: Dp = 88.dp
+private val SplitHandlePillThickness: Dp = 10.dp
+private val SplitHandlePillLength: Dp = 56.dp

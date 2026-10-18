@@ -44,6 +44,8 @@ data class ReadoutUiState(
     val functions: List<FunctionButtonUiState> = emptyList(),
     val sidePanel: SidePanelUiState = SidePanelUiState(),
     val graphicalViewPlacement: GraphicalViewPlacement = GraphicalViewPlacement.BelowReadout,
+    val readoutPaneFraction: Float = READOUT_PANE_FRACTION,
+    val graphicalPaneWeight: Float = GRAPHICAL_PANE_WEIGHT,
     val setupReminder: SetupReminderUiState? = null,
     val hint: UiText? = null,
     val undo: UndoUiState? = null,

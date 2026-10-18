@@ -223,6 +223,10 @@ class ProfileFileImporter(private val now: () -> Instant = { Clock.System.now() 
         "tachometer" -> profile.tachometer.presets.all { preset -> preset.isFinite() && preset >= 0.0 }
         "stylusDiameterUm" -> profile.stylusDiameterUm.isFinite() && profile.stylusDiameterUm >= 0.0
         "zSetterHeightUm" -> profile.zSetterHeightUm.isFinite() && profile.zSetterHeightUm >= 0.0
+        "display" -> profile.display.readoutPaneFraction.isFinite() &&
+            profile.display.readoutPaneFraction in 0.25f..0.75f &&
+            profile.display.graphicalPaneWeight.isFinite() &&
+            profile.display.graphicalPaneWeight in 0.25f..0.75f
         else -> true
     }
 

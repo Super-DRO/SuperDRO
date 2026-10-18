@@ -23,6 +23,9 @@
     <string name="settings_app_view_below">Below the readout</string>
     <string name="settings_app_view_above">Above the readout</string>
     <string name="settings_app_view_full_screen">Full screen</string>
+    <string name="settings_app_pane_size_scope">Pane split size</string>
+    <string name="settings_app_pane_size_scope_app">All machines</string>
+    <string name="settings_app_pane_size_scope_machine">Each machine</string>
     <string name="settings_app_mute">Mute all sounds</string>
     <string name="settings_app_mute_summary">No key sounds, no link tones, and no warning tones.</string>
     <string name="settings_app_mute_scope">Mute switch</string>

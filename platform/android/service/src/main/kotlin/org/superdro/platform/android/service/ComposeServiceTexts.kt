@@ -1,5 +1,7 @@
 package org.superdro.platform.android.service
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getPluralString
 import org.jetbrains.compose.resources.getString
@@ -30,27 +32,40 @@ import org.superdro.core.resources.service_title_online
  * The [ServiceTexts] of the string files of `core:resources`: `strings_service.xml`, and the state
  * and link names of `strings_app.xml`. Compose Resources selects the language of the device. The
  * functions work with no composition.
+ *
+ * All resource lookups run on [Dispatchers.IO] so `org.jetbrains.compose.resources.AsyncCache` mutex
+ * acquisitions never suspend on `Dispatchers.Main` while the UI thread blocks in `stringResource`.
  */
 object ComposeServiceTexts : ServiceTexts {
 
-    override suspend fun channelName(): String = getString(Res.string.service_channel_name)
+    override suspend fun channelName(): String = withContext(Dispatchers.IO) {
+        getString(Res.string.service_channel_name)
+    }
 
-    override suspend fun disconnectAll(): String = getString(Res.string.service_disconnect_all)
+    override suspend fun disconnectAll(): String = withContext(Dispatchers.IO) {
+        getString(Res.string.service_disconnect_all)
+    }
 
-    override suspend fun title(onlineCount: Int): String =
+    override suspend fun title(onlineCount: Int): String = withContext(Dispatchers.IO) {
         if (onlineCount <= 0) {
             getString(Res.string.service_title_none_online)
         } else {
             getPluralString(Res.plurals.service_title_online, onlineCount, onlineCount)
         }
+    }
 
-    override suspend fun offlineRemembered(count: Int): String =
+    override suspend fun offlineRemembered(count: Int): String = withContext(Dispatchers.IO) {
         getPluralString(Res.plurals.service_offline_remembered, count, count)
+    }
 
     override suspend fun deviceLine(name: String, state: SessionState, transport: TransportKind): String =
-        getString(Res.string.service_device_line, name, stateName(state), getString(linkName(transport)))
+        withContext(Dispatchers.IO) {
+            getString(Res.string.service_device_line, name, stateName(state), getString(linkName(transport)))
+        }
 
-    override suspend fun bootOpenApp(): String = getString(Res.string.service_boot_open_app)
+    override suspend fun bootOpenApp(): String = withContext(Dispatchers.IO) {
+        getString(Res.string.service_boot_open_app)
+    }
 
     private suspend fun stateName(state: SessionState): String = when (state) {
         SessionState.Disconnected -> getString(Res.string.app_status_offline)

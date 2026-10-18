@@ -23,6 +23,9 @@
     <string name="settings_app_view_below">Unter der Anzeige</string>
     <string name="settings_app_view_above">Über der Anzeige</string>
     <string name="settings_app_view_full_screen">Vollbild</string>
+    <string name="settings_app_pane_size_scope">Fensteraufteilung</string>
+    <string name="settings_app_pane_size_scope_app">Alle Maschinen</string>
+    <string name="settings_app_pane_size_scope_machine">Jede Maschine</string>
     <string name="settings_app_mute">Alle Töne stumm</string>
     <string name="settings_app_mute_summary">Keine Tastentöne, keine Verbindungstöne und keine Warntöne.</string>
     <string name="settings_app_mute_scope">Stummschalter</string>

@@ -64,6 +64,10 @@ data class DisplaySettings(
      * the keys of `CrosshairColor` of `core:camera`. Default `"default"`.
      */
     val cameraCrosshairColor: String = "default",
+    /** The part of the window width that the readout column uses in the expanded layout. */
+    val readoutPaneFraction: Float = 0.45f,
+    /** The part of the content height that the graphical view uses in portrait. */
+    val graphicalPaneWeight: Float = 0.6f,
 )
 
 /**

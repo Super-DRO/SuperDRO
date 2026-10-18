@@ -8,9 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.assertHeightIsAtLeast
@@ -25,6 +28,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
+import androidx.compose.ui.unit.width
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -273,6 +279,233 @@ class ReadoutScreenUiTest {
         onNodeWithTag(functionTag(FunctionButton.EdgeFinder)).assertExists()
         onNodeWithTag(functionTag(FunctionButton.RadiusDiameter)).assertDoesNotExist()
         onNodeWithContentDescription("Radius comp.").assertExists()
+    }
+
+    @Test
+    fun draggingTheSplitHandleInExpandedLayoutResizesReadoutAndViewerBothWaysAndReordersUi() = runComposeUiTest {
+        val sample = ReadoutSamples.mill()
+        var state by mutableStateOf(sample.state)
+        val events = object : ReadoutEvents {
+            override fun onReadoutPaneFractionChange(fraction: Float) {
+                state = state.copy(readoutPaneFraction = fraction.coerceIn(READOUT_PANE_MIN_FRACTION, READOUT_PANE_MAX_FRACTION))
+            }
+        }
+        setContent {
+            Themed(landscape) {
+                ReadoutScreen(state, sample::flow, events, layout = landscape, graphicalViewPane = {})
+            }
+        }
+
+        val initialRowBounds = onNodeWithTag(rowTag(AxisId.X)).assertExists().getBoundsInRoot()
+        val initialSupportingBounds = onNodeWithTag(SUPPORTING_PANE_TAG).assertExists().getBoundsInRoot()
+        val handleBounds = onNodeWithTag(SPLIT_HANDLE_TAG).assertExists().getBoundsInRoot()
+        assertTrue(
+            handleBounds.right >= initialRowBounds.right - 16.dp && handleBounds.left <= initialSupportingBounds.left + 16.dp,
+            "The split handle sits between the readout rows and the supporting pane.",
+        )
+
+        // Initially at 45% width (< 600 dp), the readout rows use collapsed buttons (only SetZero).
+        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.SetZero)).assertExists()
+        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.ToggleIncremental)).assertDoesNotExist()
+        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.ToggleUnits)).assertDoesNotExist()
+
+        val stripButtons = listOf(
+            ZERO_SET_TAG,
+            MODE_TAG,
+            UNITS_TAG,
+            functionTag(FunctionButton.ZReference),
+            functionTag(FunctionButton.RadiusCompensation),
+            functionTag(FunctionButton.HeightCompensation),
+            functionTag(FunctionButton.EdgeFinder),
+        )
+        fun firstRowColumnCount(): Int {
+            val top0 = onNodeWithTag(ZERO_SET_TAG).getBoundsInRoot().top.value
+            return stripButtons.count { tag ->
+                abs(onNodeWithTag(tag).getBoundsInRoot().top.value - top0) < 4f
+            }
+        }
+        val initialColumns = firstRowColumnCount()
+
+        // Drag the split handle to the left: readout becomes narrower and supporting pane becomes wider.
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(-150f, 0f))
+            up()
+        }
+        waitForIdle()
+        val narrowRowBounds = onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot()
+        val wideSupportingBounds = onNodeWithTag(SUPPORTING_PANE_TAG).getBoundsInRoot()
+        assertTrue(narrowRowBounds.width < initialRowBounds.width, "Dragging left narrows the readout column.")
+        assertTrue(wideSupportingBounds.width > initialSupportingBounds.width, "Dragging left widens the supporting pane.")
+
+        // Drag the split handle to the right so readout width > 600 dp:
+        // readout widens, supporting pane narrows, all 3 row action buttons appear, and function strip reorders into more columns.
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(500f, 0f))
+            up()
+        }
+        waitForIdle()
+        val wideRowBounds = onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot()
+        val narrowSupportingBounds = onNodeWithTag(SUPPORTING_PANE_TAG).getBoundsInRoot()
+        assertTrue(wideRowBounds.width > initialRowBounds.width, "Dragging right widens the readout column.")
+        assertTrue(narrowSupportingBounds.width < initialSupportingBounds.width, "Dragging right narrows the supporting pane.")
+        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.SetZero)).assertExists()
+        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.ToggleIncremental)).assertExists()
+        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.ToggleUnits)).assertExists()
+        val expandedColumns = firstRowColumnCount()
+        assertTrue(expandedColumns > initialColumns, "Widening the readout column reorders the function strip into more columns.")
+
+        // Dragging far past the right and left screen edges clamps to the maximum and minimum pane limits.
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(2000f, 0f))
+            up()
+        }
+        waitForIdle()
+        assertTrue(state.readoutPaneFraction <= READOUT_PANE_MAX_FRACTION + 1e-3f)
+        val clampedMaxWidth = onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot().width
+        assertTrue(onNodeWithTag(SUPPORTING_PANE_TAG).getBoundsInRoot().width >= MIN_SUPPORTING_PANE_WIDTH - 2.dp)
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(1000f, 0f))
+            up()
+        }
+        waitForIdle()
+        assertEquals(clampedMaxWidth, onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot().width)
+
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(-2000f, 0f))
+            up()
+        }
+        waitForIdle()
+        assertTrue(state.readoutPaneFraction >= READOUT_PANE_MIN_FRACTION - 1e-3f)
+        val clampedMinWidth = onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot().width
+        assertTrue(clampedMinWidth >= MIN_READOUT_PANE_WIDTH - 2.dp)
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(-1000f, 0f))
+            up()
+        }
+        waitForIdle()
+        assertEquals(clampedMinWidth, onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot().width)
+    }
+
+    @Test
+    fun draggingTheSplitHandleInPortraitLayoutResizesReadoutAndViewerVertically() = runComposeUiTest {
+        val portrait = WindowLayout.of(800.dp, 1280.dp)
+        val sample = ReadoutSamples.mill()
+        var state by mutableStateOf(sample.state)
+        val events = object : ReadoutEvents {
+            override fun onGraphicalPaneWeightChange(weight: Float) {
+                state = state.copy(graphicalPaneWeight = weight.coerceIn(GRAPHICAL_PANE_MIN_WEIGHT, GRAPHICAL_PANE_MAX_WEIGHT))
+            }
+        }
+        setContent {
+            Themed(portrait) {
+                ReadoutScreen(state, sample::flow, events, layout = portrait, graphicalViewPane = {})
+            }
+        }
+
+        val initialRowBounds = onNodeWithTag(rowTag(AxisId.X)).assertExists().getBoundsInRoot()
+        val initialGraphicalBounds = onNodeWithTag(GRAPHICAL_PANE_TAG).assertExists().getBoundsInRoot()
+        onNodeWithTag(SPLIT_HANDLE_TAG).assertExists()
+
+        // Dragging the split handle downward increases readout height and decreases graphical viewer height.
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(0f, 150f))
+            up()
+        }
+        waitForIdle()
+        val tallerRowBounds = onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot()
+        val shorterGraphicalBounds = onNodeWithTag(GRAPHICAL_PANE_TAG).getBoundsInRoot()
+        assertTrue(tallerRowBounds.height > initialRowBounds.height, "Dragging down increases readout row height.")
+        assertTrue(shorterGraphicalBounds.height < initialGraphicalBounds.height, "Dragging down decreases graphical pane height.")
+
+        // Dragging the split handle upward decreases readout height and increases graphical viewer height.
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(0f, -250f))
+            up()
+        }
+        waitForIdle()
+        val shorterRowBounds = onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot()
+        val tallerGraphicalBounds = onNodeWithTag(GRAPHICAL_PANE_TAG).getBoundsInRoot()
+        assertTrue(shorterRowBounds.height < tallerRowBounds.height, "Dragging up decreases readout row height.")
+        assertTrue(tallerGraphicalBounds.height > shorterGraphicalBounds.height, "Dragging up increases graphical pane height.")
+
+        // Dragging far past the bottom and top limits clamps within the minimum and maximum height bounds.
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(0f, 2000f))
+            up()
+        }
+        waitForIdle()
+        assertTrue(state.graphicalPaneWeight >= GRAPHICAL_PANE_MIN_WEIGHT - 1e-3f)
+        val clampedMinGraphicalHeight = onNodeWithTag(GRAPHICAL_PANE_TAG).getBoundsInRoot().height
+        assertTrue(clampedMinGraphicalHeight >= MIN_GRAPHICAL_PANE_HEIGHT - 2.dp)
+
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            moveBy(Offset(0f, -2000f))
+            up()
+        }
+        waitForIdle()
+        assertTrue(state.graphicalPaneWeight <= GRAPHICAL_PANE_MAX_WEIGHT + 1e-3f)
+        val clampedMaxGraphicalHeight = onNodeWithTag(GRAPHICAL_PANE_TAG).getBoundsInRoot().height
+        assertTrue(clampedMaxGraphicalHeight > clampedMinGraphicalHeight)
+    }
+
+    @Test
+    fun draggingTheSplitHandlePersistsTheResizeValuesGloballyAndInTheMachineProfile() = runComposeUiTest {
+        val live = LiveReadout(MachineProfile.create().copy(metricDefault = true))
+        val navigator = RecordingNavigator()
+        var currentLayout by mutableStateOf(landscape)
+        setContent {
+            Themed(currentLayout) {
+                val state by live.presenter.uiState.collectAsState()
+                ReadoutScreen(
+                    state = state,
+                    axisValue = live.presenter::axisValue,
+                    events = PresenterReadoutEvents(live.presenter, navigator),
+                    layout = currentLayout,
+                    graphicalViewPane = {},
+                )
+            }
+        }
+
+        // Multi-step horizontal drag in expanded layout persists readoutPaneFraction both globally and to the profile.
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            repeat(10) { moveBy(Offset(18f, 0f)) }
+            up()
+        }
+        waitForIdle()
+        live.scheduler.advanceUntilIdle()
+        waitForIdle()
+        val afterExpandedProfile = kotlinx.coroutines.runBlocking { live.machines.loadProfile(live.profile.id) }!!
+        val afterExpandedDrag = afterExpandedProfile.display.readoutPaneFraction
+        assertTrue(afterExpandedDrag > READOUT_PANE_FRACTION + 0.08f, "Expected persisted readoutPaneFraction > ${READOUT_PANE_FRACTION + 0.08f}, got $afterExpandedDrag")
+        assertEquals(afterExpandedDrag, live.appSettings.settings.value.readoutPaneFraction, 1e-4f)
+
+        // Switch to portrait and perform a multi-step vertical drag to persist graphicalPaneWeight.
+        currentLayout = WindowLayout.of(800.dp, 1280.dp)
+        waitForIdle()
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            repeat(10) { moveBy(Offset(0f, 16f)) }
+            up()
+        }
+        waitForIdle()
+        live.scheduler.advanceUntilIdle()
+        waitForIdle()
+        val afterPortraitProfile = kotlinx.coroutines.runBlocking { live.machines.loadProfile(live.profile.id) }!!
+        val afterPortraitDrag = afterPortraitProfile.display.graphicalPaneWeight
+        assertTrue(afterPortraitDrag < GRAPHICAL_PANE_WEIGHT - 0.05f, "Expected persisted graphicalPaneWeight < ${GRAPHICAL_PANE_WEIGHT - 0.05f}, got $afterPortraitDrag")
+        assertEquals(afterPortraitDrag, live.appSettings.settings.value.graphicalPaneWeight, 1e-4f)
+        live.close()
     }
 }
 

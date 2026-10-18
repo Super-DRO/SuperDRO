@@ -1,5 +1,6 @@
 package org.superdro.core.ui.readout
 
+import androidx.compose.runtime.Stable
 import org.superdro.core.model.AxisButtonMode
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.SidePanelMode
@@ -8,6 +9,7 @@ import org.superdro.core.model.SidePanelMode
  * The events of the readout screen. The composables are stateless and call these functions. The
  * readout entry connects them to the [ReadoutPresenter] and to the back stack of the tab.
  */
+@Stable
 interface ReadoutEvents {
     /** A tap on the value of [axis]: the keypad, the encoder settings ("Error"), or the tachometer action. */
     fun onValueTap(axis: AxisId) = Unit
@@ -56,6 +58,12 @@ interface ReadoutEvents {
 
     /** "Calibrate" of the setup reminder. */
     fun onSetupCalibrate(axis: AxisId) = Unit
+
+    /** The user dragged the vertical split handle in the expanded layout. */
+    fun onReadoutPaneFractionChange(fraction: Float) = Unit
+
+    /** The user dragged the horizontal split handle in the portrait layout. */
+    fun onGraphicalPaneWeightChange(weight: Float) = Unit
 }
 
 /** The events that do nothing, for the previews and the screenshot tests. */

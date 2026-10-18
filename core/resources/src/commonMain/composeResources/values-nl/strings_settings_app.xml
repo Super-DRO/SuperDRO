@@ -23,6 +23,9 @@
     <string name="settings_app_view_below">Onder de uitlezing</string>
     <string name="settings_app_view_above">Boven de uitlezing</string>
     <string name="settings_app_view_full_screen">Volledig scherm</string>
+    <string name="settings_app_pane_size_scope">Paneelverdeling</string>
+    <string name="settings_app_pane_size_scope_app">Alle machines</string>
+    <string name="settings_app_pane_size_scope_machine">Elke machine</string>
     <string name="settings_app_mute">Alle geluiden dempen</string>
     <string name="settings_app_mute_summary">Geen toetsgeluiden, geen verbindingstonen en geen waarschuwingstonen.</string>
     <string name="settings_app_mute_scope">Dempschakelaar</string>

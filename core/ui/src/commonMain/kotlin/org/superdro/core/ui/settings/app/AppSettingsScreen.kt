@@ -14,6 +14,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.superdro.core.model.GraphicalViewPlacement
 import org.superdro.core.model.MuteScope
+import org.superdro.core.model.PaneSizeScope
 import org.superdro.core.model.ThemeMode
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.readout_unit_mm
@@ -60,6 +61,9 @@ import org.superdro.core.resources.settings_app_mute_scope
 import org.superdro.core.resources.settings_app_mute_scope_app
 import org.superdro.core.resources.settings_app_mute_scope_machine
 import org.superdro.core.resources.settings_app_mute_summary
+import org.superdro.core.resources.settings_app_pane_size_scope
+import org.superdro.core.resources.settings_app_pane_size_scope_app
+import org.superdro.core.resources.settings_app_pane_size_scope_machine
 import org.superdro.core.resources.settings_app_profiles_summary
 import org.superdro.core.resources.settings_app_remembered_summary
 import org.superdro.core.resources.settings_app_setup_reminder
@@ -104,6 +108,7 @@ object AppSettingsTags {
     const val SHOW_HINTS = "app-show-hints"
     const val SETUP_REMINDER = "app-setup-reminder"
     const val GRAPHICAL_VIEW = "app-graphical-view"
+    const val PANE_SIZE_SCOPE = "app-pane-size-scope"
     const val MUTE = "app-mute"
     const val MUTE_SCOPE = "app-mute-scope"
     const val WAKE_LOCK = "app-wake-lock"
@@ -233,6 +238,21 @@ private fun ColumnScope.AppearanceGroup(state: AppSettingsUiState, presenter: Ap
             },
             onSelect = presenter::setGraphicalViewInPortrait,
             tag = AppSettingsTags.GRAPHICAL_VIEW,
+        )
+        SettingsSegmented(
+            title = stringResource(Res.string.settings_app_pane_size_scope),
+            options = PaneSizeScope.entries,
+            selected = settings.paneSizeScope,
+            label = { scope ->
+                stringResource(
+                    when (scope) {
+                        PaneSizeScope.App -> Res.string.settings_app_pane_size_scope_app
+                        PaneSizeScope.EachMachine -> Res.string.settings_app_pane_size_scope_machine
+                    },
+                )
+            },
+            onSelect = presenter::setPaneSizeScope,
+            tag = AppSettingsTags.PANE_SIZE_SCOPE,
         )
     }
 }
