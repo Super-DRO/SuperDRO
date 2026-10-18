@@ -45,6 +45,29 @@ class ReadoutScreenshotTest {
         assertTrue(file.length() > 0)
     }
 
+    @Test
+    fun theSetupReminderDialogOpen() {
+        val sample = ReadoutSamples.mill(setupReminder = true)
+        val layout = WindowLayout.of(1200.dp, 750.dp)
+        val file = ScreenshotRenderer.render("readout-mill-1200-landscape-setup-dialog-dark", widthDp = 1200, heightDp = 750, frames = 30) {
+            AppTheme(mode = ThemeMode.Dark, systemInDarkTheme = false) {
+                CompositionLocalProvider(LocalWindowLayout provides layout) {
+                    ReadoutScreen(
+                        state = sample.state,
+                        axisValue = sample::flow,
+                        events = NoReadoutEvents,
+                        layout = layout,
+                        sidePanelContent = { SidePanelPlaceholder(Res.string.route_sub_datums) },
+                        graphicalViewPane = { SidePanelPlaceholder(Res.string.route_graphical_view) },
+                        rpmText = sample.rpm,
+                    )
+                    SetupReminderDialog(onSettings = {}, onCalibrate = {}, onDismiss = {})
+                }
+            }
+        }
+        assertTrue(file.length() > 0)
+    }
+
     private fun renderAll(machine: String, sample: () -> ReadoutSamples.Sample) {
         widths.forEach { width ->
             listOf("landscape" to width * 10 / 16, "portrait" to width * 16 / 10).forEach { (orientation, height) ->
