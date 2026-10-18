@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.superdro.core.appversion.AppVersion
-import org.superdro.core.appversion.ReleaseVersion
 import org.superdro.core.connection.ConnectionRequest
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.connection.DeviceRef
@@ -42,6 +41,7 @@ import org.superdro.core.store.repository.MachineRepository
 import org.superdro.core.ui.presenter.PresenterContext
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.session.Connections
+import org.superdro.core.ui.settings.about.VersionCheck
 import org.superdro.core.ui.text.UiText
 
 /**
@@ -157,11 +157,7 @@ class DeviceTabsPresenter(
         if (appSettings != null) {
             scope.launch {
                 appSettings.settings.collect { settings ->
-                    val available = settings.availableReleaseVersion?.takeIf { version ->
-                        settings.checkForUpdates &&
-                            version != settings.notifiedReleaseVersion &&
-                            ReleaseVersion.isNewer(version, currentVersionCode)
-                    }
+                    val available = VersionCheck.unseenReleaseVersion(settings, currentVersionCode)
                     mutex.withLock {
                         availableUpdateVersion = available
                         publish()
@@ -224,10 +220,7 @@ class DeviceTabsPresenter(
     }
 
     override fun onAcknowledgeUpdate() {
-        appSettings?.update { settings ->
-            val available = settings.availableReleaseVersion ?: return@update settings
-            settings.copy(notifiedReleaseVersion = available)
-        }
+        appSettings?.update(VersionCheck::acknowledgeRelease)
     }
 
     private fun change(block: () -> Unit) {
