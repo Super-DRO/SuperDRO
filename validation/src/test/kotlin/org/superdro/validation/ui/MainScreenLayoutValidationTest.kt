@@ -264,6 +264,8 @@ class MainScreenLayoutValidationTest {
             val inStrip = onAllNodes(hasText(text) and hasAnyAncestor(hasTestTag(STATUS_STRIP_TAG)), useUnmergedTree = true)
             assertEquals(1, inStrip.fetchSemanticsNodes().size, text)
         }
+        val redundant = onAllNodes(hasText("Connected") and hasAnyAncestor(hasTestTag(STATUS_STRIP_TAG)), useUnmergedTree = true)
+        assertEquals(0, redundant.fetchSemanticsNodes().size, "no redundant connection status in status strip")
     }
 
     @Test
