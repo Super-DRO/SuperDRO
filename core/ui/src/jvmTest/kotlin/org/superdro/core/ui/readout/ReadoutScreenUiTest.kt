@@ -2,6 +2,7 @@ package org.superdro.core.ui.readout
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -627,6 +628,31 @@ class ReadoutScreenUiTest {
         onNodeWithTag(SETUP_REMINDER_TAG).assertDoesNotExist()
         onNodeWithText("An enabled axis has an input that is not calibrated.").assertDoesNotExist()
         live.close()
+    }
+
+    @Test
+    fun tallPortraitRowsStackActionButtonsBelowTheValueBox() = runComposeUiTest {
+        val portrait = WindowLayout.of(800.dp, 1200.dp)
+        val sample = ReadoutSamples.mill()
+        var state by mutableStateOf(sample.state.copy(graphicalPaneWeight = 0.62f))
+        setContent {
+            Themed(portrait) {
+                Box(Modifier.requiredSize(800.dp, 1200.dp)) {
+                    ReadoutScreen(state, sample::flow, NoReadoutEvents, layout = portrait, graphicalViewPane = {})
+                }
+            }
+        }
+        waitForIdle()
+        val shortValueBounds = onNodeWithTag(valueTag(AxisId.X)).assertExists().getBoundsInRoot()
+        val shortZeroBounds = onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.SetZero)).assertExists().getBoundsInRoot()
+        assertTrue(shortZeroBounds.left >= shortValueBounds.right, "Short rows place action buttons beside the value box.")
+
+        state = state.copy(graphicalPaneWeight = 0.15f)
+        waitForIdle()
+        val tallValueBounds = onNodeWithTag(valueTag(AxisId.X)).getBoundsInRoot()
+        val tallZeroBounds = onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.SetZero)).getBoundsInRoot()
+        assertTrue(tallValueBounds.width > shortValueBounds.width * 1.4f, "Tall rows expand the value box across the full width.")
+        assertTrue(tallZeroBounds.top >= tallValueBounds.bottom - 1.dp, "Tall rows place action buttons in the bottom band below the value box.")
     }
 }
 

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -102,40 +101,34 @@ fun valueTag(axis: AxisId): String = "readout-value-${axis.name}"
 fun actionTag(axis: AxisId, mode: AxisButtonMode): String = "readout-action-${axis.name}-${mode.name}"
 
 /** The height of the position slider below a linear value. */
-private val SliderHeight: Dp = 32.dp
+private val SliderHeight: Dp = 24.dp
 
-/** The width of the unit column at the right of the digits. */
-private val UnitWidth: Dp = 64.dp
+/** The default end inset of the position slider below the side unit. */
+private val SliderUnitInset: Dp = 28.dp
 
 /** The smallest height of the position slider in a short row. */
 private val MinSliderHeight: Dp = 12.dp
 
 /** The part of the row height that the slider uses, up to [SliderHeight]. */
-private const val SLIDER_FRACTION: Float = 0.2f
+private const val SLIDER_FRACTION: Float = 0.16f
 
 /** The height of the line of the display state above the digits. */
-private val StateLineHeight: Dp = 24.dp
+private val StateLineHeight: Dp = 18.dp
 
 /** The smallest height of the state line in a short row. */
-private val MinStateLineHeight: Dp = 14.dp
+private val MinStateLineHeight: Dp = 12.dp
 
 /** The part of the row height that the state line uses, up to [StateLineHeight]. */
-private const val STATE_LINE_FRACTION: Float = 0.16f
+private const val STATE_LINE_FRACTION: Float = 0.12f
 
 /**
  * The fitted text sizes of the rows, in px. All rows use the smallest size, so the digits of each
  * row have one size. [ReadoutRows] gives the map.
  */
-private val LocalRowTextSizes = staticCompositionLocalOf<MutableMap<AxisId, Float>?> { null }
+private val LocalRowTextSizes = staticCompositionLocalOf<SnapshotStateMap<AxisId, Float>?> { null }
 
 @Immutable
 private data class ReadoutRowItems(val entries: List<ReadoutRowUiState>)
-
-private fun rowRightButtonSlots(row: ReadoutRowUiState, collapsed: Boolean): Int = when {
-    row.kind == RowKind.Tachometer -> 1
-    collapsed -> row.collapsedButtons.size
-    else -> row.buttons.size
-}
 
 /**
  * The readout rows. Each row gets 1 / max(3, count) of the height of the pane.
@@ -153,11 +146,8 @@ fun ReadoutRows(
     events: ReadoutEvents,
     modifier: Modifier = Modifier,
 ) {
-    val sizes = remember { HashMap<AxisId, Float>() }
+    val sizes = remember { mutableStateMapOf<AxisId, Float>() }
     val rowItems = remember(rows) { ReadoutRowItems(rows) }
-    val uniformRows = remember(rows, collapsed) {
-        rows.size <= 1 || rows.map { rowRightButtonSlots(it, collapsed) to it.auxiliary }.distinct().size <= 1
-    }
     val minRow = LocalTouchTargets.current.button + 8.dp
     val density = LocalDensity.current
     val minRowPx = with(density) { minRow.roundToPx() }
@@ -169,7 +159,7 @@ fun ReadoutRows(
             scrollable = next
         }
     }
-    CompositionLocalProvider(LocalRowTextSizes provides if (uniformRows) null else sizes) {
+    CompositionLocalProvider(LocalRowTextSizes provides if (rows.size <= 1) null else sizes) {
         if (!scrollable) {
             Layout(
                 content = {
@@ -305,8 +295,9 @@ private fun ReadoutRowContent(
         val rowHeight = constraints.maxHeight
         val compactRow = rowWidth < 420.dp.roundToPx()
         val gapPx = (if (compactRow) baseGap / 2 else baseGap).roundToPx()
-        val hPadPx = (if (compactRow) 4.dp else 8.dp).roundToPx()
-        val vPadPx = 4.dp.roundToPx()
+        val sectionGapPx = (if (compactRow) 4.dp else 6.dp).roundToPx()
+        val hPadPx = 4.dp.roundToPx()
+        val vPadPx = 2.dp.roundToPx()
         val innerHeight = (rowHeight - vPadPx * 2).coerceAtLeast(0)
         val sideConstraints = Constraints(minWidth = 0, maxWidth = 4096, minHeight = 0, maxHeight = innerHeight)
 
@@ -319,12 +310,17 @@ private fun ReadoutRowContent(
             emptyArray()
         }
         var buttonsTotalWidth = 0
+        var buttonsMaxHeight = 0
         for (i in buttonPlaceables.indices) {
             buttonsTotalWidth += buttonPlaceables[i].width
+            if (buttonPlaceables[i].height > buttonsMaxHeight) {
+                buttonsMaxHeight = buttonPlaceables[i].height
+            }
             if (i > 0) buttonsTotalWidth += gapPx
         }
-        val rightSectionWidth = if (buttonPlaceables.isNotEmpty()) gapPx + buttonsTotalWidth else 0
-        val centerWidth = (rowWidth - hPadPx * 2 - labelPlaceable.width - gapPx - rightSectionWidth).coerceAtLeast(0)
+        val fullRightWidth = (rowWidth - hPadPx * 2 - labelPlaceable.width - sectionGapPx).coerceAtLeast(0)
+        val rightSectionWidth = if (buttonPlaceables.isNotEmpty()) sectionGapPx + buttonsTotalWidth else 0
+        val sideCenterWidth = (fullRightWidth - rightSectionWidth).coerceAtLeast(0)
 
         val rowHeightDp = rowHeight.toDp()
         val sliderHeightPx = if (hasSlider) {
@@ -332,11 +328,22 @@ private fun ReadoutRowContent(
         } else {
             0
         }
-        val valueBoxHeightPx = (innerHeight - sliderHeightPx).coerceAtLeast(0)
-        val valueBoxPlaceable = measurables[1].measure(Constraints.fixed(centerWidth, valueBoxHeightPx))
+        val bottomBandHeight = maxOf(buttonsMaxHeight, sliderHeightPx) + 4.dp.roundToPx()
+        val stackedValueBoxHeight = (innerHeight - bottomBandHeight).coerceAtLeast(0)
+        val stackButtons = buttonCount > 1 &&
+            (stackedValueBoxHeight - MinStateLineHeight.roundToPx()) * DIGIT_HEIGHT_FRACTION >
+            (sideCenterWidth - SliderUnitInset.roundToPx()) * 0.20f
+
+        val valueBoxWidthPx = if (stackButtons) fullRightWidth else sideCenterWidth
+        val valueBoxHeightPx = if (stackButtons) {
+            stackedValueBoxHeight
+        } else {
+            (innerHeight - sliderHeightPx).coerceAtLeast(0)
+        }
+        val valueBoxPlaceable = measurables[1].measure(Constraints.fixed(valueBoxWidthPx, valueBoxHeightPx))
         val sliderPlaceable = if (hasSlider) {
-            val sliderPadEndPx = if (compactRow) 0 else UnitWidth.roundToPx()
-            val sliderWidthPx = (centerWidth - sliderPadEndPx).coerceAtLeast(0)
+            val sliderPadEndPx = if (compactRow || stackButtons) 0 else SliderUnitInset.roundToPx()
+            val sliderWidthPx = (sideCenterWidth - sliderPadEndPx).coerceAtLeast(0)
             measurables[2].measure(Constraints.fixed(sliderWidthPx, sliderHeightPx))
         } else {
             null
@@ -346,15 +353,30 @@ private fun ReadoutRowContent(
             val labelY = vPadPx + (innerHeight - labelPlaceable.height) / 2
             labelPlaceable.placeRelative(hPadPx, labelY)
 
-            val centerX = hPadPx + labelPlaceable.width + gapPx
+            val centerX = hPadPx + labelPlaceable.width + sectionGapPx
             valueBoxPlaceable.placeRelative(centerX, vPadPx)
-            sliderPlaceable?.placeRelative(centerX, vPadPx + valueBoxHeightPx)
+            if (stackButtons) {
+                val bandTop = vPadPx + valueBoxHeightPx
+                val bandHeight = innerHeight - valueBoxHeightPx
+                if (sliderPlaceable != null) {
+                    val sliderY = bandTop + (bandHeight - sliderPlaceable.height) / 2
+                    sliderPlaceable.placeRelative(centerX, sliderY)
+                }
+                var buttonX = centerX + fullRightWidth - buttonsTotalWidth
+                for (buttonPlaceable in buttonPlaceables) {
+                    val buttonY = bandTop + (bandHeight - buttonPlaceable.height) / 2
+                    buttonPlaceable.placeRelative(buttonX, buttonY)
+                    buttonX += buttonPlaceable.width + gapPx
+                }
+            } else {
+                sliderPlaceable?.placeRelative(centerX, vPadPx + valueBoxHeightPx)
 
-            var buttonX = centerX + centerWidth + gapPx
-            for (buttonPlaceable in buttonPlaceables) {
-                val buttonY = vPadPx + (innerHeight - buttonPlaceable.height) / 2
-                buttonPlaceable.placeRelative(buttonX, buttonY)
-                buttonX += buttonPlaceable.width + gapPx
+                var buttonX = centerX + sideCenterWidth + sectionGapPx
+                for (buttonPlaceable in buttonPlaceables) {
+                    val buttonY = vPadPx + (innerHeight - buttonPlaceable.height) / 2
+                    buttonPlaceable.placeRelative(buttonX, buttonY)
+                    buttonX += buttonPlaceable.width + gapPx
+                }
             }
         }
     }
@@ -367,7 +389,7 @@ private fun AxisLabel(row: ReadoutRowUiState, onClick: () -> Unit) {
         onClick = onClick,
         style = DroButtonStyle.Neutral,
         contentDescription = description,
-        minWidth = LocalTouchTargets.current.button + 8.dp,
+        minWidth = LocalTouchTargets.current.button,
         modifier = Modifier.fillMaxHeight(0.9f),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -390,7 +412,7 @@ private fun AxisLabel(row: ReadoutRowUiState, onClick: () -> Unit) {
 }
 
 /**
- * The value of an axis: a fixed sign column, the digits with a fixed decimal position (tabular
+ * The value of an axis: a sign, the digits with a fixed decimal position (tabular
  * figures of the readout font), and the unit. A tap opens the keypad and changes no value.
  * The size of the digits follows the digit size rule. The digits change at once: only the
  * container of a value that is not live pulses. The line above the digits shows the
@@ -469,7 +491,9 @@ fun ValueBox(
     }
 
     val density = LocalDensity.current
-    val style = LocalReadoutTypography.current.digits
+    val readoutTypography = LocalReadoutTypography.current
+    val style = readoutTypography.digits
+    val unitBaseStyle = readoutTypography.unit
     val measurer = rememberTextMeasurer()
     val template = remember(format) { ReadoutPatterns.linear(format, metric = true).format(TEMPLATE_VALUE) }
     val referencePx = 100f
@@ -477,9 +501,11 @@ fun ValueBox(
     val reference = remember(style, referenceFontSize) { style.copy(fontSize = referenceFontSize) }
     val digitsStyle = remember(reference, color) { reference.copy(lineHeight = referenceFontSize, color = color) }
     val templateWidth = remember(reference, template) { measurer.measure(template, reference).size.width.toFloat() }
-    val signWidth = remember(reference) { measurer.measure("-", reference).size.width.toFloat() }
-    val signDp = with(density) { signWidth.toDp() }
-    val digitsDp = with(density) { (templateWidth - signWidth).toDp() }
+    val unitRefFontSize = with(density) { 20.dp.toSp() }
+    val unitRefStyle = remember(unitBaseStyle, unitRefFontSize) { unitBaseStyle.copy(fontSize = unitRefFontSize) }
+    val sideUnitWidthPx = remember(measurer, unit, unitRefStyle, density) {
+        measurer.measure(unit, unitRefStyle).size.width.toFloat() + with(density) { 8.dp.toPx() }
+    }
     val sizes = LocalRowTextSizes.current
     if (sizes != null) {
         DisposableEffect(value.axis) { onDispose { sizes.remove(value.axis) } }
@@ -490,35 +516,31 @@ fun ValueBox(
             // Child 0: Reference-sized sign and digits row. Measured with fixed unbounded constraints
             // and scaled via placeWithLayer so resize gestures never re-layout or re-rasterize glyphs.
             Row(verticalAlignment = Alignment.Bottom) {
-                Box(Modifier.width(signDp), contentAlignment = Alignment.BottomEnd) {
-                    if (value.negative) {
-                        Text(
-                            "-",
-                            style = digitsStyle,
-                            maxLines = 1,
-                            softWrap = false,
-                            modifier = Modifier.clearAndSetSemantics {},
-                        )
-                    }
-                }
-                Box(Modifier.widthIn(min = digitsDp), contentAlignment = Alignment.BottomEnd) {
+                if (value.negative) {
                     Text(
-                        value.digits,
+                        "-",
                         style = digitsStyle,
                         maxLines = 1,
                         softWrap = false,
-                        textAlign = TextAlign.End,
                         modifier = Modifier.clearAndSetSemantics {},
                     )
                 }
+                Text(
+                    value.digits,
+                    style = digitsStyle,
+                    maxLines = 1,
+                    softWrap = false,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.clearAndSetSemantics {},
+                )
             }
             // Child 1: Side unit (when width >= 260.dp).
             Text(
                 unit,
-                style = LocalReadoutTypography.current.unit,
+                style = unitBaseStyle,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
-                modifier = Modifier.width(UnitWidth).padding(start = 8.dp),
+                modifier = Modifier.padding(start = 6.dp, end = 2.dp),
             )
             // Child 2: Compact top-right unit (when width < 260.dp).
             Text(
@@ -545,17 +567,18 @@ fun ValueBox(
             stateLineHeight.roundToPx().coerceAtMost(boxHeight)
         }
         val digitsHeightPx = (boxHeight - stateLineHeightPx).coerceAtLeast(0).toFloat()
-        val unitWidthPx = UnitWidth.toPx()
-        val unitPx = if (!compactUnit) unitWidthPx else 0f
+        val unitPx = if (!compactUnit) sideUnitWidthPx else 0f
         val heightPx = digitsHeightPx * DIGIT_HEIGHT_FRACTION
         val widthPx = (boxWidth.toFloat() - unitPx).coerceAtLeast(0f)
-        val fitted = ReadoutGeometry.textSize(heightPx, widthPx, templateWidth * heightPx / referencePx)
-        if (sizes != null) {
+
+        val unbounded = Constraints()
+        val digitsPlaceable = measurables[0].measure(unbounded)
+        val effectiveTemplateWidth = maxOf(templateWidth, digitsPlaceable.width.toFloat())
+        val fitted = ReadoutGeometry.textSize(heightPx, widthPx, effectiveTemplateWidth * heightPx / referencePx)
+        if (sizes != null && sizes[value.axis] != fitted) {
             sizes[value.axis] = fitted
         }
 
-        val unbounded = Constraints()
-        val digitsPlaceable = if (fitted >= 1f) measurables[0].measure(unbounded) else null
         val sideUnitPlaceable = if (!compactUnit && fitted >= 1f) measurables[1].measure(unbounded) else null
         val compactUnitPlaceable = if (compactUnit) measurables[2].measure(unbounded) else null
         val stateChipPlaceable = if (measurables.size > 3) {
@@ -575,14 +598,13 @@ fun ValueBox(
                 compactUnitPlaceable.placeRelative(unitX, unitY)
             }
             val sizePx = minOf(fitted, sizes?.values?.minOrNull() ?: fitted)
-            if (digitsPlaceable != null && sizePx >= 1f) {
+            if (sizePx >= 1f) {
                 val scale = sizePx / referencePx
                 val scaledW = digitsPlaceable.width * scale
                 val scaledH = digitsPlaceable.height * scale
-                val sideUnitW = sideUnitPlaceable?.width ?: 0
+                val sideUnitW = if (!compactUnit) sideUnitWidthPx.roundToInt() else 0
                 val availW = (boxWidth - sideUnitW).coerceAtLeast(0)
-                val rowH = if (sideUnitPlaceable != null) maxOf(scaledH, sideUnitPlaceable.height.toFloat()) else scaledH
-                val rowBottom = stateLineHeightPx + ((digitsHeightPx + rowH) / 2f).roundToInt()
+                val rowBottom = stateLineHeightPx + ((digitsHeightPx + scaledH) / 2f).roundToInt()
                 val digitsX = (availW - scaledW).roundToInt()
                 val digitsY = (rowBottom - scaledH).roundToInt()
                 digitsPlaceable.placeWithLayer(digitsX, digitsY) {
@@ -704,11 +726,11 @@ private fun TachometerButton(label: String, surfaceSpeed: Boolean, metric: Boole
     }
 }
 
-/** The value of the template text of the size rule: the mm text of −9000. */
-private const val TEMPLATE_VALUE: Double = -9000.0
+/** The value of the template text of the size rule: the mm text of −90. */
+private const val TEMPLATE_VALUE: Double = -90.0
 
 /** The part of the value box height that the digits use. The rest is the margin of the rule. */
-private const val DIGIT_HEIGHT_FRACTION: Float = 0.8f
+private const val DIGIT_HEIGHT_FRACTION: Float = 0.9f
 
 private const val PULSE_MS: Int = 1_100
 private const val PULSE_MIN_ALPHA: Float = 0.72f
