@@ -20,6 +20,8 @@
     <string name="settings_machine_type_summary">Eine Änderung zeigt zuerst die Daten, die nicht zum neuen Typ passen.</string>
     <string name="settings_machine_metric">Standardeinheiten</string>
     <string name="settings_machine_metric_summary">Die Einheiten eines neuen Arbeitsbereichs und der Längeneinstellungen.</string>
+    <string name="settings_machine_leadscrew_pitch">Leitspindelsteigung</string>
+    <string name="settings_machine_leadscrew_pitch_summary">Die Leitspindelsteigung dieser Drehmaschine für die Regeln der Gewindeuhr.</string>
     <string name="settings_machine_section_sounds">Töne</string>
     <string name="settings_machine_mute">Töne dieser Maschine stummschalten</string>
     <string name="settings_machine_mute_summary">Schaltet alle Töne dieser Maschine stumm, auch die Verbindungstöne.</string>

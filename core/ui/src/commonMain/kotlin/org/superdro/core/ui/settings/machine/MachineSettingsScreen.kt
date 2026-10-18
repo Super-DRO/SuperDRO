@@ -116,6 +116,8 @@ import org.superdro.core.resources.settings_machine_group_z
 import org.superdro.core.resources.settings_machine_invert
 import org.superdro.core.resources.settings_machine_label
 import org.superdro.core.resources.settings_machine_label_summary
+import org.superdro.core.resources.settings_machine_leadscrew_pitch
+import org.superdro.core.resources.settings_machine_leadscrew_pitch_summary
 import org.superdro.core.resources.settings_machine_link_demo
 import org.superdro.core.resources.settings_machine_link_type
 import org.superdro.core.resources.settings_machine_metric
@@ -348,6 +350,30 @@ private fun MachineGroup(state: MachineSettingsUiState, profile: MachineProfile,
             onSelect = events::setMetricDefault,
             tag = machineSettingTag("metric"),
         )
+        if (profile.machineType.isLathe) {
+            val formattedPitch = profile.leadscrewPitchUm?.let {
+                org.superdro.core.ui.settings.components.LengthSettingFormat.format(it, profile.metricDefault)
+            }.orEmpty()
+            val textState = androidx.compose.runtime.remember(profile.id, profile.metricDefault) {
+                androidx.compose.runtime.mutableStateOf(formattedPitch)
+            }
+            val parsedCurrent = org.superdro.core.ui.settings.components.LengthSettingFormat.parse(textState.value, profile.metricDefault)
+            if (parsedCurrent != profile.leadscrewPitchUm && !(textState.value.isBlank() && profile.leadscrewPitchUm == null)) {
+                textState.value = formattedPitch
+            }
+            SettingsTextField(
+                title = stringResource(Res.string.settings_machine_leadscrew_pitch),
+                value = textState.value,
+                onValueChange = { text ->
+                    textState.value = text
+                    (events as? MachineSettingsPresenter)?.setLeadscrewPitch(text)
+                },
+                summary = stringResource(Res.string.settings_machine_leadscrew_pitch_summary),
+                suffix = stringResource(if (profile.metricDefault) Res.string.add_device_units_mm else Res.string.add_device_units_inch),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                tag = machineSettingTag("leadscrew-pitch"),
+            )
+        }
         SettingsLink(
             title = stringResource(Res.string.route_profile_file),
             summary = stringResource(

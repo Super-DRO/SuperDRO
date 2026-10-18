@@ -1,9 +1,11 @@
 package org.superdro.core.ui.graphics.view
 
 import androidx.compose.runtime.Immutable
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.tan
 import org.superdro.core.functions.PointUm
 import org.superdro.core.functions.graphics.CursorGeometry
 import org.superdro.core.functions.graphics.CutterCircle
@@ -15,7 +17,10 @@ import org.superdro.core.functions.graphics.PlaneAxes
 import org.superdro.core.functions.graphics.Vec2
 import org.superdro.core.functions.graphics.ViewGuide
 import org.superdro.core.functions.graphics.ViewPoint
+import org.superdro.core.functions.thread.ThreadPassSchedule
 import org.superdro.core.functions.thread.ThreadPoints
+import org.superdro.core.functions.thread.includedAngleDeg
+import org.superdro.core.functions.thread.taperRatio
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.Drawing
 import org.superdro.core.model.GraphicalDisplay
@@ -347,8 +352,8 @@ object GraphicalSceneBuilder {
 
     /**
      * Gives the thread outline of [spec]: the profile from Zmin to Zmax with the pitch P,
-     * between the major radius and the minor radius, and its mirror image at −X. In the plane `ZX`
-     * the view position is (Z, −X).
+     * the flank angle and root flat of [ThreadSpec.form], the radial taper slope of tapered pipe
+     * threads, and its mirror image at −X. In the plane `ZX` the view position is (Z, −X).
      */
     fun threadOutline(spec: ThreadSpec): ThreadOutline? {
         val zMin = min(spec.startZUm, spec.stopZUm)
@@ -357,16 +362,60 @@ object GraphicalSceneBuilder {
         val major = spec.majorDiameterUm / 2.0
         val minor = spec.minorDiameterUm / 2.0
         if (!(pitch > 0.0) || !(zMax > zMin) || !(major > 0.0) || !(minor > 0.0)) return null
-        val crest = if (spec.internal) minor else major
-        val root = if (spec.internal) major else minor
-        val half = pitch / 2.0
-        val count = ((zMax - zMin) / half).toInt().coerceAtMost(MAX_TEETH * 2)
+        val crestBase = if (spec.internal) minor else major
+        val rootBase = if (spec.internal) major else minor
+        val radialTaperSlope = spec.form.taperRatio / 2.0
+        fun crestAt(z: Double): Double = crestBase + (z - zMin) * radialTaperSlope
+        fun rootAt(z: Double): Double = rootBase + (z - zMin) * radialTaperSlope
+
         val profile = ArrayList<Pair<Double, Double>>()
-        for (step in 0..count) {
-            val z = zMin + step * half
-            profile += z to if (step % 2 == 0) crest else root
+        val isTrapezoidal = spec.form == org.superdro.core.model.ThreadForm.IsoTrapezoidal ||
+            spec.form == org.superdro.core.model.ThreadForm.Acme
+        if (isTrapezoidal) {
+            val depth = abs(crestBase - rootBase)
+            val halfAngleRad = (spec.form.includedAngleDeg / 2.0) * (PI / 180.0)
+            val flankSpan = (depth * tan(halfAngleRad)).coerceIn(0.0, pitch * 0.45)
+            val rootFlat = ThreadPassSchedule
+                .rootFlatWidthUm(spec.form, spec.cutter, pitch)
+                .coerceIn(0.0, (pitch - 2.0 * flankSpan).coerceAtLeast(0.0))
+            val crestFlat = (pitch - 2.0 * flankSpan - rootFlat).coerceAtLeast(0.0)
+
+            fun addPoint(z: Double, radiusAt: (Double) -> Double) {
+                val clampedZ = z.coerceIn(zMin, zMax)
+                val x = radiusAt(clampedZ)
+                val last = profile.lastOrNull()
+                if (last == null || abs(last.first - clampedZ) > 1e-3 || abs(last.second - x) > 1e-3) {
+                    profile += clampedZ to x
+                }
+            }
+
+            val teethCount = ((zMax - zMin) / pitch).toInt().coerceAtMost(MAX_TEETH)
+            addPoint(zMin, ::crestAt)
+            for (tooth in 0..teethCount) {
+                val z0 = zMin + tooth * pitch
+                if (z0 >= zMax) break
+                val zCrestRight = z0 + crestFlat / 2.0
+                val zRootLeft = zCrestRight + flankSpan
+                val zRootRight = zRootLeft + rootFlat
+                val zNextCrestLeft = zRootRight + flankSpan
+                val zNextCrest = z0 + pitch
+                if (crestFlat > 1e-3) addPoint(zCrestRight, ::crestAt)
+                if (zCrestRight < zMax) addPoint(zRootLeft, ::rootAt)
+                if (rootFlat > 1e-3 && zRootLeft < zMax) addPoint(zRootRight, ::rootAt)
+                if (zRootRight < zMax) addPoint(zNextCrestLeft, ::crestAt)
+                if (crestFlat > 1e-3 && zNextCrestLeft < zMax) addPoint(zNextCrest, ::crestAt)
+            }
+        } else {
+            val half = pitch / 2.0
+            val count = ((zMax - zMin) / half).toInt().coerceAtMost(MAX_TEETH * 2)
+            for (step in 0..count) {
+                val z = zMin + step * half
+                profile += z to if (step % 2 == 0) crestAt(z) else rootAt(z)
+            }
+            if (abs(profile.last().first - zMax) > 0.5) {
+                profile += zMax to if (count % 2 == 0) rootAt(zMax) else crestAt(zMax)
+            }
         }
-        if (abs(profile.last().first - zMax) > 0.5) profile += zMax to if (count % 2 == 0) root else crest
         val front = profile.map { (z, x) -> PlaneAxes.toView(Plane.ZX, z, x) }
         val back = profile.map { (z, x) -> PlaneAxes.toView(Plane.ZX, z, -x) }
         return ThreadOutline(listOf(front, back))

@@ -87,7 +87,7 @@ class FunctionStripValidationTest {
     private val millOrder = listOf(
         ZReference, RadiusCompensation, HeightCompensation, EdgeFinder, HoleCircle, ArbitraryHoleCircle,
         ArcCut, HoleGrid, EquidistantArray, DimensionMeasure, AngleMeasure, GraphicalView,
-        HeadTiltCompensation, RotatePart,
+        ThreadSetup, HeadTiltCompensation, RotatePart,
     )
 
     /** The lathe order 1 to 9 of the table, then the "end" rows of a lathe. */
@@ -156,8 +156,8 @@ class FunctionStripValidationTest {
     @Test
     fun always_buttons_stay_with_each_switch_off() {
         val allOff: (MachineProfile) -> MachineProfile = { p -> switches.fold(p) { profile, (_, off) -> off(profile) } }
-        assertEquals(listOf(GraphicalView, RotatePart), buttons(allOff(mill.withCaliper().withQuill())))
-        assertEquals(listOf(GraphicalView, RotatePart), buttons(allOff(horizontalMill)))
+        assertEquals(listOf(GraphicalView, ThreadSetup, RotatePart), buttons(allOff(mill.withCaliper().withQuill())))
+        assertEquals(listOf(GraphicalView, ThreadSetup, RotatePart), buttons(allOff(horizontalMill)))
         assertEquals(listOf(RadiusDiameter, LatheToolOffset, GraphicalView, ThreadSetup), buttons(allOff(lathe.withCaliper().withCompound())))
     }
 

@@ -116,4 +116,23 @@
     <string name="graphics_status_in_cut">Dans la coupe</string>
     <string name="graphics_status_past_root">Au-delà du fond</string>
     <string name="graphics_status_past_limit">Au-delà de la limite de retrait</string>
+    <string name="graphics_thread_warn_x_not_referenced">L'axe X n'est pas référencé. L'affichage du diamètre peut ne pas correspondre au filetage.</string>
+    <string name="graphics_thread_pass_target">Passe %1$d / %2$d</string>
+    <string name="graphics_thread_pass_done">%1$d passes terminées</string>
+    <string name="graphics_thread_target_diameter">Ø cible</string>
+    <string name="graphics_thread_compound_step">Pas du chariot</string>
+    <string name="graphics_thread_reset_passes">Réinitialiser les passes</string>
+    <string name="graphics_thread_start_label">Entrée %1$d / %2$d</string>
+    <string name="graphics_thread_start_chip">E%1$d</string>
+    <string name="graphics_thread_start_offset">Décalage Z %1$s · %2$s°</string>
+    <string name="graphics_thread_dial_keep_closed">Garder l'écrou fermé</string>
+    <string name="graphics_thread_dial_any_point">Cadran : tout point</string>
+    <string name="graphics_thread_dial_any_line">Cadran : toute ligne</string>
+    <string name="graphics_thread_dial_any_numbered">Cadran : toute ligne numérotée</string>
+    <string name="graphics_thread_dial_opposite_numbered">Cadran : lignes numérotées opposées</string>
+    <string name="graphics_thread_dial_same_line">Cadran : même ligne seulement</string>
+    <string name="graphics_thread_max_rpm">Max %1$d tr/min</string>
+    <string name="graphics_thread_speed_too_fast">Temps de réaction trop court</string>
+    <string name="graphics_thread_pitch_ok">Pas OK</string>
+    <string name="graphics_thread_pitch_mismatch">Pas de boîte incorrect</string>
 </resources>

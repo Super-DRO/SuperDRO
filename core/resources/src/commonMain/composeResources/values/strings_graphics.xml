@@ -116,4 +116,23 @@
     <string name="graphics_status_in_cut">In the cut</string>
     <string name="graphics_status_past_root">Past the root</string>
     <string name="graphics_status_past_limit">Past the retract limit</string>
+    <string name="graphics_thread_warn_x_not_referenced">X axis is not referenced. The diameter readout may not match the thread.</string>
+    <string name="graphics_thread_pass_target">Pass %1$d / %2$d</string>
+    <string name="graphics_thread_pass_done">All %1$d passes done</string>
+    <string name="graphics_thread_target_diameter">Target Ø</string>
+    <string name="graphics_thread_compound_step">Compound step</string>
+    <string name="graphics_thread_reset_passes">Reset passes</string>
+    <string name="graphics_thread_start_label">Start %1$d / %2$d</string>
+    <string name="graphics_thread_start_chip">S%1$d</string>
+    <string name="graphics_thread_start_offset">Z offset %1$s · %2$s°</string>
+    <string name="graphics_thread_dial_keep_closed">Keep half-nut closed</string>
+    <string name="graphics_thread_dial_any_point">Dial: any point</string>
+    <string name="graphics_thread_dial_any_line">Dial: any line</string>
+    <string name="graphics_thread_dial_any_numbered">Dial: any numbered line</string>
+    <string name="graphics_thread_dial_opposite_numbered">Dial: opposite numbered lines</string>
+    <string name="graphics_thread_dial_same_line">Dial: same line only</string>
+    <string name="graphics_thread_max_rpm">Max %1$d RPM</string>
+    <string name="graphics_thread_speed_too_fast">Reaction window too short</string>
+    <string name="graphics_thread_pitch_ok">Pitch OK</string>
+    <string name="graphics_thread_pitch_mismatch">Gearbox mismatch</string>
 </resources>

@@ -20,6 +20,8 @@
     <string name="settings_machine_type_summary">Uma alteração mostra primeiro os dados que não servem para o novo tipo.</string>
     <string name="settings_machine_metric">Unidades padrão</string>
     <string name="settings_machine_metric_summary">As unidades de um novo espaço de trabalho e das configurações de comprimento.</string>
+    <string name="settings_machine_leadscrew_pitch">Passo do fuso de rosca</string>
+    <string name="settings_machine_leadscrew_pitch_summary">O passo do fuso de rosca deste torno para as regras do relógio de rosca.</string>
     <string name="settings_machine_section_sounds">Sons</string>
     <string name="settings_machine_mute">Silenciar os sons desta máquina</string>
     <string name="settings_machine_mute_summary">Silencia todos os sons desta máquina, também os tons da ligação.</string>
