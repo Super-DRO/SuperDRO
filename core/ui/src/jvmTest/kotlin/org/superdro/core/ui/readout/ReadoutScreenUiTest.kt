@@ -507,6 +507,62 @@ class ReadoutScreenUiTest {
         assertEquals(afterPortraitDrag, live.appSettings.settings.value.graphicalPaneWeight, 1e-4f)
         live.close()
     }
+
+    @Test
+    fun touchingZeroOrIncShowsADismissableTooltipAnchoredToTheButtonWithoutShiftingReadoutRows() = runComposeUiTest {
+        val portrait = WindowLayout.of(800.dp, 1280.dp)
+        val live = LiveReadout(MachineProfile.create().copy(metricDefault = true))
+        live.inputs(AxisId.X to 10_000.0)
+        val navigator = RecordingNavigator()
+        setContent {
+            Themed(portrait) {
+                val state by live.presenter.uiState.collectAsState()
+                ReadoutScreen(
+                    state = state,
+                    axisValue = live.presenter::axisValue,
+                    events = PresenterReadoutEvents(live.presenter, navigator),
+                    layout = portrait,
+                )
+            }
+        }
+
+        val initialRowBounds = onNodeWithTag(rowTag(AxisId.X)).assertExists().getBoundsInRoot()
+        val zeroButtonTag = actionTag(AxisId.X, AxisButtonMode.SetZero)
+        val zeroButtonBounds = onNodeWithTag(zeroButtonTag).assertExists().getBoundsInRoot()
+
+        // Tap 0: shows a compact tooltip anchored below the 0 button without shifting the readout row.
+        onNodeWithTag(zeroButtonTag).performClick()
+        waitForIdle()
+        onNodeWithText("Press and hold to set the absolute zero.").assertExists()
+        val zeroTooltipBounds = onNodeWithTag(MESSAGE_LINE_TAG).assertExists().getBoundsInRoot()
+        assertEquals(initialRowBounds, onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot(), "Showing the tooltip must not shift or resize readout rows.")
+        assertTrue(zeroTooltipBounds.width < 450.dp, "Tooltip is compact, not a full-width banner.")
+        assertTrue(zeroTooltipBounds.top >= zeroButtonBounds.bottom, "Tooltip sits below the upper-screen 0 button.")
+        val zeroCenterX = (zeroButtonBounds.left + zeroButtonBounds.right) / 2
+        assertTrue(zeroCenterX in zeroTooltipBounds.left..zeroTooltipBounds.right, "Tooltip horizontally spans the pressed 0 button.")
+
+        // Dismiss via the close button.
+        onNodeWithTag(MESSAGE_DISMISS_TAG).performClick()
+        waitForIdle()
+        onNodeWithTag(MESSAGE_LINE_TAG).assertDoesNotExist()
+
+        // Tap INC/ABS: shows a compact tooltip anchored below the INC/ABS button, dismissable by tapping the tooltip.
+        val incButtonTag = actionTag(AxisId.X, AxisButtonMode.ToggleIncremental)
+        val incButtonBounds = onNodeWithTag(incButtonTag).assertExists().getBoundsInRoot()
+        onNodeWithTag(incButtonTag).performClick()
+        waitForIdle()
+        onNodeWithText("Press and hold to clear the offsets.").assertExists()
+        val incTooltipBounds = onNodeWithTag(MESSAGE_LINE_TAG).assertExists().getBoundsInRoot()
+        assertEquals(initialRowBounds, onNodeWithTag(rowTag(AxisId.X)).getBoundsInRoot())
+        assertTrue(incTooltipBounds.top >= incButtonBounds.bottom)
+        val incCenterX = (incButtonBounds.left + incButtonBounds.right) / 2
+        assertTrue(incCenterX in incTooltipBounds.left..incTooltipBounds.right)
+
+        onNodeWithTag(MESSAGE_LINE_TAG).performClick()
+        waitForIdle()
+        onNodeWithTag(MESSAGE_LINE_TAG).assertDoesNotExist()
+        live.close()
+    }
 }
 
 /** The key feedback of the readout buttons and the mute switch. */

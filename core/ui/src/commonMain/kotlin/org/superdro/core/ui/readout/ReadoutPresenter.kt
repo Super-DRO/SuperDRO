@@ -251,6 +251,7 @@ class ReadoutPresenter(
                 undo = ui.undo,
                 message = ui.message,
                 hint = ui.hint,
+                hintAnchorTag = ui.anchorTag,
             )
         } else {
             val perMachine = settings.paneSizeScope == org.superdro.core.model.PaneSizeScope.EachMachine
@@ -315,13 +316,16 @@ class ReadoutPresenter(
     }
 
     /**
-     * Shows [text] in the message line of the readout for [MESSAGE_MS]. The line is above the
-     * rows, so a sheet of the tab does not hide it. A screen entry of a different area uses
-     * `TabEntryScope.showMessage` (the snackbar of the frame), because a screen hides the readout.
+     * Shows [text] in the message tooltip of the readout for [MESSAGE_MS]. A screen entry of a
+     * different area uses `TabEntryScope.showMessage` (the snackbar of the frame), because a
+     * screen hides the readout.
      */
-    override fun showMessage(text: UiText) {
+    override fun showMessage(text: UiText) = showMessage(text, anchorTag = null)
+
+    /** Shows [text] in the message tooltip anchored to [anchorTag] for [MESSAGE_MS]. */
+    fun showMessage(text: UiText, anchorTag: String?) {
         val id = nextId()
-        local.update { state -> state.copy(message = MessageUiState(id, text)) }
+        local.update { state -> state.copy(message = MessageUiState(id, text), anchorTag = anchorTag ?: state.anchorTag) }
         messageTimer?.cancel()
         messageTimer = scope.launch {
             delay(MESSAGE_MS)
@@ -331,7 +335,20 @@ class ReadoutPresenter(
 
     /** The screen showed the message [id]. */
     fun onMessageShown(id: Long) {
-        local.update { state -> if (state.message?.id == id) state.copy(message = null) else state }
+        local.update { state ->
+            if (state.message?.id == id) {
+                state.copy(message = null, anchorTag = if (state.hint == null) null else state.anchorTag)
+            } else {
+                state
+            }
+        }
+    }
+
+    /** Dismisses the currently shown hint or info message tooltip immediately. */
+    fun onDismissMessage() {
+        hintTimer?.cancel()
+        messageTimer?.cancel()
+        local.update { state -> state.copy(message = null, hint = null, anchorTag = null) }
     }
 
     // ---------------------------------------------------------------------------------------
@@ -346,29 +363,30 @@ class ReadoutPresenter(
         val current = frame.value ?: return null
         val value = axisValue(axis).value
         if (value.state == ValueState.Error) return value.errorInput?.let(::EncoderSettingsRoute)
-        if (axis == AxisId.Tachometer) return onTachometerTap(current)
+        if (axis == AxisId.Tachometer) return onTachometerTap(current, valueTag(AxisId.Tachometer))
         return KeypadRoute(axis)
     }
 
     /** A tap on the label of [axis]: the axis details. */
     fun onLabelTap(axis: AxisId): TabRoute? {
         val current = frame.value ?: return null
-        return if (axis == AxisId.Tachometer) onTachometerTap(current) else AxisDetailsRoute(axis)
+        return if (axis == AxisId.Tachometer) onTachometerTap(current, rowTag(AxisId.Tachometer)) else AxisDetailsRoute(axis)
     }
 
     /** A tap on an action button of [axis] with [mode]. Gives the route to open, or null. */
     fun onActionTap(axis: AxisId, mode: AxisButtonMode): TabRoute? {
         val current = latestFrame() ?: return null
         val label = labelOf(current.profile, axis)
+        val tag = actionTag(axis, mode)
         when (mode) {
             AxisButtonMode.SetZero -> {
-                if (!requirePosition()) return null
+                if (!requirePosition(tag)) return null
                 apply(ZeroButtons.tap(current, axis), UiText.of(Res.string.readout_undo_zero, label))
-                if (!current.profile.display.shortPressZero) showHint(Hint.ZeroLongPress)
+                if (!current.profile.display.shortPressZero) showHint(Hint.ZeroLongPress, tag)
             }
             AxisButtonMode.ToggleIncremental -> {
                 apply(AxisOperations.toggleMode(current, axis), null)
-                showHint(Hint.ClearLongPress)
+                showHint(Hint.ClearLongPress, tag)
             }
             AxisButtonMode.ToggleUnits -> {
                 val result = ActionButtons.toggleUnits(current, axis)
@@ -376,15 +394,15 @@ class ReadoutPresenter(
                 apply(result, null)
             }
             AxisButtonMode.SetCenter -> {
-                if (!requirePosition()) return null
+                if (!requirePosition(tag)) return null
                 apply(AxisOperations.half(current, axis), UiText.of(Res.string.readout_undo_half, label))
             }
             AxisButtonMode.DivideCircle -> return if (axis == AxisId.Angular) DivisionsRoute else null
             AxisButtonMode.Hold -> {
-                if (!requirePosition()) return null
+                if (!requirePosition(tag)) return null
                 val first = current.hold[axis] == null
                 apply(AxisOperations.holdTap(current, axis), UiText.of(Res.string.readout_undo_hold, label))
-                if (first) showHint(Hint.HoldLongPress)
+                if (first) showHint(Hint.HoldLongPress, tag)
             }
         }
         return null
@@ -394,10 +412,11 @@ class ReadoutPresenter(
     fun onActionLongPress(axis: AxisId, mode: AxisButtonMode) {
         val current = latestFrame() ?: return
         val label = labelOf(current.profile, axis)
+        val tag = actionTag(axis, mode)
         when (mode) {
             AxisButtonMode.SetZero -> {
                 if (current.profile.display.shortPressZero) return
-                if (!requirePosition()) return
+                if (!requirePosition(tag)) return
                 apply(ZeroButtons.longPress(current, axis), UiText.of(Res.string.readout_undo_absolute_zero, label))
             }
             AxisButtonMode.ToggleIncremental ->
@@ -420,16 +439,16 @@ class ReadoutPresenter(
     /** The global Zero Set button, tap. */
     fun onZeroSetTap() {
         val current = latestFrame() ?: return
-        if (!requirePosition()) return
+        if (!requirePosition(ZERO_SET_TAG)) return
         apply(ZeroButtons.globalTap(current), UiText.of(Res.string.readout_undo_all_zero))
-        if (!current.profile.display.shortPressZero) showHint(Hint.ZeroLongPress)
+        if (!current.profile.display.shortPressZero) showHint(Hint.ZeroLongPress, ZERO_SET_TAG)
     }
 
     /** The global Zero Set button, long press: no action with `short_press_zero_set` on. */
     fun onZeroSetLongPress() {
         val current = latestFrame() ?: return
         if (current.profile.display.shortPressZero) return
-        if (!requirePosition()) return
+        if (!requirePosition(ZERO_SET_TAG)) return
         apply(ZeroButtons.globalLongPress(current), UiText.of(Res.string.readout_undo_all_absolute_zero))
     }
 
@@ -437,7 +456,7 @@ class ReadoutPresenter(
     fun onModeTap() {
         val current = latestFrame() ?: return
         apply(GlobalButtons.modeTap(current), null)
-        showHint(Hint.ClearLongPress)
+        showHint(Hint.ClearLongPress, MODE_TAG)
     }
 
     /** The global Mode button, long press: clears the offsets of the mode (no action in mixed modes). */
@@ -515,9 +534,9 @@ class ReadoutPresenter(
         apply(TachometerActions.selectPreset(current, rpm), UiText.of(Res.string.readout_undo_set, labelOf(current.profile, AxisId.Tachometer)))
     }
 
-    private fun onTachometerTap(current: ReadoutFrame): TabRoute? = when (val request = TachometerActions.tap(current).request) {
+    private fun onTachometerTap(current: ReadoutFrame, anchorTag: String? = null): TabRoute? = when (val request = TachometerActions.tap(current).request) {
         is OperationRequest.ShowMessage -> {
-            showMessage(request.message.toUiText())
+            showMessage(request.message.toUiText(), anchorTag)
             null
         }
         is OperationRequest.OpenPresetSheet -> TachometerPresetRoute
@@ -618,7 +637,7 @@ class ReadoutPresenter(
             delay(DOUBLE_TAP_MS)
             pendingTap = null
             request(AddPointKind.Single)
-            showHint(Hint.AddPointLongPress)
+            showHint(Hint.AddPointLongPress, ADD_POINT_TAG)
         }
     }
 
@@ -709,16 +728,22 @@ class ReadoutPresenter(
         }
     }
 
-    private fun showHint(hint: Hint) {
+    private fun showHint(hint: Hint, anchorTag: String? = null) {
         val settings = appSettings.settings.value
         if (!settings.showHints || hint.id in settings.shownHints) return
         appSettings.markHintShown(hint.id)
         val text = hint.text()
-        local.update { state -> state.copy(hint = text) }
+        local.update { state -> state.copy(hint = text, anchorTag = anchorTag) }
         hintTimer?.cancel()
         hintTimer = scope.launch {
             delay(HINT_MS)
-            local.update { state -> if (state.hint == text) state.copy(hint = null) else state }
+            local.update { state ->
+                if (state.hint == text) {
+                    state.copy(hint = null, anchorTag = if (state.message == null) null else state.anchorTag)
+                } else {
+                    state
+                }
+            }
         }
     }
 
@@ -727,10 +752,10 @@ class ReadoutPresenter(
         local.update { state -> state.copy(addPoint = AddPointRequest(id, kind)) }
     }
 
-    private fun requirePosition(): Boolean {
+    private fun requirePosition(anchorTag: String? = null): Boolean {
         val refusal = positionUnavailable() ?: return true
         sounds.error(deviceId)
-        showMessage(refusal)
+        showMessage(refusal, anchorTag)
         return false
     }
 
@@ -873,6 +898,7 @@ class ReadoutPresenter(
             graphicalPaneWeight = graphicalPaneWeight,
             setupReminder = if (showReminder) SetupReminder.axisNeedingSetup(profile, adapterProfile)?.let(::SetupReminderUiState) else null,
             hint = ui.hint,
+            hintAnchorTag = ui.anchorTag,
             undo = ui.undo,
             message = ui.message,
             keepScreenOn = state is SessionState.Connected,
@@ -917,6 +943,7 @@ class ReadoutPresenter(
         val undoRecord: UndoRecord? = null,
         val message: MessageUiState? = null,
         val hint: UiText? = null,
+        val anchorTag: String? = null,
         val addPoint: AddPointRequest? = null,
         val functionSheetOpen: Boolean = false,
     )

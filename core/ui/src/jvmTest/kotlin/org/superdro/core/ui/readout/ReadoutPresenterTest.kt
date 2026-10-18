@@ -484,14 +484,30 @@ class ReadoutPresenterTest {
         harness.presenter.onActionTap(AxisId.X, AxisButtonMode.SetZero)
         runCurrent()
         assertEquals(ReadoutPresenter.Hint.ZeroLongPress.text(), harness.presenter.uiState.value.hint)
+        assertEquals(actionTag(AxisId.X, AxisButtonMode.SetZero), harness.presenter.uiState.value.hintAnchorTag)
         assertEquals(-10_000.0, harness.presenter.frame.value?.let { _ -> harness.axisState(AxisId.X).incrementalOffset }, "The action ran.")
         assertTrue("hint_zero_long_press" in harness.store.appSettings.settings.value.shownHints)
         advanceTimeBy(ReadoutPresenter.HINT_MS + 1)
         runCurrent()
         assertNull(harness.presenter.uiState.value.hint)
+        assertNull(harness.presenter.uiState.value.hintAnchorTag)
         harness.presenter.onActionTap(AxisId.X, AxisButtonMode.SetZero)
         runCurrent()
         assertNull(harness.presenter.uiState.value.hint, "A hint shows one time.")
+    }
+
+    @Test
+    fun dismissingTheMessageClearsTheActiveHintAndMessageImmediately() = scope.runTest {
+        harness.start(MachineProfile.create().copy(metricDefault = true))
+        harness.inputs(AxisId.X to 10_000.0)
+        harness.presenter.onActionTap(AxisId.X, AxisButtonMode.ToggleIncremental)
+        runCurrent()
+        assertEquals(ReadoutPresenter.Hint.ClearLongPress.text(), harness.presenter.uiState.value.hint)
+        assertEquals(actionTag(AxisId.X, AxisButtonMode.ToggleIncremental), harness.presenter.uiState.value.hintAnchorTag)
+        harness.presenter.onDismissMessage()
+        runCurrent()
+        assertNull(harness.presenter.uiState.value.hint)
+        assertNull(harness.presenter.uiState.value.hintAnchorTag)
     }
 
     @Test

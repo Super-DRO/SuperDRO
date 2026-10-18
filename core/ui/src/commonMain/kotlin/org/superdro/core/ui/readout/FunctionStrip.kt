@@ -217,7 +217,7 @@ private fun ZeroSetButton(events: ReadoutEvents, modifier: Modifier) {
         onClick = events::onZeroSetTap,
         onLongClick = events::onZeroSetLongPress,
         contentDescription = label,
-        modifier = modifier.testTag(ZERO_SET_TAG),
+        modifier = modifier.hintAnchor(ZERO_SET_TAG).testTag(ZERO_SET_TAG),
     ) {
         Text(label, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
     }
@@ -231,7 +231,7 @@ private fun ModeButton(mode: GlobalModeState, events: ReadoutEvents, modifier: M
         onClick = events::onModeTap,
         onLongClick = events::onModeLongPress,
         contentDescription = stringResource(Res.string.readout_button_cd, name, text),
-        modifier = modifier.testTag(MODE_TAG),
+        modifier = modifier.hintAnchor(MODE_TAG).testTag(MODE_TAG),
     ) {
         StateLabel(text, mixed = mode == GlobalModeState.Mixed)
     }

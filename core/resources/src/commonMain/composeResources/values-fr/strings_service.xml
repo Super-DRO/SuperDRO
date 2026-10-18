@@ -18,5 +18,10 @@
     <string name="service_battery_reason">SuperDRO garde les liaisons avec vos machines ouvertes quand l'écran est éteint.</string>
     <string name="service_battery_continue">Continuer</string>
     <string name="service_battery_not_now">Pas maintenant</string>
-    <string name="service_background_warning">Les liaisons peuvent s'arrêter quand SuperDRO est en arrière-plan.</string>
+    <string name="service_background_warning">Les connexions aux machines (Bluetooth, USB ou Wi-Fi) peuvent s'interrompre quand SuperDRO est en arrière-plan.</string>
+    <string name="service_background_warning_title">Connexions aux machines en arrière-plan</string>
+    <string name="service_background_warning_prerequisite">Android nécessite l'autorisation Appareils à proximité (Bluetooth) ou un adaptateur USB autorisé pour maintenir les connexions aux machines actives en arrière-plan ou lorsque l'écran est éteint. Accordez l'autorisation ou activez-la dans les Paramètres de l'application.</string>
+    <string name="service_background_warning_restricted">Android a bloqué le démarrage du service de connexion en arrière-plan. Ouvrez les Paramètres de l'application et définissez l'utilisation de la batterie sur Non restreinte pour maintenir les connexions actives en arrière-plan.</string>
+    <string name="service_background_grant_permission">Accorder l'autorisation</string>
+    <string name="service_background_app_settings">Paramètres de l'application</string>
 </resources>

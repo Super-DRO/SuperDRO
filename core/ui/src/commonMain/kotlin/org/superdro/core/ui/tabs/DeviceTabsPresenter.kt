@@ -18,9 +18,11 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.superdro.core.connection.ConnectionRequest
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.connection.DeviceRef
 import org.superdro.core.connection.KeepAliveStatus
+import org.superdro.core.connection.PermissionKind
 import org.superdro.core.connection.SessionEvent
 import org.superdro.core.connection.SessionState
 import org.superdro.core.model.TabState
@@ -80,6 +82,7 @@ class DeviceTabsPresenter(
     context: PresenterContext,
     private val disconnectAll: DisconnectAllCommand = PauseAndDisconnectAll(tabStore, connections),
     keepAliveStatus: StateFlow<KeepAliveStatus> = KeepAliveStatus.idleFlow,
+    private val requests: RequestSender = RequestSender {},
 ) : ScopedPresenter(context), DeviceTabsEvents {
 
     private class SessionSnapshot(val id: DeviceId, val device: DeviceRef, val state: SessionState)
@@ -103,6 +106,7 @@ class DeviceTabsPresenter(
     private var seenStoredSelection: DeviceId? = null
     private var wantedSelection: DeviceId? = null
     private var backgroundWarning = false
+    private var currentKeepAliveStatus: KeepAliveStatus = KeepAliveStatus.Idle
     private var order: List<DeviceId> = emptyList()
     private var menuFor: DeviceId? = null
     private var overflowOpen = false
@@ -138,6 +142,7 @@ class DeviceTabsPresenter(
         scope.launch {
             keepAliveStatus.collect { status ->
                 mutex.withLock {
+                    currentKeepAliveStatus = status
                     backgroundWarning = status.linksCanStopInBackground
                     publish()
                 }
@@ -188,6 +193,14 @@ class DeviceTabsPresenter(
     }
 
     override fun onMessageShown(id: Long) = change { messages = messages.filterNot { message -> message.id == id } }
+
+    override fun onRequestBackgroundPermission() {
+        requests.send(ConnectionRequest.RequestPermissions(setOf(PermissionKind.BluetoothConnect)))
+    }
+
+    override fun onOpenBackgroundAppSettings() {
+        requests.send(ConnectionRequest.OpenAppSettings)
+    }
 
     private fun change(block: () -> Unit) {
         scope.launch {
@@ -328,6 +341,7 @@ class DeviceTabsPresenter(
             overflowOpen = overflowOpen,
             messages = messages,
             backgroundWarning = backgroundWarning,
+            keepAliveStatus = currentKeepAliveStatus,
         )
     }
 

@@ -286,18 +286,39 @@ class DeviceTabsPresenterTest {
         val store = UiStoreFixture(this)
         val status = MutableStateFlow(KeepAliveStatus.Running)
         val connections = FakeConnections()
-        val presenter = DeviceTabsPresenter(connections, store.tabs, store.machines, testPresenterContext(), keepAliveStatus = status)
+        val requests = RecordingRequests()
+        val presenter = DeviceTabsPresenter(
+            connections,
+            store.tabs,
+            store.machines,
+            testPresenterContext(),
+            keepAliveStatus = status,
+            requests = requests,
+        )
         runCurrent()
         assertEquals(false, presenter.uiState.value.backgroundWarning)
+        assertEquals(KeepAliveStatus.Running, presenter.uiState.value.keepAliveStatus)
         status.value = KeepAliveStatus.StartNotAllowed
         runCurrent()
         assertEquals(true, presenter.uiState.value.backgroundWarning)
+        assertEquals(KeepAliveStatus.StartNotAllowed, presenter.uiState.value.keepAliveStatus)
         status.value = KeepAliveStatus.PrerequisiteMissing
         runCurrent()
         assertEquals(true, presenter.uiState.value.backgroundWarning)
+        assertEquals(KeepAliveStatus.PrerequisiteMissing, presenter.uiState.value.keepAliveStatus)
+        presenter.onRequestBackgroundPermission()
+        presenter.onOpenBackgroundAppSettings()
+        assertEquals(
+            listOf(
+                org.superdro.core.connection.ConnectionRequest.RequestPermissions(setOf(org.superdro.core.connection.PermissionKind.BluetoothConnect)),
+                org.superdro.core.connection.ConnectionRequest.OpenAppSettings,
+            ),
+            requests.sent,
+        )
         status.value = KeepAliveStatus.Idle
         runCurrent()
         assertEquals(false, presenter.uiState.value.backgroundWarning)
+        assertEquals(KeepAliveStatus.Idle, presenter.uiState.value.keepAliveStatus)
         presenter.close()
         store.close()
     }

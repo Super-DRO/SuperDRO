@@ -427,8 +427,10 @@ fun ValueBox(
     val state = value.state
     // Only the draw phase reads the pulse, so the pulse does not recompose the box.
     val pulse = if (state == ValueState.Pending) rememberPulseAlpha() else null
+    val vTag = valueTag(value.axis)
     val boxModifier = modifier
-        .testTag(valueTag(value.axis))
+        .hintAnchor(vTag)
+        .testTag(vTag)
         .clickable(onClick = onClick)
         .clearAndSetSemantics {
             contentDescription = ValueSemantics.description(templates, label, state, text, unitName, stateText)
@@ -672,12 +674,13 @@ fun ActionButton(
         AxisButtonMode.SetZero, AxisButtonMode.ToggleIncremental, AxisButtonMode.Hold -> { -> events.onActionLongPress(row.axis, mode) }
         else -> null
     }
+    val tag = actionTag(row.axis, mode)
     DroButton(
         onClick = { events.onActionTap(row.axis, mode) },
         onLongClick = longPress,
         contentDescription = stringResource(Res.string.readout_button_cd, row.label, name),
         style = if (active) DroButtonStyle.Active else DroButtonStyle.Primary,
-        modifier = Modifier.testTag(actionTag(row.axis, mode)),
+        modifier = Modifier.hintAnchor(tag).testTag(tag),
     ) {
         if (mode == AxisButtonMode.Hold) {
             Icon(painterResource(Res.drawable.ic_lock), contentDescription = null, modifier = Modifier.size(18.dp))

@@ -65,6 +65,8 @@ class TabsFrameUiTest {
         override fun onCloseOverflow() { calls += "closeOverflow" }
         override fun onDisconnectAll() { calls += "disconnectAll" }
         override fun onMessageShown(id: Long) { calls += "shown $id" }
+        override fun onRequestBackgroundPermission() { calls += "requestBackgroundPermission" }
+        override fun onOpenBackgroundAppSettings() { calls += "openBackgroundAppSettings" }
     }
 
     private val mill = DeviceId("mill")
@@ -97,10 +99,18 @@ class TabsFrameUiTest {
     }
 
     @Test
-    fun theFrameShowsTheBackgroundWarningWithAnIconAndAText() = runComposeUiTest {
-        showFrame(twoTabs().copy(backgroundWarning = true), RecordingEvents())
-        onNodeWithTag(BACKGROUND_WARNING_TAG).assertIsDisplayed()
-        onNodeWithText("The links can stop while SuperDRO is in the background.").assertIsDisplayed()
+    fun theFrameShowsTheBackgroundWarningIndicatorAndOpensTheExplanationDialogOnTap() = runComposeUiTest {
+        val events = RecordingEvents()
+        showFrame(twoTabs().copy(backgroundWarning = true), events)
+        onNodeWithTag(BACKGROUND_WARNING_TAG)
+            .assertIsDisplayed()
+            .assertHeightIsAtLeast(64.dp)
+            .assertWidthIsAtLeast(64.dp)
+            .performClick()
+        onNodeWithText("Background machine connections").assertIsDisplayed()
+        onNodeWithText("Machine connections (Bluetooth, USB, or Wi-Fi) may disconnect while SuperDRO is in the background.").assertIsDisplayed()
+        onNodeWithText("Grant permission").performClick()
+        assertEquals(listOf("requestBackgroundPermission"), events.calls)
     }
 
     @Test

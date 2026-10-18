@@ -64,6 +64,9 @@ interface ReadoutEvents {
 
     /** The user dragged the horizontal split handle in the portrait layout. */
     fun onGraphicalPaneWeightChange(weight: Float) = Unit
+
+    /** Dismisses the active hint or info message tooltip. */
+    fun onDismissMessage() = Unit
 }
 
 /** The events that do nothing, for the previews and the screenshot tests. */

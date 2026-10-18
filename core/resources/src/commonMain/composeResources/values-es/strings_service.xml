@@ -18,5 +18,10 @@
     <string name="service_battery_reason">SuperDRO mantiene abiertos los enlaces con sus máquinas mientras la pantalla está apagada.</string>
     <string name="service_battery_continue">Continuar</string>
     <string name="service_battery_not_now">Ahora no</string>
-    <string name="service_background_warning">Los enlaces pueden detenerse mientras SuperDRO está en segundo plano.</string>
+    <string name="service_background_warning">Las conexiones de las máquinas (Bluetooth, USB o Wi-Fi) pueden desconectarse mientras SuperDRO está en segundo plano.</string>
+    <string name="service_background_warning_title">Conexiones de máquinas en segundo plano</string>
+    <string name="service_background_warning_prerequisite">Android requiere el permiso de Dispositivos cercanos (Bluetooth) o un adaptador USB autorizado para mantener activas las conexiones de las máquinas en segundo plano o con la pantalla apagada. Conceda el permiso o actívelo en los Ajustes de la aplicación.</string>
+    <string name="service_background_warning_restricted">Android bloqueó el inicio del servicio de conexión en segundo plano. Abra los Ajustes de la aplicación y configure el uso de batería como Sin restricciones para mantener las conexiones activas en segundo plano.</string>
+    <string name="service_background_grant_permission">Conceder permiso</string>
+    <string name="service_background_app_settings">Ajustes de la aplicación</string>
 </resources>
