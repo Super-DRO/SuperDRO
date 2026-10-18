@@ -61,4 +61,6 @@
     <string name="settings_app_dxf_reset_done">The DXF import limits are the defaults again.</string>
     <string name="settings_app_get_sig">Send #get_sig one time</string>
     <string name="settings_app_get_sig_summary">A developer option. The sessions do not use it yet.</string>
+    <string name="settings_app_check_updates">Check for updates</string>
+    <string name="settings_app_check_updates_summary">Check GitHub for a new release at most once a day.</string>
 </resources>
