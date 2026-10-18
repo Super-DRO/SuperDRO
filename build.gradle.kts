@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.Test
 import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension
 import org.superdro.composite.util.resolveProjectVersion
 
@@ -17,6 +18,8 @@ plugins {
     alias(libs.plugins.composite) apply false
 }
 
+defaultTasks("validateJvm")
+
 // One calendar version for all modules, from `git describe` (composite, resolveProjectVersion()).
 // A build on a tag gets a clean `26.41.1`. Each other build gets a `-dev` marker.
 val projectVersion = resolveProjectVersion()
@@ -31,8 +34,10 @@ allprojects {
 //   build/compose_compiler of each module. A normal build writes none. The build cache can
 //   skip a compile task, so add `--rerun` to the compile task, for example
 //   `./gradlew -PcomposeReports=true :core:ui:compileKotlinJvm --rerun`.
+// - `-PrerunTests=true` runs all requested Test tasks again while compile tasks stay cached.
 val composeStabilityFile = layout.projectDirectory.file("compose-stability.conf")
 val composeReports = providers.gradleProperty("composeReports").map { value -> value.toBoolean() }.getOrElse(false)
+val rerunTests = providers.gradleProperty("rerunTests").map { value -> value.toBoolean() }.getOrElse(false)
 subprojects {
     pluginManager.withPlugin("org.jetbrains.kotlin.plugin.compose") {
         extensions.configure<ComposeCompilerGradlePluginExtension> {
@@ -43,4 +48,36 @@ subprojects {
             }
         }
     }
+    if (rerunTests) {
+        tasks.withType<Test>().configureEach {
+            outputs.upToDateWhen { false }
+        }
+    }
+}
+
+// The verification tasks that CI and local checks run.
+tasks.register("validateJvm") {
+    group = "verification"
+    description = "Runs the JVM unit tests, the validation domain tests, the localization check, and the SQLDelight migration check."
+    dependsOn(subprojects.map { project -> project.tasks.matching { task -> task.name == "jvmTest" } })
+    dependsOn(
+        ":validation:test",
+        ":core:resources:localizationCheck",
+        ":core:store:verifySqlDelightMigration",
+    )
+}
+
+tasks.register("validateAndroid") {
+    group = "verification"
+    description = "Runs the Android debug and release assemblies, the test compilation checks, and lint."
+    dependsOn(subprojects.map { project -> project.tasks.matching { task -> task.name == "lint" } })
+    dependsOn(
+        ":app:android:assembleDebug",
+        ":app:android:assembleRelease",
+        ":app:android:baseline:compileBenchmarkReleaseKotlin",
+        ":app:android:compileDebugAndroidTestKotlin",
+        ":app:adapter-probe:assembleDebug",
+        ":app:adapter-probe:assembleRelease",
+        ":platform:android:store:compileDebugAndroidTestKotlin",
+    )
 }

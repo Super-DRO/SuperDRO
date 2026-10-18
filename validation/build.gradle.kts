@@ -254,6 +254,8 @@ val testProject = registerDomainTest(
     inputs.file(root.resolve("gradle.properties")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(root.resolve("settings.gradle.kts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(root.resolve("build.gradle.kts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(root.resolve("validation/build.gradle.kts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(root.resolve(".github/workflows/validation.yml")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         fileTree(root) {
             include(

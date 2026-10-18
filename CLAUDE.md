@@ -31,6 +31,7 @@ adapters.
 A work item is done only when all of these conditions are true:
 
 - The JVM tests of the changed modules and the matching `:validation:test*` tasks pass.
+- Before a push or a pull request update, `scripts/validate.sh` passes (or `scripts/validate.sh --android` when the change touches Android code, build logic, or resources).
 - The coordinator merged the branch of the work item into `main`.
 - The worktree of the work item does not exist. After the merge, the coordinator removes it with
   `git worktree remove <path>` and then runs `git worktree prune`.
@@ -92,6 +93,8 @@ builds do not use all the memory:
 
 - Run only the tasks of your modules, for example `:core:protocol:jvmTest` or `:core:protocol:allTests`.
 - For `:core:ui` and `:validation`, run the domain task of your area (`:core:ui:jvmTestAdapter`, `:core:ui:jvmTestFunctions`, `:core:ui:jvmTestGraphics`, `:core:ui:jvmTestReadout`, `:core:ui:jvmTestSettings`, `:core:ui:jvmTestTabs`, `:core:ui:jvmTestScreenshots`; `:validation:testFunctions`, `:validation:testProtocol`, `:validation:testReadout`, `:validation:testStore`, `:validation:testProject`, `:validation:testUi`, `:validation:testUiScreens`, `:validation:testUiScreenshots`).
+- The root task `validateJvm` (also the default task) runs all `jvmTest` tasks, `:validation:test`, `:core:resources:localizationCheck`, and `:core:store:verifySqlDelightMigration`. The root task `validateAndroid` runs the Android assemblies, test compile checks, and `lint`.
+- Before you push a branch, run `scripts/validate.sh`. The script runs the release script tests, the `composite` tests, and `validateJvm` with `-PrerunTests=true` so that cached test outputs cannot hide a failure.
 - After a change under `composite/`, run `./gradlew -p composite clean test publish` and commit `composite/m2`.
 - Do not run `./gradlew clean` on the full project of a different worktree.
 

@@ -50,8 +50,8 @@ jobs:
       # A failure of one target does not cancel the other target.
       fail-fast: false
       matrix:
-        # There is no root `build` task and no unqualified `check`. A project's `build` runs only
-        # its own `check`, so each verification task that CI needs is named here.
+        # The root build.gradle.kts defines validateAndroid and validateJvm, so that local checks
+        # and CI run the same task graphs.
         #
         #   android  the debug and release APKs of both apps, a compile check of the Baseline
         #            Profile generator and of the instrumented tests, and `lint`.
@@ -60,9 +60,9 @@ jobs:
         #            migration check of the database.
         include:
           - target: android
-            tasks: ":app:android:assembleDebug :app:android:assembleRelease :app:android:baseline:compileBenchmarkReleaseKotlin :app:android:compileDebugAndroidTestKotlin :app:adapter-probe:assembleDebug :app:adapter-probe:assembleRelease :platform:android:store:compileDebugAndroidTestKotlin lint"
+            tasks: "validateAndroid"
           - target: jvm
-            tasks: "jvmTest :validation:test :core:resources:localizationCheck :core:store:verifySqlDelightMigration"
+            tasks: "validateJvm"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
