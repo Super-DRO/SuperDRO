@@ -146,6 +146,7 @@ class AppGraph(debug: Boolean = true) : AutoCloseable {
         di.direct.instance<DeviceTabsPresenter>().close()
         manager.close()
         di.direct.instance<CoroutineScope>(tag = APP_SCOPE).cancel()
+        runBlocking { di.direct.instance<org.superdro.core.store.StoreWriter>().awaitIdle() }
         runCatching { driver.close() }
         folder.deleteRecursively()
         presenterErrors.firstOrNull()?.let { error -> throw AssertionError("A presenter failed while the test ran.", error) }

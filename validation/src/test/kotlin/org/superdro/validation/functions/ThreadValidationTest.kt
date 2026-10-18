@@ -19,16 +19,10 @@ import org.superdro.core.functions.thread.ThreadSetupProblem
 import org.superdro.core.functions.thread.ThreadTables
 import org.superdro.core.functions.thread.RetractState
 import org.superdro.core.functions.thread.ThreadCutState
-import org.superdro.core.functions.thread.ThreadDialRule
 import org.superdro.core.functions.thread.classesFor
 import org.superdro.core.model.ThreadClass
 import org.superdro.core.model.ThreadCutter
 import org.superdro.core.model.ThreadForm
-import org.superdro.core.resources.Res
-import org.superdro.core.resources.graphics_thread_dial_keep_closed
-import org.superdro.core.resources.graphics_thread_warn_x_not_referenced
-import org.superdro.core.ui.graphics.thread.dialRuleText
-import org.superdro.core.ui.graphics.thread.warningText
 
 /**
  * The lathe thread functions, with the worked examples (M10 × 1.5 6g and 6H, 1/4-20 UNC 2A
@@ -261,14 +255,5 @@ class ThreadValidationTest {
 
         val reset = ThreadCut.resetPasses(state)
         assertNull(reset.record.deepestUm)
-
-        assertEquals(
-            Res.string.graphics_thread_warn_x_not_referenced,
-            warningText(ThreadCutWarning.XNotReferenced),
-        )
-        assertEquals(
-            Res.string.graphics_thread_dial_keep_closed,
-            dialRuleText(ThreadDialRule.KeepHalfNutClosed),
-        )
     }
 }

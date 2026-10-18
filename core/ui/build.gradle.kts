@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.Sync
+import org.gradle.api.tasks.testing.Test
+import org.gradle.process.CommandLineArgumentProvider
 import org.superdro.composite.util.configureOptIns
 import org.superdro.composite.util.superDroTargets
 
@@ -7,6 +10,12 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+}
+
+private class ScreenshotDirArgs(
+    private val path: String,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> = listOf("-Dsuperdro.screenshotDir=$path")
 }
 
 // This module has no dependency on core:di, on a transport module, or on BlueFalcon. The UI sees
@@ -69,11 +78,79 @@ kotlin {
     }
 }
 
+val jvmMainCompilation = kotlin.jvm().compilations.getByName("main")
+val jvmTestCompilation = kotlin.jvm().compilations.getByName("test")
+val baseTestClasses = jvmTestCompilation.output.classesDirs
+val baseRuntimeClasspath = files(
+    tasks.named(jvmTestCompilation.processResourcesTaskName),
+    jvmMainCompilation.output.allOutputs,
+    jvmTestCompilation.runtimeDependencyFiles,
+)
+val parallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceIn(2, 4)
+
+fun registerUiDomainTest(
+    taskName: String,
+    testIncludes: List<String>,
+    testExcludes: List<String> = emptyList(),
+): org.gradle.api.tasks.TaskProvider<Test> {
+    val syncClasses = tasks.register<Sync>("sync${taskName.replaceFirstChar(Char::uppercase)}Classes") {
+        duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.EXCLUDE
+        // Include all shared non-*Test support/fixture classes so cross-package harnesses resolve.
+        from(baseTestClasses) {
+            exclude("**/*Test.class", "**/*Test$*.class", "**/*TestKt.class", "**/*TestKt$*.class")
+        }
+        // Include only the *Test classes of this UI domain.
+        from(baseTestClasses) {
+            include(testIncludes)
+            exclude(testExcludes)
+        }
+        into(layout.buildDirectory.dir("domain-test-classes/$taskName"))
+    }
+    return tasks.register<Test>(taskName) {
+        testClassesDirs = files(syncClasses)
+        classpath = files(syncClasses, baseRuntimeClasspath)
+        include(testIncludes)
+        exclude(testExcludes)
+        maxParallelForks = parallelForks
+        val screenshotDir = layout.buildDirectory.dir("screenshots/$taskName")
+        outputs.dir(screenshotDir).withPropertyName("screenshots")
+        jvmArgumentProviders.add(ScreenshotDirArgs(screenshotDir.get().asFile.absolutePath))
+        systemProperty("java.awt.headless", "true")
+        systemProperty("skiko.renderApi", "SOFTWARE")
+    }
+}
+
+val screenshotTestPattern = "**/*ScreenshotTest*"
+
+val specificDomainPatterns = listOf(
+    "org/superdro/core/ui/adapter/**/*Test*",
+    "org/superdro/core/ui/functions/**/*Test*",
+    "org/superdro/core/ui/graphics/**/*Test*",
+    "org/superdro/core/ui/readout/**/*Test*",
+    "org/superdro/core/ui/settings/**/*Test*",
+)
+
+val jvmTestDomains = listOf(
+    registerUiDomainTest("jvmTestAdapter", listOf("org/superdro/core/ui/adapter/**/*Test*"), listOf(screenshotTestPattern)),
+    registerUiDomainTest("jvmTestFunctions", listOf("org/superdro/core/ui/functions/**/*Test*"), listOf(screenshotTestPattern)),
+    registerUiDomainTest("jvmTestGraphics", listOf("org/superdro/core/ui/graphics/**/*Test*"), listOf(screenshotTestPattern)),
+    registerUiDomainTest("jvmTestReadout", listOf("org/superdro/core/ui/readout/**/*Test*"), listOf(screenshotTestPattern)),
+    registerUiDomainTest("jvmTestSettings", listOf("org/superdro/core/ui/settings/**/*Test*"), listOf(screenshotTestPattern)),
+    registerUiDomainTest("jvmTestTabs", listOf("org/superdro/core/ui/**/*Test*"), specificDomainPatterns + screenshotTestPattern),
+    registerUiDomainTest("jvmTestScreenshots", listOf(screenshotTestPattern)),
+)
+
+val hasCommandLineTestFilter = gradle.startParameter.taskRequests.any { "--tests" in it.args }
+
 // The render tests write the PNG files here. An agent reads them after `:core:ui:jvmTest`.
 tasks.named<Test>("jvmTest") {
-    val screenshotDir = layout.buildDirectory.dir("screenshots")
+    if (!hasCommandLineTestFilter) {
+        dependsOn(jvmTestDomains)
+        enabled = false
+    }
+    val screenshotDir = layout.buildDirectory.dir("screenshots/jvmTest")
     outputs.dir(screenshotDir).withPropertyName("screenshots")
-    systemProperty("superdro.screenshotDir", screenshotDir.get().asFile.absolutePath)
+    jvmArgumentProviders.add(ScreenshotDirArgs(screenshotDir.get().asFile.absolutePath))
     // The render needs no display.
     systemProperty("java.awt.headless", "true")
     systemProperty("skiko.renderApi", "SOFTWARE")

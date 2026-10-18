@@ -9,6 +9,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -39,16 +41,35 @@ import org.superdro.core.store.repository.AdapterRepository
 import org.superdro.core.store.repository.MachineRepository
 import org.superdro.core.store.sqliteVersion
 import org.superdro.core.store.valueOrNull
+import com.toxicbakery.logging.Arbor
 import org.superdro.core.ui.navigation.EntryRegistry
 import org.superdro.core.ui.navigation.NavigationHolder
 import org.superdro.core.ui.navigation.TabReadoutPresenter
 import org.superdro.core.ui.presenter.PresenterContext
 import org.superdro.core.ui.session.Connections
+import org.superdro.core.ui.settings.logs.SessionLogSink
 import org.superdro.core.ui.sound.SoundController
 import org.superdro.core.ui.tabs.DeviceTabsPresenter
 import org.superdro.core.ui.tabs.EditMachinePresenter
 import org.superdro.core.ui.tabs.adddevice.AddDevicePresenter
 import org.superdro.core.ui.tabs.remembered.RememberedMachinesPresenter
+
+/**
+ * Stops the presenters, the sessions, and the app scope of a test graph, waits for the
+ * database writer, and closes the database driver.
+ */
+internal fun DI.closeGraph() {
+    Arbor.harvest(direct.instance<SessionLogSink>())
+    val holder = direct.instance<NavigationHolder>()
+    holder.retainTabs(emptyList())
+    holder.clear()
+    holder.presenters.keys.forEach(holder.presenters::close)
+    direct.instance<DeviceTabsPresenter>().close()
+    direct.instance<ConnectionManager>().close()
+    direct.instance<CoroutineScope>(tag = APP_SCOPE).cancel()
+    runBlocking { direct.instance<StoreWriter>().awaitIdle() }
+    direct.instance<SqlDriver>().close()
+}
 
 /** The common graph builds with the platform bindings of the table of [coreDiModule], as an app gives them. */
 class CoreDiModuleTest {
@@ -67,8 +88,7 @@ class CoreDiModuleTest {
 
     @AfterTest
     fun close() {
-        di.direct.instance<ConnectionManager>().close()
-        di.direct.instance<SqlDriver>().close()
+        di.closeGraph()
         directory.deleteRecursively()
     }
 
@@ -107,10 +127,12 @@ class CoreDiModuleTest {
         direct.instance<RememberedMachinesPresenter>().close()
         direct.instance<String, EditMachinePresenter>(arg = "mill").close()
         val mill = direct.instance<DeviceId, TabReadoutPresenter>(arg = DeviceId("mill"))
+        val secondMill = direct.instance<DeviceId, TabReadoutPresenter>(arg = DeviceId("mill"))
         val lathe = direct.instance<DeviceId, TabReadoutPresenter>(arg = DeviceId("lathe"))
         assertEquals(DeviceId("lathe"), lathe.deviceId)
-        assertNotSame(mill, direct.instance<DeviceId, TabReadoutPresenter>(arg = DeviceId("mill")))
+        assertNotSame(mill, secondMill)
         mill.close()
+        secondMill.close()
         lathe.close()
     }
 

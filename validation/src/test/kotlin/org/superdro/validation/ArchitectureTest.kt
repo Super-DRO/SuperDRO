@@ -165,4 +165,33 @@ class ArchitectureTest {
         listOf("androidx.room", "androidx.datastore", "androidx.work", "androidx.camera", "com.google.android.gms")
             .forEach { group -> assertTrue("\"$group" !in catalog, "The catalog names $group.") }
     }
+
+    @Test
+    fun theValidationTasksAndDomainSplitsAreComplete() {
+        val rootBuild = root.resolve("build.gradle.kts").readText()
+        assertTrue("defaultTasks(\"validateJvm\")" in rootBuild, "validateJvm is the default root task.")
+        assertTrue("tasks.register(\"validateJvm\")" in rootBuild, "validateJvm is in the root build.")
+        assertTrue("tasks.register(\"validateAndroid\")" in rootBuild, "validateAndroid is in the root build.")
+
+        val workflow = root.resolve(".github/workflows/validation.yml").readText()
+        assertTrue("tasks: \"validateJvm\"" in workflow, "CI runs validateJvm.")
+        assertTrue("tasks: \"validateAndroid\"" in workflow, "CI runs validateAndroid.")
+
+        val validationBuild = root.resolve("validation/build.gradle.kts").readText()
+        assertTrue("tasks.named(\"processTestResources\")" in validationBuild, "validation domain tests depend on processTestResources.")
+        val uiBuild = root.resolve("core/ui/build.gradle.kts").readText()
+        assertTrue("tasks.named(jvmTestCompilation.processResourcesTaskName)" in uiBuild, "core:ui domain tests depend on the test resources task.")
+
+        val validationRoot = root.resolve("validation/src/test/kotlin/org/superdro/validation")
+        val allowedDomains = setOf("functions", "protocol", "readout", "store", "project", "ui")
+        val unmappedTests = validationRoot.walkTopDown()
+            .filter { file -> file.isFile && file.name.endsWith("Test.kt") }
+            .filterNot { file ->
+                val rel = file.relativeTo(validationRoot).invariantSeparatorsPath
+                rel == "ArchitectureTest.kt" || rel.substringBefore('/') in allowedDomains
+            }
+            .map { file -> file.relativeTo(root).invariantSeparatorsPath }
+            .toList()
+        assertEquals(emptyList(), unmappedTests, "Validation tests outside the domain test tasks.")
+    }
 }

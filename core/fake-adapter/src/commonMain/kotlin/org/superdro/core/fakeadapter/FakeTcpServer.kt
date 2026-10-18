@@ -11,6 +11,7 @@ import io.ktor.network.sockets.port
 import io.ktor.utils.io.readAvailable
 import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.superdro.core.connection.LinkFailureException
 import org.superdro.core.model.AdapterAddress
 
@@ -48,8 +50,10 @@ class FakeTcpServer(
 
     private val log = Arbor.tag("FakeTcpServer")
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    private var selectorJob: CompletableJob? = null
     private var selector: SelectorManager? = null
     private var server: ServerSocket? = null
+    private var acceptJob: Job? = null
     private var client: Job? = null
 
     /** The port of the server after [start]. */
@@ -61,17 +65,20 @@ class FakeTcpServer(
 
     /** Starts the server and gives its port. */
     suspend fun start(): Int {
-        val manager = SelectorManager(dispatcher)
+        val job = SupervisorJob()
+        val manager = SelectorManager(dispatcher + job)
         val socket = try {
             aSocket(manager).tcp().bind(host, port) { reuseAddress = true }
         } catch (failure: Throwable) {
             manager.close()
+            job.cancel()
             throw failure
         }
+        selectorJob = job
         selector = manager
         server = socket
         boundPort = socket.port
-        scope.launch { accept(socket) }
+        acceptJob = scope.launch { accept(socket) }
         log.d { "Fake adapter server on $host:$boundPort" }
         return boundPort
     }
@@ -127,11 +134,34 @@ class FakeTcpServer(
         }
     }
 
-    /** Stops the server and the client. A connect after this call is refused. */
+    /**
+     * Stops the server and the client. A connect after this call is refused.
+     *
+     * A non-blocking NIO server channel that is registered with a selector closes its OS file
+     * descriptor only when the selector closes. Wait for the accept coroutine and the selector
+     * coroutine to finish, so that the port is closed before this method returns.
+     */
     override fun close() {
-        client?.cancel()
+        val currentAccept = acceptJob
+        val currentClient = client
+        val currentSelectorJob = selectorJob
+        acceptJob = null
+        client = null
+        selectorJob = null
+        currentAccept?.cancel()
+        currentClient?.cancel()
         server?.close()
+        server = null
         selector?.close()
+        selector = null
+        currentSelectorJob?.complete()
+        if (currentAccept != null || currentClient != null || currentSelectorJob != null) {
+            runBlocking {
+                currentAccept?.join()
+                currentClient?.join()
+                currentSelectorJob?.join()
+            }
+        }
         scope.cancel()
     }
 

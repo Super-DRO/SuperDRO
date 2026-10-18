@@ -51,8 +51,7 @@ class AppGraphUiTest {
 
     @AfterTest
     fun close() {
-        di.direct.instance<ConnectionManager>().close()
-        di.direct.instance<SqlDriver>().close()
+        di.closeGraph()
         directory.deleteRecursively()
     }
 

@@ -58,8 +58,7 @@ class SettingsMachineGraphTest {
     @AfterTest
     fun close() {
         Arbor.harvest(di.direct.instance<SessionLogSink>())
-        di.direct.instance<ConnectionManager>().close()
-        di.direct.instance<SqlDriver>().close()
+        di.closeGraph()
         directory.deleteRecursively()
     }
 

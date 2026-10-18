@@ -90,9 +90,22 @@ class FakeTcpServerTest {
     @Test
     fun aConnectWithNoServerIsRefused() = runBlocking {
         Setup(timing).use { setup ->
-            val port = FakeTcpServer(FakeAdapter(FakeScenarios.Still), port = 0).use { server -> server.start() }
+            val serverDispatcher = Dispatchers.IO.limitedParallelism(1)
+            val server = FakeTcpServer(FakeAdapter(FakeScenarios.Still), port = 0, dispatcher = serverDispatcher)
+            val entered = java.util.concurrent.CountDownLatch(1)
+            val port = server.start()
+            val busy = setup.scope.launch(serverDispatcher) {
+                // Let ActorSelectorManager run processInterests() (registering the channel)
+                // and suspend at the yield() inside select() before close() runs.
+                kotlinx.coroutines.yield()
+                entered.countDown()
+                Thread.sleep(200)
+            }
+            entered.await()
+            server.close()
             val session = setup.manager.connect(DeviceRef(DeviceId("none"), "None", AdapterAddress.Tcp("127.0.0.1", port)))
             val state = withTimeout(10_000) { session.state.first { state -> state is SessionState.Reconnecting } }
+            busy.join()
             assertEquals(LinkFailure.Refused, (state as SessionState.Reconnecting).cause)
             setup.manager.disconnect(DeviceId("none"))
         }

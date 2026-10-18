@@ -5,8 +5,15 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.superdro.core.functions.thread.ThreadCutWarning
+import org.superdro.core.functions.thread.ThreadDialRule
+import org.superdro.core.resources.Res
+import org.superdro.core.resources.graphics_thread_dial_keep_closed
+import org.superdro.core.resources.graphics_thread_warn_x_not_referenced
 import org.superdro.core.ui.adaptive.WidthClass
 import org.superdro.core.ui.adaptive.WindowLayout
+import org.superdro.core.ui.graphics.thread.dialRuleText
+import org.superdro.core.ui.graphics.thread.warningText
 import org.superdro.validation.Traceability
 
 /**
@@ -58,5 +65,17 @@ class UiRulesValidationTest {
         assertTrue(used("keepScreenOn()"), "Modifier.keepScreenOn()")
         // No dynamic color.
         assertTrue(!used("dynamicLightColorScheme") && !used("dynamicDarkColorScheme"), "no dynamic color")
+    }
+
+    @Test
+    fun thread_panel_warning_and_dial_rule_texts() {
+        assertEquals(
+            Res.string.graphics_thread_warn_x_not_referenced,
+            warningText(ThreadCutWarning.XNotReferenced),
+        )
+        assertEquals(
+            Res.string.graphics_thread_dial_keep_closed,
+            dialRuleText(ThreadDialRule.KeepHalfNutClosed),
+        )
     }
 }

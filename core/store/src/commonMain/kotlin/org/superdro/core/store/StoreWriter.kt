@@ -4,6 +4,7 @@ import app.cash.sqldelight.Query
 import app.cash.sqldelight.TransactionWithReturn
 import app.cash.sqldelight.coroutines.asFlow
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
@@ -38,14 +39,33 @@ class StoreWriter(
      * writes of [block] and goes to the caller.
      */
     suspend fun <T> write(block: TransactionWithReturn<T>.(SuperDroDatabase) -> T): T =
-        withContext(dispatcher) { database.transactionWithResult { block(database) } }
+        withContext(dispatcher) {
+            try {
+                database.transactionWithResult { block(database) }
+            } catch (error: Throwable) {
+                ensureActive()
+                throw error
+            }
+        }
 
     /**
      * Reads with more than one query in one transaction on the writer dispatcher, so that the
      * result comes from one state of the database.
      */
     suspend fun <T> read(block: (SuperDroDatabase) -> T): T =
-        withContext(dispatcher) { database.transactionWithResult { block(database) } }
+        withContext(dispatcher) {
+            try {
+                database.transactionWithResult { block(database) }
+            } catch (error: Throwable) {
+                ensureActive()
+                throw error
+            }
+        }
+
+    /** Waits until the writer thread finishes the work that is in the queue now. */
+    suspend fun awaitIdle() {
+        withContext(dispatcher) {}
+    }
 
     /**
      * A flow of a value that more than one query gives. The flow calls [reader] in one transaction
