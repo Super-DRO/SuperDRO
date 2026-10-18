@@ -300,16 +300,16 @@ private fun drillSeriesText(series: DrillSeries): StringResource = when (series)
  * The thread setup screen: the inputs at the
  * start, and the live results (the pre-op and cut-to diameters, the class range, the three-wire
  * values, the pass schedule, or the tap & drill calculator) at the end in landscape or at the top
- * in portrait. "Create" stores the thread and its points.
+ * in portrait. In single-point mode, "Create" stores the thread and its points.
  */
 @Composable
 fun ThreadSetupScreen(state: ThreadSetupUiState, events: ThreadSetupEvents) {
     FunctionScreen(
         title = stringResource(Res.string.thrs_title),
         onBack = events::onBack,
-        primaryLabel = stringResource(Res.string.fn_create),
+        primaryLabel = if (state.mode == ThreadToolMode.SinglePoint) stringResource(Res.string.fn_create) else null,
         onPrimary = events::onCreate,
-        primaryEnabled = state.loaded && state.mode == ThreadToolMode.SinglePoint,
+        primaryEnabled = state.loaded,
         errors = state.error?.let { ErrorBlock(null, listOf(it)) },
         preview = {
             if (state.mode == ThreadToolMode.TapAndDrill) {

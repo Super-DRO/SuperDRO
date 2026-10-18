@@ -121,7 +121,7 @@ fun FunctionActions(
  * The frame of a function screen. The form scrolls. In landscape the preview is at the right of the
  * form. In
  * portrait the preview is above the form. The error box and the buttons are at the end of the
- * form.
+ * form. Null [primaryLabel] hides the action buttons.
  *
  * @param preview The point preview, or null for a screen with no preview.
  */
@@ -129,8 +129,8 @@ fun FunctionActions(
 fun FunctionScreen(
     title: String,
     onBack: () -> Unit,
-    primaryLabel: String,
-    onPrimary: () -> Unit,
+    primaryLabel: String? = null,
+    onPrimary: () -> Unit = {},
     modifier: Modifier = Modifier,
     primaryEnabled: Boolean = true,
     errors: ErrorBlock? = null,
@@ -147,8 +147,10 @@ fun FunctionScreen(
             ) {
                 form()
                 if (errors != null) ErrorBox(errors)
-                Spacer(Modifier.height(4.dp))
-                FunctionActions(primaryLabel = primaryLabel, onPrimary = onPrimary, onCancel = onBack, primaryEnabled = primaryEnabled)
+                if (primaryLabel != null) {
+                    Spacer(Modifier.height(4.dp))
+                    FunctionActions(primaryLabel = primaryLabel, onPrimary = onPrimary, onCancel = onBack, primaryEnabled = primaryEnabled)
+                }
             }
         }
         if (preview == null) {
