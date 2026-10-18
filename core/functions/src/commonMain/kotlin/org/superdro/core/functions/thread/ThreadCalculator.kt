@@ -271,6 +271,7 @@ object ThreadCalculator {
                 pitchUm = size.pitchUm,
                 engagementUm = size.lengthOfEngagementUm ?: size.nominalDiameterUm,
             )
+            else -> null
         }
         return if (values == null) null to ClassStatus.OutsideTable else values to null
     }

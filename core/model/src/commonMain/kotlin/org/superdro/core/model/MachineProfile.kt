@@ -112,6 +112,8 @@ data class MachineProfile(
     val zSetterHeightUm: Double = 0.0,
     /** The unit of the setter height, or null for the metric default of the profile. */
     val zSetterMetric: Boolean? = null,
+    /** The leadscrew pitch of a lathe in µm, or null when it is not set. */
+    val leadscrewPitchUm: Double? = null,
     val workspaces: List<Workspace> = listOf(Workspace()),
     /** The ID of the active workspace. An empty text means the first workspace. */
     val activeWorkspaceId: String = workspaces.firstOrNull()?.id.orEmpty(),

@@ -6,15 +6,52 @@ import kotlinx.serialization.Serializable
 
 /** The thread form. */
 @Serializable
-enum class ThreadForm { IsoMetricCoarse, IsoMetricFine, Unc, Unf, Unef, CustomMetric, CustomImperial }
+enum class ThreadForm {
+    IsoMetricCoarse,
+    IsoMetricFine,
+    Unc,
+    Unf,
+    Unef,
+    Bsw,
+    Bsf,
+    Bspp,
+    IsoTrapezoidal,
+    Acme,
+    Npt,
+    Bspt,
+    CustomMetric,
+    CustomImperial,
+}
 
 /** The tolerance class of a thread. */
 @Serializable
-enum class ThreadClass { Class6g, Class6H, Class2A, Class3A, Class2B, Class3B }
+enum class ThreadClass {
+    Class6g,
+    Class6H,
+    Class2A,
+    Class3A,
+    Class2B,
+    Class3B,
+    ClassA,
+    ClassB,
+    ClassMedium,
+    Class7e,
+    Class7H,
+    Class2G,
+    Class3G,
+}
 
 /** The form of the threading cutter. */
 @Serializable
 enum class ThreadCutter { SharpV, FullForm, Partial }
+
+/** The infeed mode of a single-point thread cut. */
+@Serializable
+enum class ThreadInfeedMode { Radial, ModifiedFlank, Flank }
+
+/** The tip radius preset of a partial threading insert. */
+@Serializable
+enum class PartialInsertPreset { Custom, A60, G60, AG60, N60 }
 
 /**
  * A lathe thread of a workspace. All lengths are µm.
@@ -26,6 +63,12 @@ enum class ThreadCutter { SharpV, FullForm, Partial }
  * @property rightReliefUm W₂, or null.
  * @property cutterTipRadiusUm The tip radius of a Partial cutter, or null when it is not known.
  *  The other cutters do not use it.
+ * @property leftHand True for a left-hand thread, false for a right-hand thread.
+ * @property starts The number of thread starts (1 or more).
+ * @property infeedMode The compound infeed mode.
+ * @property roughingPasses The manual roughing pass count, or null for the automatic count.
+ * @property wireDiameterUm The custom three-wire diameter, or null for the best wire diameter.
+ * @property insertPreset The partial insert preset.
  */
 @Serializable
 data class ThreadSpec(
@@ -48,6 +91,13 @@ data class ThreadSpec(
     val leftReliefUm: Double? = null,
     val rightReliefUm: Double? = null,
     val cutterTipRadiusUm: Double? = null,
+    val leftHand: Boolean = false,
+    val starts: Int = 1,
+    val infeedMode: ThreadInfeedMode = ThreadInfeedMode.ModifiedFlank,
+    val roughingPasses: Int? = null,
+    val wireDiameterUm: Double? = null,
+    val insertPreset: PartialInsertPreset = PartialInsertPreset.Custom,
     val createdOn: Instant = Clock.System.now(),
     val updatedOn: Instant = Clock.System.now(),
 )
+

@@ -136,6 +136,7 @@ fun formText(form: ThreadForm): StringResource = when (form) {
     ThreadForm.Unef -> Res.string.thrs_form_unef
     ThreadForm.CustomMetric -> Res.string.thrs_form_custom_metric
     ThreadForm.CustomImperial -> Res.string.thrs_form_custom_imperial
+    else -> Res.string.thrs_form_custom_imperial
 }
 
 private fun cutterText(cutter: ThreadCutter): StringResource = when (cutter) {

@@ -40,7 +40,7 @@ object ThreadTables {
         ThreadForm.Unc -> unc
         ThreadForm.Unf -> unf
         ThreadForm.Unef -> unef
-        ThreadForm.CustomMetric, ThreadForm.CustomImperial -> emptyList()
+        else -> emptyList()
     }
 
     /** Gives the row of the form with this designation, or null. */

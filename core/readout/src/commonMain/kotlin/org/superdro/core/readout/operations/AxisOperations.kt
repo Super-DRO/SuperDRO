@@ -167,15 +167,15 @@ object AxisOperations {
             val offsetX = machine.x - frame.machineOffsets(AxisId.X)
             val offsetY = machine.y - frame.machineOffsets(AxisId.Y)
             if (offsetX.isFinite() && offsetY.isFinite()) {
-                workspace = workspace.updateAxis(AxisId.X) { state -> state.copy(absoluteOffset = offsetX) }
-                workspace = workspace.updateAxis(AxisId.Y) { state -> state.copy(absoluteOffset = offsetY) }
+                workspace = workspace.updateAxis(AxisId.X) { state -> state.copy(absoluteOffset = offsetX, referenced = true) }
+                workspace = workspace.updateAxis(AxisId.Y) { state -> state.copy(absoluteOffset = offsetY, referenced = true) }
             }
         }
         targets.forEach { (axis, target) ->
             if (rotation != null && (axis == AxisId.X || axis == AxisId.Y)) return@forEach
             val base = if (axis == AxisId.Tachometer) frame.r(axis) else frame.machineOffsets(axis)
             val offset = target - base
-            if (offset.isFinite()) workspace = workspace.updateAxis(axis) { state -> state.copy(absoluteOffset = offset) }
+            if (offset.isFinite()) workspace = workspace.updateAxis(axis) { state -> state.copy(absoluteOffset = offset, referenced = true) }
         }
         return workspace
     }
@@ -196,10 +196,10 @@ object AxisOperations {
     }
 
     internal fun clearAbsoluteOffset(frame: ReadoutFrame, axis: AxisId): Workspace {
-        var workspace = frame.workspace.updateAxis(axis) { state -> state.copy(absoluteOffset = 0.0) }
+        var workspace = frame.workspace.updateAxis(axis) { state -> state.copy(absoluteOffset = 0.0, referenced = false) }
         if (frame.alignment != null && (axis == AxisId.X || axis == AxisId.Y)) {
             val other = if (axis == AxisId.X) AxisId.Y else AxisId.X
-            workspace = workspace.updateAxis(other) { state -> state.copy(absoluteOffset = 0.0) }
+            workspace = workspace.updateAxis(other) { state -> state.copy(absoluteOffset = 0.0, referenced = false) }
         }
         return workspace
     }
