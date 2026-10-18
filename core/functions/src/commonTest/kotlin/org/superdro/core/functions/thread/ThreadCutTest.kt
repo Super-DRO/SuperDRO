@@ -180,8 +180,65 @@ class ThreadCutTest {
 
     @Test
     fun armingANewThreadStartsThePassRecordAgain() {
-        val recorded = ThreadCutState(ThreadPassRecord(9400.0, 9600.0, "t1"), ThreadStroke(-14000.0, -500.0, true))
-        assertEquals(ThreadCutState(ThreadPassRecord(9400.0, 9600.0, "t1")), ThreadCut.arm(recorded, "t1"))
+        val recorded = ThreadCutState(ThreadPassRecord(9400.0, 9600.0, "t1"), ThreadStroke(-14000.0, -500.0, true), activeStart = 2)
+        assertEquals(ThreadCutState(ThreadPassRecord(9400.0, 9600.0, "t1"), activeStart = 2), ThreadCut.arm(recorded, "t1"))
         assertEquals(ThreadCutState(), ThreadCut.arm(recorded, "t2"))
+    }
+
+    @Test
+    fun leftHandThreadUsesZMaxPlusRightReliefAsRetractLimit() {
+        val leftHand = spec.copy(leftHand = true, rightReliefUm = 3000.0)
+        // Zmin = -15500, Zmax = 0, W2 = 3000 -> retractLimitZUm = +3000.0.
+        assertEquals(3000.0, ThreadCut.retractLimitZUm(leftHand), 1e-9)
+        assertEquals(RetractState.Engaged, ThreadCut.retractState(leftHand, 4700.0, 3000.0))
+        assertEquals(RetractState.PastLimit, ThreadCut.retractState(leftHand, 4700.0, 3001.0))
+        assertEquals(RetractState.Clear, ThreadCut.retractState(leftHand, 5600.0, 4000.0))
+    }
+
+    @Test
+    fun chipAreaUsesIncludedAngleAndRootFlatWidthOfForm() {
+        val trSpec = spec.copy(
+            form = ThreadForm.IsoTrapezoidal,
+            cutter = ThreadCutter.FullForm,
+            pitchUm = 2000.0,
+        )
+        // h = 0.5 mm (depthUm = 1000 µm), α = 30° -> tan(15°), w = (0.3660254 * 2000 - 0.5358984 * 250) / 1000 mm.
+        val wMm = ThreadPassSchedule.rootFlatWidthUm(ThreadForm.IsoTrapezoidal, ThreadCutter.FullForm, 2000.0) / 1000.0
+        val expected = kotlin.math.tan(15.0 * kotlin.math.PI / 180.0) * 0.25 + wMm * 0.5
+        assertEquals(expected, ThreadCut.chipArea(trSpec, 1000.0), 1e-9)
+    }
+
+    @Test
+    fun multiStartSelectionAndPassResetManageCutStateAndValues() {
+        val multiSpec = spec.copy(starts = 3)
+        var state = ThreadCut.arm(ThreadCutState(), "t1")
+        state = ThreadCut.update(multiSpec, state, 4800.0, 1000.0)
+        state = ThreadCut.update(multiSpec, state, 4800.0, -16000.0)
+        assertEquals(9600.0, state.record.deepestUm)
+        assertEquals(1, state.activeStart)
+
+        // Switching to Start 2 resets the pass record and stroke for the new start.
+        state = ThreadCut.selectStart(state, 2)
+        assertEquals(2, state.activeStart)
+        assertNull(state.record.deepestUm)
+        assertEquals(ThreadStroke(), state.stroke)
+
+        // Recording a pass on Start 2 keeps activeStart = 2.
+        state = ThreadCut.update(multiSpec, state, 4750.0, 1000.0)
+        state = ThreadCut.update(multiSpec, state, 4750.0, -16000.0)
+        assertEquals(9500.0, state.record.deepestUm)
+        assertEquals(2, state.activeStart)
+
+        val values = ThreadCut.values(multiSpec, state.record, xUm = 4700.0, readoutXUm = 636.0, zUm = -8000.0, activeStart = state.activeStart)
+        assertEquals(2, values.activeStart)
+        assertEquals(3, values.totalStarts)
+        assertEquals(8, values.schedule.roughingPassCount)
+        val next = assertNotNull(values.nextPass)
+        assertEquals(2, next.number)
+
+        // Resetting passes clears the record while keeping Start 2 active.
+        val reset = ThreadCut.resetPasses(state)
+        assertEquals(2, reset.activeStart)
+        assertNull(reset.record.deepestUm)
     }
 }
