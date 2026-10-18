@@ -205,3 +205,215 @@ object AsmeB11 {
         return ClassTolerances(0.0, tD2 * UM_PER_INCH, tD1 * UM_PER_INCH)
     }
 }
+
+/**
+ * The ISO 228-1 tolerances for BSPP (`G`) parallel pipe threads, in µm. External threads have
+ * classes `A` and `B`, and internal threads have one standard tolerance zone.
+ */
+object Iso228 {
+
+    private const val UM_PER_INCH = 25400.0
+
+    private val td2ClassA: Map<Long, Double> = mapOf(
+        28L to 107.0,
+        19L to 125.0,
+        14L to 142.0,
+        11L to 180.0,
+    )
+
+    private val tdExternal: Map<Long, Double> = mapOf(
+        28L to 214.0,
+        19L to 250.0,
+        14L to 284.0,
+        11L to 360.0,
+    )
+
+    private val tD1Internal: Map<Long, Double> = mapOf(
+        28L to 282.0,
+        19L to 445.0,
+        14L to 541.0,
+        11L to 640.0,
+    )
+
+    private fun tpiKey(pitchUm: Double): Long? {
+        if (!pitchUm.isFinite() || pitchUm <= 0.0) return null
+        val tpi = UM_PER_INCH / pitchUm
+        val key = tpi.roundToLong()
+        return if (abs(tpi - key) < 1e-3) key else null
+    }
+
+    /** Gives the external tolerances for class `A` (`classB = false`) or class `B` (`classB = true`). */
+    fun external(classB: Boolean, pitchUm: Double): ClassTolerances? {
+        val key = tpiKey(pitchUm) ?: return null
+        val baseTd2 = td2ClassA[key] ?: return null
+        val td2 = if (classB) 2.0 * baseTd2 else baseTd2
+        val td = tdExternal[key] ?: return null
+        return ClassTolerances(0.0, td2, td)
+    }
+
+    /** Gives the standard internal tolerance zone for a BSPP thread. */
+    fun internal(pitchUm: Double): ClassTolerances? {
+        val key = tpiKey(pitchUm) ?: return null
+        val tD2 = td2ClassA[key] ?: return null
+        val tD1 = tD1Internal[key] ?: return null
+        return ClassTolerances(0.0, tD2, tD1)
+    }
+}
+
+/**
+ * The BS 84:1956 medium-class formulas for British Standard Whitworth (`Bsw`) and British Standard
+ * Fine (`Bsf`) threads, in µm.
+ */
+object Bs84 {
+
+    private const val UM_PER_INCH = 25400.0
+
+    /** Gives the medium-class tolerances for an external or internal Whitworth thread. */
+    fun medium(internal: Boolean, majorUm: Double, pitchUm: Double, engagementUm: Double): ClassTolerances {
+        val d = majorUm / UM_PER_INCH
+        val p = pitchUm / UM_PER_INCH
+        val le = engagementUm / UM_PER_INCH
+        val tpi = 1.0 / p
+        val tEff = 0.002 * cbrt(d) + 0.003 * sqrt(le) + 0.005 * sqrt(p)
+        val td2 = AsmeB11.round4(tEff)
+        return if (internal) {
+            val tD1 = AsmeB11.round4(if (tpi >= 25.5) 0.2 * p + 0.004 else 0.2 * p + 0.007)
+            ClassTolerances(0.0, td2 * UM_PER_INCH, tD1 * UM_PER_INCH)
+        } else {
+            val es = -AsmeB11.round4(0.3 * tEff)
+            val td = AsmeB11.round4(tEff + 0.01 * sqrt(p))
+            ClassTolerances(es * UM_PER_INCH, td2 * UM_PER_INCH, td * UM_PER_INCH)
+        }
+    }
+}
+
+/**
+ * The ISO 2903 tolerances for ISO metric trapezoidal threads (`Class7e` external and `Class7H`
+ * internal), in µm.
+ */
+object Iso2903 {
+
+    private val rangeUpperMm = doubleArrayOf(11.2, 22.4, 45.0, 90.0, 180.0, 355.0)
+    private const val RANGE_LOWEST_MM = 5.6
+
+    private val esE: Map<Long, Double> = mapOf(
+        1500L to -67.0,
+        2000L to -71.0,
+        3000L to -85.0,
+        4000L to -95.0,
+        5000L to -106.0,
+        6000L to -118.0,
+        7000L to -125.0,
+        8000L to -140.0,
+        9000L to -150.0,
+        10000L to -160.0,
+        12000L to -180.0,
+    )
+
+    private val td4: Map<Long, Double> = mapOf(
+        1500L to 140.0,
+        2000L to 180.0,
+        3000L to 236.0,
+        4000L to 300.0,
+        5000L to 335.0,
+        6000L to 375.0,
+        7000L to 425.0,
+        8000L to 450.0,
+        9000L to 500.0,
+        10000L to 530.0,
+        12000L to 600.0,
+    )
+
+    private val tD1Grade4: Map<Long, Double> = mapOf(
+        1500L to 190.0,
+        2000L to 236.0,
+        3000L to 315.0,
+        4000L to 375.0,
+        5000L to 450.0,
+        6000L to 500.0,
+        7000L to 560.0,
+        8000L to 630.0,
+        9000L to 670.0,
+        10000L to 710.0,
+        12000L to 800.0,
+    )
+
+    private val td2Grade7: List<Map<Long, Double>> = listOf(
+        mapOf(1500L to 170.0, 2000L to 190.0, 3000L to 224.0),
+        mapOf(2000L to 200.0, 3000L to 236.0, 4000L to 265.0, 5000L to 280.0),
+        mapOf(3000L to 250.0, 4000L to 280.0, 5000L to 300.0, 6000L to 335.0, 7000L to 355.0, 8000L to 375.0),
+        mapOf(
+            3000L to 265.0, 4000L to 300.0, 5000L to 315.0, 6000L to 355.0, 7000L to 375.0,
+            8000L to 400.0, 9000L to 425.0, 10000L to 450.0, 12000L to 475.0,
+        ),
+        mapOf(4000L to 315.0, 6000L to 375.0, 8000L to 425.0, 9000L to 450.0, 10000L to 475.0, 12000L to 500.0),
+        mapOf(6000L to 400.0, 8000L to 450.0, 9000L to 475.0, 10000L to 500.0, 12000L to 530.0),
+    )
+
+    private val tD2Grade7: List<Map<Long, Double>> = listOf(
+        mapOf(1500L to 224.0, 2000L to 250.0, 3000L to 300.0),
+        mapOf(2000L to 265.0, 3000L to 315.0, 4000L to 355.0, 5000L to 375.0),
+        mapOf(3000L to 335.0, 4000L to 375.0, 5000L to 400.0, 6000L to 450.0, 7000L to 475.0, 8000L to 500.0),
+        mapOf(
+            3000L to 355.0, 4000L to 400.0, 5000L to 425.0, 6000L to 475.0, 7000L to 500.0,
+            8000L to 530.0, 9000L to 560.0, 10000L to 600.0, 12000L to 630.0,
+        ),
+        mapOf(4000L to 425.0, 6000L to 500.0, 8000L to 560.0, 9000L to 600.0, 10000L to 630.0, 12000L to 670.0),
+        mapOf(6000L to 530.0, 8000L to 600.0, 9000L to 630.0, 10000L to 670.0, 12000L to 710.0),
+    )
+
+    internal fun rangeIndex(majorUm: Double): Int {
+        val mm = majorUm / 1000.0
+        if (!(mm > RANGE_LOWEST_MM)) return -1
+        return rangeUpperMm.indexOfFirst { upper -> mm <= upper }
+    }
+
+    private fun pitchKey(pitchUm: Double): Long? {
+        val key = pitchUm.roundToLong()
+        return if (abs(pitchUm - key) < 1e-6) key else null
+    }
+
+    /** Gives the values of class `7e` (external), or null when a table has no value. */
+    fun class7e(majorUm: Double, pitchUm: Double): ClassTolerances? {
+        val key = pitchKey(pitchUm) ?: return null
+        val range = rangeIndex(majorUm)
+        if (range < 0) return null
+        val es = esE[key] ?: return null
+        val td2 = td2Grade7[range][key] ?: return null
+        val td = td4[key] ?: return null
+        return ClassTolerances(es, td2, td)
+    }
+
+    /** Gives the values of class `7H` (internal, `EI` = 0), or null when a table has no value. */
+    fun class7H(majorUm: Double, pitchUm: Double): ClassTolerances? {
+        val key = pitchKey(pitchUm) ?: return null
+        val range = rangeIndex(majorUm)
+        if (range < 0) return null
+        val tD2 = tD2Grade7[range][key] ?: return null
+        val tD1 = tD1Grade4[key] ?: return null
+        return ClassTolerances(0.0, tD2, tD1)
+    }
+}
+
+/**
+ * The ASME B1.5 General Purpose Acme tolerance formulas for classes `2G` and `3G`, in µm.
+ */
+object AsmeB15 {
+
+    private const val UM_PER_INCH = 25400.0
+
+    /** Gives the General Purpose Acme tolerances for class `2G` or `3G`. */
+    fun generalPurpose(class3G: Boolean, internal: Boolean, majorUm: Double, pitchUm: Double): ClassTolerances {
+        val d = majorUm / UM_PER_INCH
+        val p = pitchUm / UM_PER_INCH
+        val td2Base = 0.030 * sqrt(p) + 0.006 * sqrt(d)
+        val td2 = AsmeB11.round4(if (class3G) td2Base / 2.15 else td2Base)
+        val crestTol = AsmeB11.round4(max(0.05 * p, 0.005))
+        return if (internal) {
+            ClassTolerances(0.0, td2 * UM_PER_INCH, crestTol * UM_PER_INCH)
+        } else {
+            val es = -AsmeB11.round4((if (class3G) 0.006 else 0.008) * sqrt(d))
+            ClassTolerances(es * UM_PER_INCH, td2 * UM_PER_INCH, crestTol * UM_PER_INCH)
+        }
+    }
+}

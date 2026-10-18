@@ -153,4 +153,44 @@ class ThreadSetupTest {
         val customSpec = assertNotNull(ThreadSetup.toSpec(custom, workspaceId = "w1", now = now))
         assertEquals(custom, ThreadSetup.restore(customSpec).copy(threadClass = null))
     }
+
+    @Test
+    fun calculateToSpecAndRestorePreserveHandStartsInfeedPresetAndInspectionFields() {
+        val input = m10External.copy(
+            cutter = ThreadCutter.Partial,
+            insertPreset = org.superdro.core.model.PartialInsertPreset.AG60,
+            leftHand = true,
+            starts = 2,
+            infeedMode = org.superdro.core.model.ThreadInfeedMode.Flank,
+            roughingPasses = 12,
+            wireDiameterUm = 900.0,
+            measuredOverWiresUm = 10450.0,
+        )
+        val geometry = assertNotNull(ThreadSetup.calculate(input))
+        assertEquals(60.0, geometry.rootRadiusUm, 1e-6)
+        assertEquals(3000.0, geometry.leadUm, 1e-6)
+        assertEquals(true, geometry.leftHand)
+        val wires = assertNotNull(geometry.threeWire)
+        assertEquals(900.0, wires.wireDiameterUm, 1e-6)
+        assertNotNull(wires.actualPitchDiameterUm)
+        assertNotNull(wires.remainingRadialDepthUm)
+
+        val spec = assertNotNull(ThreadSetup.toSpec(input, workspaceId = "w1", now = now))
+        assertEquals(true, spec.leftHand)
+        assertEquals(2, spec.starts)
+        assertEquals(org.superdro.core.model.ThreadInfeedMode.Flank, spec.infeedMode)
+        assertEquals(12, spec.roughingPasses)
+        assertEquals(900.0, spec.wireDiameterUm)
+        assertEquals(org.superdro.core.model.PartialInsertPreset.AG60, spec.insertPreset)
+        assertEquals(60.0, spec.cutterTipRadiusUm)
+
+        val restored = ThreadSetup.restore(spec)
+        assertEquals(true, restored.leftHand)
+        assertEquals(2, restored.starts)
+        assertEquals(org.superdro.core.model.ThreadInfeedMode.Flank, restored.infeedMode)
+        assertEquals(12, restored.roughingPasses)
+        assertEquals(900.0, restored.wireDiameterUm)
+        assertEquals(org.superdro.core.model.PartialInsertPreset.AG60, restored.insertPreset)
+        assertEquals(60.0, restored.cutterTipRadiusUm)
+    }
 }

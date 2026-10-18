@@ -132,7 +132,7 @@ object MachineDatums {
         }
         val result = AxisOperations.result(frame) { base ->
             var workspace = base
-            stored.forEach { (axis, value) -> workspace = workspace.updateAxis(axis) { state -> state.copy(absoluteOffset = -value) } }
+            stored.forEach { (axis, value) -> workspace = workspace.updateAxis(axis) { state -> state.copy(absoluteOffset = -value, referenced = true) } }
             workspace
         }
         return MachineDatumPlan.Apply(shifts, noOp, result)

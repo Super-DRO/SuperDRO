@@ -110,4 +110,93 @@ class ThreadTablesTest {
         assertEquals("0.7", ThreadText.cutLoad(0.6765705))
         assertEquals("—", ThreadText.cutLoad(null))
     }
+
+    @Test
+    fun theAdditionalStandardFormTablesHaveTheExpectedSizes() {
+        val bspp = ThreadTables.sizes(ThreadForm.Bspp)
+        assertEquals(14, bspp.size)
+        assertEquals("G 1/16", bspp.first().designation)
+        assertEquals("G 2", bspp.last().designation)
+
+        val bsw = ThreadTables.sizes(ThreadForm.Bsw)
+        assertEquals(17, bsw.size)
+        assertEquals("1/8-40", bsw.first().designation)
+        assertEquals("2-4.5", bsw.last().designation)
+
+        val bsf = ThreadTables.sizes(ThreadForm.Bsf)
+        assertEquals(14, bsf.size)
+        assertEquals("3/16-32", bsf.first().designation)
+        assertEquals("1 1/2-8", bsf.last().designation)
+
+        val tr = ThreadTables.sizes(ThreadForm.IsoTrapezoidal)
+        assertEquals(20, tr.size)
+        assertEquals("Tr 8 × 1.5", tr.first().designation)
+        assertEquals("Tr 60 × 9", tr.last().designation)
+
+        val acme = ThreadTables.sizes(ThreadForm.Acme)
+        assertEquals(15, acme.size)
+        assertEquals("1/4-16", acme.first().designation)
+        assertEquals("2-4", acme.last().designation)
+
+        val npt = ThreadTables.sizes(ThreadForm.Npt)
+        assertEquals(10, npt.size)
+        assertEquals("1/16-27", npt.first().designation)
+        assertEquals("2-11.5", npt.last().designation)
+        val nptHalf = assertNotNull(ThreadTables.find(ThreadForm.Npt, "1/2-14"))
+        assertEquals(0.840 * 25400.0, nptHalf.nominalDiameterUm, 1e-6)
+        assertEquals(0.75843 * 25400.0, assertNotNull(nptHalf.e0PitchDiameterUm), 1e-6)
+        assertEquals(0.77843 * 25400.0, assertNotNull(nptHalf.e1PitchDiameterUm), 1e-6)
+        assertEquals(0.320 * 25400.0, assertNotNull(nptHalf.l1LengthUm), 1e-6)
+        assertEquals(0.5337 * 25400.0, assertNotNull(nptHalf.l2LengthUm), 1e-6)
+
+        val bspt = ThreadTables.sizes(ThreadForm.Bspt)
+        assertEquals(10, bspt.size)
+        assertEquals("R 1/16-28", bspt.first().designation)
+        assertEquals("R 2-11", bspt.last().designation)
+        val bsptQuarter = assertNotNull(ThreadTables.find(ThreadForm.Bspt, "R 1/4-19"))
+        assertEquals(13157.0, bsptQuarter.nominalDiameterUm, 1e-6)
+        assertEquals(12301.0, assertNotNull(bsptQuarter.e1PitchDiameterUm), 1e-6)
+        assertEquals(6000.0, assertNotNull(bsptQuarter.l1LengthUm), 1e-6)
+    }
+
+    @Test
+    fun eachNewFormRowHasValidTolerancesAndCutToDiameters() {
+        for (size in ThreadTables.sizes(ThreadForm.Bspp)) {
+            for (cls in listOf(ThreadClass.ClassA, ThreadClass.ClassB)) {
+                val ext = ThreadCalculator.standard(size, internal = false, ThreadCutter.FullForm, cls)
+                assertNull(ext.classStatus, size.designation)
+                assertTrue(ext.cutToDiameterUm < ext.preOp.valueUm, size.designation)
+            }
+            val intG = ThreadCalculator.standard(size, internal = true, ThreadCutter.FullForm, null)
+            assertNull(intG.classStatus, size.designation)
+            assertNotNull(intG.limits, size.designation)
+            assertTrue(intG.cutToDiameterUm > intG.preOp.valueUm, size.designation)
+        }
+        for (size in ThreadTables.sizes(ThreadForm.Bsw) + ThreadTables.sizes(ThreadForm.Bsf)) {
+            val ext = ThreadCalculator.standard(size, internal = false, ThreadCutter.FullForm, ThreadClass.ClassMedium)
+            val intG = ThreadCalculator.standard(size, internal = true, ThreadCutter.FullForm, ThreadClass.ClassMedium)
+            assertNull(ext.classStatus, size.designation)
+            assertNull(intG.classStatus, size.designation)
+            assertTrue(ext.cutToDiameterUm < ext.preOp.valueUm, size.designation)
+            assertTrue(intG.cutToDiameterUm > intG.preOp.valueUm, size.designation)
+        }
+        for (size in ThreadTables.sizes(ThreadForm.IsoTrapezoidal)) {
+            val ext = ThreadCalculator.standard(size, internal = false, ThreadCutter.FullForm, ThreadClass.Class7e)
+            val intG = ThreadCalculator.standard(size, internal = true, ThreadCutter.FullForm, ThreadClass.Class7H)
+            assertNull(ext.classStatus, size.designation)
+            assertNull(intG.classStatus, size.designation)
+            assertTrue(ext.cutToDiameterUm < ext.preOp.valueUm, size.designation)
+            assertTrue(intG.cutToDiameterUm > intG.preOp.valueUm, size.designation)
+        }
+        for (size in ThreadTables.sizes(ThreadForm.Acme)) {
+            for (cls in listOf(ThreadClass.Class2G, ThreadClass.Class3G)) {
+                val ext = ThreadCalculator.standard(size, internal = false, ThreadCutter.FullForm, cls)
+                val intG = ThreadCalculator.standard(size, internal = true, ThreadCutter.FullForm, cls)
+                assertNull(ext.classStatus, size.designation)
+                assertNull(intG.classStatus, size.designation)
+                assertTrue(ext.cutToDiameterUm < ext.preOp.valueUm, size.designation)
+                assertTrue(intG.cutToDiameterUm > intG.preOp.valueUm, size.designation)
+            }
+        }
+    }
 }

@@ -49,6 +49,19 @@ data class ThreadPoint(
 )
 
 /**
+ * The axial Z offset and spindle angle offset of one start of a multi-start thread.
+ *
+ * @property startNumber The 1-based start index (`1..starts`).
+ * @property zOffsetUm The axial Z offset `(startNumber − 1) × pitchUm`, in µm.
+ * @property spindleAngleArcSec The spindle angle offset `1_296_000 × (startNumber − 1) / starts`, in arc seconds.
+ */
+data class ThreadStartOffset(
+    val startNumber: Int,
+    val zOffsetUm: Double,
+    val spindleAngleArcSec: Double,
+)
+
+/**
  * The thread points as sub-datums with the group kind `Thread`
  * and the four finish corners of the thread arm.
  */
@@ -121,11 +134,32 @@ object ThreadPoints {
     }
 
     /**
-     * Gives the corner that the arm step activates: the corner with
-     * X > 0 and the smallest Z. The X and Z readouts then show the distance to it.
+     * Gives the corner that the arm step activates: the corner with X > 0 and the smallest Z for
+     * a right-hand thread, or the largest Z for a left-hand thread. The X and Z readouts then show
+     * the distance to it.
      */
-    fun activeCorner(spec: ThreadSpec): ThreadPoint? =
-        finishCorners(spec).filter { point -> (point.x ?: 0.0) > 0.0 }.minByOrNull { point -> point.z ?: Double.MAX_VALUE }
+    fun activeCorner(spec: ThreadSpec): ThreadPoint? {
+        val frontCorners = finishCorners(spec).filter { point -> (point.x ?: 0.0) > 0.0 }
+        return if (spec.leftHand) {
+            frontCorners.maxByOrNull { point -> point.z ?: Double.NEGATIVE_INFINITY }
+        } else {
+            frontCorners.minByOrNull { point -> point.z ?: Double.POSITIVE_INFINITY }
+        }
+    }
+
+    /**
+     * Gives the axial Z offset and spindle angle offset for each start `1..starts` of [spec].
+     */
+    fun startOffsets(spec: ThreadSpec): List<ThreadStartOffset> {
+        val count = spec.starts.coerceAtLeast(1)
+        return (1..count).map { startNumber ->
+            ThreadStartOffset(
+                startNumber = startNumber,
+                zOffsetUm = (startNumber - 1) * spec.pitchUm,
+                spindleAngleArcSec = 1_296_000.0 * (startNumber - 1) / count,
+            )
+        }
+    }
 
     /**
      * Gives the group reference of a thread point: `<thread id>:<role>`, for example

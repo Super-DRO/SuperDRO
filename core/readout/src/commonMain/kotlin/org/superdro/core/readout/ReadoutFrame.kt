@@ -37,6 +37,7 @@ import org.superdro.core.readout.input.InputSnapshot
  *   absolute.
  * @property subDatumOffset The sub-datum offset `S` in use, or null.
  * @property modified True when an offset or a projection changes the axis: the warning state.
+ * @property referenced True when the absolute reference of the axis is set.
  */
 data class AxisReading(
     val axis: AxisId,
@@ -56,6 +57,7 @@ data class AxisReading(
     val locked: Boolean,
     val subDatumOffset: Double?,
     val modified: Boolean,
+    val referenced: Boolean = false,
 ) {
     /** True when `R` is a finite number. */
     val hasValue: Boolean get() = r.isFinite()
@@ -370,6 +372,7 @@ class ReadoutFrame(
             locked = locked,
             subDatumOffset = subDatum,
             modified = modified,
+            referenced = state.referenced,
         )
     }
 

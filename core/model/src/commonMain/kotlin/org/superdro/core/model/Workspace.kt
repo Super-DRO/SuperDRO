@@ -14,6 +14,7 @@ fun newId(): String = Uuid.random().toString()
  *
  * @property metric The unit of the axis, or null for the metric default of the profile.
  * @property diameterMode True on a lathe X. [forAxis] sets it.
+ * @property referenced True when the absolute reference of the axis is set.
  */
 @Serializable
 data class AxisState(
@@ -27,6 +28,7 @@ data class AxisState(
     val divisionUnits: Boolean = false,
     val divisionsPerRev: Int? = null,
     val surfaceSpeedMode: Boolean = false,
+    val referenced: Boolean = false,
 ) {
     companion object {
         /** The state of a new workspace: the diameter mode is on for a lathe X only. */

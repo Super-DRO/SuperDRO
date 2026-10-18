@@ -190,7 +190,39 @@ class AxisOperationsTest {
         val after = result.frame(start)
         assertNear(0.0, after.reading(AxisId.X).absolute, 1e-6)
         assertNear(shownY, after.reading(AxisId.Y).absolute, 1e-6)
+        assertTrue(after.reading(AxisId.X).referenced)
+        assertTrue(after.reading(AxisId.Y).referenced)
         val cleared = AxisOperations.clearAbsolute(after, AxisId.X)
         assertEquals(0.0, cleared.state(AxisId.Y).absoluteOffset)
+        assertFalse(cleared.state(AxisId.X).referenced)
+        assertFalse(cleared.state(AxisId.Y).referenced)
+    }
+
+    @Test
+    fun anAbsoluteZeroCenterOrPresetSetsReferencedOnTheAxis() {
+        val start = frame(Fixtures.lathe(), mapOf(AxisId.X to 10000.0, AxisId.Z to 5000.0))
+        assertFalse(start.reading(AxisId.X).referenced)
+        assertFalse(start.reading(AxisId.Z).referenced)
+
+        val incZero = AxisOperations.setIncremental(start, AxisId.X, 0.0)
+        assertFalse(incZero.state(AxisId.X).referenced)
+        assertFalse(incZero.frame(start).reading(AxisId.X).referenced)
+
+        val absZero = ZeroButtons.longPress(start, AxisId.X)
+        assertTrue(absZero.state(AxisId.X).referenced)
+        assertTrue(absZero.frame(start).reading(AxisId.X).referenced)
+        assertFalse(absZero.state(AxisId.Z).referenced)
+
+        val centered = AxisOperations.center(start, AxisId.X)
+        assertTrue(centered.state(AxisId.X).referenced)
+        assertTrue(centered.frame(start).reading(AxisId.X).referenced)
+
+        val preset = AxisOperations.keypadValue(start, AxisId.X, 20000.0)
+        assertTrue(preset.state(AxisId.X).referenced)
+        assertTrue(preset.frame(start).reading(AxisId.X).referenced)
+
+        val cleared = AxisOperations.clearAbsolute(preset.frame(start), AxisId.X)
+        assertFalse(cleared.state(AxisId.X).referenced)
+        assertFalse(cleared.frame(start).reading(AxisId.X).referenced)
     }
 }

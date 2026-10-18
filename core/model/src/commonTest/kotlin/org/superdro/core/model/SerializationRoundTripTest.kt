@@ -48,7 +48,7 @@ class SerializationRoundTripTest {
             id = "w1",
             name = "Part A",
             axisStates = mapOf(
-                AxisId.X to AxisState(absoluteOffset = -40000.0, incrementalOffset = 12.5, relative = true, metric = true, diameterMode = true),
+                AxisId.X to AxisState(absoluteOffset = -40000.0, incrementalOffset = 12.5, relative = true, metric = true, diameterMode = true, referenced = true),
                 AxisId.Angular to AxisState(divisionUnits = true, divisionsPerRev = 24),
                 AxisId.Tachometer to AxisState(surfaceSpeedMode = true),
             ),
@@ -108,6 +108,7 @@ class SerializationRoundTripTest {
             stylusMetric = true,
             zSetterHeightUm = 50000.0,
             zSetterMetric = false,
+            leadscrewPitchUm = 3175.0,
             workspaces = listOf(workspace),
             activeWorkspaceId = "w1",
             tools = listOf(Tool(id = "t1", kind = ToolKind.Mill, name = "6 mm end mill", diameterUm = 6000.0, toothCount = 4, createdOn = time, updatedOn = time)),
@@ -206,11 +207,17 @@ class SerializationRoundTripTest {
         assertRoundTrip(
             ThreadSpec(
                 id = "th1", workspaceId = "w1", tag = "M10", form = ThreadForm.IsoMetricCoarse, size = "M10 × 1.5",
-                threadClass = ThreadClass.Class6g, cutter = ThreadCutter.SharpV, pitchUm = 1500.0,
+                threadClass = ThreadClass.Class6g, cutter = ThreadCutter.Partial, pitchUm = 1500.0,
                 preOpDiameterUm = 9968.0, cutToDiameterUm = 7695.0, startZUm = 0.0, stopZUm = -15500.0,
-                leftReliefUm = 4500.0, createdOn = time, updatedOn = time,
+                leftReliefUm = 4500.0, cutterTipRadiusUm = 55.0, leftHand = true, starts = 2,
+                infeedMode = ThreadInfeedMode.Flank, roughingPasses = 12, wireDiameterUm = 866.0,
+                insertPreset = PartialInsertPreset.A60, createdOn = time, updatedOn = time,
             )
         )
+        ThreadForm.entries.forEach { form -> assertRoundTrip(form) }
+        ThreadClass.entries.forEach { threadClass -> assertRoundTrip(threadClass) }
+        ThreadInfeedMode.entries.forEach { mode -> assertRoundTrip(mode) }
+        PartialInsertPreset.entries.forEach { preset -> assertRoundTrip(preset) }
         assertRoundTrip(
             MeasurementLogEntry(
                 id = "m1", workspaceId = "w1", sequence = 1, verb = "circle_from_3_points", title = "Circle from 3 points",

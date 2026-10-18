@@ -43,6 +43,19 @@ class WorkspaceDefaultsTest {
         assertFalse(state.divisionUnits)
         assertEquals(null, state.divisionsPerRev)
         assertFalse(state.surfaceSpeedMode)
+        assertFalse(state.referenced)
+    }
+
+    @Test
+    fun aNewThreadSpecAndProfileHaveTheExpectedDefaults() {
+        val spec = ThreadSpec()
+        assertFalse(spec.leftHand)
+        assertEquals(1, spec.starts)
+        assertEquals(ThreadInfeedMode.ModifiedFlank, spec.infeedMode)
+        assertEquals(null, spec.roughingPasses)
+        assertEquals(null, spec.wireDiameterUm)
+        assertEquals(PartialInsertPreset.Custom, spec.insertPreset)
+        assertEquals(null, MachineProfile.create(MachineType.Lathe).leadscrewPitchUm)
     }
 
     @Test

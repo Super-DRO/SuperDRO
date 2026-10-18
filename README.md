@@ -17,6 +17,8 @@ The app code uses the Apache License 2.0 ([LICENSE](LICENSE)).
 |---|---|
 | [CLAUDE.md](CLAUDE.md) | The work rules of the repository |
 | [docs/versioning-and-release-plan.md](docs/versioning-and-release-plan.md) | The app version and the release workflows |
+| [docs/thread-cutting-spike.md](docs/thread-cutting-spike.md) | The research and the design for the thread cutting tools |
+| [docs/thread-cutting-plan.md](docs/thread-cutting-plan.md) | The multi-agent implementation plan for the thread cutting tools |
 
 ## Status
 
