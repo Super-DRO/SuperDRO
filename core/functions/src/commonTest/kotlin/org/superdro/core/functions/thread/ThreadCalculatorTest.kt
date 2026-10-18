@@ -220,6 +220,67 @@ class ThreadCalculatorTest {
         assertEquals(listOf(ThreadClass.Class6g), classesFor(ThreadForm.IsoMetricCoarse, internal = false))
         assertEquals(listOf(ThreadClass.Class2B, ThreadClass.Class3B), classesFor(ThreadForm.Unef, internal = true))
         assertEquals(listOf(ThreadClass.Class2A, ThreadClass.Class3A), classesFor(ThreadForm.Unc, internal = false))
+        assertEquals(listOf(ThreadClass.ClassA, ThreadClass.ClassB), classesFor(ThreadForm.Bspp, internal = false))
+        assertEquals(emptyList(), classesFor(ThreadForm.Bspp, internal = true))
+        assertEquals(listOf(ThreadClass.ClassMedium), classesFor(ThreadForm.Bsw, internal = false))
+        assertEquals(listOf(ThreadClass.Class7e), classesFor(ThreadForm.IsoTrapezoidal, internal = false))
+        assertEquals(listOf(ThreadClass.Class7H), classesFor(ThreadForm.IsoTrapezoidal, internal = true))
+        assertEquals(listOf(ThreadClass.Class2G, ThreadClass.Class3G), classesFor(ThreadForm.Acme, internal = false))
+        assertEquals(emptyList(), classesFor(ThreadForm.Npt, internal = false))
         assertEquals(emptyList(), classesFor(ThreadForm.CustomMetric, internal = false))
+    }
+
+    @Test
+    fun bsppGQuarterUses55DegreeProfileAndIso228Tolerances() {
+        val gQuarter = assertNotNull(ThreadTables.find(ThreadForm.Bspp, "G 1/4"))
+        val extA = ThreadCalculator.standard(gQuarter, internal = false, ThreadCutter.FullForm, ThreadClass.ClassA)
+        assertEquals(13157.0 - 0.6403274 * gQuarter.pitchUm, extA.basicPitchDiameterUm, 0.1)
+        assertEquals(125.0, assertNotNull(extA.tolerances).pitchDiameterToleranceUm, 1e-6)
+        assertEquals(250.0, assertNotNull(extA.tolerances).crestDiameterToleranceUm, 1e-6)
+        assertEquals(gQuarter.pitchUm / 4.0, extA.rootFlatWidthUm, 1e-6)
+
+        val intStd = ThreadCalculator.standard(gQuarter, internal = true, ThreadCutter.FullForm, null)
+        val gauges = assertNotNull(intStd.internalGaugeLimits)
+        assertEquals(11444.975, gauges.minorGoUm, 0.5)
+        assertEquals(gauges.minorGoUm + 445.0, gauges.minorNoGoUm, 0.5)
+    }
+
+    @Test
+    fun isoTrapezoidalAndAcmeAndPipeFormsComputeDiametersAndRootFlats() {
+        val tr16 = assertNotNull(ThreadTables.find(ThreadForm.IsoTrapezoidal, "Tr 16 × 4"))
+        val trExt = ThreadCalculator.standard(tr16, internal = false, ThreadCutter.FullForm, ThreadClass.Class7e, starts = 2, leftHand = true)
+        assertEquals(14000.0, trExt.basicPitchDiameterUm, 1e-6)
+        assertEquals(11500.0, trExt.externalRootDiameterUm, 1e-6)
+        assertEquals(-95.0, assertNotNull(trExt.tolerances).deviationUm, 1e-6)
+        assertEquals(265.0, assertNotNull(trExt.tolerances).pitchDiameterToleranceUm, 1e-6)
+        assertEquals(0.3660254 * 4000.0 - 0.5358984 * 250.0, trExt.rootFlatWidthUm, 1e-4)
+        assertEquals(8000.0, trExt.leadUm, 1e-6)
+        assertEquals(true, trExt.leftHand)
+        assertEquals(true, trExt.needsAnvilTilt)
+
+        val acmeHalf = assertNotNull(ThreadTables.find(ThreadForm.Acme, "1/2-10"))
+        val acmeExt = ThreadCalculator.standard(acmeHalf, internal = false, ThreadCutter.FullForm, ThreadClass.Class2G)
+        assertEquals(12700.0 - 1270.0, acmeExt.basicPitchDiameterUm, 1e-6)
+        assertEquals(12700.0 - 2540.0 - 508.0, acmeExt.externalRootDiameterUm, 1e-6)
+        assertEquals(0.3706912 * 2540.0 - 0.5172352 * 254.0, acmeExt.rootFlatWidthUm, 1e-4)
+
+        val nptHalf = assertNotNull(ThreadTables.find(ThreadForm.Npt, "1/2-14"))
+        val nptExt = ThreadCalculator.standard(nptHalf, internal = false, ThreadCutter.FullForm, null)
+        assertEquals(0.77843 * 25400.0, nptExt.targetPitchDiameterUm, 1e-6)
+        assertNotNull(nptExt.threeWire)
+    }
+
+    @Test
+    fun reliefAndEntryChamferDiametersFollowExternalAndInternalRules() {
+        val ext = ThreadCalculator.standard(m10, internal = false, ThreadCutter.SharpV, ThreadClass.Class6g)
+        // min(200, 0.15 * 1500 = 225) = 200 -> relief = cutTo - 400; entry chamfer = minor - 200.
+        assertEquals(ext.cutToDiameterUm - 400.0, ext.reliefDiameterUm, 1e-6)
+        assertEquals(ext.minorDiameterUm - 200.0, ext.entryChamferDiameterUm, 1e-6)
+
+        val intG = ThreadCalculator.standard(m10, internal = true, ThreadCutter.SharpV, ThreadClass.Class6H)
+        assertEquals(intG.cutToDiameterUm + 400.0, intG.reliefDiameterUm, 1e-6)
+        assertEquals(intG.majorDiameterUm + 300.0, intG.entryChamferDiameterUm, 1e-6)
+        assertNotNull(intG.internalGaugeLimits)
+        assertNotNull(intG.internalBarRecommendation)
     }
 }

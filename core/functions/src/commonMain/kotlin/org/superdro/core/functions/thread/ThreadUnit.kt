@@ -99,6 +99,46 @@ val ThreadClass.isExternal: Boolean
         -> false
     }
 
+/** True for an internal class. */
+val ThreadClass.isInternal: Boolean
+    get() = when (this) {
+        ThreadClass.Class6H,
+        ThreadClass.Class2B,
+        ThreadClass.Class3B,
+        ThreadClass.ClassMedium,
+        ThreadClass.Class7H,
+        ThreadClass.Class2G,
+        ThreadClass.Class3G,
+        -> true
+        ThreadClass.Class6g,
+        ThreadClass.Class2A,
+        ThreadClass.Class3A,
+        ThreadClass.ClassA,
+        ThreadClass.ClassB,
+        ThreadClass.Class7e,
+        -> false
+    }
+
+/** The unit of the tolerance class. */
+val ThreadClass.unit: ThreadUnit
+    get() = when (this) {
+        ThreadClass.Class6g,
+        ThreadClass.Class6H,
+        ThreadClass.Class7e,
+        ThreadClass.Class7H,
+        -> ThreadUnit.Millimeter
+        ThreadClass.Class2A,
+        ThreadClass.Class3A,
+        ThreadClass.Class2B,
+        ThreadClass.Class3B,
+        ThreadClass.ClassA,
+        ThreadClass.ClassB,
+        ThreadClass.ClassMedium,
+        ThreadClass.Class2G,
+        ThreadClass.Class3G,
+        -> ThreadUnit.Inch
+    }
+
 /** True for an ISO 965 class (6g, 6H). Else the class is not an ISO 965 class. */
 val ThreadClass.isIso: Boolean
     get() = this == ThreadClass.Class6g || this == ThreadClass.Class6H

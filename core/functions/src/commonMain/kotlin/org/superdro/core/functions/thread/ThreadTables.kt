@@ -7,10 +7,15 @@ import org.superdro.core.model.ThreadForm
  *
  * @property designation The size text, for example `M10 × 1.5` (with U+00D7) or `1/4-20`.
  * @property nominalDiameterUm The basic major diameter D.
- * @property pitchUm The pitch P. For a UN row, P = 25400 / TPI.
- * @property threadsPerInch The threads per inch of a UN row, or null for an ISO row.
- * @property lengthOfEngagementUm The length of engagement LE of the ASME B1.1 formulas: LE = D
- *   for UNC and UNF, LE = 9P for UNEF, null for an ISO row.
+ * @property pitchUm The pitch P. For an inch row, P = 25400 / TPI.
+ * @property threadsPerInch The threads per inch of an inch or pipe row, or null for a metric row.
+ * @property lengthOfEngagementUm The length of engagement LE of the tolerance formulas, or null.
+ * @property e0PitchDiameterUm The pitch diameter `E0` at the small end of a tapered pipe thread,
+ *   or null.
+ * @property e1PitchDiameterUm The pitch diameter `E1` at the hand-tight gauge plane `L1` of a
+ *   tapered pipe thread, or null.
+ * @property l1LengthUm The hand-tight engagement length `L1` of a tapered pipe thread, or null.
+ * @property l2LengthUm The effective thread length `L2` of a tapered pipe thread, or null.
  */
 data class ThreadSize(
     val designation: String,
@@ -19,6 +24,10 @@ data class ThreadSize(
     val pitchUm: Double,
     val threadsPerInch: Double? = null,
     val lengthOfEngagementUm: Double? = null,
+    val e0PitchDiameterUm: Double? = null,
+    val e1PitchDiameterUm: Double? = null,
+    val l1LengthUm: Double? = null,
+    val l2LengthUm: Double? = null,
 )
 
 /**
@@ -28,6 +37,12 @@ data class ThreadSize(
  * - ISO metric fine: the ISO 261 fine pitches from M3 × 0.35 to M68 × 1.5. For each diameter, the
  *   rows go from the largest pitch to the smallest pitch.
  * - UNC, UNF, UNEF: the ASME B1.1 series from #5-40, #5-44, and #12-32.
+ * - BSW, BSF: the BS 84 coarse and fine series from 1/8 in to 2 in.
+ * - BSPP: the ISO 228-1 parallel pipe series from G 1/16 to G 2.
+ * - ISO trapezoidal: the ISO 2902 preferred series from Tr 8 × 1.5 to Tr 60 × 9.
+ * - Acme: the ASME B1.5 general purpose series from 1/4-16 to 2-4.
+ * - NPT: the ASME B1.20.1 tapered pipe series from 1/16-27 to 2-11.5.
+ * - BSPT: the ISO 7-1 tapered pipe series from R 1/16-28 to R 2-11.
  *
  * The rows of a custom form are empty.
  */
@@ -40,7 +55,14 @@ object ThreadTables {
         ThreadForm.Unc -> unc
         ThreadForm.Unf -> unf
         ThreadForm.Unef -> unef
-        else -> emptyList()
+        ThreadForm.Bsw -> bsw
+        ThreadForm.Bsf -> bsf
+        ThreadForm.Bspp -> bspp
+        ThreadForm.IsoTrapezoidal -> isoTrapezoidal
+        ThreadForm.Acme -> acme
+        ThreadForm.Npt -> npt
+        ThreadForm.Bspt -> bspt
+        ThreadForm.CustomMetric, ThreadForm.CustomImperial -> emptyList()
     }
 
     /** Gives the row of the form with this designation, or null. */
@@ -50,6 +72,13 @@ object ThreadTables {
     private fun iso(form: ThreadForm, diameterMm: Double, pitchMm: Double): ThreadSize = ThreadSize(
         designation = "M${trimNumber(diameterMm, 4)} × ${trimNumber(pitchMm, 4)}",
         form = form,
+        nominalDiameterUm = diameterMm * 1000.0,
+        pitchUm = pitchMm * 1000.0,
+    )
+
+    private fun tr(diameterMm: Double, pitchMm: Double): ThreadSize = ThreadSize(
+        designation = "Tr ${trimNumber(diameterMm, 4)} × ${trimNumber(pitchMm, 4)}",
+        form = ThreadForm.IsoTrapezoidal,
         nominalDiameterUm = diameterMm * 1000.0,
         pitchUm = pitchMm * 1000.0,
     )
@@ -133,6 +162,26 @@ object ThreadTables {
         )
     }
 
+    /** An inch row with decimal TPI text (`2-4.5` or `1/4-20`). */
+    private fun inchSeries(
+        form: ThreadForm,
+        size: String,
+        diameterIn: Double,
+        tpi: Double,
+        engagementFactor: Double = 1.0,
+    ): ThreadSize {
+        val pitchUm = 25400.0 / tpi
+        val diameterUm = diameterIn * 25400.0
+        return ThreadSize(
+            designation = "$size-${trimNumber(tpi, 2)}",
+            form = form,
+            nominalDiameterUm = diameterUm,
+            pitchUm = pitchUm,
+            threadsPerInch = tpi,
+            lengthOfEngagementUm = engagementFactor * diameterUm,
+        )
+    }
+
     /** The major diameter of a number size: 0.060 + 0.013 × N inch. */
     private fun numberSize(n: Int): Double = 0.060 + 0.013 * n
 
@@ -172,4 +221,172 @@ object ThreadTables {
         Triple("1 1/2", 1.5, 18.0), Triple("1 9/16", 1.5625, 18.0), Triple("1 5/8", 1.625, 18.0),
         Triple("1 11/16", 1.6875, 18.0),
     ).map { (size, d, tpi) -> un(ThreadForm.Unef, size, d, tpi) }
+
+    private val bsw: List<ThreadSize> = listOf(
+        Triple("1/8", 0.125, 40.0),
+        Triple("3/16", 0.1875, 24.0),
+        Triple("1/4", 0.25, 20.0),
+        Triple("5/16", 0.3125, 18.0),
+        Triple("3/8", 0.375, 16.0),
+        Triple("7/16", 0.4375, 14.0),
+        Triple("1/2", 0.5, 12.0),
+        Triple("9/16", 0.5625, 12.0),
+        Triple("5/8", 0.625, 11.0),
+        Triple("3/4", 0.75, 10.0),
+        Triple("7/8", 0.875, 9.0),
+        Triple("1", 1.0, 8.0),
+        Triple("1 1/8", 1.125, 7.0),
+        Triple("1 1/4", 1.25, 7.0),
+        Triple("1 1/2", 1.5, 6.0),
+        Triple("1 3/4", 1.75, 5.0),
+        Triple("2", 2.0, 4.5),
+    ).map { (size, d, tpi) -> inchSeries(ThreadForm.Bsw, size, d, tpi) }
+
+    private val bsf: List<ThreadSize> = listOf(
+        Triple("3/16", 0.1875, 32.0),
+        Triple("1/4", 0.25, 26.0),
+        Triple("5/16", 0.3125, 22.0),
+        Triple("3/8", 0.375, 20.0),
+        Triple("7/16", 0.4375, 18.0),
+        Triple("1/2", 0.5, 16.0),
+        Triple("9/16", 0.5625, 16.0),
+        Triple("5/8", 0.625, 14.0),
+        Triple("3/4", 0.75, 12.0),
+        Triple("7/8", 0.875, 11.0),
+        Triple("1", 1.0, 10.0),
+        Triple("1 1/8", 1.125, 9.0),
+        Triple("1 1/4", 1.25, 9.0),
+        Triple("1 1/2", 1.5, 8.0),
+    ).map { (size, d, tpi) -> inchSeries(ThreadForm.Bsf, size, d, tpi) }
+
+    private val bspp: List<ThreadSize> = listOf(
+        Triple("G 1/16", 7723.0, 28.0),
+        Triple("G 1/8", 9728.0, 28.0),
+        Triple("G 1/4", 13157.0, 19.0),
+        Triple("G 3/8", 16662.0, 19.0),
+        Triple("G 1/2", 20955.0, 14.0),
+        Triple("G 5/8", 22911.0, 14.0),
+        Triple("G 3/4", 26441.0, 14.0),
+        Triple("G 7/8", 30201.0, 14.0),
+        Triple("G 1", 33249.0, 11.0),
+        Triple("G 1 1/8", 37897.0, 11.0),
+        Triple("G 1 1/4", 41910.0, 11.0),
+        Triple("G 1 1/2", 47803.0, 11.0),
+        Triple("G 1 3/4", 53746.0, 11.0),
+        Triple("G 2", 59614.0, 11.0),
+    ).map { (designation, majorUm, tpi) ->
+        ThreadSize(
+            designation = designation,
+            form = ThreadForm.Bspp,
+            nominalDiameterUm = majorUm,
+            pitchUm = 25400.0 / tpi,
+            threadsPerInch = tpi,
+        )
+    }
+
+    private val isoTrapezoidal: List<ThreadSize> = listOf(
+        8.0 to 1.5,
+        10.0 to 2.0,
+        12.0 to 3.0,
+        14.0 to 3.0,
+        16.0 to 4.0,
+        18.0 to 4.0,
+        20.0 to 4.0,
+        22.0 to 5.0,
+        24.0 to 5.0,
+        26.0 to 5.0,
+        28.0 to 5.0,
+        30.0 to 6.0,
+        32.0 to 6.0,
+        36.0 to 6.0,
+        40.0 to 7.0,
+        44.0 to 7.0,
+        48.0 to 8.0,
+        50.0 to 8.0,
+        52.0 to 8.0,
+        60.0 to 9.0,
+    ).map { (d, p) -> tr(d, p) }
+
+    private val acme: List<ThreadSize> = listOf(
+        Triple("1/4", 0.25, 16.0),
+        Triple("5/16", 0.3125, 14.0),
+        Triple("3/8", 0.375, 12.0),
+        Triple("7/16", 0.4375, 12.0),
+        Triple("1/2", 0.5, 10.0),
+        Triple("5/8", 0.625, 8.0),
+        Triple("3/4", 0.75, 6.0),
+        Triple("7/8", 0.875, 6.0),
+        Triple("1", 1.0, 5.0),
+        Triple("1 1/8", 1.125, 5.0),
+        Triple("1 1/4", 1.25, 5.0),
+        Triple("1 3/8", 1.375, 4.0),
+        Triple("1 1/2", 1.5, 4.0),
+        Triple("1 3/4", 1.75, 4.0),
+        Triple("2", 2.0, 4.0),
+    ).map { (size, d, tpi) -> inchSeries(ThreadForm.Acme, size, d, tpi, engagementFactor = 2.0) }
+
+    private fun nptRow(
+        designation: String,
+        odIn: Double,
+        tpi: Double,
+        e0In: Double,
+        e1In: Double,
+        l1In: Double,
+        l2In: Double,
+    ): ThreadSize = ThreadSize(
+        designation = designation,
+        form = ThreadForm.Npt,
+        nominalDiameterUm = odIn * 25400.0,
+        pitchUm = 25400.0 / tpi,
+        threadsPerInch = tpi,
+        e0PitchDiameterUm = e0In * 25400.0,
+        e1PitchDiameterUm = e1In * 25400.0,
+        l1LengthUm = l1In * 25400.0,
+        l2LengthUm = l2In * 25400.0,
+    )
+
+    private val npt: List<ThreadSize> = listOf(
+        nptRow("1/16-27", 0.3125, 27.0, 0.27118, 0.28118, 0.160, 0.2611),
+        nptRow("1/8-27", 0.405, 27.0, 0.36351, 0.37360, 0.1615, 0.2639),
+        nptRow("1/4-18", 0.540, 18.0, 0.47739, 0.49163, 0.2278, 0.4018),
+        nptRow("3/8-18", 0.675, 18.0, 0.61201, 0.62701, 0.240, 0.4078),
+        nptRow("1/2-14", 0.840, 14.0, 0.75843, 0.77843, 0.320, 0.5337),
+        nptRow("3/4-14", 1.050, 14.0, 0.96768, 0.98887, 0.339, 0.5457),
+        nptRow("1-11.5", 1.315, 11.5, 1.21363, 1.23863, 0.400, 0.6828),
+        nptRow("1 1/4-11.5", 1.660, 11.5, 1.55713, 1.58338, 0.420, 0.7068),
+        nptRow("1 1/2-11.5", 1.900, 11.5, 1.79609, 1.82234, 0.420, 0.7235),
+        nptRow("2-11.5", 2.375, 11.5, 2.26902, 2.29627, 0.436, 0.7565),
+    )
+
+    private fun bsptRow(
+        designation: String,
+        majorUm: Double,
+        tpi: Double,
+        e1Um: Double,
+        l1Um: Double,
+        l2Um: Double,
+    ): ThreadSize = ThreadSize(
+        designation = designation,
+        form = ThreadForm.Bspt,
+        nominalDiameterUm = majorUm,
+        pitchUm = 25400.0 / tpi,
+        threadsPerInch = tpi,
+        e0PitchDiameterUm = e1Um - 0.0625 * l1Um,
+        e1PitchDiameterUm = e1Um,
+        l1LengthUm = l1Um,
+        l2LengthUm = l2Um,
+    )
+
+    private val bspt: List<ThreadSize> = listOf(
+        bsptRow("R 1/16-28", 7723.0, 28.0, 7142.0, 4000.0, 6500.0),
+        bsptRow("R 1/8-28", 9728.0, 28.0, 9147.0, 4000.0, 6500.0),
+        bsptRow("R 1/4-19", 13157.0, 19.0, 12301.0, 6000.0, 9700.0),
+        bsptRow("R 3/8-19", 16662.0, 19.0, 15806.0, 6400.0, 10100.0),
+        bsptRow("R 1/2-14", 20955.0, 14.0, 19793.0, 8200.0, 13200.0),
+        bsptRow("R 3/4-14", 26441.0, 14.0, 25279.0, 9500.0, 14500.0),
+        bsptRow("R 1-11", 33249.0, 11.0, 31770.0, 10400.0, 16800.0),
+        bsptRow("R 1 1/4-11", 41910.0, 11.0, 40431.0, 12700.0, 19100.0),
+        bsptRow("R 1 1/2-11", 47803.0, 11.0, 46324.0, 12700.0, 19100.0),
+        bsptRow("R 2-11", 59614.0, 11.0, 58135.0, 15900.0, 23400.0),
+    )
 }

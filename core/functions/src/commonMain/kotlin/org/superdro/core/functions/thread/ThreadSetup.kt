@@ -2,9 +2,11 @@ package org.superdro.core.functions.thread
 
 import kotlin.time.Clock
 import kotlin.time.Instant
+import org.superdro.core.model.PartialInsertPreset
 import org.superdro.core.model.ThreadClass
 import org.superdro.core.model.ThreadCutter
 import org.superdro.core.model.ThreadForm
+import org.superdro.core.model.ThreadInfeedMode
 import org.superdro.core.model.ThreadSpec
 
 /**
@@ -22,6 +24,13 @@ import org.superdro.core.model.ThreadSpec
  * @property lengthUm "Thread Length (L)", from the start toward −Z.
  * @property leftReliefUm W₁ (at the shoulder or the bottom). Null or 0 means no relief.
  * @property rightReliefUm W₂ (at the face or the mouth). Null or 0 means no relief.
+ * @property leftHand True for a left-hand thread, false for a right-hand thread.
+ * @property starts The number of thread starts (`1` or more).
+ * @property infeedMode The compound slide infeed mode.
+ * @property roughingPasses The manual roughing pass count, or null for the automatic count.
+ * @property wireDiameterUm The custom three-wire diameter, or null for the best wire diameter.
+ * @property measuredOverWiresUm The measured micrometer reading over three wires, or null.
+ * @property insertPreset The partial threading insert preset.
  */
 data class ThreadSetupInput(
     val form: ThreadForm = ThreadForm.IsoMetricCoarse,
@@ -38,6 +47,13 @@ data class ThreadSetupInput(
     val leftReliefUm: Double? = null,
     val rightReliefUm: Double? = null,
     val tag: String = "",
+    val leftHand: Boolean = false,
+    val starts: Int = 1,
+    val infeedMode: ThreadInfeedMode = ThreadInfeedMode.ModifiedFlank,
+    val roughingPasses: Int? = null,
+    val wireDiameterUm: Double? = null,
+    val measuredOverWiresUm: Double? = null,
+    val insertPreset: PartialInsertPreset = PartialInsertPreset.Custom,
 )
 
 /**
@@ -178,14 +194,51 @@ object ThreadSetup {
      * missing or not valid.
      */
     fun calculate(input: ThreadSetupInput): ThreadGeometry? {
-        if (input.form.isCustom) {
+        val validStarts = input.starts.coerceAtLeast(1)
+        val validWire = input.wireDiameterUm?.takeIf { it.isFinite() && it > 0.0 }
+        val validMeasured = input.measuredOverWiresUm?.takeIf { it.isFinite() && it > 0.0 }
+        val validLength = input.lengthUm?.takeIf { it.isFinite() && it > 0.0 }
+        val baseGeometry = if (input.form.isCustom) {
             val pitch = input.customPitchUm?.takeIf { it.isFinite() && it > 0.0 } ?: return null
             val major = input.customMajorDiameterUm?.takeIf { it.isFinite() && it > 0.0 } ?: return null
             val minor = input.customMinorDiameterUm?.takeIf { it.isFinite() && it > 0.0 && it < major } ?: return null
-            return ThreadCalculator.custom(input.form, input.internal, input.cutter, major, minor, pitch)
+            ThreadCalculator.custom(
+                form = input.form,
+                internal = input.internal,
+                cutter = input.cutter,
+                majorDiameterUm = major,
+                minorDiameterUm = minor,
+                pitchUm = pitch,
+                starts = validStarts,
+                leftHand = input.leftHand,
+                customWireDiameterUm = validWire,
+                measuredOverWiresUm = validMeasured,
+            )
+        } else {
+            val size = input.size?.let { ThreadTables.find(input.form, it) } ?: return null
+            val effectiveTipRadius = input.insertPreset.tipRadiusUm ?: input.cutterTipRadiusUm
+            ThreadCalculator.standard(
+                size = size,
+                internal = input.internal,
+                cutter = input.cutter,
+                threadClass = input.threadClass,
+                cutterTipRadiusUm = effectiveTipRadius,
+                starts = validStarts,
+                leftHand = input.leftHand,
+                customWireDiameterUm = validWire,
+                measuredOverWiresUm = validMeasured,
+            )
         }
-        val size = input.size?.let { ThreadTables.find(input.form, it) } ?: return null
-        return ThreadCalculator.standard(size, input.internal, input.cutter, input.threadClass, input.cutterTipRadiusUm)
+        return if (input.internal && validLength != null) {
+            baseGeometry.copy(
+                internalBarRecommendation = ThreadSyncRules.internalBarRecommendation(
+                    minorDiameterUm = baseGeometry.minorDiameterUm,
+                    lengthUm = validLength,
+                ),
+            )
+        } else {
+            baseGeometry
+        }
     }
 
     /**
@@ -234,6 +287,11 @@ object ThreadSetup {
         val w1 = input.leftReliefUm?.takeIf { it > 0.0 }
         val w2 = input.rightReliefUm?.takeIf { it > 0.0 }
         val z = zPositions(startZ, length, w1, w2)
+        val effectiveTipRadius = if (input.cutter == ThreadCutter.Partial) {
+            input.insertPreset.tipRadiusUm ?: input.cutterTipRadiusUm
+        } else {
+            null
+        }
         return ThreadSpec(
             workspaceId = workspaceId,
             tag = input.tag.trim().ifEmpty { defaultTag(existingTags) },
@@ -252,7 +310,13 @@ object ThreadSetup {
             stopZUm = z.stopZUm,
             leftReliefUm = w1,
             rightReliefUm = w2,
-            cutterTipRadiusUm = if (input.cutter == ThreadCutter.Partial) input.cutterTipRadiusUm else null,
+            cutterTipRadiusUm = effectiveTipRadius,
+            leftHand = input.leftHand,
+            starts = input.starts.coerceAtLeast(1),
+            infeedMode = input.infeedMode,
+            roughingPasses = input.roughingPasses?.takeIf { it > 0 },
+            wireDiameterUm = input.wireDiameterUm?.takeIf { it.isFinite() && it > 0.0 },
+            insertPreset = if (input.cutter == ThreadCutter.Partial) input.insertPreset else PartialInsertPreset.Custom,
             createdOn = now,
             updatedOn = now,
         )
@@ -269,11 +333,12 @@ object ThreadSetup {
         val sz = spec.startZUm + (w2 ?: 0.0)
         val length = sz - spec.stopZUm + (w1 ?: 0.0)
         val custom = spec.form.isCustom
+        val hasClasses = classesFor(spec.form, spec.internal).isNotEmpty()
         return ThreadSetupInput(
             form = spec.form,
             internal = spec.internal,
             size = if (custom) null else spec.size,
-            threadClass = if (custom) null else spec.threadClass,
+            threadClass = if (custom || !hasClasses) null else spec.threadClass,
             cutter = spec.cutter,
             customPitchUm = if (custom) spec.pitchUm else null,
             customMajorDiameterUm = if (custom) spec.majorDiameterUm else null,
@@ -284,6 +349,13 @@ object ThreadSetup {
             leftReliefUm = w1,
             rightReliefUm = w2,
             tag = "",
+            leftHand = spec.leftHand,
+            starts = spec.starts,
+            infeedMode = spec.infeedMode,
+            roughingPasses = spec.roughingPasses,
+            wireDiameterUm = spec.wireDiameterUm,
+            measuredOverWiresUm = null,
+            insertPreset = spec.insertPreset,
         )
     }
 }
