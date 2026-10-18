@@ -58,7 +58,6 @@ import org.superdro.core.resources.Res
 import org.superdro.core.resources.frame_close
 import org.superdro.core.resources.ic_close
 import org.superdro.core.resources.ic_info
-import org.superdro.core.resources.ic_sync
 import org.superdro.core.resources.ic_warning
 import org.superdro.core.resources.readout_setup_calibrate
 import org.superdro.core.resources.readout_setup_settings
@@ -67,8 +66,6 @@ import org.superdro.core.resources.readout_setup_title
 import org.superdro.core.resources.readout_status_datum
 import org.superdro.core.resources.readout_status_measurement
 import org.superdro.core.resources.readout_status_no_tool
-import org.superdro.core.resources.readout_status_offline
-import org.superdro.core.resources.readout_status_reconnecting
 import org.superdro.core.resources.readout_status_rpm
 import org.superdro.core.resources.readout_status_tool
 import org.superdro.core.ui.text.UiText
@@ -89,8 +86,7 @@ val NoRpmText: StateFlow<String?> = MutableStateFlow(null)
 
 /**
  * The status strip: the units, ABS or INC, the active tool, the active sub-datum, the RPM,
- * the adapter state, the "Measurement" mode chip, and the "Offline" or "Reconnecting"
- * label. Each status has an icon and a text.
+ * and the "Measurement" mode chip. Each status has an icon and a text.
  *
  * @param rpmText The RPM text of the tachometer, or null when the tachometer is off. Only the RPM
  *   chip reads it, so a new RPM value does not recompose the other chips.
@@ -116,19 +112,8 @@ fun StatusStrip(
         StatusChip(state.toolName?.let { name -> stringResource(Res.string.readout_status_tool, name) } ?: stringResource(Res.string.readout_status_no_tool))
         state.subDatumName?.let { name -> StatusChip(stringResource(Res.string.readout_status_datum, name)) }
         RpmChip(rpmText)
-        val (linkContainer, linkContent) = linkColors(state.link)
-        val attempt = when (val link = state.link) {
-            is LinkStatus.Reconnecting -> " (${link.attempt})"
-            is LinkStatus.Connecting -> if (link.attempt > 1) " (${link.attempt})" else ""
-            else -> ""
-        }
-        StatusChip(stringResource(ReadoutTexts.linkText(state.link)) + attempt, ReadoutTexts.linkIcon(state.link), linkContainer, linkContent)
         if (state.measurementMode) {
             StatusChip(stringResource(Res.string.readout_status_measurement), Res.drawable.ic_info, colors.secondaryContainer, colors.onSecondaryContainer)
-        }
-        state.offline?.let { label ->
-            val text = stringResource(if (label == OfflineLabel.Offline) Res.string.readout_status_offline else Res.string.readout_status_reconnecting)
-            StatusChip(text, Res.drawable.ic_sync, colors.tertiaryContainer, colors.onTertiaryContainer)
         }
         trailing()
     }
@@ -139,19 +124,6 @@ fun StatusStrip(
 private fun RpmChip(rpmText: StateFlow<String?>) {
     val rpm by rpmText.collectAsState()
     rpm?.let { text -> StatusChip(stringResource(Res.string.readout_status_rpm, text)) }
-}
-
-/** The container roles of the link status. */
-@Composable
-private fun linkColors(status: LinkStatus): Pair<Color, Color> {
-    val colors = MaterialTheme.colorScheme
-    return when (status) {
-        LinkStatus.Connected -> colors.primaryContainer to colors.onPrimaryContainer
-        is LinkStatus.Connecting, LinkStatus.AwaitingData, is LinkStatus.Reconnecting, LinkStatus.NoData ->
-            colors.tertiaryContainer to colors.onTertiaryContainer
-        is LinkStatus.WaitingForDevice, is LinkStatus.Failed -> colors.errorContainer to colors.onErrorContainer
-        LinkStatus.Disconnected -> colors.surfaceContainerHighest to colors.onSurface
-    }
 }
 
 @Composable
