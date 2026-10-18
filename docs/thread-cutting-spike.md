@@ -33,26 +33,28 @@ SuperDRO has these thread functions now:
 | Model | Stores a workspace thread in µm (`ThreadForm`, `ThreadClass`, `ThreadCutter`, diameters, start Z, stop Z, reliefs W₁ and W₂, and the tip radius of a partial cutter). | `core/model/src/commonMain/kotlin/org/superdro/core/model/ThreadSpec.kt` |
 | Tables and tolerances | ISO 261 metric coarse (M3 to M68) and fine (M3 × 0.35 to M68 × 1.5), ASME B1.1 UNC, UNF, and UNEF, custom metric, and custom imperial. ISO 965-1 grade 6 (`6g`, `6H`) and ASME B1.1 (`2A`, `3A`, `2B`, `3B`). | `core/functions/src/commonMain/kotlin/org/superdro/core/functions/thread/ThreadTables.kt`, `core/functions/src/commonMain/kotlin/org/superdro/core/functions/thread/ClassTolerances.kt` |
 | Diameter math | Calculates the pre-op diameter ("Turn to (D)" or "Bore to (D₁)") with its class range, the cut-to diameter for the cutter root radius `r`, and the three-wire values for the best wire diameter (`W = 0.5773503 × P`). | `core/functions/src/commonMain/kotlin/org/superdro/core/functions/thread/ThreadCalculator.kt`, `core/functions/src/commonMain/kotlin/org/superdro/core/functions/thread/ThreadSetup.kt` |
-| Points and outline | Makes 14 to 20 sub-datums (`Z₁`, `Z₂`, `W₁`, `W₂`, `D`, `D₁`, and the extent and relief corners) and draws the thread outline in the graphical view. | `core/functions/src/commonMain/kotlin/org/superdro/core/functions/thread/ThreadPoints.kt`, `core/ui/src/commonMain/kotlin/org/superdro/core/ui/graphics/view/GraphicalSceneBuilder.kt` |
+| Points and outline | Makes 14 to 20 sub-datums (`Z₁`, `Z₂`, `W₁`, `W₂`, `D`, `D₁`, and the extent and relief corners) and draws the thread outline in the graphical view. | `core/functions/src/commonMain/kotlin/org/superdro/core/functions/thread/ThreadPoints.kt`, `core/ui/src/commonMain/kotlin/org/superdro/core/ui/graphics/view/GraphicalScene.kt` |
 | Live cut panel | Shows the retract state (`Clear`, `Engaged`, `PastLimit`), the depth phase (`Safe`, `Cutting`, `PastFinal`), the deepest recorded pass, the radial infeed, and the chip-area load ratio. | `core/functions/src/commonMain/kotlin/org/superdro/core/functions/thread/ThreadCut.kt`, `core/ui/src/commonMain/kotlin/org/superdro/core/ui/graphics/thread/ThreadCutController.kt`, `core/ui/src/commonMain/kotlin/org/superdro/core/ui/graphics/thread/ThreadPanel.kt` |
 
 The current code has these gaps:
 
-- `ThreadSetupScreen` shows only on a lathe profile. A mill profile has no tap drill, roll tap, or
-  clearance hole calculator.
+- `FunctionStripRules.buttons` shows `FunctionButton.ThreadSetup` only on a lathe profile. A mill
+  profile has no tap drill, roll tap, or clearance hole calculator.
 - `ThreadSetupScreen` does not show the relief groove diameter, the entry chamfer diameter, the
   partial insert preset (`A60`, `G60`, `AG60`, `N60`), the smallest bore of an internal threading
   bar, or the lead angle of the helix.
 - `ThreadCut` has no pass schedule and no compound slide infeed math.
 - `ThreadCalculator.threeWire` uses only the best wire size on a 60° external thread with no lead
   angle correction, and gives no inspection values for an internal thread.
-- `ThreadCutWarning.XNotReferenced` is in `ThreadCut`, but `ThreadCutController` and `ThreadPanel`
-  do not show it.
+- `ThreadCutWarning.XNotReferenced` is in `ThreadCut`, but `AxisState` and `AxisReading` do not
+  track whether X has a reference, and `ThreadCutController` and `ThreadPanel` do not show the
+  warning.
 
 ## 3. Thread forms and profile geometry
 
 Let `P` be the axial pitch in µm, `starts` (1 or more) be the number of starts, and
-`Lead = starts × P` be the axial advance for one spindle turn.
+`Lead = starts × P` be the axial advance for one spindle turn. All lengths in `core:model` and
+`core:functions` are µm (`Double`), and all stored or exposed angles are arc seconds (`Double`).
 
 ### 3.1 60° ISO metric and Unified (`IsoMetricCoarse`, `IsoMetricFine`, `Unc`, `Unf`, `Unef`, `CustomMetric`, `CustomImperial`)
 
@@ -70,8 +72,9 @@ Let `P` be the axial pitch in µm, `starts` (1 or more) be the number of starts,
 - Basic pitch diameter `d2 = D − h3`.
 - Basic minor diameter `D1 = D − 2 × h3 = D − 1.2806548 × P`.
 - Tables:
-  - `Bspp` (ISO 228-1, designation `G`): G 1/16 (28 TPI) to G 2 (11 TPI), external classes A and B,
-    internal class G.
+  - `Bspp` (ISO 228-1, symbol `G`): G 1/16 (28 TPI) to G 2 (11 TPI), external classes `A` and `B`,
+    and the single standard internal tolerance zone (ISO 228-1 internal threads have no class suffix
+    letter).
   - `Bsw` and `Bsf` (BS 84): 1/8 in to 2 in, medium class.
 
 ### 3.3 30° ISO metric trapezoidal (`IsoTrapezoidal`, ISO 2901 / DIN 103)
@@ -79,9 +82,9 @@ Let `P` be the axial pitch in µm, `starts` (1 or more) be the number of starts,
 - Included angle `α = 30°`.
 - Fundamental triangle height `H1 = P / (2 × tan 15°) = 1.8660254 × P`.
 - Radial crest and root clearance `ac`:
-  - `P = 1500 µm`: `ac = 150 µm`.
-  - `2000 µm ≤ P ≤ 5000 µm`: `ac = 250 µm`.
-  - `6000 µm ≤ P ≤ 12000 µm`: `ac = 500 µm`.
+  - `P ≤ 1500 µm`: `ac = 150 µm`.
+  - `1500 µm < P ≤ 5000 µm`: `ac = 250 µm`.
+  - `P > 5000 µm`: `ac = 500 µm`.
 - Basic pitch diameter `d2 = D − 0.5 × P`.
 - External minor diameter `d3 = D − (P + 2 × ac)`.
 - Internal major diameter `D4 = D + 2 × ac`.
@@ -93,7 +96,7 @@ Let `P` be the axial pitch in µm, `starts` (1 or more) be the number of starts,
 ### 3.4 29° Acme (`Acme`, ASME B1.5)
 
 - Included angle `α = 29°`.
-- Fundamental triangle height `H = P / (2 × tan 14.5°) = 1.9333567 × P`.
+- Fundamental triangle height `H = P / (2 × tan 14.5°) = 1.9333565 × P`.
 - Basic depth `h = 0.5 × P`.
 - Radial root and crest clearance `c`: `254 µm` (0.010 in) for 10 TPI or less, `127 µm` (0.005 in)
   for more than 10 TPI.
@@ -101,8 +104,10 @@ Let `P` be the axial pitch in µm, `starts` (1 or more) be the number of starts,
 - External minor diameter `d3 = D − P − 2 × c`.
 - Internal major diameter `D4 = D + 2 × c`.
 - Internal minor bore `D1 = D − P`.
-- Crest flat width `Fc = 0.3706996 × P`.
-- Cutter tip flat width at the root `Fr = 0.3706996 × P − 0.5172414 × c`.
+- Basic crest flat width `Fc = 0.5 × P × (1 − tan 14.5°) = 0.3706912 × P` (`0.3707 × P` in the
+  ASME B1.5 tables).
+- Cutter tip flat width at the root `Fr = Fc − 2 × c × tan 14.5° = 0.3706912 × P − 0.5172352 × c`
+  (`0.3707 × P − 0.52 × c` in the ASME B1.5 tables).
 - Table: ASME B1.5 general purpose sizes from `1/4-16` to `2-4`, classes `2G` and `3G`.
 
 ### 3.5 Tapered pipe threads (`Npt` 60° ASME B1.20.1, `Bspt` 55° ISO 7-1)
@@ -148,26 +153,30 @@ This calculator works on both mill profiles and lathe profiles:
    - `AG60`: `r = 60 µm` (pitch 0.5 to 3.0 mm, 48 to 8 TPI).
    - `N60`: `r = 400 µm` (pitch 3.5 to 5.0 mm, 7 to 5 TPI).
    - `Custom`: manual tip radius.
-3. **Internal boring bar check.** Gives the largest standard internal holder size (`06IR`, `08IR`,
-   `11IR`, `16IR`, `22IR`, or solid carbide micro-bar) that fits inside the pre-bore diameter `D1`,
-   and warns when `lengthUm > 3.5 × D1`.
+3. **Internal boring bar check.** Gives the largest standard internal holder size that fits inside
+   the pre-bore diameter `D1` (`06IR`: minimum bore 6 mm, `08IR`: 8 mm, `11IR`: 11 mm, `16IR`:
+   16 mm, `22IR`: 20 mm; or a solid carbide micro-bar below 6 mm). Warns when the ratio of thread
+   length `lengthUm` to the bar shank diameter is more than `3.5`.
 4. **Helix lead angle (`λ`).**
-   - `λ = arctan(starts × P / (π × d2))`.
-   - Shows `λ` in degrees. Warns when `λ > 2.5°` that the tool needs a tilted anvil or extra leading
+   - `λ = arctan(starts × P / (π × d2))`, stored in arc seconds and shown in degrees.
+   - Warns when `λ > 9000` arc seconds (`2.5°`) that the tool needs a tilted anvil or extra leading
      flank relief.
 
 ## 5. Left-hand and multi-start threads
 
 1. **Left-hand (`leftHand: Boolean`).**
-   - A right-hand thread cuts from `startZ` toward `−Z`, with the retract limit at `Zmin − W1`.
-   - A left-hand thread cuts from `Zmin` toward `+Z`, with the retract limit at `Zmax + W2`.
+   - A right-hand thread cuts from `Zmax` toward `−Z`, with the stopping relief `W1` and the retract
+     limit at `Zmin − W1`.
+   - A left-hand thread cuts from `Zmin` toward `+Z`, with the stopping relief `W2` and the retract
+     limit at `Zmax + W2`.
    - `ThreadPoints.activeCorner` selects the finish corner at `Zmin` for a right-hand thread and at
      `Zmax` for a left-hand thread.
 2. **Multi-start (`starts: Int`).**
    - The gearbox pitch is the lead: `Lead = starts × P` (or `TPI / starts`).
    - For each start `m` from `1` to `starts`:
      - Axial Z offset: `ΔZ_m = (m − 1) × P`.
-     - Spindle angle offset: `Δθ_m = 360° × (m − 1) / starts`.
+     - Spindle angle offset: `Δθ_m = 1_296_000 × (m − 1) / starts` arc seconds (`360° / starts` per
+       start).
    - `ThreadPanel` shows the active start (`Start m of starts`) and resets the pass record when the
      operator switches to the next start.
 
@@ -187,16 +196,23 @@ This calculator works on both mill profiles and lathe profiles:
 Let `h_total = |cutToDiameterUm − preOpDiameterUm| / 2` be the total radial depth, and let
 `h_finish` be the radial depth of the finish pass (default `35 µm`).
 
-The roughing depth is `h_rough = max(0, h_total − h_finish)`. With the chip area formula
-`A(h) = tan(α / 2) × h² + w × h`, pass `k` of `N_rough` roughing passes has the cumulative radial
-depth `h_k` that solves `A(h_k) = (k / N_rough) × A(h_rough)`:
+The roughing depth is `h_rough = max(0, h_total − h_finish)`. In the chip area formula
+`A(h) = tan(α / 2) × h² + w × h`, the root flat width `w` is:
+
+- `w = Fr` for `Acme` (`29°`).
+- `w = f` for `IsoTrapezoidal` (`30°`).
+- `w = P / 4` for `ThreadCutter.FullForm` on 60° and 55° threads.
+- `w = 0` for `ThreadCutter.SharpV` and `ThreadCutter.Partial` on 60° and 55° threads.
+
+Pass `k` of `N_rough` roughing passes has the cumulative radial depth `h_k` that solves
+`A(h_k) = (k / N_rough) × A(h_rough)`:
 
 ```text
 h_k = (-w + sqrt(w² + 4 × tan(α / 2) × (k / N_rough) × A(h_rough))) / (2 × tan(α / 2))
 ```
 
-Each step `Δr_k = h_k − h_{k−1}` has a floor of `25 µm` so that the cutter does not rub. The
-schedule ends with `1` finish pass at `h_total` and `1` or `2` spring passes at `h_total`.
+Each step `Δr_k = h_k − h_{k−1}` has a floor of `25 µm` to prevent rubbing. The schedule ends with
+`1` finish pass at `h_total` and `1` or `2` spring passes at `h_total`.
 
 Both `ThreadSetupScreen` and `ThreadPanel` use this schedule:
 
@@ -206,31 +222,38 @@ Both `ThreadSetupScreen` and `ThreadPanel` use this schedule:
 
 ## 7. Machine synchronization and safety (`ThreadSyncRules`)
 
-1. **Threading dial rule.** From the leadscrew pitch (`leadscrewPitchUm`) and the thread lead:
+1. **Threading dial rule.** From the leadscrew pitch (`leadscrewPitchUm` on `MachineProfile`) and
+   the thread lead:
    - Different unit systems (metric thread on an inch leadscrew, or inch thread on a metric
      leadscrew): keep the half-nut closed for all passes.
    - Same unit system: gives the exact dial engagement rule (`Any point`, `Any line`,
      `Any numbered line`, `Opposite numbered lines`, or `Same line only`).
 2. **Safe spindle speed and reaction time.**
-   - With a stopping zone `W_stop = max(W1, 1.5 × P)` and a target reaction window `t_react`
+   - Let `W_exit` be `W2` for a left-hand thread and `W1` for a right-hand thread. With the
+     stopping zone `W_stop = max(W_exit ?: 0.0, 1.5 × P)` and a target reaction window `t_react`
      (1.0 s external, 1.5 s internal):
      `RPM_max = floor(60 × W_stop / (Lead × t_react))`.
    - When the tachometer is active, `ThreadPanel` calculates the carriage speed
      `v_z = (RPM / 60) × Lead` and the time in the relief groove `t_window = W_stop / v_z`.
 3. **Live pitch check.** When the tachometer and the Z scale are active, `ThreadPanel` compares the
    measured Z feed per revolution with `Lead` and warns when the error is more than 3%.
-4. **X reference warning (D135).** `ThreadCutController` passes `x.referenced` to `ThreadCut.values`,
-   and `ThreadPanel` shows the warning when X has no reference.
+4. **X reference warning (D135).** Add `referenced: Boolean = false` to `AxisState` (set to `true`
+   when the user sets or zeroes the X axis in absolute mode) and expose it on `AxisReading`.
+   `ThreadCutController` passes `x.referenced` to `ThreadCut.values`, and `ThreadPanel` shows the
+   warning when X has no reference.
 
 ## 8. Inspection and verification (`ThreadInspection`)
 
 1. **External three-wire measurement with custom wire size and lead correction.**
    - Best wire size `W_best = P / (2 × cos(α / 2))`.
-   - For a wire of diameter `W`, half-angle `θ = α / 2`, pitch diameter `E`, and lead angle
-     `λ = arctan(starts × P / (π × E))`:
-     `M(E, W) = E − P / (2 × tan θ) + W × (1 + 1 / sin θ + 0.5 × tan²(λ) × cos θ × cot θ)`.
+   - For a parallel external thread, a wire of diameter `W`, half-angle `θ = α / 2`, target pitch
+     diameter `E = targetPitchDiameterUm`, and lead angle `λ = arctan(starts × P / (π × E))`:
+     `C_wire = W × (1 + 1 / sin θ + 0.5 × tan²(λ) × cos θ × cot θ) − P / (2 × tan θ)`
+     `M(E, W) = E + C_wire`.
+   - For a tapered pipe thread (`Npt`, `Bspt`), the formula evaluates `M` at the `E0` and `E1`
+     gauge planes with the taper factor `sec²(β)`.
    - When the user enters a measured micrometer reading `M_measured`, the calculator gives the
-     actual pitch diameter `E_actual` and the remaining radial depth
+     actual pitch diameter `E_actual = M_measured − C_wire` and the remaining radial depth
      `Δr_rem = max(0, (M_measured − M_target) / 2)`.
 2. **Internal thread limits.**
    - Minor diameter pin gauge limits: `Go = D1min`, `No-Go = D1max`.
@@ -240,8 +263,8 @@ Both `ThreadSetupScreen` and `ThreadPanel` use this schedule:
 
 | Module | Changes |
 |---|---|
-| `core:model` | Add `Bsw`, `Bsf`, `Bspp`, `IsoTrapezoidal`, `Acme`, `Npt`, and `Bspt` to `ThreadForm`. Add `ThreadInfeedMode` and the optional fields `leftHand`, `starts`, `infeedMode`, `roughingPasses`, and `wireDiameterUm` to `ThreadSpec`. |
+| `core:model` | Add `Bsw`, `Bsf`, `Bspp`, `IsoTrapezoidal`, `Acme`, `Npt`, and `Bspt` to `ThreadForm`. Add `ThreadInfeedMode` and the optional fields `leftHand`, `starts`, `infeedMode`, `roughingPasses`, and `wireDiameterUm` to `ThreadSpec` (stored in `thread_spec.spec_json` with default values, so no SQLDelight table migration is necessary). Add `leadscrewPitchUm: Double? = null` to `MachineProfile` and `referenced: Boolean = false` to `AxisState`. |
+| `core:readout` | Expose `referenced: Boolean` on `AxisReading` and set `AxisState.referenced = true` when an absolute position or zero is set on the axis. |
 | `core:functions` | Extend `ThreadTables` and `ThreadCalculator`. Add `TapAndClearanceCalculator`, `StandardDrillTables`, `ThreadPassSchedule`, `ThreadSyncRules`, and `ThreadInspection`. Update `ThreadPoints` and `ThreadCut` for left-hand and multi-start threads. |
-| `core:store` | Add a SQLDelight migration for the new `thread_spec` columns with default values. |
-| `core:resources` | Add the new strings to `strings_functions_thread.xml` and `strings_graphics.xml` in all six languages. |
-| `core:ui` | Update `ThreadSetupPresenter`, `ThreadSetupScreen`, `ThreadCutController`, `ThreadPanel`, `GraphicalSceneBuilder`, and `FunctionStripRules` (to open the thread and tap tool on mill profiles too). |
+| `core:resources` | Add the new strings to `strings_thread.xml` and `strings_graphics.xml` in all six languages (`values`, `values-es`, `values-fr`, `values-de`, `values-pt-rBR`, `values-nl`). |
+| `core:ui` | Update `ThreadSetupPresenter`, `ThreadSetupScreen`, `ThreadCutController`, `ThreadPanel`, `GraphicalScene`, and `FunctionStripRules` (to open the thread and tap tool on mill profiles too). |
