@@ -265,6 +265,7 @@ class PresenterReadoutEvents(private val presenter: ReadoutPresenter, private va
     override fun onSetupCalibrate(axis: AxisId) = navigator.push(CalibrationWizardRoute(axis))
     override fun onReadoutPaneFractionChange(fraction: Float) = presenter.onReadoutPaneFractionChange(fraction)
     override fun onGraphicalPaneWeightChange(weight: Float) = presenter.onGraphicalPaneWeightChange(weight)
+    override fun onDismissMessage() = presenter.onDismissMessage()
 
     private fun open(route: TabRoute?) {
         if (route != null) navigator.push(route)

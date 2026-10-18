@@ -18,5 +18,10 @@
     <string name="service_battery_reason">SuperDRO hält die Verbindungen zu Ihren Maschinen offen, während der Bildschirm aus ist.</string>
     <string name="service_battery_continue">Weiter</string>
     <string name="service_battery_not_now">Nicht jetzt</string>
-    <string name="service_background_warning">Die Verbindungen können abbrechen, während SuperDRO im Hintergrund ist.</string>
+    <string name="service_background_warning">Maschinenverbindungen (Bluetooth, USB oder WLAN) können abbrechen, während SuperDRO im Hintergrund ist.</string>
+    <string name="service_background_warning_title">Maschinenverbindungen im Hintergrund</string>
+    <string name="service_background_warning_prerequisite">Android benötigt die Berechtigung für Geräte in der Nähe (Bluetooth) oder einen zugelassenen USB-Adapter, um Maschinenverbindungen im Hintergrund oder bei ausgeschaltetem Bildschirm aktiv zu halten. Erteilen Sie die Berechtigung oder aktivieren Sie sie in den App-Einstellungen.</string>
+    <string name="service_background_warning_restricted">Android hat den Start des Hintergrund-Verbindungsdienstes blockiert. Öffnen Sie die App-Einstellungen und stellen Sie die Akkunutzung auf „Nicht eingeschränkt“, damit SuperDRO die Maschinenverbindungen im Hintergrund aktiv halten kann.</string>
+    <string name="service_background_grant_permission">Berechtigung erteilen</string>
+    <string name="service_background_app_settings">App-Einstellungen</string>
 </resources>

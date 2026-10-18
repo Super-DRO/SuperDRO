@@ -2,6 +2,7 @@ package org.superdro.core.ui.tabs
 
 import androidx.compose.runtime.Immutable
 import org.superdro.core.connection.DeviceId
+import org.superdro.core.connection.KeepAliveStatus
 import org.superdro.core.connection.SessionState
 import org.superdro.core.model.TransportKind
 import org.superdro.core.ui.text.UiText
@@ -48,6 +49,7 @@ data class DeviceTabsUiState(
     val overflowOpen: Boolean = false,
     val messages: List<TabMessage> = emptyList(),
     val backgroundWarning: Boolean = false,
+    val keepAliveStatus: KeepAliveStatus = if (backgroundWarning) KeepAliveStatus.PrerequisiteMissing else KeepAliveStatus.Idle,
 ) {
     /** The index of the selected tab in [tabs], or -1. */
     val selectedIndex: Int get() = tabs.indexOfFirst { tab -> tab.id == selected }
@@ -81,4 +83,10 @@ interface DeviceTabsEvents {
 
     /** The snackbar showed the message [id]. */
     fun onMessageShown(id: Long)
+
+    /** Requests the runtime permission needed to keep machine connections active in the background. */
+    fun onRequestBackgroundPermission() = Unit
+
+    /** Opens the system app settings so the user can allow background machine connections. */
+    fun onOpenBackgroundAppSettings() = Unit
 }

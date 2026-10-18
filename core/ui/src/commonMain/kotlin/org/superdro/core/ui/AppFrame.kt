@@ -1,6 +1,7 @@
 package org.superdro.core.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -33,6 +35,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,6 +58,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.superdro.core.connection.DeviceId
+import org.superdro.core.connection.KeepAliveStatus
 import org.superdro.core.model.TransportKind
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.app_add_machine
@@ -76,7 +83,13 @@ import org.superdro.core.resources.ic_science
 import org.superdro.core.resources.ic_settings
 import org.superdro.core.resources.ic_usb
 import org.superdro.core.resources.ic_warning
+import org.superdro.core.resources.service_background_app_settings
+import org.superdro.core.resources.service_background_grant_permission
 import org.superdro.core.resources.service_background_warning
+import org.superdro.core.resources.service_background_warning_prerequisite
+import org.superdro.core.resources.service_background_warning_restricted
+import org.superdro.core.resources.service_background_warning_title
+import org.superdro.core.resources.service_battery_not_now
 import org.superdro.core.resources.ic_wifi
 import org.superdro.core.resources.route_adapter_details
 import org.superdro.core.resources.route_machine_settings
@@ -188,6 +201,10 @@ fun FrameLayout(
             events.onMessageShown(message.id)
         }
     }
+    var warningDialogOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(state.backgroundWarning) {
+        if (!state.backgroundWarning) warningDialogOpen = false
+    }
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
             TopRow(
@@ -197,43 +214,120 @@ fun FrameLayout(
                 onOpenSettings = onOpenSettings,
                 onOverflowAction = onOverflowAction,
                 onTabMenuAction = onTabMenuAction,
+                onOpenBackgroundWarning = { warningDialogOpen = true },
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            if (state.backgroundWarning) BackgroundWarning()
             Box(Modifier.fillMaxSize()) {
                 content(Modifier.fillMaxSize().testTag(FRAME_CONTENT_TAG))
                 SnackbarHost(snackbarHost, Modifier.align(Alignment.BottomCenter).padding(16.dp))
             }
         }
     }
+    if (warningDialogOpen && state.backgroundWarning) {
+        BackgroundWarningDialog(
+            status = state.keepAliveStatus,
+            onGrantPermission = {
+                warningDialogOpen = false
+                events.onRequestBackgroundPermission()
+            },
+            onOpenAppSettings = {
+                warningDialogOpen = false
+                events.onOpenBackgroundAppSettings()
+            },
+            onDismiss = { warningDialogOpen = false },
+        )
+    }
 }
 
-/** The test tag of the warning that the links can stop in the background. */
+/** The test tag of the warning indicator that machine connections may disconnect in the background. */
 const val BACKGROUND_WARNING_TAG: String = "backgroundWarning"
 
 /**
- * The warning of the frame while the connection service cannot keep the links in the background
- * (`KeepAliveStatus.linksCanStopInBackground`). It has an icon and a text, with the roles of a
- * failure.
+ * Compact caution indicator in [TopRow] while the connection service cannot keep machine
+ * connections active in the background (`KeepAliveStatus.linksCanStopInBackground`). Tapping it
+ * opens [BackgroundWarningDialog] with the explanation and action buttons.
  */
 @Composable
-private fun BackgroundWarning() {
-    Surface(
-        color = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        modifier = Modifier.fillMaxWidth().testTag(BACKGROUND_WARNING_TAG),
+private fun BackgroundWarningIndicator(onClick: () -> Unit, minSize: Dp) {
+    val description = stringResource(Res.string.service_background_warning)
+    Box(
+        modifier = Modifier
+            .size(minSize)
+            .testTag(BACKGROUND_WARNING_TAG)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
     ) {
-        Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource(Res.drawable.ic_warning), contentDescription = null, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(12.dp))
-            Text(stringResource(Res.string.service_background_warning), style = MaterialTheme.typography.bodyMedium)
+        Surface(
+            color = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            shape = MaterialTheme.shapes.small,
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_warning),
+                contentDescription = null,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp).size(20.dp),
+            )
         }
     }
 }
 
 /**
- * The tab row of the online machines, then "+", the gear, and the overflow menu. The icon
- * buttons have the minimum touch target.
+ * Explains why machine connections may disconnect in the background and provides direct actions
+ * to grant the missing permission or open the system app settings.
+ */
+@Composable
+private fun BackgroundWarningDialog(
+    status: KeepAliveStatus,
+    onGrantPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val detailRes = if (status == KeepAliveStatus.StartNotAllowed) {
+        Res.string.service_background_warning_restricted
+    } else {
+        Res.string.service_background_warning_prerequisite
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painter = painterResource(Res.drawable.ic_warning),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(24.dp),
+            )
+        },
+        title = { Text(stringResource(Res.string.service_background_warning_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(Res.string.service_background_warning))
+                Text(stringResource(detailRes))
+            }
+        },
+        confirmButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (status != KeepAliveStatus.StartNotAllowed) {
+                    TextButton(colors = AccentButtons.text(), onClick = onGrantPermission) {
+                        Text(stringResource(Res.string.service_background_grant_permission))
+                    }
+                }
+                TextButton(colors = AccentButtons.text(), onClick = onOpenAppSettings) {
+                    Text(stringResource(Res.string.service_background_app_settings))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(colors = AccentButtons.text(), onClick = onDismiss) {
+                Text(stringResource(Res.string.service_battery_not_now))
+            }
+        },
+    )
+}
+
+/**
+ * The tab row of the online machines, then the background warning indicator (when active),
+ * "+", the gear, and the overflow menu. The icon buttons have the minimum touch target.
  */
 @Composable
 private fun TopRow(
@@ -243,6 +337,7 @@ private fun TopRow(
     onOpenSettings: () -> Unit,
     onOverflowAction: (OverflowAction) -> Unit,
     onTabMenuAction: (DeviceId, TabMenuAction) -> Unit,
+    onOpenBackgroundWarning: () -> Unit,
 ) {
     val target = LocalTouchTargets.current.button
     val selectedIndex = state.selectedIndex
@@ -277,6 +372,9 @@ private fun TopRow(
                     onMenuAction = { action -> onTabMenuAction(tab.id, action) },
                 )
             }
+        }
+        if (state.backgroundWarning) {
+            BackgroundWarningIndicator(onClick = onOpenBackgroundWarning, minSize = target)
         }
         IconButton(onClick = onAddMachine, modifier = Modifier.size(target).testTag(ADD_MACHINE_TAG)) {
             Icon(painterResource(Res.drawable.ic_add), contentDescription = stringResource(Res.string.app_add_machine))

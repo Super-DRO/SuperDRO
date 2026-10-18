@@ -18,5 +18,10 @@
     <string name="service_battery_reason">O SuperDRO mantém as conexões com suas máquinas abertas enquanto a tela está desligada.</string>
     <string name="service_battery_continue">Continuar</string>
     <string name="service_battery_not_now">Agora não</string>
-    <string name="service_background_warning">As conexões podem parar enquanto o SuperDRO está em segundo plano.</string>
+    <string name="service_background_warning">As conexões das máquinas (Bluetooth, USB ou Wi-Fi) podem ser desconectadas enquanto o SuperDRO está em segundo plano.</string>
+    <string name="service_background_warning_title">Conexões de máquinas em segundo plano</string>
+    <string name="service_background_warning_prerequisite">O Android requer a permissão de Dispositivos próximos (Bluetooth) ou um adaptador USB autorizado para manter as conexões das máquinas ativas em segundo plano ou com a tela desligada. Conceda a permissão ou permita-a nas Configurações do aplicativo.</string>
+    <string name="service_background_warning_restricted">O Android bloqueou o início do serviço de conexão em segundo plano. Abra as Configurações do aplicativo e defina o uso da bateria como Irrestrito para manter as conexões das máquinas ativas em segundo plano.</string>
+    <string name="service_background_grant_permission">Conceder permissão</string>
+    <string name="service_background_app_settings">Configurações do aplicativo</string>
 </resources>

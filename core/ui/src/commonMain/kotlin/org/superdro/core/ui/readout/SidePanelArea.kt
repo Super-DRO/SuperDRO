@@ -97,6 +97,7 @@ fun AddPointButton(events: ReadoutEvents, modifier: Modifier = Modifier) {
                 },
             )
             .semantics { contentDescription = description }
+            .hintAnchor(ADD_POINT_TAG)
             .testTag(ADD_POINT_TAG),
         shape = CircleShape,
         color = colors.primaryContainer,

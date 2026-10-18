@@ -18,5 +18,10 @@
     <string name="service_battery_reason">SuperDRO keeps the links to your machines open while the screen is off.</string>
     <string name="service_battery_continue">Continue</string>
     <string name="service_battery_not_now">Not now</string>
-    <string name="service_background_warning">The links can stop while SuperDRO is in the background.</string>
+    <string name="service_background_warning">Machine connections (Bluetooth, USB, or Wi-Fi) may disconnect while SuperDRO is in the background.</string>
+    <string name="service_background_warning_title">Background machine connections</string>
+    <string name="service_background_warning_prerequisite">Android requires the Nearby devices (Bluetooth) permission or a permitted USB adapter to keep machine connections active in the background or while the screen is off. Grant the permission or allow it in App settings.</string>
+    <string name="service_background_warning_restricted">Android blocked the background connection service from starting. Open App settings and set battery usage to Unrestricted so SuperDRO can keep machine connections active in the background.</string>
+    <string name="service_background_grant_permission">Grant permission</string>
+    <string name="service_background_app_settings">App settings</string>
 </resources>

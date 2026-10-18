@@ -48,6 +48,7 @@ data class ReadoutUiState(
     val graphicalPaneWeight: Float = GRAPHICAL_PANE_WEIGHT,
     val setupReminder: SetupReminderUiState? = null,
     val hint: UiText? = null,
+    val hintAnchorTag: String? = null,
     val undo: UndoUiState? = null,
     val message: MessageUiState? = null,
     val keepScreenOn: Boolean = false,

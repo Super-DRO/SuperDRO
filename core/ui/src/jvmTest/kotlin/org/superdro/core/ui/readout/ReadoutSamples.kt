@@ -128,6 +128,7 @@ object ReadoutSamples {
             sidePanel = SidePanelUiState(toolsEnabled = true),
             setupReminder = if (setupReminder) SetupReminderUiState(AxisId.X) else null,
             hint = hint,
+            hintAnchorTag = if (hint != null) actionTag(AxisId.X, org.superdro.core.model.AxisButtonMode.SetZero) else null,
             keepScreenOn = true,
         )
     }

@@ -148,22 +148,46 @@ fun ReadoutScreen(
 ) {
     // The font of the digits is a setting of the machine profile.
     val typography = readoutTypography(state.readoutFont)
-    CompositionLocalProvider(LocalReadoutTypography provides typography) {
-        Surface(modifier.fillMaxSize().testTag(READOUT_SCREEN_TAG), color = MaterialTheme.colorScheme.surface) {
-            Column(Modifier.fillMaxSize()) {
-                StatusStrip(state.status, rpmText = rpmText, trailing = statusItems)
-                state.setupReminder?.let { reminder ->
-                    SetupReminderBanner(onSettings = events::onSetupSettings, onCalibrate = { events.onSetupCalibrate(reminder.axis) })
+    val activeMessage = state.message?.text ?: state.hint
+    var anchorBounds by remember(state.hintAnchorTag) { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+    val anchorTracker = remember(activeMessage != null, state.hintAnchorTag) {
+        if (activeMessage != null && state.hintAnchorTag != null) {
+            HintAnchorTracker(state.hintAnchorTag) { rect ->
+                if (anchorBounds != rect) {
+                    anchorBounds = rect
                 }
-                (state.message?.text ?: state.hint)?.let { text -> MessageLine(text) }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                when {
-                    layout.expanded ->
-                        ExpandedBody(state, axisValue, events, sidePanelContent, graphicalViewPane, Modifier.weight(1f))
-                    layout.landscape -> ShortLandscapeBody(state, axisValue, events, sidePanelContent, Modifier.weight(1f))
-                    else -> PortraitBody(
-                        state, axisValue, events, sidePanelContent, graphicalViewPane,
-                        compact = layout.widthClass == WidthClass.Compact, modifier = Modifier.weight(1f),
+            }
+        } else {
+            null
+        }
+    }
+    CompositionLocalProvider(
+        LocalReadoutTypography provides typography,
+        LocalHintAnchorTracker provides anchorTracker,
+    ) {
+        Surface(modifier.fillMaxSize().testTag(READOUT_SCREEN_TAG), color = MaterialTheme.colorScheme.surface) {
+            Box(Modifier.fillMaxSize()) {
+                Column(Modifier.fillMaxSize()) {
+                    StatusStrip(state.status, rpmText = rpmText, trailing = statusItems)
+                    state.setupReminder?.let { reminder ->
+                        SetupReminderBanner(onSettings = events::onSetupSettings, onCalibrate = { events.onSetupCalibrate(reminder.axis) })
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    when {
+                        layout.expanded ->
+                            ExpandedBody(state, axisValue, events, sidePanelContent, graphicalViewPane, Modifier.weight(1f))
+                        layout.landscape -> ShortLandscapeBody(state, axisValue, events, sidePanelContent, Modifier.weight(1f))
+                        else -> PortraitBody(
+                            state, axisValue, events, sidePanelContent, graphicalViewPane,
+                            compact = layout.widthClass == WidthClass.Compact, modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                if (activeMessage != null) {
+                    MessageTooltipOverlay(
+                        text = activeMessage,
+                        anchorBoundsInRoot = anchorBounds,
+                        onDismiss = events::onDismissMessage,
                     )
                 }
             }
