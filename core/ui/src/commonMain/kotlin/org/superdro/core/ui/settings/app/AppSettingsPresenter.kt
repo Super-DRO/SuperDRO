@@ -192,6 +192,7 @@ class AppSettingsPresenter(
     fun setFullScreen(on: Boolean) = change { it.copy(fullScreen = on) }
     fun setShowHints(on: Boolean) = change { it.copy(showHints = on) }
     fun setShowSetupReminder(on: Boolean) = change { it.copy(showSetupReminder = on) }
+    fun setCheckForUpdates(on: Boolean) = change { it.copy(checkForUpdates = on) }
     fun setGraphicalViewInPortrait(placement: GraphicalViewPlacement) = change { it.copy(graphicalViewInPortrait = placement) }
     fun setPaneSizeScope(scope: org.superdro.core.model.PaneSizeScope) = change { it.copy(paneSizeScope = scope) }
     fun setMuteAllSounds(on: Boolean) = change { it.copy(muteAllSounds = on) }

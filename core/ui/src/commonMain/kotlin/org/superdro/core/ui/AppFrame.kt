@@ -73,10 +73,12 @@ import org.superdro.core.resources.app_settings
 import org.superdro.core.resources.frame_menu_disconnect
 import org.superdro.core.resources.frame_menu_rename
 import org.superdro.core.resources.frame_tab_description
+import org.superdro.core.resources.frame_update_available
 import org.superdro.core.resources.ic_add
 import org.superdro.core.resources.ic_bluetooth
 import org.superdro.core.resources.ic_circle
 import org.superdro.core.resources.ic_error
+import org.superdro.core.resources.ic_info
 import org.superdro.core.resources.ic_more_vert
 import org.superdro.core.resources.ic_radio_unchecked
 import org.superdro.core.resources.ic_science
@@ -93,6 +95,7 @@ import org.superdro.core.resources.service_battery_not_now
 import org.superdro.core.resources.ic_wifi
 import org.superdro.core.resources.route_adapter_details
 import org.superdro.core.resources.route_machine_settings
+import org.superdro.core.ui.navigation.AboutRoute
 import org.superdro.core.ui.navigation.AdapterDetailsRoute
 import org.superdro.core.ui.navigation.AddDeviceRoute
 import org.superdro.core.ui.navigation.AppSettingsRoute
@@ -170,6 +173,10 @@ fun AppFrame(
                 }
             }
         },
+        onOpenUpdate = {
+            events.onAcknowledgeUpdate()
+            navigation.push(AboutRoute)
+        },
         content = content,
     )
 }
@@ -190,6 +197,7 @@ fun FrameLayout(
     onOverflowAction: (OverflowAction) -> Unit,
     onTabMenuAction: (DeviceId, TabMenuAction) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenUpdate: () -> Unit = { events.onAcknowledgeUpdate() },
     content: @Composable (Modifier) -> Unit,
 ) {
     val snackbarHost = LocalAppSnackbarHostState.current
@@ -215,6 +223,7 @@ fun FrameLayout(
                 onOverflowAction = onOverflowAction,
                 onTabMenuAction = onTabMenuAction,
                 onOpenBackgroundWarning = { warningDialogOpen = true },
+                onOpenUpdate = onOpenUpdate,
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Box(Modifier.fillMaxSize()) {
@@ -241,6 +250,48 @@ fun FrameLayout(
 
 /** The test tag of the warning indicator that machine connections may disconnect in the background. */
 const val BACKGROUND_WARNING_TAG: String = "backgroundWarning"
+
+/** The test tag of the indicator that a new release version is available. */
+const val UPDATE_AVAILABLE_TAG: String = "updateAvailable"
+
+/**
+ * Compact chip in [TopRow] when an unseen release is available. One tap marks the version as
+ * seen and opens the About screen.
+ */
+@Composable
+private fun UpdateAvailableIndicator(version: String, onClick: () -> Unit, minHeight: Dp) {
+    Box(
+        modifier = Modifier
+            .heightIn(min = minHeight)
+            .padding(horizontal = 4.dp)
+            .testTag(UPDATE_AVAILABLE_TAG)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            shape = MaterialTheme.shapes.small,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_info),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    text = stringResource(Res.string.frame_update_available, version),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
 
 /**
  * Compact caution indicator in [TopRow] while the connection service cannot keep machine
@@ -338,6 +389,7 @@ private fun TopRow(
     onOverflowAction: (OverflowAction) -> Unit,
     onTabMenuAction: (DeviceId, TabMenuAction) -> Unit,
     onOpenBackgroundWarning: () -> Unit,
+    onOpenUpdate: () -> Unit,
 ) {
     val target = LocalTouchTargets.current.button
     val selectedIndex = state.selectedIndex
@@ -372,6 +424,10 @@ private fun TopRow(
                     onMenuAction = { action -> onTabMenuAction(tab.id, action) },
                 )
             }
+        }
+        val availableUpdateVersion = state.availableUpdateVersion
+        if (availableUpdateVersion != null) {
+            UpdateAvailableIndicator(version = availableUpdateVersion, onClick = onOpenUpdate, minHeight = target)
         }
         if (state.backgroundWarning) {
             BackgroundWarningIndicator(onClick = onOpenBackgroundWarning, minSize = target)
