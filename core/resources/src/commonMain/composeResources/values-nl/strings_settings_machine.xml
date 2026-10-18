@@ -20,6 +20,8 @@
     <string name="settings_machine_type_summary">Een wijziging toont eerst de gegevens die niet bij het nieuwe type passen.</string>
     <string name="settings_machine_metric">Standaardeenheden</string>
     <string name="settings_machine_metric_summary">De eenheden van een nieuwe werkruimte en van de lengte-instellingen.</string>
+    <string name="settings_machine_leadscrew_pitch">Leispindelspoed</string>
+    <string name="settings_machine_leadscrew_pitch_summary">De leispindelspoed van deze draaibank voor de regels van de draadklok.</string>
     <string name="settings_machine_section_sounds">Geluiden</string>
     <string name="settings_machine_mute">Geluiden van deze machine dempen</string>
     <string name="settings_machine_mute_summary">Dempt alle geluiden van deze machine, ook de verbindingstonen.</string>

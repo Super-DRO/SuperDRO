@@ -18,10 +18,17 @@ import org.superdro.core.functions.thread.ThreadSetupInput
 import org.superdro.core.functions.thread.ThreadSetupProblem
 import org.superdro.core.functions.thread.ThreadTables
 import org.superdro.core.functions.thread.RetractState
+import org.superdro.core.functions.thread.ThreadCutState
+import org.superdro.core.functions.thread.ThreadDialRule
 import org.superdro.core.functions.thread.classesFor
 import org.superdro.core.model.ThreadClass
 import org.superdro.core.model.ThreadCutter
 import org.superdro.core.model.ThreadForm
+import org.superdro.core.resources.Res
+import org.superdro.core.resources.graphics_thread_dial_keep_closed
+import org.superdro.core.resources.graphics_thread_warn_x_not_referenced
+import org.superdro.core.ui.graphics.thread.dialRuleText
+import org.superdro.core.ui.graphics.thread.warningText
 
 /**
  * The lathe thread functions, with the worked examples (M10 × 1.5 6g and 6H, 1/4-20 UNC 2A
@@ -222,5 +229,46 @@ class ThreadValidationTest {
         assertEquals(ThreadCutStatus.PastRetractLimit, values.status)
         assertTrue(ThreadCutWarning.XNotReferenced in values.warnings)
         assertEquals(RetractState.Clear, ThreadCut.retractState(spec, xUm = 6_000.0, zUm = -30_000.0), "clear of the crests")
+    }
+
+    @Test
+    fun pass_schedule_reset_multi_start_dial_rules_and_panel_texts() {
+        val multiSpec = assertNotNull(
+            ThreadSetup.toSpec(
+                m10Input.copy(starts = 2, leftHand = true),
+                workspaceId = "w",
+            ),
+        )
+        assertEquals(2, multiSpec.starts)
+        assertTrue(multiSpec.leftHand)
+        val activeCorner = assertNotNull(ThreadPoints.activeCorner(multiSpec))
+        assertEquals(0.0, activeCorner.z!!, 1e-9, "left-hand selects the largest Z finish corner")
+
+        val offsets = ThreadPoints.startOffsets(multiSpec)
+        assertEquals(2, offsets.size)
+        assertEquals(0.0, offsets[0].zOffsetUm, 1e-9)
+        assertEquals(1_500.0, offsets[1].zOffsetUm, 1e-9)
+        assertEquals(180.0 * 3_600.0, offsets[1].spindleAngleArcSec, 1e-6)
+
+        var state = ThreadCut.arm(ThreadCutState(), multiSpec.id)
+        state = ThreadCut.update(multiSpec, state, xUm = 4_700.0, zUm = 0.0)
+        state = ThreadCut.update(multiSpec, state, xUm = 4_700.0, zUm = -15_500.0)
+        assertNotNull(state.record.deepestUm)
+
+        val selected = ThreadCut.selectStart(state, 2)
+        assertEquals(2, selected.activeStart)
+        assertNull(selected.record.deepestUm)
+
+        val reset = ThreadCut.resetPasses(state)
+        assertNull(reset.record.deepestUm)
+
+        assertEquals(
+            Res.string.graphics_thread_warn_x_not_referenced,
+            warningText(ThreadCutWarning.XNotReferenced),
+        )
+        assertEquals(
+            Res.string.graphics_thread_dial_keep_closed,
+            dialRuleText(ThreadDialRule.KeepHalfNutClosed),
+        )
     }
 }

@@ -155,6 +155,21 @@ class MachineSettingsPresenter(
 
     override fun setMetricDefault(on: Boolean) = write { it.copy(metricDefault = on) }
 
+    /** Sets the leadscrew pitch of this lathe from the text [text] in the default units of the profile. */
+    fun setLeadscrewPitch(text: String) = write { current ->
+        if (text.isBlank()) {
+            current.copy(leadscrewPitchUm = null)
+        } else {
+            val pitchUm = org.superdro.core.ui.settings.components.LengthSettingFormat.parse(text, current.metricDefault)
+            if (pitchUm != null && pitchUm > 0.0) current.copy(leadscrewPitchUm = pitchUm) else current
+        }
+    }
+
+    /** Sets the leadscrew pitch of this lathe in micrometers, or clears it when [pitchUm] is null or not positive. */
+    fun setLeadscrewPitchUm(pitchUm: Double?) = write { current ->
+        current.copy(leadscrewPitchUm = pitchUm?.takeIf { value -> value > 0.0 })
+    }
+
     /** The mute switch of this machine. It applies with the mute scope "each machine". */
     override fun setMuteSounds(on: Boolean) = write { it.copy(muteSounds = on) }
 

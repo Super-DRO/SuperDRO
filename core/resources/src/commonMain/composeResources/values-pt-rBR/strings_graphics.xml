@@ -116,4 +116,23 @@
     <string name="graphics_status_in_cut">No corte</string>
     <string name="graphics_status_past_root">Além do fundo</string>
     <string name="graphics_status_past_limit">Além do limite de recuo</string>
+    <string name="graphics_thread_warn_x_not_referenced">O eixo X não tem referência. A leitura do diâmetro pode não corresponder à rosca.</string>
+    <string name="graphics_thread_pass_target">Passada %1$d / %2$d</string>
+    <string name="graphics_thread_pass_done">Todas as %1$d passadas concluídas</string>
+    <string name="graphics_thread_target_diameter">Ø alvo</string>
+    <string name="graphics_thread_compound_step">Passo do carro</string>
+    <string name="graphics_thread_reset_passes">Reiniciar passadas</string>
+    <string name="graphics_thread_start_label">Entrada %1$d / %2$d</string>
+    <string name="graphics_thread_start_chip">E%1$d</string>
+    <string name="graphics_thread_start_offset">Deslocamento Z %1$s · %2$s°</string>
+    <string name="graphics_thread_dial_keep_closed">Manter porca fechada</string>
+    <string name="graphics_thread_dial_any_point">Relógio: qualquer ponto</string>
+    <string name="graphics_thread_dial_any_line">Relógio: qualquer linha</string>
+    <string name="graphics_thread_dial_any_numbered">Relógio: qualquer linha numerada</string>
+    <string name="graphics_thread_dial_opposite_numbered">Relógio: linhas numeradas opostas</string>
+    <string name="graphics_thread_dial_same_line">Relógio: somente a mesma linha</string>
+    <string name="graphics_thread_max_rpm">Máx. %1$d RPM</string>
+    <string name="graphics_thread_speed_too_fast">Tempo de reação muito curto</string>
+    <string name="graphics_thread_pitch_ok">Passo OK</string>
+    <string name="graphics_thread_pitch_mismatch">Passo da caixa incorreto</string>
 </resources>
