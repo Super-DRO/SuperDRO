@@ -160,25 +160,24 @@ fun registerDomainTest(
         into(layout.buildDirectory.dir("domain-test-classes/$taskName"))
     }
     return tasks.register<Test>(taskName) {
-        val resourcesDir = sourceSets.test.map { it.output.resourcesDir!! }
         testClassesDirs = files(syncClasses)
-        classpath = files(syncClasses, resourcesDir, runtimeClasspath)
-    maxParallelForks = forks
-    testLogging { showStandardStreams = true }
-    systemProperty("java.awt.headless", "true")
-    systemProperty("skiko.renderApi", "SOFTWARE")
-    val uiScreenshotDir = layout.buildDirectory.dir("ui-screenshots/$taskName")
-    outputs.dir(uiScreenshotDir).withPropertyName("uiScreenshots")
-    val screenshotPath = uiScreenshotDir.get().asFile.absolutePath
-    val rootPath = root.absolutePath
-    jvmArgumentProviders.add(
-        SystemPropertyArgs(
-            listOf(
-                "-Dsuperdro.rootDir=$rootPath",
-                "-Dsuperdro.uiScreenshotDir=$screenshotPath",
+        classpath = files(syncClasses, tasks.named("processTestResources"), runtimeClasspath)
+        maxParallelForks = forks
+        testLogging { showStandardStreams = true }
+        systemProperty("java.awt.headless", "true")
+        systemProperty("skiko.renderApi", "SOFTWARE")
+        val uiScreenshotDir = layout.buildDirectory.dir("ui-screenshots/$taskName")
+        outputs.dir(uiScreenshotDir).withPropertyName("uiScreenshots")
+        val screenshotPath = uiScreenshotDir.get().asFile.absolutePath
+        val rootPath = root.absolutePath
+        jvmArgumentProviders.add(
+            SystemPropertyArgs(
+                listOf(
+                    "-Dsuperdro.rootDir=$rootPath",
+                    "-Dsuperdro.uiScreenshotDir=$screenshotPath",
+                ),
             ),
-        ),
-    )
+        )
         configureInputs()
     }
 }

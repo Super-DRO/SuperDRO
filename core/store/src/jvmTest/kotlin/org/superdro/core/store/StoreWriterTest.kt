@@ -48,8 +48,27 @@ class StoreWriterTest {
             (1..50).map { async(Dispatchers.IO) { machines.addSubDatum(workspaceId, SubDatum(x = 1.0)) } }.awaitAll()
             val names = machines.loadWorkspace(workspaceId)!!.subDatums.map { it.name }.toSet()
             assertEquals((1..50).map { "Point $it" }.toSet(), names)
+            writer.awaitIdle()
         } finally {
             driver.close()
         }
+    }
+
+    @Test
+    fun aCancelledReadOrWriteOnAClosedDriverThrowsCancellationException() = runBlocking {
+        val driver = inMemoryDriver()
+        val writer = StoreWriter(createSuperDroDatabase(driver))
+        driver.close()
+        val uncaught = mutableListOf<Throwable>()
+        val scope = kotlinx.coroutines.CoroutineScope(
+            Dispatchers.Default + kotlinx.coroutines.CoroutineExceptionHandler { _, error -> uncaught += error },
+        )
+        val job = scope.async {
+            kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]!!.cancel()
+            writer.read { db -> db.machineProfileQueries.selectAll().executeAsList() }
+        }
+        job.join()
+        writer.awaitIdle()
+        assertEquals(emptyList(), uncaught)
     }
 }

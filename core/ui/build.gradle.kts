@@ -82,7 +82,7 @@ val jvmMainCompilation = kotlin.jvm().compilations.getByName("main")
 val jvmTestCompilation = kotlin.jvm().compilations.getByName("test")
 val baseTestClasses = jvmTestCompilation.output.classesDirs
 val baseRuntimeClasspath = files(
-    jvmTestCompilation.output.allOutputs - jvmTestCompilation.output.classesDirs,
+    tasks.named(jvmTestCompilation.processResourcesTaskName),
     jvmMainCompilation.output.allOutputs,
     jvmTestCompilation.runtimeDependencyFiles,
 )

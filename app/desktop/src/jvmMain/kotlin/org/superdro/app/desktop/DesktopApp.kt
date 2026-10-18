@@ -18,10 +18,14 @@ import org.superdro.core.connection.ConnectionManager
 import org.superdro.core.connection.ConnectionRequestManager
 import org.superdro.core.connection.toDeviceRef
 import org.superdro.core.debugadapter.DebugAdapter
+import org.superdro.core.store.StoreWriter
 import org.superdro.core.store.json.AppSettingsStore
 import org.superdro.core.store.json.TabStore
 import org.superdro.core.di.APP_SCOPE
 import org.superdro.core.di.LINK_IO_DISPATCHER
+import org.superdro.core.ui.navigation.NavigationHolder
+import org.superdro.core.ui.settings.logs.SessionLogSink
+import org.superdro.core.ui.tabs.DeviceTabsPresenter
 import org.superdro.platform.desktop.di.DESKTOP_PLATFORM_SCOPE
 import org.superdro.platform.desktop.di.DesktopRequestHandler
 import org.superdro.platform.desktop.store.DesktopSecretStore
@@ -52,12 +56,16 @@ class DesktopApp(
     private val appScope: CoroutineScope by instance(tag = APP_SCOPE)
     private val platformScope: CoroutineScope by instance(tag = DESKTOP_PLATFORM_SCOPE)
     private val linkIo: CoroutineDispatcher by instance(tag = LINK_IO_DISPATCHER)
+    private val logSink: SessionLogSink by instance()
+    private val holder: NavigationHolder by instance()
+    private val tabsPresenter: DeviceTabsPresenter by instance()
     private val manager: ConnectionManager by instance()
     private val requests: ConnectionRequestManager by instance()
     private val requestHandler: DesktopRequestHandler by instance()
     private val debugAdapter: DebugAdapter by instance()
     private val appSettings: AppSettingsStore by instance()
     private val tabs: TabStore by instance()
+    private val writer: StoreWriter by instance()
     private val driver: SqlDriver by instance()
 
     private var requestJob: Job? = null
@@ -103,6 +111,11 @@ class DesktopApp(
     override fun close() {
         if (closed) return
         closed = true
+        Arbor.harvest(logSink)
+        holder.retainTabs(emptyList())
+        holder.clear()
+        holder.presenters.keys.forEach(holder.presenters::close)
+        tabsPresenter.close()
         // The JSON stores coalesce their writes. Write the last updates before the process stops.
         runBlocking {
             withTimeoutOrNull(FLUSH_TIMEOUT_MS) {
@@ -115,6 +128,7 @@ class DesktopApp(
         platformScope.cancel()
         appScope.cancel()
         (linkIo as? Closeable)?.close()
+        runBlocking { writer.awaitIdle() }
         driver.close()
         log.i { "SuperDRO desktop stopped" }
     }

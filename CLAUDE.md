@@ -30,6 +30,7 @@ adapters.
 
 A work item is done only when all of these conditions are true:
 
+- The JVM tests of the changed modules and the matching `:validation:test*` tasks pass.
 - The coordinator merged the branch of the work item into `main`.
 - The worktree of the work item does not exist. After the merge, the coordinator removes it with
   `git worktree remove <path>` and then runs `git worktree prune`.
@@ -61,7 +62,7 @@ has commits that are not in `main`. Merge these commits, or ask the user before 
 ## Units and numbers
 
 - Lengths: micrometers (µm) as `Double`. Angles: arc seconds as `Double`. Counts: `Long`.
-  Drawing coordinates: integer nanometers (`Long`). Times: milliseconds.
+- Drawing coordinates: integer nanometers (`Long`). Times: milliseconds.
 - Never use `Float` for a position.
 
 ## Strings and languages
@@ -90,6 +91,7 @@ builds do not use all the memory:
 ```
 
 - Run only the tasks of your modules, for example `:core:protocol:jvmTest` or `:core:protocol:allTests`.
+- For `:core:ui` and `:validation`, run the domain task of your area (`:core:ui:jvmTestAdapter`, `:core:ui:jvmTestFunctions`, `:core:ui:jvmTestGraphics`, `:core:ui:jvmTestReadout`, `:core:ui:jvmTestSettings`, `:core:ui:jvmTestTabs`, `:core:ui:jvmTestScreenshots`; `:validation:testFunctions`, `:validation:testProtocol`, `:validation:testReadout`, `:validation:testStore`, `:validation:testProject`, `:validation:testUi`, `:validation:testUiScreens`, `:validation:testUiScreenshots`).
 - After a change under `composite/`, run `./gradlew -p composite clean test publish` and commit `composite/m2`.
 - Do not run `./gradlew clean` on the full project of a different worktree.
 
