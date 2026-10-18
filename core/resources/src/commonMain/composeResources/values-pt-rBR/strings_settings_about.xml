@@ -31,4 +31,7 @@
     <string name="settings_about_help_pick">Selecione um tópico. O texto aparece aqui.</string>
     <string name="settings_about_license_pick">Selecione um aviso. O texto da licença aparece aqui.</string>
     <string name="settings_about_back_to_list">Voltar para a lista</string>
+    <string name="settings_about_update_available">O SuperDRO %1$s está disponível.</string>
+    <string name="settings_about_open_release">Ver a versão no GitHub</string>
+    <string name="frame_update_available">Atualização %1$s</string>
 </resources>
