@@ -20,6 +20,16 @@ enum class MuteScope {
     EachMachine,
 }
 
+/** The scope of the readout and graphical view split sizes. */
+@Serializable
+enum class PaneSizeScope {
+    /** One split size for the app applies to all machines ([AppSettings.readoutPaneFraction] and [AppSettings.graphicalPaneWeight]). */
+    App,
+
+    /** One split size for each machine ([DisplaySettings.readoutPaneFraction] and [DisplaySettings.graphicalPaneWeight]). */
+    EachMachine,
+}
+
 /**
  * An action that a hardware key can start in the selected tab. A later
  * version can add values. A value that an older version does not know gives
@@ -72,6 +82,8 @@ data class AppSettings(
     val readoutPaneFraction: Float = 0.45f,
     /** The part of the content height that the graphical view uses in portrait. */
     val graphicalPaneWeight: Float = 0.6f,
+    /** Whether the pane split sizes apply across all machines or per machine profile. */
+    val paneSizeScope: PaneSizeScope = PaneSizeScope.App,
     /** Large buttons: 25 % larger touch targets. */
     val largeButtons: Boolean = false,
     val muteAllSounds: Boolean = false,

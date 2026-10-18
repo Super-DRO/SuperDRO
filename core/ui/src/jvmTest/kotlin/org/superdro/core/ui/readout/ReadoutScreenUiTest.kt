@@ -457,6 +457,56 @@ class ReadoutScreenUiTest {
         val clampedMaxGraphicalHeight = onNodeWithTag(GRAPHICAL_PANE_TAG).getBoundsInRoot().height
         assertTrue(clampedMaxGraphicalHeight > clampedMinGraphicalHeight)
     }
+
+    @Test
+    fun draggingTheSplitHandlePersistsTheResizeValuesGloballyAndInTheMachineProfile() = runComposeUiTest {
+        val live = LiveReadout(MachineProfile.create().copy(metricDefault = true))
+        val navigator = RecordingNavigator()
+        var currentLayout by mutableStateOf(landscape)
+        setContent {
+            Themed(currentLayout) {
+                val state by live.presenter.uiState.collectAsState()
+                ReadoutScreen(
+                    state = state,
+                    axisValue = live.presenter::axisValue,
+                    events = PresenterReadoutEvents(live.presenter, navigator),
+                    layout = currentLayout,
+                    graphicalViewPane = {},
+                )
+            }
+        }
+
+        // Multi-step horizontal drag in expanded layout persists readoutPaneFraction both globally and to the profile.
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            repeat(10) { moveBy(Offset(18f, 0f)) }
+            up()
+        }
+        waitForIdle()
+        live.scheduler.advanceUntilIdle()
+        waitForIdle()
+        val afterExpandedProfile = kotlinx.coroutines.runBlocking { live.machines.loadProfile(live.profile.id) }!!
+        val afterExpandedDrag = afterExpandedProfile.display.readoutPaneFraction
+        assertTrue(afterExpandedDrag > READOUT_PANE_FRACTION + 0.08f, "Expected persisted readoutPaneFraction > ${READOUT_PANE_FRACTION + 0.08f}, got $afterExpandedDrag")
+        assertEquals(afterExpandedDrag, live.appSettings.settings.value.readoutPaneFraction, 1e-4f)
+
+        // Switch to portrait and perform a multi-step vertical drag to persist graphicalPaneWeight.
+        currentLayout = WindowLayout.of(800.dp, 1280.dp)
+        waitForIdle()
+        onNodeWithTag(SPLIT_HANDLE_TAG).performTouchInput {
+            down(center)
+            repeat(10) { moveBy(Offset(0f, 16f)) }
+            up()
+        }
+        waitForIdle()
+        live.scheduler.advanceUntilIdle()
+        waitForIdle()
+        val afterPortraitProfile = kotlinx.coroutines.runBlocking { live.machines.loadProfile(live.profile.id) }!!
+        val afterPortraitDrag = afterPortraitProfile.display.graphicalPaneWeight
+        assertTrue(afterPortraitDrag < GRAPHICAL_PANE_WEIGHT - 0.05f, "Expected persisted graphicalPaneWeight < ${GRAPHICAL_PANE_WEIGHT - 0.05f}, got $afterPortraitDrag")
+        assertEquals(afterPortraitDrag, live.appSettings.settings.value.graphicalPaneWeight, 1e-4f)
+        live.close()
+    }
 }
 
 /** The key feedback of the readout buttons and the mute switch. */

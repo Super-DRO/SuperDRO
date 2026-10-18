@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.kodein.di.DI
 import org.kodein.di.DIAware
@@ -196,7 +197,7 @@ class ConnectionService : Service() {
     }
 
     private suspend fun showSummary(summary: KeepAliveSummary) {
-        content = NotificationContent.of(summary, texts)
+        content = withContext(Dispatchers.IO) { NotificationContent.of(summary, texts) }
         if (stopped) return
         notifySafely(notification())
     }

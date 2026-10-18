@@ -79,6 +79,12 @@ class AppSettingsUiTest {
         onNodeWithTag(AppSettingsTags.FULL_SCREEN).performClick()
         settle(graph)
         assertEquals(false, graph.store.appSettings.settings.value.fullScreen)
+        onNodeWithText("Each machine").performScrollTo().performClick()
+        settle(graph)
+        assertEquals(org.superdro.core.model.PaneSizeScope.EachMachine, graph.store.appSettings.settings.value.paneSizeScope)
+        onNodeWithText("All machines").performScrollTo().performClick()
+        settle(graph)
+        assertEquals(org.superdro.core.model.PaneSizeScope.App, graph.store.appSettings.settings.value.paneSizeScope)
         graph.close()
     }
 

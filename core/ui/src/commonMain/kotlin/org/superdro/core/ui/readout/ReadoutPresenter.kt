@@ -241,16 +241,29 @@ class ReadoutPresenter(
         library,
         combine(appSettings.settings, local) { settings, state -> settings to state },
     ) { current, state, adapterProfile, tools, (settings, ui) ->
+        val globalFraction = settings.readoutPaneFraction.coerceIn(READOUT_PANE_MIN_FRACTION, READOUT_PANE_MAX_FRACTION)
+        val globalWeight = settings.graphicalPaneWeight.coerceIn(GRAPHICAL_PANE_MIN_WEIGHT, GRAPHICAL_PANE_MAX_WEIGHT)
         if (current == null) {
             ReadoutUiState(
                 deviceId = deviceId,
-                readoutPaneFraction = settings.readoutPaneFraction.coerceIn(READOUT_PANE_MIN_FRACTION, READOUT_PANE_MAX_FRACTION),
-                graphicalPaneWeight = settings.graphicalPaneWeight.coerceIn(GRAPHICAL_PANE_MIN_WEIGHT, GRAPHICAL_PANE_MAX_WEIGHT),
+                readoutPaneFraction = globalFraction,
+                graphicalPaneWeight = globalWeight,
                 undo = ui.undo,
                 message = ui.message,
                 hint = ui.hint,
             )
         } else {
+            val perMachine = settings.paneSizeScope == org.superdro.core.model.PaneSizeScope.EachMachine
+            val fraction = if (perMachine) {
+                current.profile.display.readoutPaneFraction.coerceIn(READOUT_PANE_MIN_FRACTION, READOUT_PANE_MAX_FRACTION)
+            } else {
+                globalFraction
+            }
+            val weight = if (perMachine) {
+                current.profile.display.graphicalPaneWeight.coerceIn(GRAPHICAL_PANE_MIN_WEIGHT, GRAPHICAL_PANE_MAX_WEIGHT)
+            } else {
+                globalWeight
+            }
             uiStateOf(
                 current = current,
                 state = state,
@@ -258,8 +271,8 @@ class ReadoutPresenter(
                 tools = tools,
                 showReminder = settings.showSetupReminder,
                 placement = settings.graphicalViewInPortrait,
-                readoutPaneFraction = settings.readoutPaneFraction.coerceIn(READOUT_PANE_MIN_FRACTION, READOUT_PANE_MAX_FRACTION),
-                graphicalPaneWeight = settings.graphicalPaneWeight.coerceIn(GRAPHICAL_PANE_MIN_WEIGHT, GRAPHICAL_PANE_MAX_WEIGHT),
+                readoutPaneFraction = fraction,
+                graphicalPaneWeight = weight,
                 ui = ui,
             )
         }
@@ -630,12 +643,22 @@ class ReadoutPresenter(
     fun onReadoutPaneFractionChange(fraction: Float) {
         val clamped = fraction.coerceIn(READOUT_PANE_MIN_FRACTION, READOUT_PANE_MAX_FRACTION)
         appSettings.update { settings -> settings.copy(readoutPaneFraction = clamped) }
+        scope.launch {
+            machines.updateProfile(profileId) { current ->
+                current.copy(display = current.display.copy(readoutPaneFraction = clamped))
+            }
+        }
     }
 
     /** Updates the vertical height weight of the graphical view pane in the portrait layout. */
     fun onGraphicalPaneWeightChange(weight: Float) {
         val clamped = weight.coerceIn(GRAPHICAL_PANE_MIN_WEIGHT, GRAPHICAL_PANE_MAX_WEIGHT)
         appSettings.update { settings -> settings.copy(graphicalPaneWeight = clamped) }
+        scope.launch {
+            machines.updateProfile(profileId) { current ->
+                current.copy(display = current.display.copy(graphicalPaneWeight = clamped))
+            }
+        }
     }
 
     // ---------------------------------------------------------------------------------------

@@ -23,6 +23,9 @@
     <string name="settings_app_view_below">Abaixo da leitura</string>
     <string name="settings_app_view_above">Acima da leitura</string>
     <string name="settings_app_view_full_screen">Tela cheia</string>
+    <string name="settings_app_pane_size_scope">Tamanho da divisão de painéis</string>
+    <string name="settings_app_pane_size_scope_app">Todas as máquinas</string>
+    <string name="settings_app_pane_size_scope_machine">Cada máquina</string>
     <string name="settings_app_mute">Silenciar todos os sons</string>
     <string name="settings_app_mute_summary">Sem sons de teclas, sem tons de ligação e sem tons de aviso.</string>
     <string name="settings_app_mute_scope">Interruptor de silêncio</string>

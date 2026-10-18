@@ -1,5 +1,6 @@
 package org.superdro.core.ui.readout
 
+import androidx.compose.runtime.Stable
 import org.superdro.core.model.AxisButtonMode
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.SidePanelMode
@@ -8,6 +9,7 @@ import org.superdro.core.model.SidePanelMode
  * The events of the readout screen. The composables are stateless and call these functions. The
  * readout entry connects them to the [ReadoutPresenter] and to the back stack of the tab.
  */
+@Stable
 interface ReadoutEvents {
     /** A tap on the value of [axis]: the keypad, the encoder settings ("Error"), or the tachometer action. */
     fun onValueTap(axis: AxisId) = Unit

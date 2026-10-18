@@ -387,6 +387,15 @@ class SettingsDefaultsTest {
     }
 
     @Test
+    fun paneSizeScopeIsAllMachinesWithDefaultSplitValues() {
+        assertEquals(PaneSizeScope.App, app.paneSizeScope)
+        assertEquals(0.45f, app.readoutPaneFraction)
+        assertEquals(0.6f, app.graphicalPaneWeight)
+        assertEquals(0.45f, mill.display.readoutPaneFraction)
+        assertEquals(0.6f, mill.display.graphicalPaneWeight)
+    }
+
+    @Test
     fun fullScreenIsTrue() {
         assertTrue(app.fullScreen)
     }

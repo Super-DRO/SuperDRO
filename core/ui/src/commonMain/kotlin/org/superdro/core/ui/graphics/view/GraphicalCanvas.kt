@@ -5,7 +5,11 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.flow.StateFlow
+import org.superdro.core.ui.presenter.collectLiveState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -106,6 +110,7 @@ fun graphicalColorsOf(scheme: ColorScheme, accent: Color): GraphicalColors =
     )
 
 /** The gestures of the canvas. The view presenter gets them. */
+@Stable
 interface GraphicalCanvasEvents {
     fun onSize(widthPx: Double, heightPx: Double)
     fun onTap(position: Vec2)
@@ -132,6 +137,7 @@ fun GraphicalCanvas(
     description: String? = null,
     transparentBackground: Boolean = false,
     cursorColor: Color? = null,
+    liveState: StateFlow<GraphicalViewUiState>? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     val accent = accentColor()
@@ -144,11 +150,27 @@ fun GraphicalCanvas(
         )
     }
     val strokes = remember(metrics.density) { CanvasStrokes(metrics.density.toFloat()) }
+    val stateHolder = liveState?.collectLiveState()
+    val drawing = if (stateHolder != null) {
+        remember(stateHolder) { derivedStateOf { stateHolder.value.scene?.drawing } }.value
+    } else {
+        state.scene?.drawing
+    }
+    val toolGeometry = if (stateHolder != null) {
+        remember(stateHolder) { derivedStateOf { stateHolder.value.scene?.toolOutline?.geometry } }.value
+    } else {
+        state.scene?.toolOutline?.geometry
+    }
+    val threadOutline = if (stateHolder != null) {
+        remember(stateHolder) { derivedStateOf { stateHolder.value.scene?.threadOutline } }.value
+    } else {
+        state.scene?.threadOutline
+    }
     // The paths are in model µm. Only a new drawing, tool, or thread makes them again: a new
     // position moves them on the canvas.
-    val drawingPaths = rememberDrawingPaths(state.scene?.drawing)
-    val toolPaths = rememberToolPaths(state.scene?.toolOutline?.geometry)
-    val threadPaths = rememberThreadPaths(state.scene?.threadOutline)
+    val drawingPaths = rememberDrawingPaths(drawing)
+    val toolPaths = rememberToolPaths(toolGeometry)
+    val threadPaths = rememberThreadPaths(threadOutline)
     Canvas(
         modifier = modifier
             .clipToBounds()
@@ -170,8 +192,14 @@ fun GraphicalCanvas(
             .testTag(GRAPHICAL_CANVAS_TAG),
     ) {
         drawRect(colors.background)
-        val scene = state.scene ?: return@Canvas
-        val port = state.viewport ?: return@Canvas
+        val currentState = stateHolder?.value ?: state
+        val scene = currentState.scene ?: return@Canvas
+        val rawPort = currentState.viewport ?: return@Canvas
+        val port = if (rawPort.widthPx == size.width.toDouble() && rawPort.heightPx == size.height.toDouble()) {
+            rawPort
+        } else {
+            rawPort.resize(size.width.toDouble(), size.height.toDouble())
+        }
         val transform = port.transform
         val dp = metrics.density.toFloat()
         referenceImage?.let { layer -> drawReferenceImage(layer, transform, scene) }

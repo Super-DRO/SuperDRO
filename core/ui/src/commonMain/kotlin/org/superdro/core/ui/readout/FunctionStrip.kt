@@ -2,14 +2,10 @@ package org.superdro.core.ui.readout
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,10 +15,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
@@ -80,46 +81,111 @@ fun FunctionStrip(
 ) {
     val targets = LocalTouchTargets.current
     val gap = targets.gap
-    val items: List<StripItem> = listOf(StripItem.ZeroSet, StripItem.Mode, StripItem.Units) + functions.map(StripItem::Function)
-    @Composable
-    fun item(entry: StripItem, itemModifier: Modifier) = when (entry) {
-        StripItem.ZeroSet -> ZeroSetButton(events, itemModifier)
-        StripItem.Mode -> ModeButton(global.mode, events, itemModifier)
-        StripItem.Units -> UnitsButton(global.units, events, itemModifier)
-        is StripItem.Function -> FunctionButtonView(entry.state, events, itemModifier)
+    val items = remember(functions) {
+        StripItems(listOf(StripItem.ZeroSet, StripItem.Mode, StripItem.Units) + functions.map(StripItem::Function))
     }
     when (form) {
         StripForm.Rail -> Column(
             modifier = modifier.testTag(FUNCTION_STRIP_TAG).verticalScroll(rememberScrollState()).padding(gap / 2),
             verticalArrangement = Arrangement.spacedBy(gap),
         ) {
-            items.forEach { entry -> item(entry, Modifier.fillMaxWidth()) }
+            items.entries.forEach { entry -> StripItemButton(entry, global, events, Modifier.fillMaxWidth()) }
         }
         StripForm.TwoRows -> Row(
             modifier = modifier.testTag(FUNCTION_STRIP_TAG).horizontalScroll(rememberScrollState()).padding(gap / 2),
             horizontalArrangement = Arrangement.spacedBy(gap),
         ) {
-            items.chunked(2).forEach { pair ->
+            items.entries.chunked(2).forEach { pair ->
                 Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-                    pair.forEach { entry -> item(entry, Modifier.width(StripButtonWidth)) }
+                    pair.forEach { entry -> StripItemButton(entry, global, events, Modifier.width(StripButtonWidth)) }
                 }
             }
         }
-        StripForm.Grid -> BoxWithConstraints(modifier) {
-            val columns = gridColumns(maxWidth - gap, StripButtonWidth * (targets.button / 64.dp), gap)
-            Column(
-                modifier = Modifier.fillMaxWidth().testTag(FUNCTION_STRIP_TAG).verticalScroll(rememberScrollState()).padding(gap / 2),
-                verticalArrangement = Arrangement.spacedBy(gap),
-            ) {
-                items.chunked(columns).forEach { line ->
-                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(gap)) {
-                        line.forEach { entry -> item(entry, Modifier.weight(1f).fillMaxHeight()) }
-                        repeat(columns - line.size) { Spacer(Modifier.weight(1f)) }
-                    }
+        StripForm.Grid -> FunctionGrid(
+            items = items,
+            global = global,
+            events = events,
+            buttonWidth = StripButtonWidth * (targets.button / 64.dp),
+            gap = gap,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun FunctionGrid(
+    items: StripItems,
+    global: GlobalButtonsUiState,
+    events: ReadoutEvents,
+    buttonWidth: Dp,
+    gap: Dp,
+    modifier: Modifier = Modifier,
+) {
+    Layout(
+        content = {
+            items.entries.forEach { entry -> StripItemButton(entry, global, events, Modifier) }
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(FUNCTION_STRIP_TAG)
+            .verticalScroll(rememberScrollState())
+            .padding(gap / 2),
+    ) { measurables, constraints ->
+        val columns = gridColumns(constraints.maxWidth.toDp(), buttonWidth, gap)
+        val gapPx = gap.roundToPx()
+        val rawCellWidth = ((constraints.maxWidth - gapPx * (columns - 1)) / columns).coerceAtLeast(0)
+        val minButtonWidthPx = buttonWidth.roundToPx().coerceAtMost(rawCellWidth)
+        val stepPx = 16
+        val cellWidth = if (rawCellWidth > stepPx) {
+            ((rawCellWidth / stepPx) * stepPx).coerceAtLeast(minButtonWidthPx)
+        } else {
+            rawCellWidth
+        }
+        val rowCount = (measurables.size + columns - 1) / columns
+        val placeables = arrayOfNulls<Placeable>(measurables.size)
+        val rowHeights = IntArray(rowCount)
+        var totalHeight = 0
+        val widthConstraints = Constraints.fixedWidth(cellWidth)
+        for (row in 0 until rowCount) {
+            val start = row * columns
+            val end = minOf(start + columns, measurables.size)
+            var maxH = 0
+            for (i in start until end) {
+                val p = measurables[i].measure(widthConstraints)
+                placeables[i] = p
+                if (p.height > maxH) maxH = p.height
+            }
+            rowHeights[row] = maxH
+            totalHeight += maxH
+            if (row > 0) totalHeight += gapPx
+        }
+        layout(constraints.maxWidth, totalHeight) {
+            var y = 0
+            for (row in 0 until rowCount) {
+                val start = row * columns
+                val end = minOf(start + columns, measurables.size)
+                var x = 0
+                for (i in start until end) {
+                    placeables[i]!!.placeRelative(x, y)
+                    x += cellWidth + gapPx
                 }
+                y += rowHeights[row] + gapPx
             }
         }
     }
+}
+
+@Composable
+private fun StripItemButton(
+    entry: StripItem,
+    global: GlobalButtonsUiState,
+    events: ReadoutEvents,
+    modifier: Modifier,
+) = when (entry) {
+    StripItem.ZeroSet -> ZeroSetButton(events, modifier)
+    StripItem.Mode -> ModeButton(global.mode, events, modifier)
+    StripItem.Units -> UnitsButton(global.units, events, modifier)
+    is StripItem.Function -> FunctionButtonView(entry.state, events, modifier)
 }
 
 /** The smallest number of columns of [StripForm.Grid]. */
@@ -132,7 +198,11 @@ const val MIN_GRID_COLUMNS: Int = 2
 fun gridColumns(width: Dp, buttonWidth: Dp, gap: Dp): Int =
     maxOf(MIN_GRID_COLUMNS, ((width + gap) / (buttonWidth + gap)).toInt())
 
+@Immutable
+private data class StripItems(val entries: List<StripItem>)
+
 /** One button of the strip. */
+@Immutable
 private sealed interface StripItem {
     data object ZeroSet : StripItem
     data object Mode : StripItem

@@ -85,6 +85,20 @@ private fun ReadoutRoot(scope: TabEntryScope, registry: EntryRegistry) {
     UndoSnackbar(state.undo, LocalAppSnackbarHostState.current, presenter)
     AddPointEffect(state.addPointRequest, presenter, scope, registry)
     val graphicalPane = registry.graphicalViewPaneContent
+    val sidePanelContent = remember<@Composable (SidePanelMode) -> Unit>(scope, registry) {
+        { mode ->
+            val content = registry.sidePanelContent(mode)
+            if (content != null) content(scope) else SidePanelPlaceholder(sidePanelTitle(mode))
+        }
+    }
+    val graphicalViewPane = remember<@Composable () -> Unit>(scope, graphicalPane) {
+        {
+            if (graphicalPane != null) graphicalPane(scope) else SidePanelPlaceholder(Res.string.route_graphical_view)
+        }
+    }
+    val statusItems = remember<@Composable () -> Unit>(scope, registry) {
+        { registry.statusStripItems.forEach { item -> item(scope) } }
+    }
     CompositionLocalProvider(LocalReadoutFeedback provides feedback) {
         ReadoutScreen(
             state = state,
@@ -92,14 +106,9 @@ private fun ReadoutRoot(scope: TabEntryScope, registry: EntryRegistry) {
             events = events,
             // The hardware keys of the selected tab.
             modifier = readoutHardwareKeys(presenter, scope.navigator).then(if (state.keepScreenOn) Modifier.keepScreenOn() else Modifier),
-            sidePanelContent = { mode ->
-                val content = registry.sidePanelContent(mode)
-                if (content != null) content(scope) else SidePanelPlaceholder(sidePanelTitle(mode))
-            },
-            graphicalViewPane = {
-                if (graphicalPane != null) graphicalPane(scope) else SidePanelPlaceholder(Res.string.route_graphical_view)
-            },
-            statusItems = { registry.statusStripItems.forEach { item -> item(scope) } },
+            sidePanelContent = sidePanelContent,
+            graphicalViewPane = graphicalViewPane,
+            statusItems = statusItems,
             rpmText = presenter.rpmText,
         )
     }

@@ -37,6 +37,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,14 +47,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.StateFlow
+import org.superdro.core.ui.presenter.collectLiveState
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -133,6 +140,7 @@ const val DISPLAY_SHEET_TAG: String = "graphical-display-sheet"
 const val GRAPHICAL_LOCK_BADGE_TAG: String = "graphical-lock-badge"
 
 /** The events of the controls of the graphical view. */
+@Stable
 interface GraphicalViewEvents : GraphicalCanvasEvents, ThreadPanelEvents {
     fun onSwitch(switch: GraphicalSwitch, on: Boolean)
     fun onPlane(plane: Plane)
@@ -182,16 +190,74 @@ fun GraphicalView(
     leftPanel: (@Composable () -> Unit)? = null,
     displayPane: (@Composable () -> Unit)? = null,
     deleteShapeDialog: @Composable (index: Int, typeName: org.superdro.core.model.ShapeType, onConfirm: () -> Unit, onDismiss: () -> Unit) -> Unit =
-        { _, _, onConfirm, onDismiss -> DefaultDeleteShapeDialog(onConfirm, onDismiss) },
+        DefaultDeleteShapeDialogContent,
     backdrop: (@Composable () -> Unit)? = null,
     transparentBackground: Boolean = false,
     cursorColor: Color? = null,
+    liveState: StateFlow<GraphicalViewUiState>? = null,
 ) {
-    BoxWithConstraints(modifier.fillMaxSize().clipToBounds()) {
-        val narrow = maxWidth < 600.dp
-        val compactWidth = maxWidth < 460.dp
-        val short = maxHeight < SHORT_VIEW_HEIGHT
-        val displayAsSheet = short || compactWidth
+    val canvasDescription = stringResource(Res.string.graphics_canvas_description, controls.workspaceName)
+    val stateHolder = liveState?.collectLiveState()
+    val locked = if (stateHolder != null) {
+        remember(stateHolder) { derivedStateOf { stateHolder.value.locked } }.value
+    } else {
+        view.locked
+    }
+    val showRecenter = if (stateHolder != null) {
+        remember(stateHolder) {
+            derivedStateOf {
+                val s = stateHolder.value
+                s.recenterVisible && !s.locked
+            }
+        }.value
+    } else {
+        view.recenterVisible && !locked
+    }
+    val overlay = if (stateHolder != null) {
+        remember(stateHolder) { derivedStateOf { stateHolder.value.overlay } }.value
+    } else {
+        view.overlay
+    }
+    val chromeSizeState = remember {
+        mutableStateOf(ChromeSizeClass(narrow = false, compactWidth = false, short = false, wideBottomBar = true))
+    }
+    val chromeContent = remember<@Composable () -> Unit>(
+        controls,
+        events,
+        showFullScreen,
+        displayPaneOpen,
+        threadPanel,
+        locked,
+        showRecenter,
+        overlay,
+        extraTopStrip,
+        leftPanel,
+        displayPane,
+        deleteShapeDialog,
+    ) {
+        {
+            val sizeClass = chromeSizeState.value
+            GraphicalChromeOverlay(
+                controls = controls,
+                events = events,
+                showFullScreen = showFullScreen,
+                displayPaneOpen = displayPaneOpen,
+                threadPanel = threadPanel,
+                narrow = sizeClass.narrow,
+                compactWidth = sizeClass.compactWidth,
+                short = sizeClass.short,
+                wideBottomBar = sizeClass.wideBottomBar,
+                locked = locked,
+                showRecenter = showRecenter,
+                overlay = overlay,
+                extraTopStrip = extraTopStrip,
+                leftPanel = leftPanel,
+                displayPane = displayPane,
+                deleteShapeDialog = deleteShapeDialog,
+            )
+        }
+    }
+    Box(modifier.fillMaxSize().clipToBounds()) {
         // The camera video goes under the canvas.
         if (backdrop != null) Box(Modifier.fillMaxSize()) { backdrop() }
         GraphicalCanvas(
@@ -200,11 +266,65 @@ fun GraphicalView(
             events = events,
             referenceImage = referenceImage,
             measurementMarks = measurementMarks,
-            description = stringResource(Res.string.graphics_canvas_description, controls.workspaceName),
+            description = canvasDescription,
             modifier = Modifier.fillMaxSize(),
             transparentBackground = transparentBackground,
             cursorColor = cursorColor,
+            liveState = liveState,
         )
+        Layout(content = chromeContent, modifier = Modifier.fillMaxSize()) { measurables, constraints ->
+            val maxWidth = constraints.maxWidth.toDp()
+            val maxHeight = constraints.maxHeight.toDp()
+            val nextSizeClass = ChromeSizeClass(
+                narrow = maxWidth < 600.dp,
+                compactWidth = maxWidth < 460.dp,
+                short = maxHeight < SHORT_VIEW_HEIGHT,
+                wideBottomBar = maxWidth >= 520.dp,
+            )
+            if (chromeSizeState.value != nextSizeClass) {
+                chromeSizeState.value = nextSizeClass
+            }
+            val fixed = Constraints.fixed(constraints.maxWidth, constraints.maxHeight)
+            val placeables = measurables.map { it.measure(fixed) }
+            layout(constraints.maxWidth, constraints.maxHeight) {
+                placeables.forEach { it.placeRelative(0, 0) }
+            }
+        }
+    }
+}
+
+@Immutable
+private data class ChromeSizeClass(
+    val narrow: Boolean,
+    val compactWidth: Boolean,
+    val short: Boolean,
+    val wideBottomBar: Boolean,
+)
+
+private val DefaultDeleteShapeDialogContent: @Composable (Int, org.superdro.core.model.ShapeType, () -> Unit, () -> Unit) -> Unit =
+    { _, _, onConfirm, onDismiss -> DefaultDeleteShapeDialog(onConfirm, onDismiss) }
+
+@Composable
+private fun GraphicalChromeOverlay(
+    controls: GraphicalControlsUiState,
+    events: GraphicalViewEvents,
+    showFullScreen: Boolean,
+    displayPaneOpen: Boolean,
+    threadPanel: ThreadPanelUiState?,
+    narrow: Boolean,
+    compactWidth: Boolean,
+    short: Boolean,
+    wideBottomBar: Boolean,
+    locked: Boolean,
+    showRecenter: Boolean,
+    overlay: ViewOverlay?,
+    extraTopStrip: @Composable () -> Unit,
+    leftPanel: (@Composable () -> Unit)?,
+    displayPane: (@Composable () -> Unit)?,
+    deleteShapeDialog: @Composable (index: Int, typeName: org.superdro.core.model.ShapeType, onConfirm: () -> Unit, onDismiss: () -> Unit) -> Unit,
+) {
+    val displayAsSheet = short || compactWidth
+    Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             TopStrip(controls, events, showFullScreen, displayPaneOpen, extraTopStrip)
             Row(Modifier.weight(1f).fillMaxWidth()) {
@@ -247,9 +367,9 @@ fun GraphicalView(
                 displayPane()
             }
         }
-        if (maxWidth >= 520.dp) {
-            StatusBadges(view, controls, Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp))
-            if (view.recenterVisible && !view.locked) {
+        if (wideBottomBar) {
+            StatusBadges(locked, controls, Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp))
+            if (showRecenter) {
                 FilledTonalButton(
                     onClick = events::onRecenter,
                     modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).heightIn(min = 48.dp).testTag(GRAPHICAL_RECENTER_TAG),
@@ -261,8 +381,8 @@ fun GraphicalView(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                StatusBadges(view, controls, Modifier.align(Alignment.CenterHorizontally))
-                if (view.recenterVisible && !view.locked) {
+                StatusBadges(locked, controls, Modifier.align(Alignment.CenterHorizontally))
+                if (showRecenter) {
                     FilledTonalButton(
                         onClick = events::onRecenter,
                         modifier = Modifier.align(Alignment.Start).heightIn(min = 48.dp).testTag(GRAPHICAL_RECENTER_TAG),
@@ -271,7 +391,7 @@ fun GraphicalView(
                 ZoomPresets(events, Modifier.align(Alignment.End), wrap = true)
             }
         }
-        Overlays(view, events, deleteShapeDialog)
+        Overlays(overlay, events, deleteShapeDialog)
     }
 }
 
@@ -471,9 +591,9 @@ private fun ZoomPresets(events: GraphicalViewEvents, modifier: Modifier, wrap: B
 }
 
 @Composable
-private fun StatusBadges(view: GraphicalViewUiState, controls: GraphicalControlsUiState, modifier: Modifier) {
+private fun StatusBadges(locked: Boolean, controls: GraphicalControlsUiState, modifier: Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (view.locked) {
+        if (locked) {
             Surface(
                 color = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -501,11 +621,11 @@ private fun AngleLabel(text: String) {
 
 @Composable
 private fun Overlays(
-    view: GraphicalViewUiState,
+    overlay: ViewOverlay?,
     events: GraphicalViewEvents,
     deleteShapeDialog: @Composable (Int, org.superdro.core.model.ShapeType, () -> Unit, () -> Unit) -> Unit,
 ) {
-    when (val overlay = view.overlay) {
+    when (overlay) {
         is ViewOverlay.DirectionPicker -> DirectionPicker(overlay.current, events)
         is ViewOverlay.SubDatumMenu -> SubDatumMenu(overlay, events)
         is ViewOverlay.DeleteShape -> deleteShapeDialog(overlay.index, overlay.type, { events.onDeleteShapeConfirmed(overlay.index) }, events::onOverlayDismiss)

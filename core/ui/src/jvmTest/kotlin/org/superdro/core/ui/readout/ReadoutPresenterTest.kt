@@ -551,4 +551,45 @@ class ReadoutPresenterTest {
         runCurrent()
         assertEquals(UiText.of(Res.string.readout_undo_zero, "X"), harness.presenter.uiState.value.undo?.label)
     }
+
+    @Test
+    fun resizingTheReadoutAndGraphicalSplitSavesGloballyAndPerMachineAndFollowsPaneSizeScope() = scope.runTest {
+        val initialMill = MachineProfile.create(MachineType.VerticalMill, "Mill").let { mill ->
+            mill.copy(display = mill.display.copy(readoutPaneFraction = 0.52f, graphicalPaneWeight = 0.48f))
+        }
+        harness.start(initialMill)
+        // By default, paneSizeScope is App, so uiState uses the global AppSettings values.
+        assertEquals(READOUT_PANE_FRACTION, harness.presenter.uiState.value.readoutPaneFraction, 1e-4f)
+        assertEquals(GRAPHICAL_PANE_WEIGHT, harness.presenter.uiState.value.graphicalPaneWeight, 1e-4f)
+
+        // Switching paneSizeScope to EachMachine uses the machine profile's DisplaySettings values.
+        harness.store.appSettings.update { settings -> settings.copy(paneSizeScope = org.superdro.core.model.PaneSizeScope.EachMachine) }
+        advanceUntilIdle()
+        assertEquals(0.52f, harness.presenter.uiState.value.readoutPaneFraction, 1e-4f)
+        assertEquals(0.48f, harness.presenter.uiState.value.graphicalPaneWeight, 1e-4f)
+
+        // Resizing updates both global AppSettings and the machine profile's DisplaySettings.
+        harness.presenter.onReadoutPaneFractionChange(0.62f)
+        harness.presenter.onGraphicalPaneWeightChange(0.38f)
+        advanceUntilIdle()
+
+        assertEquals(0.62f, harness.presenter.uiState.value.readoutPaneFraction, 1e-4f)
+        assertEquals(0.38f, harness.presenter.uiState.value.graphicalPaneWeight, 1e-4f)
+        assertEquals(0.62f, harness.store.appSettings.settings.value.readoutPaneFraction, 1e-4f)
+        assertEquals(0.38f, harness.store.appSettings.settings.value.graphicalPaneWeight, 1e-4f)
+        val stored = assertNotNull(harness.store.machines.loadProfile(harness.profile.id))
+        assertEquals(0.62f, stored.display.readoutPaneFraction, 1e-4f)
+        assertEquals(0.38f, stored.display.graphicalPaneWeight, 1e-4f)
+
+        // Values outside the allowed bounds are clamped before saving.
+        harness.presenter.onReadoutPaneFractionChange(0.95f)
+        harness.presenter.onGraphicalPaneWeightChange(0.05f)
+        advanceUntilIdle()
+
+        val clamped = assertNotNull(harness.store.machines.loadProfile(harness.profile.id))
+        assertEquals(READOUT_PANE_MAX_FRACTION, clamped.display.readoutPaneFraction, 1e-4f)
+        assertEquals(GRAPHICAL_PANE_MIN_WEIGHT, clamped.display.graphicalPaneWeight, 1e-4f)
+        assertEquals(READOUT_PANE_MAX_FRACTION, harness.store.appSettings.settings.value.readoutPaneFraction, 1e-4f)
+        assertEquals(GRAPHICAL_PANE_MIN_WEIGHT, harness.store.appSettings.settings.value.graphicalPaneWeight, 1e-4f)
+    }
 }
