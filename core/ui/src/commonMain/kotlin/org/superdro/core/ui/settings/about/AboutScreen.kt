@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -40,8 +41,10 @@ import org.superdro.core.resources.settings_about_license_missing
 import org.superdro.core.resources.settings_about_licenses_intro
 import org.superdro.core.resources.settings_about_mark_read
 import org.superdro.core.resources.settings_about_new
+import org.superdro.core.resources.settings_about_open_release
 import org.superdro.core.resources.settings_about_source
 import org.superdro.core.resources.settings_about_summary
+import org.superdro.core.resources.settings_about_update_available
 import org.superdro.core.resources.settings_about_updated
 import org.superdro.core.resources.settings_about_version
 import org.superdro.core.resources.settings_about_version_code
@@ -82,6 +85,12 @@ const val ABOUT_MARK_READ_TAG: String = "about-mark-read"
 /** The test tag of the "New" marker of the "What changed" text. */
 const val ABOUT_NEW_TAG: String = "about-new"
 
+/** The test tag of the "Update available" section. */
+const val ABOUT_UPDATE_AVAILABLE_TAG: String = "about-update-available"
+
+/** The test tag of the button that opens the GitHub Release page. */
+const val ABOUT_OPEN_RELEASE_TAG: String = "about-open-release"
+
 /** The test tag of the text of an open license. */
 const val LICENSE_TEXT_TAG: String = "license-text"
 
@@ -110,6 +119,7 @@ fun helpRowTag(topic: HelpTopic): String = "about-help:${topic.name}"
 interface AboutEvents {
     fun onSelectGroup(group: AboutGroup)
     fun onMarkWhatChangedRead()
+    fun onOpenRelease() = Unit
     fun onOpenHelp(topic: HelpTopic)
     fun onCloseHelp()
     fun onOpenNotice(id: String)
@@ -121,6 +131,7 @@ interface AboutEvents {
 fun AboutPresenter.events(): AboutEvents = object : AboutEvents {
     override fun onSelectGroup(group: AboutGroup) = selectGroup(group)
     override fun onMarkWhatChangedRead() = markWhatChangedRead()
+    override fun onOpenRelease() = markReleaseNotified()
     override fun onOpenHelp(topic: HelpTopic) = openHelp(topic)
     override fun onCloseHelp() = closeHelp()
     override fun onOpenNotice(id: String) = openNotice(id)
@@ -167,6 +178,14 @@ fun AboutScreen(state: AboutUiState, events: AboutEvents, onBack: () -> Unit) {
 
 @Composable
 private fun ColumnScope.VersionGroup(state: AboutUiState, events: AboutEvents) {
+    val availableVersion = state.availableReleaseVersion
+    if (availableVersion != null) {
+        UpdateAvailableSection(
+            version = availableVersion,
+            releaseUrl = state.availableReleaseUrl,
+            onOpenRelease = events::onOpenRelease,
+        )
+    }
     if (state.whatChangedPending) WhatChangedSection(state, events)
     Column(Modifier.fillMaxWidth().padding(top = 16.dp)) {
         Text("SuperDRO", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
@@ -186,6 +205,42 @@ private fun ColumnScope.VersionGroup(state: AboutUiState, events: AboutEvents) {
         SettingsNote(stringResource(Res.string.settings_about_app_license))
     }
     if (!state.whatChangedPending) WhatChangedSection(state, events)
+}
+
+@Composable
+private fun UpdateAvailableSection(
+    version: String,
+    releaseUrl: String?,
+    onOpenRelease: () -> Unit,
+) {
+    val uriHandler = LocalUriHandler.current
+    val url = releaseUrl ?: releaseTagUrl(version)
+    SettingsSection(
+        stringResource(Res.string.settings_about_new),
+        modifier = Modifier.testTag(ABOUT_UPDATE_AVAILABLE_TAG),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
+            NewMarker(tag = null)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                stringResource(Res.string.settings_about_update_available, version),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+            FilledTonalButton(
+                onClick = {
+                    onOpenRelease()
+                    runCatching { uriHandler.openUri(url) }
+                },
+                modifier = Modifier.heightIn(min = LocalTouchTargets.current.button).testTag(ABOUT_OPEN_RELEASE_TAG),
+            ) {
+                Text(stringResource(Res.string.settings_about_open_release))
+            }
+        }
+    }
 }
 
 @Composable
@@ -217,12 +272,12 @@ private fun WhatChangedSection(state: AboutUiState, events: AboutEvents) {
 
 /** The "New" marker: an icon and a text on `tertiaryContainer`. */
 @Composable
-private fun NewMarker() {
+private fun NewMarker(tag: String? = ABOUT_NEW_TAG) {
     Surface(
         color = MaterialTheme.colorScheme.tertiaryContainer,
         contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
         shape = MaterialTheme.shapes.small,
-        modifier = Modifier.testTag(ABOUT_NEW_TAG),
+        modifier = if (tag != null) Modifier.testTag(tag) else Modifier,
     ) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(painterResource(Res.drawable.ic_info), contentDescription = null, modifier = Modifier.size(16.dp))
