@@ -118,3 +118,16 @@ fun accentSwitchColors(): SwitchColors = SwitchDefaults.colors(
     checkedThumbColor = onAccentColor(),
     checkedIconColor = accentColor(),
 )
+
+/**
+ * The container and content colors of a yellow warning chip. Each pair has more than 7 : 1
+ * contrast in light mode and in dark mode.
+ */
+@Composable
+fun warningContainerColors(): Pair<Color, Color> =
+    if (isLightAccent()) warningContainerLight to onWarningContainerLight else warningContainerDark to onWarningContainerDark
+
+/** The icon color of a yellow warning dialog in light mode and in dark mode. */
+@Composable
+fun warningIconColor(): Color = if (isLightAccent()) warningLight else warningDark
+

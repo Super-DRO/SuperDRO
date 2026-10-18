@@ -28,6 +28,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -161,6 +162,10 @@ fun ReadoutScreen(
             null
         }
     }
+    var setupReminderDialogOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(state.setupReminder) {
+        if (state.setupReminder == null) setupReminderDialogOpen = false
+    }
     CompositionLocalProvider(
         LocalReadoutTypography provides typography,
         LocalHintAnchorTracker provides anchorTracker,
@@ -168,10 +173,12 @@ fun ReadoutScreen(
         Surface(modifier.fillMaxSize().testTag(READOUT_SCREEN_TAG), color = MaterialTheme.colorScheme.surface) {
             Box(Modifier.fillMaxSize()) {
                 Column(Modifier.fillMaxSize()) {
-                    StatusStrip(state.status, rpmText = rpmText, trailing = statusItems)
-                    state.setupReminder?.let { reminder ->
-                        SetupReminderBanner(onSettings = events::onSetupSettings, onCalibrate = { events.onSetupCalibrate(reminder.axis) })
-                    }
+                    StatusStrip(
+                        state = state.status,
+                        rpmText = rpmText,
+                        onSetupReminderClick = if (state.setupReminder != null) ({ setupReminderDialogOpen = true }) else null,
+                        trailing = statusItems,
+                    )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     when {
                         layout.expanded ->
@@ -191,6 +198,20 @@ fun ReadoutScreen(
                     )
                 }
             }
+        }
+        val reminder = state.setupReminder
+        if (setupReminderDialogOpen && reminder != null) {
+            SetupReminderDialog(
+                onSettings = {
+                    setupReminderDialogOpen = false
+                    events.onSetupSettings()
+                },
+                onCalibrate = {
+                    setupReminderDialogOpen = false
+                    events.onSetupCalibrate(reminder.axis)
+                },
+                onDismiss = { setupReminderDialogOpen = false },
+            )
         }
     }
 }

@@ -152,7 +152,7 @@ class ReadoutScreenUiTest {
         val x = live.workspace().axisStates.getValue(AxisId.X)
         assertEquals(0.0, x.absoluteOffset)
         assertEquals(0.0, x.incrementalOffset)
-        onNodeWithText("Calibration required").assertExists()
+        onNodeWithContentDescription("Calibration required").assertExists()
         live.close()
     }
 
@@ -561,6 +561,71 @@ class ReadoutScreenUiTest {
         onNodeWithTag(MESSAGE_LINE_TAG).performClick()
         waitForIdle()
         onNodeWithTag(MESSAGE_LINE_TAG).assertDoesNotExist()
+        live.close()
+    }
+
+    @Test
+    fun theSetupReminderIndicatorOpensTheDialogWithSettingsAndCalibrate() = runComposeUiTest {
+        val live = LiveReadout(MachineProfile.create().copy(metricDefault = true))
+        val navigator = RecordingNavigator()
+        setContent {
+            Themed(landscape) {
+                val state by live.presenter.uiState.collectAsState()
+                ReadoutScreen(
+                    state = state,
+                    axisValue = live.presenter::axisValue,
+                    events = PresenterReadoutEvents(live.presenter, navigator),
+                    layout = landscape,
+                )
+            }
+        }
+
+        val statusBounds = onNodeWithTag(STATUS_STRIP_TAG).assertExists().getBoundsInRoot()
+        val indicatorBounds = onNodeWithTag(SETUP_REMINDER_TAG).assertExists().getBoundsInRoot()
+        assertTrue(
+            indicatorBounds.top >= statusBounds.top && indicatorBounds.bottom <= statusBounds.bottom,
+            "The setup reminder indicator sits inside the status strip without adding a banner row.",
+        )
+        onNodeWithContentDescription("Calibration required").assertExists()
+
+        // Tap the yellow warning indicator: opens the Calibration required dialog.
+        onNodeWithTag(SETUP_REMINDER_TAG).performClick()
+        waitForIdle()
+        onNodeWithText("Calibration required").assertExists()
+        onNodeWithText("An enabled axis has an input that is not calibrated.").assertExists()
+        onNodeWithText("Settings").performClick()
+        waitForIdle()
+        onNodeWithText("An enabled axis has an input that is not calibrated.").assertDoesNotExist()
+        assertEquals(
+            listOf<TabRoute>(org.superdro.core.ui.navigation.MachineSettingsRoute),
+            navigator.pushed,
+        )
+
+        // Reopen the dialog and tap Calibrate.
+        onNodeWithTag(SETUP_REMINDER_TAG).performClick()
+        waitForIdle()
+        onNodeWithText("Calibrate").performClick()
+        waitForIdle()
+        onNodeWithText("An enabled axis has an input that is not calibrated.").assertDoesNotExist()
+        assertEquals(
+            listOf<TabRoute>(
+                org.superdro.core.ui.navigation.MachineSettingsRoute,
+                org.superdro.core.ui.navigation.CalibrationWizardRoute(AxisId.X),
+            ),
+            navigator.pushed,
+        )
+
+        // Reopen the dialog and turn off showSetupReminder: dialog and indicator both disappear.
+        onNodeWithTag(SETUP_REMINDER_TAG).performClick()
+        waitForIdle()
+        onNodeWithText("An enabled axis has an input that is not calibrated.").assertExists()
+        kotlinx.coroutines.runBlocking {
+            live.appSettings.update { settings -> settings.copy(showSetupReminder = false) }
+        }
+        live.scheduler.advanceUntilIdle()
+        waitForIdle()
+        onNodeWithTag(SETUP_REMINDER_TAG).assertDoesNotExist()
+        onNodeWithText("An enabled axis has an input that is not calibrated.").assertDoesNotExist()
         live.close()
     }
 }

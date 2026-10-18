@@ -5,22 +5,21 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
@@ -42,6 +41,8 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
@@ -70,10 +71,15 @@ import org.superdro.core.resources.readout_status_rpm
 import org.superdro.core.resources.readout_status_tool
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.text.resolve
-import org.superdro.core.ui.theme.LocalTouchTargets
+import org.superdro.core.ui.theme.AccentButtons
+import org.superdro.core.ui.theme.warningContainerColors
+import org.superdro.core.ui.theme.warningIconColor
 
 /** The test tag of the status strip. */
 const val STATUS_STRIP_TAG: String = "readout-status-strip"
+
+/** The test tag of the setup reminder indicator. */
+const val SETUP_REMINDER_TAG: String = "readout-setup-reminder"
 
 /** The test tag of the hint and message tooltip. */
 const val MESSAGE_LINE_TAG: String = "readout-message-line"
@@ -86,10 +92,11 @@ val NoRpmText: StateFlow<String?> = MutableStateFlow(null)
 
 /**
  * The status strip: the units, ABS or INC, the active tool, the active sub-datum, the RPM,
- * and the "Measurement" mode chip. Each status has an icon and a text.
+ * the "Measurement" mode chip, and the setup reminder indicator. Each status has an icon and a text.
  *
  * @param rpmText The RPM text of the tachometer, or null when the tachometer is off. Only the RPM
  *   chip reads it, so a new RPM value does not recompose the other chips.
+ * @param onSetupReminderClick Opens the setup reminder dialog when a reminder is active.
  * @param trailing The items of the other areas after the frame items, for example the status
  *   chip of the data output (`EntryRegistry.statusStripItem`).
  */
@@ -98,6 +105,7 @@ fun StatusStrip(
     state: StatusStripUiState,
     modifier: Modifier = Modifier,
     rpmText: StateFlow<String?> = NoRpmText,
+    onSetupReminderClick: (() -> Unit)? = null,
     trailing: @Composable () -> Unit = {},
 ) {
     val colors = MaterialTheme.colorScheme
@@ -116,6 +124,9 @@ fun StatusStrip(
             StatusChip(stringResource(Res.string.readout_status_measurement), Res.drawable.ic_info, colors.secondaryContainer, colors.onSecondaryContainer)
         }
         trailing()
+        if (onSetupReminderClick != null) {
+            SetupReminderIndicator(onClick = onSetupReminderClick)
+        }
     }
 }
 
@@ -145,30 +156,68 @@ private fun StatusChip(
 }
 
 /**
- * The setup reminder banner: "Calibration required" with
- * the actions "Settings" and "Calibrate". The app setting "Show the setup reminder" turns it off.
+ * Compact yellow warning indicator in [StatusStrip] when an enabled axis has an input that is not
+ * calibrated. A tap opens [SetupReminderDialog]. The app setting "Show the setup reminder" turns
+ * it off.
  */
 @Composable
-fun SetupReminderBanner(onSettings: () -> Unit, onCalibrate: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    Surface(modifier.fillMaxWidth().testTag("readout-setup-reminder"), color = colors.tertiaryContainer, contentColor = colors.onTertiaryContainer) {
-        Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource(Res.drawable.ic_warning), contentDescription = null, modifier = Modifier.size(24.dp))
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(Res.string.readout_setup_title), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(Res.string.readout_setup_text), style = MaterialTheme.typography.bodyMedium)
-            }
-            Spacer(Modifier.width(12.dp))
-            FilledTonalButton(onClick = onSettings, modifier = Modifier.heightIn(min = LocalTouchTargets.current.button)) {
-                Text(stringResource(Res.string.readout_setup_settings))
-            }
-            Spacer(Modifier.width(LocalTouchTargets.current.gap))
-            FilledTonalButton(onClick = onCalibrate, modifier = Modifier.heightIn(min = LocalTouchTargets.current.button)) {
-                Text(stringResource(Res.string.readout_setup_calibrate))
-            }
-        }
+fun SetupReminderIndicator(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val description = stringResource(Res.string.readout_setup_title)
+    val (container, content) = warningContainerColors()
+    Surface(
+        color = container,
+        contentColor = content,
+        shape = MaterialTheme.shapes.small,
+        modifier = modifier
+            .testTag(SETUP_REMINDER_TAG)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+    ) {
+        Icon(
+            painter = painterResource(Res.drawable.ic_warning),
+            contentDescription = null,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp).size(20.dp),
+        )
     }
+}
+
+/**
+ * Shows the "Calibration required" message with the actions "Settings" and "Calibrate".
+ */
+@Composable
+fun SetupReminderDialog(
+    onSettings: () -> Unit,
+    onCalibrate: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painter = painterResource(Res.drawable.ic_warning),
+                contentDescription = null,
+                tint = warningIconColor(),
+                modifier = Modifier.size(24.dp),
+            )
+        },
+        title = { Text(stringResource(Res.string.readout_setup_title)) },
+        text = { Text(stringResource(Res.string.readout_setup_text)) },
+        confirmButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(colors = AccentButtons.text(), onClick = onSettings) {
+                    Text(stringResource(Res.string.readout_setup_settings))
+                }
+                TextButton(colors = AccentButtons.text(), onClick = onCalibrate) {
+                    Text(stringResource(Res.string.readout_setup_calibrate))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(colors = AccentButtons.text(), onClick = onDismiss) {
+                Text(stringResource(Res.string.frame_close))
+            }
+        },
+    )
 }
 
 /**
