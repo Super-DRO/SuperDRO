@@ -105,4 +105,36 @@ class ThreadPointsTest {
         assertEquals(true, ThreadPoints.needsRebuild(thread, subDatums.drop(1).filter { it.name != "Thread 1 - W₁ Inner" }))
         assertEquals(true, ThreadPoints.needsRebuild(thread.copy(id = "t-2"), subDatums))
     }
+
+    @Test
+    fun leftHandThreadSelectsTheFinishCornerAtZMax() {
+        val rightHand = spec(w1 = 4500.0, w2 = 1500.0)
+        val leftHand = rightHand.copy(leftHand = true)
+
+        val rhCorner = assertNotNull(ThreadPoints.activeCorner(rightHand))
+        assertEquals(ThreadPointRole.ReliefInnerLeft, rhCorner.role)
+        assertEquals(rightHand.stopZUm, rhCorner.z)
+        assertEquals(rightHand.cutToDiameterUm / 2.0, rhCorner.x!!, 1e-9)
+
+        val lhCorner = assertNotNull(ThreadPoints.activeCorner(leftHand))
+        assertEquals(ThreadPointRole.ReliefInnerRight, lhCorner.role)
+        assertEquals(leftHand.startZUm, lhCorner.z)
+        assertEquals(leftHand.cutToDiameterUm / 2.0, lhCorner.x!!, 1e-9)
+    }
+
+    @Test
+    fun multiStartThreadGivesAxialAndSpindleAngleOffsetsForEachStart() {
+        val single = spec(w1 = null, w2 = null).copy(starts = 1)
+        assertEquals(
+            listOf(ThreadStartOffset(startNumber = 1, zOffsetUm = 0.0, spindleAngleArcSec = 0.0)),
+            ThreadPoints.startOffsets(single),
+        )
+
+        val triple = spec(w1 = null, w2 = null).copy(starts = 3, pitchUm = 1500.0)
+        val offsets = ThreadPoints.startOffsets(triple)
+        assertEquals(3, offsets.size)
+        assertEquals(ThreadStartOffset(1, 0.0, 0.0), offsets[0])
+        assertEquals(ThreadStartOffset(2, 1500.0, 432_000.0), offsets[1])
+        assertEquals(ThreadStartOffset(3, 3000.0, 864_000.0), offsets[2])
+    }
 }

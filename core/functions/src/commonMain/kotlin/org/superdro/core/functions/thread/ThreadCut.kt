@@ -1,9 +1,11 @@
 package org.superdro.core.functions.thread
 
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-import org.superdro.core.model.ThreadCutter
+import kotlin.math.tan
+import org.superdro.core.model.ThreadInfeedMode
 import org.superdro.core.model.ThreadSpec
 
 /** The retract state of the thread cut panel. */
@@ -15,8 +17,8 @@ enum class RetractState {
     Engaged,
 
     /**
-     * The tool is not clear and Z is past the retract limit: the end of the relief W₁ (the
-     * shoulder or the bottom) at `Zmin − W₁`, or `Zmin` with no W₁.
+     * The tool is not clear and Z is past the retract limit: `Zmin − W₁` for a right-hand thread,
+     * or `Zmax + W₂` for a left-hand thread.
      */
     PastLimit,
 }
@@ -40,8 +42,7 @@ enum class ThreadCutStatus { SelectFinishCorner, ClearOfCrests, InTheCut, PastTh
  *
  * - [XNotReferenced]: the X axis has no reference. The math treats the X value
  *   as the radius from the spindle axis, so the values are not correct. The text: "X has no
- *   reference. Set X to zero on the spindle axis before you cut the thread." No screen shows
- *   the warning now.
+ *   reference. Set X to zero on the spindle axis before you cut the thread."
  */
 enum class ThreadCutWarning { XNotReferenced }
 
@@ -72,13 +73,14 @@ data class ThreadStroke(
 data class ThreadPosition(val xUm: Double, val zUm: Double)
 
 /**
- * The state of the pass recorder: the record, the stroke, and the last position, or null when
- * the last Z was not known.
+ * The state of the pass recorder: the record, the stroke, the last position, and the active start
+ * number.
  */
 data class ThreadCutState(
     val record: ThreadPassRecord = ThreadPassRecord(),
     val stroke: ThreadStroke = ThreadStroke(),
     val last: ThreadPosition? = null,
+    val activeStart: Int = 1,
 )
 
 /**
@@ -89,7 +91,11 @@ data class ThreadCutState(
  * @property cutLoadRatio "Cut load ≈ %1$s×" with one decimal, or null ("—").
  * @property clearDiameterUm The X diameter at which the tool is clear of the crests (the clearance
  *   limit): `MinorDiameter − clr` (internal) or `MajorDiameter + clr` (external).
- * @property retractLimitZUm The Z retract limit: `Zmin − W₁`.
+ * @property retractLimitZUm The Z retract limit: `Zmin − W₁` (right-hand) or `Zmax + W₂` (left-hand).
+ * @property schedule The generated pass schedule for the thread.
+ * @property nextPass The next scheduled pass after the deepest recorded pass, or null.
+ * @property activeStart The active 1-based start number (`1..totalStarts`).
+ * @property totalStarts The total number of starts of the thread.
  */
 data class ThreadCutValues(
     val lastPassUm: Double?,
@@ -101,10 +107,20 @@ data class ThreadCutValues(
     val clearDiameterUm: Double,
     val retractLimitZUm: Double,
     val warnings: Set<ThreadCutWarning>,
+    val schedule: PassSchedule = PassSchedule(
+        infeedMode = ThreadInfeedMode.ModifiedFlank,
+        infeedAngleDeg = 29.5,
+        totalRadialDepthUm = 0.0,
+        roughingPassCount = 0,
+        passes = emptyList(),
+    ),
+    val nextPass: ScheduledPass? = null,
+    val activeStart: Int = 1,
+    val totalStarts: Int = 1,
 )
 
 /**
- * The thread cut panel math. The panel has no pass schedule.
+ * The thread cut panel math.
  *
  * The inputs: `x` = the absolute X value in µm, which the math treats as the radius from the
  * spindle axis; `c` = the X readout value before the diameter factor; `d` = the deepest recorded
@@ -133,22 +149,28 @@ object ThreadCut {
     fun clearDiameterUm(spec: ThreadSpec): Double =
         if (spec.internal) spec.minorDiameterUm - clearanceUm(spec) else spec.majorDiameterUm + clearanceUm(spec)
 
-    /** Gives the Z retract limit `Zmin − W₁` (W₁ = 0 with no relief). */
-    fun retractLimitZUm(spec: ThreadSpec): Double = min(spec.startZUm, spec.stopZUm) - (spec.leftReliefUm ?: 0.0)
+    /** Gives the Z retract limit: `Zmin − W₁` for right-hand, or `Zmax + W₂` for left-hand. */
+    fun retractLimitZUm(spec: ThreadSpec): Double = if (spec.leftHand) {
+        max(spec.startZUm, spec.stopZUm) + (spec.rightReliefUm ?: 0.0)
+    } else {
+        min(spec.startZUm, spec.stopZUm) - (spec.leftReliefUm ?: 0.0)
+    }
 
     /**
      * Gives the retract state. Internal: clear when `2|x| ≤ MinorDiameter − clr`. External: clear
-     * when `2|x| ≥ MajorDiameter + clr`. Else past the limit when [zUm] is below the Z retract
-     * limit, else engaged.
+     * when `2|x| ≥ MajorDiameter + clr`. Else past the limit when [zUm] is past the Z retract
+     * limit (`zUm < limit` for right-hand, `zUm > limit` for left-hand), else engaged.
      */
     fun retractState(spec: ThreadSpec, xUm: Double, zUm: Double?): RetractState {
         val diameter = 2.0 * abs(xUm)
         val clear = if (spec.internal) diameter <= clearDiameterUm(spec) else diameter >= clearDiameterUm(spec)
-        return when {
-            clear -> RetractState.Clear
-            zUm != null && zUm.isFinite() && zUm < retractLimitZUm(spec) -> RetractState.PastLimit
-            else -> RetractState.Engaged
+        if (clear) return RetractState.Clear
+        if (zUm != null && zUm.isFinite()) {
+            val limitZ = retractLimitZUm(spec)
+            val pastLimit = if (spec.leftHand) zUm > limitZ else zUm < limitZ
+            if (pastLimit) return RetractState.PastLimit
         }
+        return RetractState.Engaged
     }
 
     /** Safe when clear; past the final depth when `depth(root) − depth(2|x|) < 0`; else cutting. */
@@ -159,15 +181,16 @@ object ThreadCut {
     }
 
     /**
-     * The chip area `A(h) = tan 30° · h² + w · h` for h > 0, else 0.
-     * `h = (depth / 2) / f` is the radial depth in the thread unit, and `w = P / 4` for a Full
-     * Form cutter, else 0.
+     * The chip area `A(h) = tan(α / 2) · h² + w · h` for h > 0, else 0.
+     * `h = (depth / 2) / f` is the radial depth in the thread unit, and `w` is the cutter root flat
+     * width in the thread unit.
      */
     fun chipArea(spec: ThreadSpec, depthUm: Double): Double {
         val f = spec.form.unit.umPerUnit
         val h = depthUm / 2.0 / f
-        val w = if (spec.cutter == ThreadCutter.FullForm) spec.pitchUm / f / 4.0 else 0.0
-        return if (h > 0.0) TAN_30 * h * h + w * h else 0.0
+        val w = ThreadPassSchedule.rootFlatWidthUm(spec.form, spec.cutter, spec.pitchUm) / f
+        val tanHalfAngle = tan((spec.form.includedAngleDeg / 2.0) * PI / 180.0)
+        return if (h > 0.0) tanHalfAngle * h * h + w * h else 0.0
     }
 
     /**
@@ -178,6 +201,7 @@ object ThreadCut {
      * @param zUm The Z value, or null.
      * @param hasActiveCorner False when no sub-datum is active.
      * @param xReferenced False when the X axis has no reference.
+     * @param activeStart The active 1-based start number.
      */
     fun values(
         spec: ThreadSpec,
@@ -187,8 +211,14 @@ object ThreadCut {
         zUm: Double?,
         hasActiveCorner: Boolean = true,
         xReferenced: Boolean = true,
+        activeStart: Int = 1,
     ): ThreadCutValues {
         val warnings = if (xReferenced) emptySet() else setOf(ThreadCutWarning.XNotReferenced)
+        val schedule = ThreadPassSchedule.generate(spec)
+        val d = record.deepestUm?.takeIf { it.isFinite() }
+        val nextPass = ThreadPassSchedule.nextPass(schedule, d, spec.preOpDiameterUm, spec.internal)
+        val totalStarts = spec.starts.coerceAtLeast(1)
+        val clampedStart = activeStart.coerceIn(1, totalStarts)
         if (!xUm.isFinite()) {
             return ThreadCutValues(
                 lastPassUm = null,
@@ -200,9 +230,12 @@ object ThreadCut {
                 clearDiameterUm = clearDiameterUm(spec),
                 retractLimitZUm = retractLimitZUm(spec),
                 warnings = warnings,
+                schedule = schedule,
+                nextPass = nextPass,
+                activeStart = clampedStart,
+                totalStarts = totalStarts,
             )
         }
-        val d = record.deepestUm?.takeIf { it.isFinite() }
         val e = record.previousDeepestUm?.takeIf { it.isFinite() }
         val latchDepth = d?.let { depthUm(spec, it) }
         val currentDepth = depthUm(spec, 2.0 * abs(xUm))
@@ -233,17 +266,41 @@ object ThreadCut {
             clearDiameterUm = clearDiameterUm(spec),
             retractLimitZUm = retractLimitZUm(spec),
             warnings = warnings,
+            schedule = schedule,
+            nextPass = nextPass,
+            activeStart = clampedStart,
+            totalStarts = totalStarts,
         )
     }
 
     /**
-     * Arms a thread: for a new thread id, the pass record
-     * starts again. The stroke always starts again.
+     * Arms a thread: for a new thread id, the pass record and active start reset. The stroke
+     * always starts again.
      */
     fun arm(state: ThreadCutState, threadId: String): ThreadCutState {
-        val record = if (state.record.threadId != null && state.record.threadId != threadId) ThreadPassRecord() else state.record
-        return ThreadCutState(record = record, stroke = ThreadStroke())
+        val sameThread = state.record.threadId == null || state.record.threadId == threadId
+        val record = if (sameThread) state.record else ThreadPassRecord()
+        val activeStart = if (sameThread) state.activeStart else 1
+        return ThreadCutState(record = record, stroke = ThreadStroke(), activeStart = activeStart)
     }
+
+    /**
+     * Selects a new thread start (`1..starts`) and resets the pass record and stroke for that
+     * start.
+     */
+    fun selectStart(state: ThreadCutState, startNumber: Int): ThreadCutState =
+        ThreadCutState(
+            record = ThreadPassRecord(),
+            stroke = ThreadStroke(),
+            last = null,
+            activeStart = startNumber.coerceAtLeast(1),
+        )
+
+    /**
+     * Resets the recorded passes and the stroke while keeping the active start.
+     */
+    fun resetPasses(state: ThreadCutState): ThreadCutState =
+        state.copy(record = ThreadPassRecord(), stroke = ThreadStroke(), last = null)
 
     /**
      * Updates the pass record with one position. A Z outside
@@ -282,9 +339,9 @@ object ThreadCut {
                 record = crossed.record
             }
         }
-        if (!inside) return ThreadCutState(record, ThreadStroke(), here)
+        if (!inside) return ThreadCutState(record, ThreadStroke(), here, state.activeStart)
         val next = latch(spec, stroke.copy(minZUm = min(stroke.minZUm, zUm), maxZUm = max(stroke.maxZUm, zUm)), record, xUm, zMin, zMax)
-        return ThreadCutState(next.record, next.stroke, here)
+        return ThreadCutState(next.record, next.stroke, here, state.activeStart)
     }
 
     /** Latches the pass of [stroke] with the X value [xUm] when the stroke covers the band 25 % to 75 %. */
