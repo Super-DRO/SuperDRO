@@ -116,4 +116,23 @@
     <string name="graphics_status_in_cut">Im Schnitt</string>
     <string name="graphics_status_past_root">Über den Grund hinaus</string>
     <string name="graphics_status_past_limit">Über die Rückzugsgrenze hinaus</string>
+    <string name="graphics_thread_warn_x_not_referenced">Die X-Achse ist nicht referenziert. Die Durchmesseranzeige passt eventuell nicht zum Gewinde.</string>
+    <string name="graphics_thread_pass_target">Durchgang %1$d / %2$d</string>
+    <string name="graphics_thread_pass_done">Alle %1$d Durchgänge fertig</string>
+    <string name="graphics_thread_target_diameter">Ziel-Ø</string>
+    <string name="graphics_thread_compound_step">Oberschlittenzustellung</string>
+    <string name="graphics_thread_reset_passes">Durchgänge zurücksetzen</string>
+    <string name="graphics_thread_start_label">Gang %1$d / %2$d</string>
+    <string name="graphics_thread_start_chip">G%1$d</string>
+    <string name="graphics_thread_start_offset">Z-Versatz %1$s · %2$s°</string>
+    <string name="graphics_thread_dial_keep_closed">Schlossmutter geschlossen lassen</string>
+    <string name="graphics_thread_dial_any_point">Uhr: jeder Punkt</string>
+    <string name="graphics_thread_dial_any_line">Uhr: jeder Strich</string>
+    <string name="graphics_thread_dial_any_numbered">Uhr: jeder bezifferte Strich</string>
+    <string name="graphics_thread_dial_opposite_numbered">Uhr: gegenüberliegende bezifferte Striche</string>
+    <string name="graphics_thread_dial_same_line">Uhr: nur derselbe Strich</string>
+    <string name="graphics_thread_max_rpm">Max. %1$d U/min</string>
+    <string name="graphics_thread_speed_too_fast">Reaktionszeit zu kurz</string>
+    <string name="graphics_thread_pitch_ok">Steigung OK</string>
+    <string name="graphics_thread_pitch_mismatch">Getriebesteigung falsch</string>
 </resources>

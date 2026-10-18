@@ -20,6 +20,8 @@
     <string name="settings_machine_type_summary">A change shows the data that does not fit the new type first.</string>
     <string name="settings_machine_metric">Default units</string>
     <string name="settings_machine_metric_summary">The units of a new workspace and of the length settings.</string>
+    <string name="settings_machine_leadscrew_pitch">Leadscrew pitch</string>
+    <string name="settings_machine_leadscrew_pitch_summary">The leadscrew pitch of this lathe for the thread dial rules.</string>
     <string name="settings_machine_section_sounds">Sounds</string>
     <string name="settings_machine_mute">Mute the sounds of this machine</string>
     <string name="settings_machine_mute_summary">Mutes all sounds of this machine, also the link tones.</string>

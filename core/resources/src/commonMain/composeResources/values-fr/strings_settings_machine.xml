@@ -20,6 +20,8 @@
     <string name="settings_machine_type_summary">Un changement affiche d'abord les données qui ne conviennent pas au nouveau type.</string>
     <string name="settings_machine_metric">Unités par défaut</string>
     <string name="settings_machine_metric_summary">Les unités d'un nouvel espace de travail et des réglages de longueur.</string>
+    <string name="settings_machine_leadscrew_pitch">Pas de la vis-mère</string>
+    <string name="settings_machine_leadscrew_pitch_summary">Le pas de la vis-mère de ce tour pour les règles du cadran de filetage.</string>
     <string name="settings_machine_section_sounds">Sons</string>
     <string name="settings_machine_mute">Couper les sons de cette machine</string>
     <string name="settings_machine_mute_summary">Coupe tous les sons de cette machine, aussi les tonalités de liaison.</string>

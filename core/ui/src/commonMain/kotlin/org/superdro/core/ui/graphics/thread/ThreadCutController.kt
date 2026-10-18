@@ -12,11 +12,19 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.superdro.core.functions.thread.PitchCheckResult
+import org.superdro.core.functions.thread.SafeSpeedAdvice
+import org.superdro.core.functions.thread.ScheduledPass
 import org.superdro.core.functions.thread.ThreadCut
 import org.superdro.core.functions.thread.ThreadCutState
 import org.superdro.core.functions.thread.ThreadCutStatus
+import org.superdro.core.functions.thread.ThreadCutWarning
+import org.superdro.core.functions.thread.ThreadDialRule
 import org.superdro.core.functions.thread.ThreadPassRecord
 import org.superdro.core.functions.thread.ThreadPoints
+import org.superdro.core.functions.thread.ThreadSyncRules
+import org.superdro.core.functions.thread.ThreadUnit
+import org.superdro.core.functions.thread.unit
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.SubDatumGroupKind
 import org.superdro.core.model.ThreadPass
@@ -53,18 +61,33 @@ sealed interface ThreadPanelUiState {
         val infeed: String?,
         val cutLoad: String?,
         val metric: Boolean,
+        val warnings: Set<ThreadCutWarning> = emptySet(),
+        val leadscrewPitchUm: Double? = null,
+        val dialRule: ThreadDialRule = ThreadDialRule.KeepHalfNutClosed,
+        val safeSpeed: SafeSpeedAdvice? = null,
+        val pitchCheck: PitchCheckResult? = null,
+        val nextPass: ScheduledPass? = null,
+        val totalPasses: Int = 0,
+        val nextTargetDiameter: String? = null,
+        val nextCompoundStep: String? = null,
+        val activeStart: Int = 1,
+        val totalStarts: Int = 1,
+        val startZOffset: String? = null,
+        val startAngleDeg: String? = null,
+        val onResetPasses: () -> Unit = {},
+        val onSelectStart: (Int) -> Unit = {},
     ) : ThreadPanelUiState
 }
 
 /**
- * The thread arm and the thread cut panel of the graphical view. The panel has no pass schedule.
+ * The thread arm and the thread cut panel of the graphical view.
  *
  * - The arm button: when the panel is open, it disarms and closes. Else it lists the threads with
  *   StartZ ≠ StopZ. With no thread it asks "There are no threads in this workspace. Do you want to
  *   create one?". With one thread it arms that thread at once.
  * - The arm step makes the 4 finish corner sub-datums again when they are not there, starts a new
  *   pass record for a new thread, stores the armed thread in the workspace, and activates the
- *   corner with X > 0 and the smallest Z.
+ *   finish corner with X > 0.
  * - Each readout frame updates the pass record. A new record goes into the workspace
  *   ([org.superdro.core.model.Workspace.threadPass]).
  */
@@ -76,7 +99,12 @@ class ThreadCutController(
 ) {
     private val panelOpen = MutableStateFlow(false)
     private val askCreate = MutableStateFlow(false)
-    private var cut = ThreadCutState()
+    private val cutFlow = MutableStateFlow(ThreadCutState())
+    private var cut: ThreadCutState
+        get() = cutFlow.value
+        set(value) {
+            cutFlow.value = value
+        }
 
     /** True while the question "There are no threads in this workspace. …" shows. */
     val createQuestion: StateFlow<Boolean> = askCreate
@@ -85,8 +113,8 @@ class ThreadCutController(
     val armable: StateFlow<List<ThreadSpec>> = threads
 
     /** The panel, or null when it is closed and no thread is armed. */
-    val panel: StateFlow<ThreadPanelUiState?> = combine(readout.frame, threads, panelOpen) { frame, list, open ->
-        panelOf(frame, list, open)
+    val panel: StateFlow<ThreadPanelUiState?> = combine(readout.frame, threads, panelOpen, cutFlow) { frame, list, open, cutState ->
+        panelOf(frame, list, open, cutState)
     }.distinctUntilChanged().stateIn(scope, SharingStarted.Eagerly, null)
 
     /** True when the panel is open or a thread is armed. */
@@ -152,6 +180,28 @@ class ThreadCutController(
         }
     }
 
+    /** Clears the recorded passes of the armed thread. */
+    fun onResetPasses() {
+        val frame = readout.frame.value
+        val armedId = frame?.workspace?.armedThreadId ?: cut.record.threadId
+        val reset = ThreadCut.resetPasses(cut)
+        cut = reset.copy(record = reset.record.copy(threadId = armedId))
+        if (frame != null) {
+            readout.applyWorkspace(null) { workspace -> workspace.copy(threadPass = passOf(cut.record)) }
+        }
+    }
+
+    /** Selects the active start [startNumber] (1-based) and resets the pass record for that start. */
+    fun onSelectStart(startNumber: Int) {
+        val frame = readout.frame.value
+        val armedId = frame?.workspace?.armedThreadId ?: cut.record.threadId
+        val selected = ThreadCut.selectStart(cut, startNumber)
+        cut = selected.copy(record = selected.record.copy(threadId = armedId))
+        if (frame != null) {
+            readout.applyWorkspace(null) { workspace -> workspace.copy(threadPass = passOf(cut.record)) }
+        }
+    }
+
     private suspend fun activateCorner(spec: ThreadSpec) {
         val corner = ThreadPoints.activeCorner(spec) ?: return
         val ref = ThreadPoints.groupRef(spec.id, corner.role)
@@ -176,7 +226,12 @@ class ThreadCutController(
         }
     }
 
-    private fun panelOf(frame: ReadoutFrame?, threads: List<ThreadSpec>, open: Boolean): ThreadPanelUiState? {
+    private fun panelOf(
+        frame: ReadoutFrame?,
+        threads: List<ThreadSpec>,
+        open: Boolean,
+        cutState: ThreadCutState,
+    ): ThreadPanelUiState? {
         if (frame == null || !frame.profile.machineType.isLathe) return null
         val armedId = frame.workspace.armedThreadId
         val armed = armedId?.let { id -> threads.firstOrNull { thread -> thread.id == id } }
@@ -187,16 +242,48 @@ class ThreadCutController(
         }
         val x = frame.reading(AxisId.X)
         val z = frame.reading(AxisId.Z)
+        val record = recordOf(frame.workspace.threadPass).takeIf { item -> item.threadId == armed.id }
+            ?: cutState.record.takeIf { item -> item.threadId == armed.id }
+            ?: ThreadPassRecord(threadId = armed.id)
         val values = ThreadCut.values(
             spec = armed,
-            record = recordOf(frame.workspace.threadPass).takeIf { record -> record.threadId == armed.id } ?: ThreadPassRecord(),
+            record = record,
             xUm = x.absolute,
             readoutXUm = x.value,
             zUm = if (z.hasValue) z.absolute else null,
             hasActiveCorner = frame.workspace.activeSubDatumId != null,
+            xReferenced = x.referenced,
+            activeStart = cutState.activeStart,
         )
         fun text(radialUm: Double?): String? = radialUm?.let { value ->
             frame.pattern(AxisId.X).format(frame.converter(AxisId.X).toDisplay(frame.postProcessor(AxisId.X).toShown(value)))
+        }
+        fun lengthText(axis: AxisId, lengthUm: Double): String =
+            frame.pattern(axis).format(frame.converter(axis).toDisplay(lengthUm))
+
+        val leadUm = armed.pitchUm * armed.starts.coerceAtLeast(1)
+        val leadscrewPitchUm = frame.profile.leadscrewPitchUm
+        val dialRule = ThreadSyncRules.dialRule(
+            leadUm = leadUm,
+            threadMetric = armed.form.unit == ThreadUnit.Millimeter,
+            leadscrewPitchUm = leadscrewPitchUm,
+            leadscrewMetric = frame.profile.metricDefault,
+        )
+        val exitReliefUm = if (armed.leftHand) armed.rightReliefUm else armed.leftReliefUm
+        val tach = frame.reading(AxisId.Tachometer)
+        val currentRpm = if (frame.enabled(AxisId.Tachometer) && tach.hasValue && tach.absolute > 0.0) tach.absolute else null
+        val safeSpeed = ThreadSyncRules.safeSpeed(
+            leadUm = leadUm,
+            pitchUm = armed.pitchUm,
+            exitReliefUm = exitReliefUm,
+            internal = armed.internal,
+            currentRpm = currentRpm,
+        )
+        val nextPass = values.nextPass
+        val startOffset = if (values.totalStarts > 1) {
+            ThreadPoints.startOffsets(armed).firstOrNull { item -> item.startNumber == values.activeStart }
+        } else {
+            null
         }
         return ThreadPanelUiState.Armed(
             thread = choiceOf(armed),
@@ -205,6 +292,20 @@ class ThreadCutController(
             infeed = text(values.infeedUm),
             cutLoad = values.cutLoadRatio?.let { ratio -> oneDecimal(ratio) },
             metric = frame.metric(AxisId.X),
+            warnings = values.warnings,
+            leadscrewPitchUm = leadscrewPitchUm,
+            dialRule = dialRule,
+            safeSpeed = safeSpeed,
+            nextPass = nextPass,
+            totalPasses = values.schedule.passes.size,
+            nextTargetDiameter = nextPass?.let { pass -> lengthText(AxisId.X, pass.targetDiameterUm) },
+            nextCompoundStep = nextPass?.takeIf { pass -> pass.compoundStepUm > 0.0 }?.let { pass -> lengthText(AxisId.X, pass.compoundStepUm) },
+            activeStart = values.activeStart,
+            totalStarts = values.totalStarts,
+            startZOffset = startOffset?.let { item -> lengthText(AxisId.Z, item.zOffsetUm) },
+            startAngleDeg = startOffset?.let { item -> oneDecimal(item.spindleAngleArcSec / 3_600.0) },
+            onResetPasses = ::onResetPasses,
+            onSelectStart = ::onSelectStart,
         )
     }
 

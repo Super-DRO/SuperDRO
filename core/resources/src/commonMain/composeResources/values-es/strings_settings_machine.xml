@@ -20,6 +20,8 @@
     <string name="settings_machine_type_summary">Un cambio muestra primero los datos que no son válidos para el nuevo tipo.</string>
     <string name="settings_machine_metric">Unidades por defecto</string>
     <string name="settings_machine_metric_summary">Las unidades de un espacio de trabajo nuevo y de los ajustes de longitud.</string>
+    <string name="settings_machine_leadscrew_pitch">Paso del husillo patrón</string>
+    <string name="settings_machine_leadscrew_pitch_summary">El paso del husillo patrón de este torno para las reglas del reloj de roscar.</string>
     <string name="settings_machine_section_sounds">Sonidos</string>
     <string name="settings_machine_mute">Silenciar los sonidos de esta máquina</string>
     <string name="settings_machine_mute_summary">Silencia todos los sonidos de esta máquina, también los tonos del enlace.</string>
