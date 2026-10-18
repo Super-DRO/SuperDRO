@@ -82,6 +82,7 @@ internal val uiModule = DI.Module("uiModule") {
             disconnectAll = instance(),
             keepAliveStatus = instance<ConnectionKeepAlive>().status,
             requests = instance(),
+            appSettings = instance(),
         )
     }
     // The profiles of the demo machines of a debug build. The graph makes the object in the

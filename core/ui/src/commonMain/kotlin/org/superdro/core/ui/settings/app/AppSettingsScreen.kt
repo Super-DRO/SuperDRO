@@ -29,6 +29,8 @@ import org.superdro.core.resources.settings_app_battery
 import org.superdro.core.resources.settings_app_battery_exempt
 import org.superdro.core.resources.settings_app_battery_not_exempt
 import org.superdro.core.resources.settings_app_battery_open
+import org.superdro.core.resources.settings_app_check_updates
+import org.superdro.core.resources.settings_app_check_updates_summary
 import org.superdro.core.resources.settings_app_dxf_bezier
 import org.superdro.core.resources.settings_app_dxf_blocks
 import org.superdro.core.resources.settings_app_dxf_entities
@@ -107,6 +109,7 @@ object AppSettingsTags {
     const val FULL_SCREEN = "app-full-screen"
     const val SHOW_HINTS = "app-show-hints"
     const val SETUP_REMINDER = "app-setup-reminder"
+    const val CHECK_FOR_UPDATES = "app-check-updates"
     const val GRAPHICAL_VIEW = "app-graphical-view"
     const val PANE_SIZE_SCOPE = "app-pane-size-scope"
     const val MUTE = "app-mute"
@@ -222,6 +225,13 @@ private fun ColumnScope.AppearanceGroup(state: AppSettingsUiState, presenter: Ap
             checked = settings.showSetupReminder,
             onCheckedChange = presenter::setShowSetupReminder,
             tag = AppSettingsTags.SETUP_REMINDER,
+        )
+        SettingsSwitch(
+            title = stringResource(Res.string.settings_app_check_updates),
+            summary = stringResource(Res.string.settings_app_check_updates_summary),
+            checked = settings.checkForUpdates,
+            onCheckedChange = presenter::setCheckForUpdates,
+            tag = AppSettingsTags.CHECK_FOR_UPDATES,
         )
         SettingsSegmented(
             title = stringResource(Res.string.settings_app_graphical_view),

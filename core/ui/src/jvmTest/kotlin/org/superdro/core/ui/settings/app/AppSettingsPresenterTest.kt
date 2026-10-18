@@ -60,6 +60,7 @@ class AppSettingsPresenterTest {
         assertTrue(settings.wakeLockWhileLinked)
         assertTrue(settings.showHints)
         assertTrue(settings.showSetupReminder)
+        assertTrue(settings.checkForUpdates)
         assertFalse(settings.sendGetSigOnce)
         assertEquals(GraphicalViewPlacement.BelowReadout, settings.graphicalViewInPortrait)
         assertEquals(emptySet(), settings.hiddenLinkTypes)
@@ -78,6 +79,7 @@ class AppSettingsPresenterTest {
         presenter.setFullScreen(false)
         presenter.setShowHints(false)
         presenter.setShowSetupReminder(false)
+        presenter.setCheckForUpdates(false)
         presenter.setGraphicalViewInPortrait(GraphicalViewPlacement.FullScreen)
         presenter.setMuteAllSounds(true)
         presenter.setWakeLock(false)
@@ -89,6 +91,7 @@ class AppSettingsPresenterTest {
         assertFalse(settings.fullScreen)
         assertFalse(settings.showHints)
         assertFalse(settings.showSetupReminder)
+        assertFalse(settings.checkForUpdates)
         assertEquals(GraphicalViewPlacement.FullScreen, settings.graphicalViewInPortrait)
         assertTrue(settings.muteAllSounds)
         assertFalse(settings.wakeLockWhileLinked)
@@ -97,6 +100,7 @@ class AppSettingsPresenterTest {
         harness.store.appSettings.awaitWrites()
         val file = harness.store.storeIO.files.getValue("app-settings.json").decodeToString()
         assertTrue("\"largeButtons\":true" in file, file)
+        assertTrue("\"checkForUpdates\":false" in file, file)
         harness.close()
     }
 
