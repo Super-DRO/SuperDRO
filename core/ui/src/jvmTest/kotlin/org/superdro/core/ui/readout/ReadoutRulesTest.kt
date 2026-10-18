@@ -88,7 +88,7 @@ class ReadoutRulesTest {
     fun theMillOrderOnAVerticalAndAHorizontalMill() {
         val expected = listOf(
             B.ZReference, B.RadiusCompensation, B.HeightCompensation, B.EdgeFinder, B.HoleCircle, B.ArbitraryHoleCircle,
-            B.ArcCut, B.HoleGrid, B.EquidistantArray, B.AngleMeasure, B.GraphicalView, B.RotatePart,
+            B.ArcCut, B.HoleGrid, B.EquidistantArray, B.AngleMeasure, B.GraphicalView, B.ThreadSetup, B.RotatePart,
         )
         assertEquals(expected, FunctionStripRules.buttons(mill, null).map { it.button })
         assertEquals(expected, FunctionStripRules.buttons(horizontal, null).map { it.button }, "A horizontal mill has the mill buttons.")
@@ -96,7 +96,7 @@ class ReadoutRulesTest {
         assertTrue(B.DimensionMeasure in FunctionStripRules.buttons(withCaliper, null).map { it.button })
         val withQuill = mill.copy(z = mill.z.copy(secondary = InputConfig('w')))
         val buttons = FunctionStripRules.buttons(withQuill, null).map { it.button }
-        assertEquals(listOf(B.GraphicalView, B.HeadTiltCompensation, B.RotatePart), buttons.takeLast(3))
+        assertEquals(listOf(B.GraphicalView, B.ThreadSetup, B.HeadTiltCompensation, B.RotatePart), buttons.takeLast(4))
     }
 
     @Test
@@ -146,7 +146,7 @@ class ReadoutRulesTest {
         assertFalse(B.CompoundCompensation in FunctionStripRules.buttons(noCompound, null).map { it.button })
         // The buttons with "always" have no switch.
         val allOff = FunctionButtonSettings(false, false, false, false, false, false, false, false, false, false, false, false, false)
-        assertEquals(listOf(B.GraphicalView, B.RotatePart), FunctionStripRules.buttons(mill.copy(functionButtons = allOff), null).map { it.button })
+        assertEquals(listOf(B.GraphicalView, B.ThreadSetup, B.RotatePart), FunctionStripRules.buttons(mill.copy(functionButtons = allOff), null).map { it.button })
         assertEquals(listOf(B.RadiusDiameter, B.LatheToolOffset, B.GraphicalView, B.ThreadSetup), FunctionStripRules.buttons(lathe.copy(functionButtons = allOff), null).map { it.button })
     }
 

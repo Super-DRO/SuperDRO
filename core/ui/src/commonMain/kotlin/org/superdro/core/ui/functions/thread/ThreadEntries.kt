@@ -6,9 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import org.superdro.core.model.PartialInsertPreset
 import org.superdro.core.model.ThreadClass
 import org.superdro.core.model.ThreadCutter
 import org.superdro.core.model.ThreadForm
+import org.superdro.core.model.ThreadInfeedMode
 import org.superdro.core.ui.functions.common.rememberFunctionServices
 import org.superdro.core.ui.navigation.EntryKind
 import org.superdro.core.ui.navigation.EntryRegistry
@@ -34,11 +36,16 @@ private fun ThreadSetupEntry(scope: TabEntryScope) {
     val events = remember(presenter, scope) {
         object : ThreadSetupEvents {
             override fun onRestore(id: String) = presenter.onRestore(id)
+            override fun onMode(mode: ThreadToolMode) = presenter.onMode(mode)
             override fun onInternal(internal: Boolean) = presenter.onInternal(internal)
+            override fun onLeftHand(leftHand: Boolean) = presenter.onLeftHand(leftHand)
+            override fun onStarts(starts: Int) = presenter.onStarts(starts)
             override fun onForm(form: ThreadForm) = presenter.onForm(form)
             override fun onSize(size: String) = presenter.onSize(size)
             override fun onClass(threadClass: ThreadClass) = presenter.onClass(threadClass)
             override fun onCutter(cutter: ThreadCutter) = presenter.onCutter(cutter)
+            override fun onInsertPreset(preset: PartialInsertPreset) = presenter.onInsertPreset(preset)
+            override fun onInfeedMode(mode: ThreadInfeedMode) = presenter.onInfeedMode(mode)
             override fun onText(field: ThreadField, text: String) = presenter.onText(field, text)
             override fun onSyncStartZ() {
                 presenter.onSyncStartZ()?.let(scope::showMessage)

@@ -3,6 +3,7 @@ package org.superdro.core.ui.functions.thread
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -13,10 +14,12 @@ import kotlinx.coroutines.test.runTest
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
+import org.superdro.core.model.PartialInsertPreset
 import org.superdro.core.model.SubDatumGroupKind
 import org.superdro.core.model.ThreadClass
 import org.superdro.core.model.ThreadCutter
 import org.superdro.core.model.ThreadForm
+import org.superdro.core.model.ThreadInfeedMode
 import org.superdro.core.ui.functions.FunctionsHarness
 import org.superdro.core.ui.functions.TestEnvironment
 import org.superdro.core.ui.functions.common.loadString
@@ -30,8 +33,8 @@ class ThreadSetupPresenterTest {
     @AfterTest
     fun close() = harness.close()
 
-    private suspend fun TestScope.presenter(): ThreadSetupPresenter {
-        harness.start(MachineProfile.create(MachineType.Lathe, "Lathe").copy(metricDefault = true))
+    private suspend fun TestScope.presenter(machineType: MachineType = MachineType.Lathe): ThreadSetupPresenter {
+        harness.start(MachineProfile.create(machineType, machineType.name).copy(metricDefault = true))
         return ThreadSetupPresenter(harness.presenter, harness.services).also { advanceUntilIdle() }
     }
 
@@ -121,7 +124,12 @@ class ThreadSetupPresenterTest {
     fun allFieldsComeBackFromTheLastThread() = scope.runTest {
         val setup = presenter()
         setup.select(ThreadForm.IsoMetricFine, "M10 × 1.25", internal = false, cutter = ThreadCutter.Partial)
-        setup.onText(ThreadField.TipRadius, "0.1")
+        setup.onInsertPreset(PartialInsertPreset.AG60)
+        setup.onLeftHand(true)
+        setup.onStarts(2)
+        setup.onInfeedMode(ThreadInfeedMode.Flank)
+        setup.onText(ThreadField.RoughingPasses, "6")
+        setup.onText(ThreadField.CustomWireDiameter, "0.75")
         setup.onText(ThreadField.StartZ, "5")
         setup.onText(ThreadField.Length, "18")
         setup.onText(ThreadField.LeftRelief, "3")
@@ -136,8 +144,14 @@ class ThreadSetupPresenterTest {
         assertEquals(ThreadForm.IsoMetricFine, state.form)
         assertEquals("M10 × 1.25", state.size)
         assertEquals(false, state.internal)
+        assertEquals(true, state.leftHand)
+        assertEquals(2, state.starts)
         assertEquals(ThreadCutter.Partial, state.cutter)
-        assertEquals("0.1", state.tipRadius.text)
+        assertEquals(PartialInsertPreset.AG60, state.insertPreset)
+        assertEquals(ThreadInfeedMode.Flank, state.infeedMode)
+        assertEquals("6", state.roughingPasses.text)
+        assertEquals("0.06", state.tipRadius.text)
+        assertEquals("0.75", state.wireDiameter.text)
         assertEquals("5", state.startZ.text)
         assertEquals("18", state.length.text)
         assertEquals("3", state.leftRelief.text)
@@ -182,6 +196,84 @@ class ThreadSetupPresenterTest {
         assertEquals("-2.5", setup.uiState.value.startZ.text)
         setup.onText(ThreadField.StartZ, "++1")
         assertEquals(-1_500.0, setup.uiState.value.startZ.valueUm)
+        setup.close()
+    }
+
+    @Test
+    fun millStartsInTapAndDrillModeAndCalculatesTapAndHolePrep() = scope.runTest {
+        val setup = presenter(MachineType.VerticalMill)
+        val state = setup.uiState
+        assertFalse(state.value.isLathe)
+        assertEquals(ThreadToolMode.TapAndDrill, state.value.mode)
+        setup.onForm(ThreadForm.IsoMetricCoarse)
+        setup.onSize("M10 × 1.5")
+        setup.onText(ThreadField.BlindHoleDepth, "15")
+        val tap = assertNotNull(state.value.tapResults)
+        assertEquals("8.539", tap.cutTheoreticalDiameter)
+        assertEquals("8.5 mm", tap.cutClosestDrill.label)
+        assertEquals(true, tap.cutWithinMinorLimits)
+        assertNotNull(tap.formTheoreticalDiameter)
+        assertEquals("10.500", tap.closeClearance)
+        assertEquals("11.000", tap.normalClearance)
+        assertEquals("12.000", tap.looseClearance)
+        assertEquals("10.300", tap.countersink90)
+        assertEquals("21.000", tap.blindBottomingDepth)
+        assertEquals("24.000", tap.blindPlugDepth)
+        assertEquals("30.750", tap.blindTaperDepth)
+        setup.close()
+    }
+
+    @Test
+    fun newThreadFormsPassScheduleThreeWireAndInternalGauges() = scope.runTest {
+        val setup = presenter(MachineType.Lathe)
+        assertTrue(setup.uiState.value.isLathe)
+        assertEquals(ThreadToolMode.SinglePoint, setup.uiState.value.mode)
+
+        // All new standard forms populate sizes and calculate geometry.
+        for (form in listOf(
+            ThreadForm.Bsw,
+            ThreadForm.Bsf,
+            ThreadForm.Bspp,
+            ThreadForm.IsoTrapezoidal,
+            ThreadForm.Acme,
+            ThreadForm.Npt,
+            ThreadForm.Bspt,
+        )) {
+            setup.onForm(form)
+            assertTrue(setup.uiState.value.sizes.isNotEmpty(), "Expected sizes for $form")
+            assertNotNull(setup.uiState.value.results, "Expected results for $form")
+        }
+
+        // External M10 × 1.5 with multi-start, preset warning, custom 3-wire, and pass schedule.
+        setup.select(ThreadForm.IsoMetricCoarse, "M10 × 1.5", internal = false, cutter = ThreadCutter.Partial)
+        setup.onStarts(2)
+        setup.onInsertPreset(PartialInsertPreset.G60)
+        setup.onInfeedMode(ThreadInfeedMode.ModifiedFlank)
+        setup.onText(ThreadField.RoughingPasses, "5")
+        setup.onText(ThreadField.CustomWireDiameter, "0.895")
+        setup.onText(ThreadField.MeasuredOverWires, "10.450")
+
+        var results = assertNotNull(setup.uiState.value.results)
+        assertEquals(2, results.starts)
+        assertEquals("3.000", results.lead)
+        assertTrue(results.insertPresetPitchWarning)
+        assertTrue(results.wireValid)
+        assertNotNull(results.actualPitchDiameter)
+        assertNotNull(results.remainingRadialDepth)
+        assertEquals("29.5", results.scheduleInfeedAngleDeg)
+        assertEquals(7, results.schedulePasses.size)
+
+        // Internal M10 × 1.5 with Go/No-Go gauges and boring bar deflection warning.
+        setup.select(ThreadForm.IsoMetricCoarse, "M10 × 1.5", internal = true, cutter = ThreadCutter.SharpV)
+        setup.onText(ThreadField.Length, "35")
+        results = assertNotNull(setup.uiState.value.results)
+        assertEquals("8.376", results.minorGo)
+        assertEquals("8.676", results.minorNoGo)
+        assertEquals("9.026", results.pitchGo)
+        assertEquals("9.206", results.pitchNoGo)
+        assertEquals("08IR", results.internalBarHolder)
+        assertTrue(results.internalBarDeflectionRisk)
+
         setup.close()
     }
 }

@@ -194,6 +194,7 @@ object FunctionStripRules {
             add(FunctionButton.DimensionMeasure, show.dimensionMeasure && caliper)
             add(FunctionButton.AngleMeasure, show.angleMeasure)
             add(FunctionButton.GraphicalView, true)
+            add(FunctionButton.ThreadSetup, true)
             add(FunctionButton.HeadTiltCompensation, show.headTilt && hasQuillInput(profile))
             add(FunctionButton.RotatePart, true)
             add(FunctionButton.AlignAxes, measurement)
