@@ -72,7 +72,7 @@ class GraphicalSceneTest {
         val workspace = ViewSamples.millWorkspace().copy(plane = Plane.XZ)
         val xz = GraphicalSceneBuilder.build(ViewSamples.frame(ViewSamples.mill, workspace, x = 1_000.0, y = 2_000.0, z = -3_000.0))
         near(1_000.0, xz.tool!!.h)
-        near(-3_000.0, xz.tool!!.v)
+        near(-3_000.0, xz.tool.v)
         // Only the point with X and Z shows in XZ.
         assertEquals(listOf("p3"), xz.points.map { point -> point.id })
         assertEquals(0.0, xz.cutter!!.radiusUm)

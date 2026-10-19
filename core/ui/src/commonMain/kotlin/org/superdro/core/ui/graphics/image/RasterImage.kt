@@ -29,21 +29,30 @@ class RasterImage(val width: Int, val height: Int, val argb: IntArray) {
  * The image decode, the JPEG encode, and the image of the Compose canvas of the platform. Android
  * uses `BitmapFactory` and `Bitmap.compress`. The JVM uses `ImageIO` and Skia.
  */
-expect object PlatformImages {
+object PlatformImages {
 
     /**
      * Decodes [bytes] (JPEG or PNG). The larger side of the result is [maxSide] or less: the
      * decode uses the sample size of [ReferenceImageMath.decodeSampleSize], then a scale when the
      * image is still too large. Gives null when the bytes are not an image.
      */
-    fun decode(bytes: ByteArray, maxSide: Int = ReferenceImageMath.DECODE_LIMIT_PX): RasterImage?
+    fun decode(bytes: ByteArray, maxSide: Int = ReferenceImageMath.DECODE_LIMIT_PX): RasterImage? =
+        decodePlatformImage(bytes, maxSide)
 
     /** Encodes [image] as a JPEG with the quality [quality] (0 to 100). The alpha goes away. */
-    fun encodeJpeg(image: RasterImage, quality: Int = ReferenceImageMath.JPEG_QUALITY): ByteArray
+    fun encodeJpeg(image: RasterImage, quality: Int = ReferenceImageMath.JPEG_QUALITY): ByteArray =
+        encodePlatformJpeg(image, quality)
 
     /** Gives the image of [image] for the Compose canvas. */
-    fun toImageBitmap(image: RasterImage): ImageBitmap
+    fun toImageBitmap(image: RasterImage): ImageBitmap =
+        toPlatformImageBitmap(image)
 }
+
+internal expect fun decodePlatformImage(bytes: ByteArray, maxSide: Int): RasterImage?
+
+internal expect fun encodePlatformJpeg(image: RasterImage, quality: Int): ByteArray
+
+internal expect fun toPlatformImageBitmap(image: RasterImage): ImageBitmap
 
 /** The pixel steps of the reference image setup in common code. */
 object RasterImages {

@@ -126,7 +126,7 @@ class RememberedMachinesPresenter(
                         transport = profile?.adapter?.kind,
                         address = profile?.adapter?.let(::addressText),
                         state = linkState,
-                        link = if (trying) sessionState?.let(TabStatusRules::of) else null,
+                        link = if (trying) TabStatusRules.of(sessionState) else null,
                         lastCause = if (trying && reconnects) causes[DeviceId(machine.profileId)] else null,
                     )
                 }
