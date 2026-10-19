@@ -104,10 +104,3 @@ tasks.named<Test>("jvmTest") {
     systemProperty("java.awt.headless", "true")
     systemProperty("skiko.renderApi", "SOFTWARE")
 }
-
-// The virtual time functions of kotlinx-coroutines-test are experimental. Only the tests use them.
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    if (name == "compileTestKotlinJvm") {
-        compilerOptions.optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
-    }
-}

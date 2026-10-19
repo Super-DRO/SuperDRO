@@ -8,7 +8,7 @@ plugins {
 
 // No dependency on coroutines or Compose.
 kotlin {
-    configureOptIns()
+    configureOptIns(coroutines = false)
     superDroTargets("org.superdro.core.protocol")
     sourceSets {
         val commonMain by getting {

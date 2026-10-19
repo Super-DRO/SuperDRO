@@ -8,7 +8,7 @@ plugins {
 }
 
 kotlin {
-    configureOptIns()
+    configureOptIns(coroutines = false)
     superDroTargets("org.superdro.core.model")
     sourceSets {
         val commonMain by getting {

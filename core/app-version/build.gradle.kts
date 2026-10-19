@@ -63,7 +63,7 @@ val generateAppVersion by tasks.registering {
 }
 
 kotlin {
-    configureOptIns(serialization = false)
+    configureOptIns(serialization = false, coroutines = false)
     superDroTargets("org.superdro.core.appversion")
     sourceSets {
         val commonMain by getting {

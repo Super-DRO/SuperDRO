@@ -50,7 +50,7 @@ android {
 }
 
 kotlin {
-    configureOptIns(serialization = false)
+    configureOptIns(serialization = false, coroutines = false)
 }
 
 baselineProfile {
