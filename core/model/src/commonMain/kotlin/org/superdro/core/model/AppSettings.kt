@@ -128,6 +128,16 @@ data class AppSettings(
     val lastRunVersion: String? = null,
     /** True after an update until the user closes the "What changed" text of the about screen. */
     val whatChangedPending: Boolean = false,
+    /** True when the app checks GitHub for a new release at most once a day. */
+    val checkForUpdates: Boolean = true,
+    /** The wall-clock time in epoch milliseconds of the last release check, or 0 before the first check. */
+    val lastReleaseCheckEpochMs: Long = 0L,
+    /** The newest release version found on GitHub (for example "26.42.2"), or null. */
+    val availableReleaseVersion: String? = null,
+    /** The URL of the GitHub Release page for [availableReleaseVersion], or null. */
+    val availableReleaseUrl: String? = null,
+    /** The last release version whose notification the user already saw. */
+    val notifiedReleaseVersion: String? = null,
 ) {
     companion object {
         const val SCHEMA_VERSION: Int = 1

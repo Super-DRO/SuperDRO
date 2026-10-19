@@ -1,7 +1,10 @@
 package org.superdro.core.ui.settings.about
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.isDialog
@@ -61,6 +64,43 @@ class AboutScreenUiTest {
         waitForIdle()
         assertFalse(harness.store.appSettings.settings.value.whatChangedPending)
         assertEquals(0, onAllNodesWithTag(ABOUT_NEW_TAG).fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun anAvailableReleaseShowsInVersionGroupAndMarksNotifiedOnOpen() = runComposeUiTest {
+        val harness = Harness()
+        val openedUris = mutableListOf<String>()
+        val uriHandler = object : UriHandler {
+            override fun openUri(uri: String) {
+                openedUris += uri
+            }
+        }
+        harness.store.appSettings.update { settings ->
+            settings.copy(
+                availableReleaseVersion = "26.42.2",
+                availableReleaseUrl = "https://github.com/Super-DRO/SuperDRO/releases/tag/v26.42.2",
+            )
+        }
+        harness.settle()
+        setContent {
+            CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+                SettingsThemed(dark = false, window = SettingsWindow.Landscape) {
+                    val state by harness.presenter.uiState.collectAsState()
+                    AboutScreen(state, harness.presenter.events(), onBack = {})
+                }
+            }
+        }
+        harness.settle()
+        waitForIdle()
+        onNodeWithTag(ABOUT_UPDATE_AVAILABLE_TAG).assertIsDisplayed()
+        onNodeWithTag(ABOUT_OPEN_RELEASE_TAG).assertIsDisplayed().performClick()
+        harness.settle()
+        waitForIdle()
+        assertEquals("26.42.2", harness.store.appSettings.settings.value.notifiedReleaseVersion)
+        assertEquals(
+            listOf("https://github.com/Super-DRO/SuperDRO/releases/tag/v26.42.2"),
+            openedUris,
+        )
     }
 
     @Test

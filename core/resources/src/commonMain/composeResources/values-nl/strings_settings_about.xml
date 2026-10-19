@@ -31,4 +31,7 @@
     <string name="settings_about_help_pick">Kies een onderwerp. De tekst verschijnt hier.</string>
     <string name="settings_about_license_pick">Kies een vermelding. De licentietekst verschijnt hier.</string>
     <string name="settings_about_back_to_list">Terug naar de lijst</string>
+    <string name="settings_about_update_available">SuperDRO %1$s is beschikbaar.</string>
+    <string name="settings_about_open_release">Versie op GitHub bekijken</string>
+    <string name="frame_update_available">Update %1$s</string>
 </resources>

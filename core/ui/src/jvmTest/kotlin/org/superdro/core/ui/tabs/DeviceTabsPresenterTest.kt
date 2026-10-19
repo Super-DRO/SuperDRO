@@ -437,4 +437,53 @@ class DeviceTabsPresenterTest {
         assertEquals(emptyList(), messages(harness))
         harness.close()
     }
+
+    @Test
+    fun theFrameShowsAnAvailableUpdateUntilTheUserAcknowledgesItOrTurnsOffChecks() = runTest {
+        val store = UiStoreFixture(this)
+        val presenter = DeviceTabsPresenter(
+            connections = FakeConnections(),
+            tabStore = store.tabs,
+            machines = store.machines,
+            context = testPresenterContext(),
+            appSettings = store.appSettings,
+            currentVersionCode = 2_642_001,
+        )
+        runCurrent()
+        assertEquals(null, presenter.uiState.value.availableUpdateVersion)
+
+        // Same version as currentVersionCode: not newer, so no update indicator.
+        store.appSettings.update { it.copy(availableReleaseVersion = "26.42.1") }
+        runCurrent()
+        assertEquals(null, presenter.uiState.value.availableUpdateVersion)
+
+        // Newer version: shows in uiState.
+        store.appSettings.update { it.copy(availableReleaseVersion = "26.42.2") }
+        runCurrent()
+        assertEquals("26.42.2", presenter.uiState.value.availableUpdateVersion)
+
+        // Turning off checkForUpdates hides the indicator.
+        store.appSettings.update { it.copy(checkForUpdates = false) }
+        runCurrent()
+        assertEquals(null, presenter.uiState.value.availableUpdateVersion)
+
+        // Turning checkForUpdates back on shows the indicator again because it was not acknowledged.
+        store.appSettings.update { it.copy(checkForUpdates = true) }
+        runCurrent()
+        assertEquals("26.42.2", presenter.uiState.value.availableUpdateVersion)
+
+        // Acknowledging the update records notifiedReleaseVersion and hides the indicator.
+        presenter.onAcknowledgeUpdate()
+        runCurrent()
+        assertEquals("26.42.2", store.appSettings.settings.value.notifiedReleaseVersion)
+        assertEquals(null, presenter.uiState.value.availableUpdateVersion)
+
+        // A newer release after the acknowledged one shows again.
+        store.appSettings.update { it.copy(availableReleaseVersion = "26.42.3") }
+        runCurrent()
+        assertEquals("26.42.3", presenter.uiState.value.availableUpdateVersion)
+
+        presenter.close()
+        store.close()
+    }
 }

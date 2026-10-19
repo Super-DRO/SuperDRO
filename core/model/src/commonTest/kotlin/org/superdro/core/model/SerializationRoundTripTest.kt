@@ -150,8 +150,22 @@ class SerializationRoundTripTest {
                 hiddenLinkTypes = setOf(TransportKind.Ble),
                 shownHints = setOf("hold_to_zero"),
                 keyMappings = listOf(KeyMapping(keyCode = 66L, deviceDescriptor = "pedal", action = KeyAction.ZeroAxis, axis = AxisId.X)),
+                lastRunVersion = "26.42.1",
+                whatChangedPending = true,
+                checkForUpdates = false,
+                lastReleaseCheckEpochMs = 1_760_000_000_000L,
+                availableReleaseVersion = "26.42.2",
+                availableReleaseUrl = "https://github.com/Super-DRO/SuperDRO/releases/tag/v26.42.2",
+                notifiedReleaseVersion = "26.42.1",
             )
         )
+        val defaults = SuperDroJson.decodeFromString(AppSettings.serializer(), "{}")
+        assertEquals(AppSettings(), defaults)
+        assertEquals(true, defaults.checkForUpdates)
+        assertEquals(0L, defaults.lastReleaseCheckEpochMs)
+        assertEquals(null, defaults.availableReleaseVersion)
+        assertEquals(null, defaults.availableReleaseUrl)
+        assertEquals(null, defaults.notifiedReleaseVersion)
         assertRoundTrip(TabState(remembered = listOf(RememberedMachine("p1"), RememberedMachine("p2", paused = true)), selectedProfileId = "p2"))
     }
 

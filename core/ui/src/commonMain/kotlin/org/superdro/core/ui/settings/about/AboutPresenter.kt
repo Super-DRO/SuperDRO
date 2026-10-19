@@ -4,15 +4,21 @@ import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.superdro.core.appversion.AppVersion
+import org.superdro.core.appversion.ReleaseVersion
+import org.superdro.core.model.AppSettings
 import org.superdro.core.resources.Res
 import org.superdro.core.store.json.AppSettingsStore
 import org.superdro.core.ui.presenter.PresenterContext
@@ -48,12 +54,16 @@ data class LicenseView(
  *
  * @property whatChangedPending True after an update until the user marks the "What changed" text as
  *   read. The text then shows first, with a "New" marker.
+ * @property availableReleaseVersion The version of a newer release on GitHub, or `null`.
+ * @property availableReleaseUrl The web URL of [availableReleaseVersion], or `null`.
  */
 @Immutable
 data class AboutUiState(
     val versionName: String,
     val versionCode: Int,
     val whatChangedPending: Boolean = false,
+    val availableReleaseVersion: String? = null,
+    val availableReleaseUrl: String? = null,
     val group: AboutGroup = AboutGroup.Version,
     val notices: List<ThirdPartyNotice> = ThirdPartyNotices.ALL,
     val whatChanged: List<StringResource> = WhatChanged.ITEMS,
@@ -74,7 +84,7 @@ class AboutPresenter(
     context: PresenterContext,
     private val readFile: suspend (String) -> ByteArray = { path -> Res.readBytes("files/$path") },
     versionName: String = AppVersion.NAME,
-    versionCode: Int = AppVersion.CODE,
+    private val versionCode: Int = AppVersion.CODE,
 ) : ScopedPresenter(context) {
 
     private val local = MutableStateFlow(AboutUiState(versionName, versionCode))
@@ -82,8 +92,26 @@ class AboutPresenter(
 
     /** The state of the screen. */
     val uiState: StateFlow<AboutUiState> = combine(local, appSettings.settings) { state, settings ->
-        state.copy(whatChangedPending = settings.whatChangedPending)
-    }.stateIn(scope, SharingStarted.Eagerly, local.value.copy(whatChangedPending = appSettings.settings.value.whatChangedPending))
+        state.withSettings(settings)
+    }.stateIn(
+        scope,
+        SharingStarted.Eagerly,
+        local.value.withSettings(appSettings.settings.value),
+    )
+
+    private fun AboutUiState.withSettings(settings: AppSettings): AboutUiState {
+        val availableVer = VersionCheck.availableReleaseVersion(settings, versionCode)
+        val availableUrl = if (availableVer != null) {
+            settings.availableReleaseUrl?.takeIf { it.isNotBlank() } ?: releaseTagUrl(availableVer)
+        } else {
+            null
+        }
+        return copy(
+            whatChangedPending = settings.whatChangedPending,
+            availableReleaseVersion = availableVer,
+            availableReleaseUrl = availableUrl,
+        )
+    }
 
     /** Shows the group [group]. */
     fun selectGroup(group: AboutGroup) = local.update { state -> state.copy(group = group) }
@@ -92,6 +120,14 @@ class AboutPresenter(
     fun markWhatChangedRead() {
         appSettings.update { settings -> settings.copy(whatChangedPending = false) }
     }
+
+    /** Marks the available release notification as seen. */
+    fun markReleaseNotified() {
+        appSettings.update(VersionCheck::acknowledgeRelease)
+    }
+
+    /** Marks the available release notification as seen. */
+    fun acknowledgeRelease() = markReleaseNotified()
 
     /** Opens the help text of [topic]. */
     fun openHelp(topic: HelpTopic) = local.update { state -> state.copy(openHelp = topic) }
@@ -136,17 +172,45 @@ class AboutPresenter(
 }
 
 /**
- * Applies [VersionCheck] at the start of the app: after the load of `app-settings.json`,
- * it writes the version of this start and, after an update, sets `whatChangedPending`. `core:di`
- * makes one object at the start of the graph.
+ * Applies [VersionCheck] at the start of the app and runs the daily GitHub release check.
+ *
+ * After the load of `app-settings.json`, it writes the version of this start, sets
+ * `whatChangedPending` after an update, and checks GitHub at most once in 24 hours when
+ * [releaseFetcher] is not [ReleaseFetcher.None].
  */
-class VersionWatcher(private val appSettings: AppSettingsStore, private val current: String = AppVersion.NAME) {
+class VersionWatcher(
+    private val appSettings: AppSettingsStore,
+    private val current: String = AppVersion.NAME,
+    private val currentCode: Int = ReleaseVersion.codeOf(current) ?: AppVersion.CODE,
+    private val releaseFetcher: ReleaseFetcher = ReleaseFetcher.None,
+    private val nowEpochMs: () -> Long = { kotlin.time.Clock.System.now().toEpochMilliseconds() },
+) {
 
     /** Starts the check in [scope]. */
     fun start(scope: CoroutineScope): Job = scope.launch {
         appSettings.awaitLoaded()
-        if (appSettings.settings.value.lastRunVersion != current) {
-            appSettings.update { settings -> VersionCheck.afterStart(settings, current) }
+        val initial = appSettings.settings.value
+        if (VersionCheck.afterStart(initial, current, currentCode) != initial) {
+            appSettings.update { settings -> VersionCheck.afterStart(settings, current, currentCode) }
+        }
+        if (releaseFetcher === ReleaseFetcher.None) return@launch
+        while (currentCoroutineContext().isActive) {
+            appSettings.settings.first { settings -> settings.checkForUpdates }
+            val delayMs = VersionCheck.nextCheckDelayMs(appSettings.settings.value, nowEpochMs())
+            if (delayMs > 0L) {
+                delay(delayMs)
+                continue
+            }
+            val remote = releaseFetcher.fetchLatest()
+            if (remote != null) {
+                val now = nowEpochMs()
+                appSettings.update { settings ->
+                    VersionCheck.afterReleaseCheck(settings, remote, now, currentCode)
+                }
+                delay(VersionCheck.CHECK_INTERVAL_MS)
+            } else {
+                delay(VersionCheck.RETRY_INTERVAL_MS)
+            }
         }
     }
 }

@@ -61,4 +61,6 @@
     <string name="settings_app_dxf_reset_done">Die Grenzen des DXF-Imports sind wieder die Standardwerte.</string>
     <string name="settings_app_get_sig">#get_sig einmal senden</string>
     <string name="settings_app_get_sig_summary">Eine Entwickleroption. Die Sitzungen verwenden sie noch nicht.</string>
+    <string name="settings_app_check_updates">Nach Updates suchen</string>
+    <string name="settings_app_check_updates_summary">Sucht höchstens einmal am Tag auf GitHub nach einer neuen Version.</string>
 </resources>

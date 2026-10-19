@@ -50,6 +50,7 @@ data class DeviceTabsUiState(
     val messages: List<TabMessage> = emptyList(),
     val backgroundWarning: Boolean = false,
     val keepAliveStatus: KeepAliveStatus = if (backgroundWarning) KeepAliveStatus.PrerequisiteMissing else KeepAliveStatus.Idle,
+    val availableUpdateVersion: String? = null,
 ) {
     /** The index of the selected tab in [tabs], or -1. */
     val selectedIndex: Int get() = tabs.indexOfFirst { tab -> tab.id == selected }
@@ -89,4 +90,7 @@ interface DeviceTabsEvents {
 
     /** Opens the system app settings so the user can allow background machine connections. */
     fun onOpenBackgroundAppSettings() = Unit
+
+    /** Marks the available release update as seen. */
+    fun onAcknowledgeUpdate() = Unit
 }

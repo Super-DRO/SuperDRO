@@ -38,6 +38,8 @@ import org.superdro.core.ui.AppFrame
 import org.superdro.core.ui.BACKGROUND_WARNING_TAG
 import org.superdro.core.ui.FRAME_CONTENT_TAG
 import org.superdro.core.ui.FrameLayout
+import org.superdro.core.ui.UPDATE_AVAILABLE_TAG
+import org.superdro.core.ui.navigation.AboutRoute
 import org.superdro.core.ui.navigation.AddDeviceRoute
 import org.superdro.core.ui.navigation.AppSettingsRoute
 import org.superdro.core.ui.navigation.MachineSettingsRoute
@@ -67,6 +69,7 @@ class TabsFrameUiTest {
         override fun onMessageShown(id: Long) { calls += "shown $id" }
         override fun onRequestBackgroundPermission() { calls += "requestBackgroundPermission" }
         override fun onOpenBackgroundAppSettings() { calls += "openBackgroundAppSettings" }
+        override fun onAcknowledgeUpdate() { calls += "acknowledgeUpdate" }
     }
 
     private val mill = DeviceId("mill")
@@ -96,6 +99,20 @@ class TabsFrameUiTest {
         showFrame(twoTabs(), events)
         onNodeWithTag(tabTag(lathe)).performClick()
         assertEquals(listOf("select lathe"), events.calls)
+    }
+
+    @Test
+    fun theFrameShowsTheUpdateAvailableChipAndOpensAboutOnTap() = runComposeUiTest {
+        val events = RecordingEvents()
+        val navigation = NavigationHolder()
+        showFrame(twoTabs().copy(availableUpdateVersion = "26.42.2"), events, navigation)
+        onNodeWithTag(UPDATE_AVAILABLE_TAG)
+            .assertIsDisplayed()
+            .assertHeightIsAtLeast(64.dp)
+            .performClick()
+        onNodeWithText("Update 26.42.2", useUnmergedTree = true).assertIsDisplayed()
+        assertEquals(listOf("acknowledgeUpdate"), events.calls)
+        assertEquals(listOf(AboutRoute), navigation.globalEntries.map { it.route })
     }
 
     @Test

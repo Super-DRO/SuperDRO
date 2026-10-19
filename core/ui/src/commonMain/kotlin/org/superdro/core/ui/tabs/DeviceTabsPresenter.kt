@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.superdro.core.appversion.AppVersion
 import org.superdro.core.connection.ConnectionRequest
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.connection.DeviceRef
@@ -34,11 +35,13 @@ import org.superdro.core.resources.connection_restart_failed
 import org.superdro.core.resources.frame_could_not_connect
 import org.superdro.core.resources.frame_machine_message
 import org.superdro.core.resources.frame_reconnecting
+import org.superdro.core.store.json.AppSettingsStore
 import org.superdro.core.store.json.TabStore
 import org.superdro.core.store.repository.MachineRepository
 import org.superdro.core.ui.presenter.PresenterContext
 import org.superdro.core.ui.presenter.ScopedPresenter
 import org.superdro.core.ui.session.Connections
+import org.superdro.core.ui.settings.about.VersionCheck
 import org.superdro.core.ui.text.UiText
 
 /**
@@ -83,6 +86,8 @@ class DeviceTabsPresenter(
     private val disconnectAll: DisconnectAllCommand = PauseAndDisconnectAll(tabStore, connections),
     keepAliveStatus: StateFlow<KeepAliveStatus> = KeepAliveStatus.idleFlow,
     private val requests: RequestSender = RequestSender {},
+    private val appSettings: AppSettingsStore? = null,
+    private val currentVersionCode: Int = AppVersion.CODE,
 ) : ScopedPresenter(context), DeviceTabsEvents {
 
     private class SessionSnapshot(val id: DeviceId, val device: DeviceRef, val state: SessionState)
@@ -107,6 +112,7 @@ class DeviceTabsPresenter(
     private var wantedSelection: DeviceId? = null
     private var backgroundWarning = false
     private var currentKeepAliveStatus: KeepAliveStatus = KeepAliveStatus.Idle
+    private var availableUpdateVersion: String? = null
     private var order: List<DeviceId> = emptyList()
     private var menuFor: DeviceId? = null
     private var overflowOpen = false
@@ -145,6 +151,17 @@ class DeviceTabsPresenter(
                     currentKeepAliveStatus = status
                     backgroundWarning = status.linksCanStopInBackground
                     publish()
+                }
+            }
+        }
+        if (appSettings != null) {
+            scope.launch {
+                appSettings.settings.collect { settings ->
+                    val available = VersionCheck.unseenReleaseVersion(settings, currentVersionCode)
+                    mutex.withLock {
+                        availableUpdateVersion = available
+                        publish()
+                    }
                 }
             }
         }
@@ -200,6 +217,10 @@ class DeviceTabsPresenter(
 
     override fun onOpenBackgroundAppSettings() {
         requests.send(ConnectionRequest.OpenAppSettings)
+    }
+
+    override fun onAcknowledgeUpdate() {
+        appSettings?.update(VersionCheck::acknowledgeRelease)
     }
 
     private fun change(block: () -> Unit) {
@@ -342,6 +363,7 @@ class DeviceTabsPresenter(
             messages = messages,
             backgroundWarning = backgroundWarning,
             keepAliveStatus = currentKeepAliveStatus,
+            availableUpdateVersion = availableUpdateVersion,
         )
     }
 

@@ -2,6 +2,8 @@ package org.superdro.core.ui.settings.about
 
 import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.StringResource
+import org.superdro.core.appversion.AppVersion
+import org.superdro.core.appversion.ReleaseVersion
 import org.superdro.core.model.AppSettings
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.settings_about_change_background
@@ -63,8 +65,9 @@ object WhatChanged {
 }
 
 /**
- * The rule of the "What changed" notice. At each start of the app, the version of the
- * last start goes into `AppSettings.lastRunVersion`:
+ * The rules of the "What changed" notice and the daily release check.
+ *
+ * At each start of the app, the version of the last start goes into `AppSettings.lastRunVersion`:
  *
  * | Last start | Result |
  * |---|---|
@@ -74,13 +77,115 @@ object WhatChanged {
  */
 object VersionCheck {
 
-    /** Gives [settings] after a start of the app with the version [current]. */
-    fun afterStart(settings: AppSettings, current: String): AppSettings {
+    /** The minimum time in milliseconds between two release checks (24 hours). */
+    const val CHECK_INTERVAL_MS: Long = 86_400_000L
+
+    /** The retry delay in milliseconds after a failed network check (1 hour). */
+    const val RETRY_INTERVAL_MS: Long = 3_600_000L
+
+    /**
+     * Gives [settings] after a start of the app with the version [current] and [currentCode].
+     *
+     * Clears [AppSettings.availableReleaseVersion] and [AppSettings.availableReleaseUrl] when the
+     * stored release is not newer than [currentCode].
+     */
+    fun afterStart(
+        settings: AppSettings,
+        current: String,
+        currentCode: Int = ReleaseVersion.codeOf(current) ?: AppVersion.CODE,
+    ): AppSettings {
         val last = settings.lastRunVersion
-        if (last == current) return settings
-        return settings.copy(
-            lastRunVersion = current,
-            whatChangedPending = settings.whatChangedPending || last != null,
-        )
+        val withRun = if (last == current) {
+            settings
+        } else {
+            settings.copy(
+                lastRunVersion = current,
+                whatChangedPending = settings.whatChangedPending || last != null,
+            )
+        }
+        val available = withRun.availableReleaseVersion
+        return if (available != null && !ReleaseVersion.isNewer(available, currentCode)) {
+            withRun.copy(availableReleaseVersion = null, availableReleaseUrl = null)
+        } else {
+            withRun
+        }
+    }
+
+    /**
+     * Gives `true` when [settings] permits a release check at [nowEpochMs].
+     */
+    fun shouldCheckRelease(settings: AppSettings, nowEpochMs: Long): Boolean {
+        if (!settings.checkForUpdates) return false
+        val lastCheck = settings.lastReleaseCheckEpochMs
+        if (lastCheck <= 0L) return true
+        if (nowEpochMs < lastCheck) return true
+        return nowEpochMs - lastCheck >= CHECK_INTERVAL_MS
+    }
+
+    /**
+     * Gives the delay in milliseconds until the next release check after [nowEpochMs].
+     */
+    fun nextCheckDelayMs(settings: AppSettings, nowEpochMs: Long): Long {
+        if (shouldCheckRelease(settings, nowEpochMs)) return 0L
+        val elapsed = nowEpochMs - settings.lastReleaseCheckEpochMs
+        return (CHECK_INTERVAL_MS - elapsed).coerceAtLeast(1L)
+    }
+
+    /**
+     * Gives [settings] after a release check at [nowEpochMs] with result [remote].
+     */
+    fun afterReleaseCheck(
+        settings: AppSettings,
+        remote: RemoteRelease?,
+        nowEpochMs: Long,
+        currentCode: Int = AppVersion.CODE,
+    ): AppSettings {
+        if (remote == null) {
+            return settings.copy(lastReleaseCheckEpochMs = nowEpochMs)
+        }
+        return if (ReleaseVersion.isNewer(remote.version, currentCode)) {
+            settings.copy(
+                lastReleaseCheckEpochMs = nowEpochMs,
+                availableReleaseVersion = remote.version,
+                availableReleaseUrl = remote.htmlUrl,
+            )
+        } else {
+            settings.copy(
+                lastReleaseCheckEpochMs = nowEpochMs,
+                availableReleaseVersion = null,
+                availableReleaseUrl = null,
+            )
+        }
+    }
+
+    /**
+     * Gives [AppSettings.availableReleaseVersion] when it is newer than [currentCode], or `null`.
+     */
+    fun availableReleaseVersion(
+        settings: AppSettings,
+        currentCode: Int = AppVersion.CODE,
+    ): String? = settings.availableReleaseVersion?.takeIf { version ->
+        ReleaseVersion.isNewer(version, currentCode)
+    }
+
+    /**
+     * Gives the available release version when the user did not yet see its notification, or `null`.
+     */
+    fun unseenReleaseVersion(
+        settings: AppSettings,
+        currentCode: Int = AppVersion.CODE,
+    ): String? {
+        if (!settings.checkForUpdates) return null
+        return availableReleaseVersion(settings, currentCode)?.takeIf { version ->
+            version != settings.notifiedReleaseVersion
+        }
+    }
+
+    /**
+     * Marks [AppSettings.availableReleaseVersion] as seen in [AppSettings.notifiedReleaseVersion].
+     */
+    fun acknowledgeRelease(settings: AppSettings): AppSettings {
+        val available = settings.availableReleaseVersion ?: return settings
+        return settings.copy(notifiedReleaseVersion = available)
     }
 }

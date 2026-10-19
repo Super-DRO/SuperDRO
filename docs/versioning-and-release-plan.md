@@ -34,6 +34,7 @@ The version system and the release system have these five properties:
 | `.github/workflows/build-release.yml` | Builds the tag and publishes the release |
 | `.github/workflows/validation.yml` | The development path: pull requests and pushes to `main` |
 | `signing/upload.keystore.gpg` | The encrypted upload keystore (section 7). It is not in the repository yet. |
+| `docs/release-notification-plan.md` | The design and the rules of the in-app release notification |
 
 ## 3. Version form
 
@@ -129,7 +130,8 @@ metadata. The resolver changes a `+` in that part to a `.`.
   (`26.43.1-dev`). The `-dev` marker still shows a development build. To include the metadata,
   build with `-Psuperdro.stampBuildMetadata=true`. The About screen shows `NAME` and `CODE`. The
   export files write `NAME` in their header. `VersionWatcher` compares `NAME` with the version of
-  the last start, and it shows the changes after an update.
+  the last start, and it shows the changes after an update. `VersionWatcher` also checks GitHub
+  for a new release at most once a day (`docs/release-notification-plan.md`).
 
 **Provenance.** A local build on a clean checkout of a tag also gets the clean version. Thus the
 version alone does not show which workflow made an artifact. A release is an artifact that the
