@@ -24,6 +24,11 @@ kotlin {
                 implementation(libs.ktor.network)
             }
         }
+        val jvmMain by getting {
+            dependencies {
+                runtimeOnly(libs.slf4j.nop)
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)

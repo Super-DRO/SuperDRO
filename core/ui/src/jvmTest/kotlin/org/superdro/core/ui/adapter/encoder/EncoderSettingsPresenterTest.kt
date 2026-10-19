@@ -188,9 +188,9 @@ class EncoderSettingsPresenterTest {
             val state = presenter.uiState.value
             assertEquals(1, state.problems.size)
             assertNotNull(state.errorMap)
-            assertEquals(1, state.errorMap?.intervals)
-            assertEquals(0L, state.errorMap?.first)
-            assertEquals(100L, state.errorMap?.last)
+            assertEquals(1, state.errorMap.intervals)
+            assertEquals(0L, state.errorMap.first)
+            assertEquals(100L, state.errorMap.last)
             presenter.close()
         }
     }

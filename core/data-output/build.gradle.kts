@@ -63,6 +63,7 @@ kotlin {
             dependencies {
                 implementation(libs.bouncycastle.tls)
                 implementation(libs.paho.mqtt)
+                runtimeOnly(libs.slf4j.nop)
             }
         }
     }
@@ -76,5 +77,6 @@ dependencies {
         exclude(group = "com.librato.metrics")
         exclude(group = "io.dropwizard.metrics")
         exclude(group = "com.zaxxer")
+        exclude(group = "org.slf4j", module = "slf4j-reload4j")
     }
 }

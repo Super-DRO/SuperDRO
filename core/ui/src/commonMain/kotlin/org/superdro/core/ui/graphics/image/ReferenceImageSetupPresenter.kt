@@ -508,7 +508,7 @@ class ReferenceImageSetupPresenter(
         val fit = if (source == null) null else fitOf(current.cards, source)
         val fitted = fit as? ImageFitResult.Fitted
         val preview = current.preview && fitted != null
-        val contentMatrix = if (preview) ReferenceImageMath.previewMatrix(fitted!!.matrix, references) else Matrix3.IDENTITY
+        val contentMatrix = if (preview) ReferenceImageMath.previewMatrix(fitted.matrix, references) else Matrix3.IDENTITY
         val scale = if (source == null) 1.0 else fitScale(source, contentMatrix, current.viewWidth, current.viewHeight) * current.zoom
         val pixel = source?.let { image ->
             ReferenceImageMath.reticlePixel(image.width.toDouble(), image.height.toDouble(), current.panX, current.panY, scale, contentMatrix)

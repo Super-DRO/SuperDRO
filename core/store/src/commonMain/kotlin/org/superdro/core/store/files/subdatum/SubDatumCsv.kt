@@ -187,7 +187,7 @@ class SubDatumImportPreview internal constructor(
                                 updatedOn = time,
                             )
                             updates[match.id] = merged
-                            if (matchIndex != null) workspace[matchIndex] = merged
+                            workspace[matchIndex] = merged
                             previewRows += PreviewRow(row.row, row.name, RowAction.Update, SubDatumItem.Point(merged, item.tolerance), row.problems)
                         }
                     }
