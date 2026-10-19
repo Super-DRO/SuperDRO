@@ -17,6 +17,7 @@
     <string name="frame_state_offline">getrennt</string>
     <string name="frame_state_paused">pausiert</string>
     <string name="frame_remembered_last_cause">Letzter Fehler: %1$s</string>
+    <string name="frame_remembered_open">Öffnen</string>
     <string name="frame_remembered_connect">Verbinden</string>
     <string name="frame_remembered_pause">Pausieren</string>
     <string name="frame_remembered_edit">Bearbeiten</string>

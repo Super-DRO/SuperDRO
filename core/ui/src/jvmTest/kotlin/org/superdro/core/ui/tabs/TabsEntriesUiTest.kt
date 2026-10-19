@@ -43,12 +43,16 @@ import org.superdro.core.ui.tabs.adddevice.AddDevicePresenter
 import org.superdro.core.ui.tabs.adddevice.linkOptionTag
 import org.superdro.core.ui.tabs.adddevice.LinkOption
 import org.superdro.core.ui.tabs.remembered.RememberedMachinesPresenter
+import org.superdro.core.ui.tabs.remembered.rememberedOpenTag
 import org.superdro.core.ui.tabs.remembered.rememberedRowTag
+import org.superdro.core.ui.tabTag
 import org.superdro.core.ui.testing.FakeConnections
 import org.superdro.core.ui.testing.UiStoreFixture
 import org.superdro.core.ui.theme.AppTheme
 import org.superdro.core.ui.navigation.BatteryOptimizationRoute
 import org.superdro.core.connection.ConnectionRequest
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 /**
  * The global entries of the frame in the navigation host with a DI graph: the add-device sheet
@@ -71,6 +75,7 @@ class TabsEntriesUiTest {
         val di = DI {
             bindSingleton<RequestSender> { requests }
             bindSingleton { store.appSettings }
+            bindSingleton { tabs }
             bindProvider {
                 AddDevicePresenter(
                     connections, store.tabs, store.machines, store.adapters, settingsFlow(), listOf(bluetooth), FakeCapabilities(),
@@ -92,9 +97,10 @@ class TabsEntriesUiTest {
 
     private fun ComposeUiTest.show(graph: Graph) {
         setContent {
+            val state by graph.tabs.uiState.collectAsState()
             ProvideDI(graph.di) {
                 AppTheme(systemInDarkTheme = false) {
-                    AppFrame(state = graph.tabs.uiState.value, events = graph.tabs, navigation = graph.navigation) { modifier ->
+                    AppFrame(state = state, events = graph.tabs, navigation = graph.navigation) { modifier ->
                         NavigationHost(
                             holder = graph.navigation,
                             registry = graph.registry,
@@ -213,6 +219,12 @@ class TabsEntriesUiTest {
         settle(graph)
         assertEquals(listOf(ids[1]), graph.store.tabs.state.value.remembered.map { it.profileId })
         assertEquals(0, onAllNodesWithTag(rememberedRowTag(ids[0])).fetchSemanticsNodes().size)
+        // "Open" on the paused machine closes the pane and shows its tab in the frame.
+        onNodeWithTag(rememberedOpenTag(ids[1])).assertHeightIsAtLeast(64.dp).performClick()
+        settle(graph)
+        assertTrue(graph.navigation.globalEntries.isEmpty())
+        onNodeWithTag(tabTag(org.superdro.core.connection.DeviceId(ids[1]))).assertIsDisplayed()
+        assertEquals(org.superdro.core.connection.DeviceId(ids[1]), graph.tabs.uiState.value.selected)
         graph.close()
     }
 }

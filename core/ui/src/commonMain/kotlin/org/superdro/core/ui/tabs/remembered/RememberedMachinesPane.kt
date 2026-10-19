@@ -2,7 +2,7 @@ package org.superdro.core.ui.tabs.remembered
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -31,6 +31,7 @@ import org.superdro.core.resources.frame_no_remembered
 import org.superdro.core.resources.frame_remembered_connect
 import org.superdro.core.resources.frame_remembered_edit
 import org.superdro.core.resources.frame_remembered_last_cause
+import org.superdro.core.resources.frame_remembered_open
 import org.superdro.core.resources.frame_remembered_pause
 import org.superdro.core.resources.frame_remembered_remove
 import org.superdro.core.resources.frame_remove_text
@@ -55,8 +56,12 @@ import org.superdro.core.ui.theme.AccentButtons
 /** The test tag of the row of [profileId]. */
 fun rememberedRowTag(profileId: String): String = "remembered:$profileId"
 
+/** The test tag of the "Open" button of [profileId]. */
+fun rememberedOpenTag(profileId: String): String = "remembered-open:$profileId"
+
 /** The events of the remembered machines pane. */
 interface RememberedMachinesEvents {
+    fun onOpen(profileId: String) = Unit
     fun onConnect(profileId: String)
     fun onPause(profileId: String)
     fun onEdit(profileId: String)
@@ -67,8 +72,8 @@ interface RememberedMachinesEvents {
 
 /**
  * The remembered machines pane: one row for each remembered
- * machine with its name, link type, address, and state, and the actions Connect, Pause, Edit, and
- * Remove. "Remove" asks first.
+ * machine with its name, link type, address, and state, and the actions Connect, Pause, Open,
+ * Edit, and Remove. "Remove" asks first.
  */
 @Composable
 fun RememberedMachinesPane(state: RememberedMachinesUiState, events: RememberedMachinesEvents, onBack: () -> Unit) {
@@ -124,9 +129,10 @@ private fun RememberedRow(row: RememberedMachineRow, events: RememberedMachinesE
                 if (link != null) StatusChip(link, link.text.resolve()) else StatusChip(statusOf(row.state), stateText(row.state))
             },
         )
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(target.gap),
+            verticalArrangement = Arrangement.spacedBy(target.gap),
         ) {
             if (row.state == MachineLinkState.Online) {
                 FilledTonalButton(onClick = { events.onPause(row.profileId) }, modifier = Modifier.heightIn(min = target.button)) {
@@ -143,6 +149,13 @@ private fun RememberedRow(row: RememberedMachineRow, events: RememberedMachinesE
                         Text(stringResource(Res.string.frame_remembered_pause))
                     }
                 }
+            }
+            OutlinedButton(
+                colors = AccentButtons.outlined(),
+                onClick = { events.onOpen(row.profileId) },
+                modifier = Modifier.heightIn(min = target.button).testTag(rememberedOpenTag(row.profileId)),
+            ) {
+                Text(stringResource(Res.string.frame_remembered_open))
             }
             OutlinedButton(colors = AccentButtons.outlined(), onClick = { events.onEdit(row.profileId) }, modifier = Modifier.heightIn(min = target.button)) {
                 Text(stringResource(Res.string.frame_remembered_edit))
