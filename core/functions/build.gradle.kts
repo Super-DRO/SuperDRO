@@ -11,7 +11,7 @@ plugins {
 // The serialization plugin gives the session types of the error map wizard and of the
 // tip calibration. kotlinx-serialization comes through core:model.
 kotlin {
-    configureOptIns()
+    configureOptIns(coroutines = false)
     superDroTargets("org.superdro.core.functions")
     sourceSets {
         val commonMain by getting {

@@ -20,13 +20,6 @@ kotlin {
     configureOptIns()
 }
 
-// The virtual time functions of kotlinx-coroutines-test are experimental. Only the unit tests use them.
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    if (name.endsWith("UnitTestKotlin")) {
-        compilerOptions.optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
-    }
-}
-
 dependencies {
     implementation(projects.core.camera)
     implementation(projects.core.connection)

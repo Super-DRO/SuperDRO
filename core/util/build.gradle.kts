@@ -7,7 +7,7 @@ plugins {
 }
 
 kotlin {
-    configureOptIns(serialization = false)
+    configureOptIns(serialization = false, coroutines = false)
     superDroTargets("org.superdro.core.util")
     sourceSets {
         val commonTest by getting {

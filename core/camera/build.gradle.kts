@@ -25,11 +25,3 @@ kotlin {
         }
     }
 }
-
-// The virtual time functions of kotlinx-coroutines-test (advanceTimeBy, runCurrent, currentTime)
-// are experimental. Only the tests use them.
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    if (name == "compileTestKotlinJvm") {
-        compilerOptions.optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
-    }
-}

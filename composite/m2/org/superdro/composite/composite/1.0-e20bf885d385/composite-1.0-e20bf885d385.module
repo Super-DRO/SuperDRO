@@ -3,7 +3,7 @@
   "component": {
     "group": "org.superdro.composite",
     "module": "composite",
-    "version": "1.0-b1d9f21725fa",
+    "version": "1.0-e20bf885d385",
     "attributes": {
       "org.gradle.status": "release"
     }
@@ -27,13 +27,13 @@
       },
       "files": [
         {
-          "name": "composite-1.0-b1d9f21725fa.jar",
-          "url": "composite-1.0-b1d9f21725fa.jar",
-          "size": 40911,
-          "sha512": "906dd662d13cd76268830457de56c14d5fe58362311306858a37e2b53c0a72966989d1b6d8f16847991b1632fdf5ca5169ab9e694c7e59c9537461c3991ebc7a",
-          "sha256": "e0db3458d1f9c1b6ff2a47ebd24379d5fb5e72454844b88a53fad57641522add",
-          "sha1": "ce223aecce38fcb860b07b5711db457706c3ea7f",
-          "md5": "9c2f283a1004ba1a1d960e9ccbe8e6a5"
+          "name": "composite-1.0-e20bf885d385.jar",
+          "url": "composite-1.0-e20bf885d385.jar",
+          "size": 41081,
+          "sha512": "d6dfde35ec7b44e564569fa670864e439cd871854786ab25081a760adb8b1f7ac4ba6ecf3020974152026e2fddf5655c91835db8af5649d73a9e900681b8fa87",
+          "sha256": "ba6d542634b02841db21f15caa8cac16f6c6f31282a7a119bacf322daae5857c",
+          "sha1": "7ac2199bcbcb57234542538667e50ec10107d877",
+          "md5": "5404ada523a3275728cdde6b30635d42"
         }
       ]
     },
@@ -50,13 +50,13 @@
       },
       "files": [
         {
-          "name": "composite-1.0-b1d9f21725fa.jar",
-          "url": "composite-1.0-b1d9f21725fa.jar",
-          "size": 40911,
-          "sha512": "906dd662d13cd76268830457de56c14d5fe58362311306858a37e2b53c0a72966989d1b6d8f16847991b1632fdf5ca5169ab9e694c7e59c9537461c3991ebc7a",
-          "sha256": "e0db3458d1f9c1b6ff2a47ebd24379d5fb5e72454844b88a53fad57641522add",
-          "sha1": "ce223aecce38fcb860b07b5711db457706c3ea7f",
-          "md5": "9c2f283a1004ba1a1d960e9ccbe8e6a5"
+          "name": "composite-1.0-e20bf885d385.jar",
+          "url": "composite-1.0-e20bf885d385.jar",
+          "size": 41081,
+          "sha512": "d6dfde35ec7b44e564569fa670864e439cd871854786ab25081a760adb8b1f7ac4ba6ecf3020974152026e2fddf5655c91835db8af5649d73a9e900681b8fa87",
+          "sha256": "ba6d542634b02841db21f15caa8cac16f6c6f31282a7a119bacf322daae5857c",
+          "sha1": "7ac2199bcbcb57234542538667e50ec10107d877",
+          "md5": "5404ada523a3275728cdde6b30635d42"
         }
       ]
     }

@@ -8,7 +8,7 @@ plugins {
 // application data directory of the user, StoreIOProviderJvm, the database file with
 // JdbcSqliteDriver and SQLite 3.53.4, and the file SecretStore.
 kotlin {
-    configureOptIns()
+    configureOptIns(coroutines = false)
     jvm()
     sourceSets {
         jvmMain {
