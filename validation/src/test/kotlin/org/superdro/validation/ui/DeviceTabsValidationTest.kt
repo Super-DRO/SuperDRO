@@ -493,7 +493,9 @@ class DeviceTabsValidationTest {
                 ),
             ),
         )
+        val opened = ArrayList<String>()
         val events = object : RememberedMachinesEvents {
+            override fun onOpen(profileId: String) { opened += profileId }
             override fun onConnect(profileId: String) = Unit
             override fun onPause(profileId: String) = Unit
             override fun onEdit(profileId: String) = Unit
@@ -508,9 +510,12 @@ class DeviceTabsValidationTest {
         listOf("Mill A", "00:11:22:33:44:55", "192.168.4.1:8080", "Reconnecting (3)", "Last error: Connect failed").forEach { text ->
             assertTrue(onAllNodesWithText(text, substring = true, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty(), text)
         }
-        listOf("Connect", "Pause", "Edit", "Remove").forEach { action ->
+        listOf("Connect", "Pause", "Open", "Edit", "Remove").forEach { action ->
             assertTrue(onAllNodesWithText(action, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty(), action)
         }
+        onAllNodesWithText("Open")[1].performClick()
+        waitForIdle()
+        assertEquals(listOf("b"), opened)
     }
 
     @Test

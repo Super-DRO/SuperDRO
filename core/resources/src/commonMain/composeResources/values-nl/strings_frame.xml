@@ -17,6 +17,7 @@
     <string name="frame_state_offline">niet verbonden</string>
     <string name="frame_state_paused">gepauzeerd</string>
     <string name="frame_remembered_last_cause">Laatste fout: %1$s</string>
+    <string name="frame_remembered_open">Openen</string>
     <string name="frame_remembered_connect">Verbinden</string>
     <string name="frame_remembered_pause">Pauzeren</string>
     <string name="frame_remembered_edit">Bewerken</string>

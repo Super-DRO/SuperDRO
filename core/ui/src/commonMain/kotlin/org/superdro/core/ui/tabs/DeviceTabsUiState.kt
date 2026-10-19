@@ -8,7 +8,8 @@ import org.superdro.core.model.TransportKind
 import org.superdro.core.ui.text.UiText
 
 /**
- * One tab of a machine that is online, or that connects.
+ * One tab of a machine that is online, that connects, or that the user opened from the remembered
+ * machines pane.
  *
  * @property transport The link type: the tab shows its icon (Bluetooth, USB, Wi-Fi, demo).
  * @property state The state of the session.
@@ -33,7 +34,7 @@ data class DeviceTabUiState(
 data class TabMessage(val id: Long, val text: UiText)
 
 /**
- * The state of the frame: the tabs of the online machines, the selected
+ * The state of the frame: the tabs of the machines, the selected
  * tab, the number of remembered machines, the open menus, and the messages of the snackbar.
  *
  * @property menuFor The machine whose long-press menu is open, or null.
@@ -63,6 +64,9 @@ data class DeviceTabsUiState(
 interface DeviceTabsEvents {
     /** One tap on a tab selects it. */
     fun onSelect(id: DeviceId)
+
+    /** Opens the tab of a remembered machine [id] and selects it, also when the machine has no link. */
+    fun onOpen(id: DeviceId) = Unit
 
     /** A long press on a tab opens its menu. */
     fun onOpenMenu(id: DeviceId)

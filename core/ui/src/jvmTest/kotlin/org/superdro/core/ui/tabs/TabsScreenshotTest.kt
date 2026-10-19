@@ -20,12 +20,21 @@ import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
 import org.superdro.core.model.ThemeMode
 import org.superdro.core.model.TransportKind
+import org.superdro.core.resources.Res
+import org.superdro.core.resources.route_graphical_view
+import org.superdro.core.resources.route_sub_datums
 import org.superdro.core.ui.EmptyState
 import org.superdro.core.ui.FrameLayout
 import org.superdro.core.ui.ScreenshotRenderer
 import org.superdro.core.ui.adaptive.LocalWindowLayout
 import org.superdro.core.ui.adaptive.WidthClass
 import org.superdro.core.ui.adaptive.WindowLayout
+import org.superdro.core.ui.navigation.SidePanelPlaceholder
+import org.superdro.core.ui.readout.LinkStatus
+import org.superdro.core.ui.readout.NoReadoutEvents
+import org.superdro.core.ui.readout.OfflineLabel
+import org.superdro.core.ui.readout.ReadoutSamples
+import org.superdro.core.ui.readout.ReadoutScreen
 import org.superdro.core.ui.tabs.adddevice.AddDevicePresenter
 import org.superdro.core.ui.tabs.adddevice.AddDeviceSheet
 import org.superdro.core.ui.tabs.adddevice.SetupInput
@@ -113,6 +122,48 @@ class TabsScreenshotTest {
             ScreenshotRenderer.render("tabs-menu-landscape-$theme", 1200, 750) {
                 Themed(dark, true) {
                     FrameLayout(frameState.copy(menuFor = DeviceId("mill")), NoEvents, {}, {}, {}, { _, _ -> }) { modifier -> Box(modifier) }
+                }
+            }
+            val sample = ReadoutSamples.mill()
+            val offlineReadout = sample.state.copy(
+                status = sample.state.status.copy(
+                    link = LinkStatus.Disconnected,
+                    offline = OfflineLabel.Offline,
+                ),
+            )
+            val offlineTabs = DeviceTabsUiState(
+                tabs = listOf(tab("lathe", "Bridgeport Mill", SessionState.Disconnected, TransportKind.Tcp)),
+                selected = DeviceId("lathe"),
+                rememberedCount = 2,
+            )
+            ScreenshotRenderer.render("tabs-offline-opened-landscape-$theme", 1200, 750) {
+                Themed(dark, true) {
+                    FrameLayout(offlineTabs, NoEvents, {}, {}, {}, { _, _ -> }) { modifier ->
+                        ReadoutScreen(
+                            state = offlineReadout,
+                            axisValue = sample::flow,
+                            events = NoReadoutEvents,
+                            modifier = modifier,
+                            layout = WindowLayout(WidthClass.Expanded, true),
+                            sidePanelContent = { SidePanelPlaceholder(Res.string.route_sub_datums) },
+                            graphicalViewPane = { SidePanelPlaceholder(Res.string.route_graphical_view) },
+                        )
+                    }
+                }
+            }
+            ScreenshotRenderer.render("tabs-offline-menu-landscape-$theme", 1200, 750) {
+                Themed(dark, true) {
+                    FrameLayout(offlineTabs.copy(menuFor = DeviceId("lathe")), NoEvents, {}, {}, {}, { _, _ -> }) { modifier ->
+                        ReadoutScreen(
+                            state = offlineReadout,
+                            axisValue = sample::flow,
+                            events = NoReadoutEvents,
+                            modifier = modifier,
+                            layout = WindowLayout(WidthClass.Expanded, true),
+                            sidePanelContent = { SidePanelPlaceholder(Res.string.route_sub_datums) },
+                            graphicalViewPane = { SidePanelPlaceholder(Res.string.route_graphical_view) },
+                        )
+                    }
                 }
             }
         }

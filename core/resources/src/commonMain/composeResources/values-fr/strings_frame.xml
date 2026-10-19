@@ -17,6 +17,7 @@
     <string name="frame_state_offline">hors ligne</string>
     <string name="frame_state_paused">en pause</string>
     <string name="frame_remembered_last_cause">Dernière erreur : %1$s</string>
+    <string name="frame_remembered_open">Ouvrir</string>
     <string name="frame_remembered_connect">Connecter</string>
     <string name="frame_remembered_pause">Mettre en pause</string>
     <string name="frame_remembered_edit">Modifier</string>

@@ -486,4 +486,68 @@ class DeviceTabsPresenterTest {
         presenter.close()
         store.close()
     }
+
+    @Test
+    fun anUnconnectedRememberedMachineOpensWithNoSessionAndStaysUntilDisconnected() = runTest {
+        val harness = Harness(this)
+        val profile = harness.store.machines.createProfile(
+            MachineProfile.create(MachineType.VerticalMill, "Mill").copy(adapter = AdapterAddress.Tcp("192.168.4.1", 8080)),
+        ).valueOrNull()!!
+        harness.store.tabs.remember(profile.id)
+        harness.store.tabs.setPaused(profile.id, true)
+        val mill = DeviceId(profile.id)
+        runCurrent()
+        assertEquals(emptyList(), harness.names)
+
+        harness.presenter.onOpen(mill)
+        runCurrent()
+        val tab = harness.presenter.uiState.value.tabs.single()
+        assertEquals("Mill", tab.name)
+        assertEquals(TransportKind.Tcp, tab.transport)
+        assertEquals(SessionState.Disconnected, tab.state)
+        assertEquals(TabStatusIcon.Offline, tab.status.icon)
+        assertEquals("Offline", tab.status.text.english())
+        assertEquals(false, tab.inGrace)
+        assertEquals(false, tab.adapterDetailsEnabled)
+        assertEquals(mill, harness.presenter.uiState.value.selected)
+        assertEquals(mill.value, harness.store.tabs.state.value.selectedProfileId)
+
+        // The tab does not hide after the grace time.
+        advanceTimeBy(30_000L)
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+        assertEquals(emptyList(), messages(harness))
+
+        // Disconnect from the tab menu hides the offline tab.
+        harness.presenter.onPause(mill)
+        runCurrent()
+        assertEquals(emptyList(), harness.names)
+        harness.close()
+    }
+
+    @Test
+    fun anOpenedOfflineMachineWithAReconnectingSessionStaysAndBecomesOnlineWhenConnected() = runTest {
+        val harness = Harness(this)
+        val mill = harness.machine("Mill")
+        val session = harness.session(mill, "Mill", SessionState.Reconnecting(3, 1_000L, LinkFailure.Refused))
+        runCurrent()
+        assertEquals(emptyList(), harness.names)
+
+        harness.presenter.onOpen(mill)
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+        assertEquals("Reconnecting (3)", harness.presenter.uiState.value.tabs.single().status.text.english())
+        assertEquals(false, harness.presenter.uiState.value.tabs.single().inGrace)
+        assertEquals(false, harness.presenter.uiState.value.tabs.single().adapterDetailsEnabled)
+
+        advanceTimeBy(20_000L)
+        runCurrent()
+        assertEquals(listOf("Mill"), harness.names)
+
+        session.state.value = SessionState.Connected(20_000L)
+        runCurrent()
+        assertEquals(TabStatusIcon.Connected, harness.presenter.uiState.value.tabs.single().status.icon)
+        assertEquals(true, harness.presenter.uiState.value.tabs.single().adapterDetailsEnabled)
+        harness.close()
+    }
 }

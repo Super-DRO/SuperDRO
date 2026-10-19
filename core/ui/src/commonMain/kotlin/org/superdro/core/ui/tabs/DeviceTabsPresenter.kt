@@ -26,7 +26,9 @@ import org.superdro.core.connection.KeepAliveStatus
 import org.superdro.core.connection.PermissionKind
 import org.superdro.core.connection.SessionEvent
 import org.superdro.core.connection.SessionState
+import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.TabState
+import org.superdro.core.model.TransportKind
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.app_could_not_restore_link
 import org.superdro.core.resources.connection_adapter_restarted
@@ -52,6 +54,9 @@ import org.superdro.core.ui.text.UiText
  * Rules:
  * - A tab shows while the session of its machine is online (`AwaitingData`, `Connected`, or
  *   `NoData`).
+ * - A tab also shows when the user opens a remembered machine from the remembered machines pane
+ *   ([onOpen]), even when the machine has no link. The tab stays until the user disconnects it or
+ *   removes the machine.
  * - A tab also shows when a session starts: the session goes to `Connecting(1)` from no session or
  *   from `Disconnected`. Thus the user sees that a new machine connects. When the first attempt
  *   fails before the session is online, the grace time starts. After the grace time the tab hides,
@@ -61,8 +66,8 @@ import org.superdro.core.ui.text.UiText
  *   shows the status of the session ("Reconnecting (n)", or the cause) and the readout keeps the
  *   last values. After the grace time the tab hides, and the snackbar shows "Could not restore the
  *   link".
- * - A user disconnect (the session goes to `Disconnected`) hides the tab at once: the user asked
- *   for it, so a grace time has no use.
+ * - A user disconnect (the session goes to `Disconnected`, or [onPause]) hides the tab at once:
+ *   the user asked for it, so a grace time has no use.
  * - The tabs have the order of the remembered machines of [TabStore], then the other sessions in
  *   the order of their start.
  * - One tap selects a tab and writes the selection to [TabStore]. Each new stored selection
@@ -100,8 +105,10 @@ class DeviceTabsPresenter(
 
     private var sessions: List<SessionSnapshot> = emptyList()
     private var tabState: TabState = TabState()
-    private var names: Map<String, String> = emptyMap()
+    private var profiles: Map<String, MachineProfile> = emptyMap()
+    private var rememberedIds: Set<DeviceId> = emptySet()
     private val visible = LinkedHashSet<DeviceId>()
+    private val opened = HashSet<DeviceId>()
     private val lastStates = HashMap<DeviceId, SessionState>()
 
     /** The tabs of the sessions that started and were not online yet. */
@@ -129,17 +136,20 @@ class DeviceTabsPresenter(
                 }
             }
         }
-        val nameFlow = machines.profiles()
-            .map { profiles -> profiles.associate { profile -> profile.id to profile.name } }
+        val profileFlow = machines.profiles()
+            .map { list -> list.associateBy { profile -> profile.id } }
             .onStart { emit(emptyMap()) }
             .distinctUntilChanged()
         scope.launch {
-            combine(sessionFlow, tabStore.state, nameFlow) { snapshots, tabs, profileNames -> Triple(snapshots, tabs, profileNames) }
-                .collect { (snapshots, tabs, profileNames) ->
+            combine(sessionFlow, tabStore.state, profileFlow) { snapshots, tabs, profileMap -> Triple(snapshots, tabs, profileMap) }
+                .collect { (snapshots, tabs, profileMap) ->
                     mutex.withLock {
+                        val newRemembered = tabs.remembered.mapTo(HashSet()) { machine -> DeviceId(machine.profileId) }
+                        (rememberedIds - newRemembered).forEach(::hide)
+                        rememberedIds = newRemembered
                         sessions = snapshots
                         tabState = tabs
-                        names = profileNames
+                        profiles = profileMap
                         applySessions()
                         publish()
                     }
@@ -185,12 +195,34 @@ class DeviceTabsPresenter(
         }
     }
 
+    override fun onOpen(id: DeviceId) {
+        scope.launch {
+            mutex.withLock {
+                val snapshot = sessions.firstOrNull { it.id == id }
+                if (snapshot?.state?.isOnline != true) {
+                    opened += id
+                }
+                visible += id
+                starting -= id
+                graceJobs.remove(id)?.cancel()
+                selected = id
+                wantedSelection = null
+                menuFor = null
+                tabStore.select(id.value)
+                publish()
+            }
+        }
+    }
+
     override fun onOpenMenu(id: DeviceId) = change { menuFor = id }
 
     override fun onCloseMenu() = change { menuFor = null }
 
     override fun onPause(id: DeviceId) {
-        change { menuFor = null }
+        change {
+            menuFor = null
+            hide(id)
+        }
         tabStore.setPaused(id.value, true)
         connections.disconnect(id)
     }
@@ -205,7 +237,10 @@ class DeviceTabsPresenter(
      * session goes to `Disconnected`.
      */
     override fun onDisconnectAll() {
-        change { overflowOpen = false }
+        change {
+            overflowOpen = false
+            opened.toList().forEach(::hide)
+        }
         disconnectAll.disconnectAll()
     }
 
@@ -249,7 +284,7 @@ class DeviceTabsPresenter(
     private fun applySessions() {
         val ids = sessions.mapTo(HashSet()) { snapshot -> snapshot.id }
         (visible.toList() + lastStates.keys.toList()).filter { id -> id !in ids }.forEach { id ->
-            hide(id)
+            if (id !in opened) hide(id)
             lastStates.remove(id)
         }
         sessions.forEach { snapshot ->
@@ -259,6 +294,12 @@ class DeviceTabsPresenter(
             val wasOnline = before?.isOnline == true
             when {
                 state.isOnline -> {
+                    opened -= id
+                    visible += id
+                    starting -= id
+                    graceJobs.remove(id)?.cancel()
+                }
+                id in opened -> {
                     visible += id
                     starting -= id
                     graceJobs.remove(id)?.cancel()
@@ -291,7 +332,7 @@ class DeviceTabsPresenter(
             graceJobs.remove(id)
             val snapshot = sessions.firstOrNull { it.id == id }
             if (snapshot == null || !snapshot.state.isOnline) {
-                if (id in visible) {
+                if (id in visible && id !in opened) {
                     val neverOnline = id in starting
                     hide(id)
                     addMessage(id, UiText.of(if (neverOnline) Res.string.frame_could_not_connect else Res.string.app_could_not_restore_link))
@@ -302,6 +343,7 @@ class DeviceTabsPresenter(
     }
 
     private fun hide(id: DeviceId) {
+        opened -= id
         visible -= id
         starting -= id
         graceJobs.remove(id)?.cancel()
@@ -313,13 +355,17 @@ class DeviceTabsPresenter(
     }
 
     private fun nameOf(id: DeviceId): String =
-        names[id.value] ?: sessions.firstOrNull { it.id == id }?.device?.name ?: id.value
+        profiles[id.value]?.name ?: sessions.firstOrNull { it.id == id }?.device?.name ?: id.value
+
+    private fun transportOf(id: DeviceId, snapshot: SessionSnapshot?): TransportKind =
+        snapshot?.device?.transport ?: profiles[id.value]?.adapter?.kind ?: TransportKind.BluetoothSpp
 
     /** Gives the order of the tabs: the remembered order, then the other sessions in start order. */
     private fun tabOrder(): List<DeviceId> {
         val remembered = tabState.remembered.map { machine -> DeviceId(machine.profileId) }
         val first = remembered.filter { id -> id in visible }
-        val rest = sessions.map { it.id }.filter { id -> id in visible && id !in first }
+        val sessionIds = sessions.map { it.id }
+        val rest = (sessionIds + visible).distinct().filter { id -> id in visible && id !in first }
         return first + rest
     }
 
@@ -344,13 +390,14 @@ class DeviceTabsPresenter(
         if (current == null || current !in newOrder) selected = neighbor(current, newOrder)
         order = newOrder
         val tabs = newOrder.map { id ->
-            val snapshot = sessions.first { it.id == id }
+            val snapshot = sessions.firstOrNull { it.id == id }
+            val sessionState = snapshot?.state ?: SessionState.Disconnected
             DeviceTabUiState(
                 id = id,
                 name = nameOf(id),
-                transport = snapshot.device.transport,
-                state = snapshot.state,
-                status = TabStatusRules.of(snapshot.state),
+                transport = transportOf(id, snapshot),
+                state = sessionState,
+                status = TabStatusRules.of(sessionState),
                 inGrace = id in graceJobs,
             )
         }

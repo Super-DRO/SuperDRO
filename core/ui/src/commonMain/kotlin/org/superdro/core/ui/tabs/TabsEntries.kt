@@ -5,8 +5,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import org.kodein.di.direct
 import org.kodein.di.instance
+import org.kodein.di.instanceOrNull
 import org.superdro.core.store.json.AppSettingsStore
 import org.superdro.core.connection.ConnectionRequest
+import org.superdro.core.connection.DeviceId
 import org.superdro.core.ui.LocalDI
 import org.superdro.core.ui.navigation.AddDeviceRoute
 import org.superdro.core.ui.navigation.BatteryOptimizationRoute
@@ -42,8 +44,20 @@ fun EntryRegistry.tabsEntries() {
     global<RememberedMachinesRoute>(EntryKind.Screen, RouteArea.Frame) { route ->
         val di = LocalDI.current
         val presenter = rememberPresenter { di.direct.instance<RememberedMachinesPresenter>() }
+        val tabs = di.direct.instanceOrNull<DeviceTabsPresenter>()
         val state by presenter.uiState.collectAsState()
-        RememberedMachinesPane(state = state, events = paneEvents(presenter, edit = { id -> navigator.push(EditMachineRoute(id)) }), onBack = { navigator.pop(route) })
+        RememberedMachinesPane(
+            state = state,
+            events = paneEvents(
+                presenter = presenter,
+                edit = { id -> navigator.push(EditMachineRoute(id)) },
+                open = { id ->
+                    tabs?.onOpen(DeviceId(id))
+                    navigator.pop(route)
+                },
+            ),
+            onBack = { navigator.pop(route) },
+        )
     }
     global<RenameMachineRoute>(EntryKind.Dialog, RouteArea.Frame) { route ->
         val di = LocalDI.current
@@ -78,9 +92,14 @@ fun EntryRegistry.tabsEntries() {
     }
 }
 
-/** The events of the pane: the presenter, and the edit dialog through [edit]. */
-fun paneEvents(presenter: RememberedMachinesPresenter, edit: (String) -> Unit): RememberedMachinesEvents =
+/** The events of the pane: the presenter, the edit dialog through [edit], and the tab open through [open]. */
+fun paneEvents(
+    presenter: RememberedMachinesPresenter,
+    edit: (String) -> Unit,
+    open: (String) -> Unit = {},
+): RememberedMachinesEvents =
     object : RememberedMachinesEvents {
+        override fun onOpen(profileId: String) = open(profileId)
         override fun onConnect(profileId: String) = presenter.connect(profileId)
         override fun onPause(profileId: String) = presenter.pause(profileId)
         override fun onEdit(profileId: String) = edit(profileId)
