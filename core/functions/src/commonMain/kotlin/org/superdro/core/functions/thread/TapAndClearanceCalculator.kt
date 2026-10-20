@@ -16,6 +16,17 @@ enum class TapChamferKind(val pitches: Double) {
 }
 
 /**
+ * The closest standard drill in one [DrillSeries] and its actual thread engagement percentage.
+ *
+ * @property drill The closest standard drill in the series.
+ * @property actualEngagementPercent The actual thread engagement percentage that [drill] gives.
+ */
+data class SeriesTapDrill(
+    val drill: StandardDrill,
+    val actualEngagementPercent: Double,
+)
+
+/**
  * The tap drill result for a target engagement percentage. All lengths are µm.
  *
  * @property engagementPercent The target thread engagement percentage (`50.0` to `85.0`).
@@ -26,6 +37,9 @@ enum class TapChamferKind(val pitches: Double) {
  * @property closestWithinMinorLimits True when `nearestDrills.closest.diameterUm` is inside the
  *   class minor diameter range `[D1min, D1max]`, false when it is outside, or null when no class
  *   limits are provided.
+ * @property seriesDrills The closest standard drill for each valid [DrillSeries]. The list omits a
+ *   series when the tap drill diameter is outside the series range or gives an invalid thread
+ *   engagement percentage.
  */
 data class TapDrillResult(
     val engagementPercent: Double,
@@ -33,6 +47,7 @@ data class TapDrillResult(
     val nearestDrills: NearestDrills,
     val closestActualEngagementPercent: Double,
     val closestWithinMinorLimits: Boolean?,
+    val seriesDrills: List<SeriesTapDrill> = emptyList(),
 )
 
 /**
@@ -142,13 +157,51 @@ object TapAndClearanceCalculator {
         val withinLimits = minorLimitsUm?.let { (minUm, maxUm) ->
             nearest.closest.diameterUm in (minUm - LIMIT_TOLERANCE_UM)..(maxUm + LIMIT_TOLERANCE_UM)
         }
+        val seriesDrills = cutTapSeriesDrills(
+            majorDiameterUm = majorDiameterUm,
+            pitchUm = pitchUm,
+            theoreticalDiameterUm = theoreticalDiameterUm,
+            includedAngleDeg = includedAngleDeg,
+        )
         return TapDrillResult(
             engagementPercent = clampedPct,
             theoreticalDiameterUm = theoreticalDiameterUm,
             nearestDrills = nearest,
             closestActualEngagementPercent = actualPct,
             closestWithinMinorLimits = withinLimits,
+            seriesDrills = seriesDrills,
         )
+    }
+
+    /**
+     * Gives the closest standard drill for each valid [DrillSeries].
+     *
+     * The result includes a series only when both conditions are true:
+     * 1. [theoreticalDiameterUm] is inside the series range, or the boundary drill gives an
+     *    engagement in `[MIN_ENGAGEMENT_PERCENT, MAX_ENGAGEMENT_PERCENT]`.
+     * 2. [actualCutTapEngagementPercent] is greater than `0.0` and at most `100.0`.
+     */
+    fun cutTapSeriesDrills(
+        majorDiameterUm: Double,
+        pitchUm: Double,
+        theoreticalDiameterUm: Double,
+        includedAngleDeg: Double = 60.0,
+    ): List<SeriesTapDrill> = DrillSeries.entries.mapNotNull { series ->
+        val nearest = StandardDrillTables.nearestInSeries(theoreticalDiameterUm, series) ?: return@mapNotNull null
+        val drill = nearest.closest
+        val pct = actualCutTapEngagementPercent(
+            majorDiameterUm = majorDiameterUm,
+            pitchUm = pitchUm,
+            drillDiameterUm = drill.diameterUm,
+            includedAngleDeg = includedAngleDeg,
+        )
+        val withinSeriesBounds = nearest.smallerOrEqual != null && nearest.largerOrEqual != null
+        val boundaryValidEngagement = pct in MIN_ENGAGEMENT_PERCENT..MAX_ENGAGEMENT_PERCENT
+        if ((withinSeriesBounds || boundaryValidEngagement) && pct > 0.0 && pct <= 100.0) {
+            SeriesTapDrill(drill = drill, actualEngagementPercent = pct)
+        } else {
+            null
+        }
     }
 
     /**

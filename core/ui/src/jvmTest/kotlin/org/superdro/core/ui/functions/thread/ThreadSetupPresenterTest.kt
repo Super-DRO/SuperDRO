@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.superdro.core.functions.thread.DrillSeries
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
@@ -211,6 +212,10 @@ class ThreadSetupPresenterTest {
         val tap = assertNotNull(state.value.tapResults)
         assertEquals("8.539", tap.cutTheoreticalDiameter)
         assertEquals("8.5 mm", tap.cutClosestDrill.label)
+        assertEquals(
+            listOf(DrillSeries.Metric, DrillSeries.Fractional, DrillSeries.Letter),
+            tap.cutSeriesDrills.map { it.series },
+        )
         assertEquals(true, tap.cutWithinMinorLimits)
         assertNotNull(tap.formTheoreticalDiameter)
         assertEquals("10.500", tap.closeClearance)
@@ -220,6 +225,20 @@ class ThreadSetupPresenterTest {
         assertEquals("21.000", tap.blindBottomingDepth)
         assertEquals("24.000", tap.blindPlugDepth)
         assertEquals("30.750", tap.blindTaperDepth)
+
+        // Small taps omit Letter drills; large taps omit Number and Letter drills.
+        setup.onSize("M3 × 0.5")
+        val m3Tap = assertNotNull(state.value.tapResults)
+        assertEquals(
+            listOf(DrillSeries.Metric, DrillSeries.Fractional, DrillSeries.Number),
+            m3Tap.cutSeriesDrills.map { it.series },
+        )
+        setup.onSize("M16 × 2")
+        val m16Tap = assertNotNull(state.value.tapResults)
+        assertEquals(
+            listOf(DrillSeries.Metric, DrillSeries.Fractional),
+            m16Tap.cutSeriesDrills.map { it.series },
+        )
         setup.close()
     }
 

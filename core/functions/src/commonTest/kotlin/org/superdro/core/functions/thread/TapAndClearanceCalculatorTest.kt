@@ -24,6 +24,10 @@ class TapAndClearanceCalculatorTest {
         assertEquals(2500.0, summary.cutTap.nearestDrills.closest.diameterUm, 1e-6)
         assertEquals(76.98, summary.cutTap.closestActualEngagementPercent, 0.05)
         assertEquals(true, summary.cutTap.closestWithinMinorLimits)
+        assertEquals(
+            listOf(DrillSeries.Metric, DrillSeries.Fractional, DrillSeries.Number),
+            summary.cutTap.seriesDrills.map { it.drill.series },
+        )
 
         val formTap = assertNotNull(summary.formTap)
         assertEquals(2779.0, formTap.theoreticalDiameterUm, 0.01)
@@ -160,5 +164,53 @@ class TapAndClearanceCalculatorTest {
         assertEquals("11.9 mm", summary.cutTap.nearestDrills.closest.label)
         assertTrue(summary.cutTap.closestActualEngagementPercent in 70.0..80.0)
         assertNull(summary.formTap)
+    }
+
+    @Test
+    fun seriesDrillsOmitOutOfRangeAndInvalidEngagementDrills() {
+        val m3By0Point8 = TapAndClearanceCalculator.cutTapDrill(
+            majorDiameterUm = 3000.0,
+            pitchUm = 800.0,
+            includedAngleDeg = 60.0,
+            metric = true,
+        )
+        assertEquals(
+            listOf(DrillSeries.Metric, DrillSeries.Fractional, DrillSeries.Number),
+            m3By0Point8.seriesDrills.map { it.drill.series },
+        )
+        assertTrue(m3By0Point8.seriesDrills.all { it.actualEngagementPercent > 0.0 && it.actualEngagementPercent <= 100.0 })
+
+        val m6 = TapAndClearanceCalculator.cutTapDrill(
+            majorDiameterUm = 6000.0,
+            pitchUm = 1000.0,
+            includedAngleDeg = 60.0,
+            metric = true,
+        )
+        assertEquals(
+            listOf(DrillSeries.Metric, DrillSeries.Fractional, DrillSeries.Number),
+            m6.seriesDrills.map { it.drill.series },
+        )
+
+        val m10 = TapAndClearanceCalculator.cutTapDrill(
+            majorDiameterUm = 10000.0,
+            pitchUm = 1500.0,
+            includedAngleDeg = 60.0,
+            metric = true,
+        )
+        assertEquals(
+            listOf(DrillSeries.Metric, DrillSeries.Fractional, DrillSeries.Letter),
+            m10.seriesDrills.map { it.drill.series },
+        )
+
+        val m16 = TapAndClearanceCalculator.cutTapDrill(
+            majorDiameterUm = 16000.0,
+            pitchUm = 2000.0,
+            includedAngleDeg = 60.0,
+            metric = true,
+        )
+        assertEquals(
+            listOf(DrillSeries.Metric, DrillSeries.Fractional),
+            m16.seriesDrills.map { it.drill.series },
+        )
     }
 }

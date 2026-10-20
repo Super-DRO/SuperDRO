@@ -16,7 +16,6 @@ import org.superdro.core.functions.thread.PassKind
 import org.superdro.core.functions.thread.PassSchedule
 import org.superdro.core.functions.thread.ReliefLabel
 import org.superdro.core.functions.thread.StandardDrill
-import org.superdro.core.functions.thread.StandardDrillTables
 import org.superdro.core.functions.thread.TapAndClearanceCalculator
 import org.superdro.core.functions.thread.TapAndHolePrepSummary
 import org.superdro.core.functions.thread.ThreadDialRule
@@ -661,11 +660,7 @@ class ThreadSetupPresenter(
             results = geometry?.let { results(it, schedule, state) },
             passSchedule = schedule,
             tapSummary = tapSummary,
-            tapResults = if (geometry != null && tapSummary != null) {
-                tapResults(geometry, tapSummary, state.unit)
-            } else {
-                null
-            },
+            tapResults = tapSummary?.let { tapResults(it, state.unit) },
         )
     }
 
@@ -753,7 +748,6 @@ class ThreadSetupPresenter(
     }
 
     private fun tapResults(
-        geometry: ThreadGeometry,
         summary: TapAndHolePrepSummary,
         unit: ThreadUnit,
     ): TapDrillResultsUiState {
@@ -767,16 +761,8 @@ class ThreadSetupPresenter(
             )
 
         val cutClosest = drillRow(summary.cutTap.nearestDrills.closest, summary.cutTap.closestActualEngagementPercent)
-        val seriesDrills = DrillSeries.entries.mapNotNull { series ->
-            val nearest = StandardDrillTables.nearestInSeries(summary.cutTap.theoreticalDiameterUm, series) ?: return@mapNotNull null
-            val drill = nearest.closest
-            val pct = TapAndClearanceCalculator.actualCutTapEngagementPercent(
-                majorDiameterUm = geometry.nominalDiameterUm,
-                pitchUm = geometry.pitchUm,
-                drillDiameterUm = drill.diameterUm,
-                includedAngleDeg = geometry.form.includedAngleDeg,
-            )
-            drillRow(drill, pct)
+        val seriesDrills = summary.cutTap.seriesDrills.map { seriesDrill ->
+            drillRow(seriesDrill.drill, seriesDrill.actualEngagementPercent)
         }
         val formTap = summary.formTap
         val blind = summary.blindHole
