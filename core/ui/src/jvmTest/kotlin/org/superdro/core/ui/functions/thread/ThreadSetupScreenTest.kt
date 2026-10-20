@@ -126,8 +126,20 @@ class ThreadSetupScreenTest {
             onNodeWithTag(ThreadTags.MODE).assertDoesNotExist()
             onNodeWithTag(ThreadTags.TAP_RESULTS).assertExists()
             onNodeWithTag("thread-cut-tap-closest").assertExists()
+            onNodeWithTag("thread-drill-series-Metric").assertExists()
+            onNodeWithTag("thread-drill-series-Fractional").assertExists()
+            onNodeWithTag("thread-drill-series-Letter").assertExists()
+            onNodeWithTag("thread-drill-series-Number").assertDoesNotExist()
             onNodeWithTag(PRIMARY_BUTTON_TAG).assertDoesNotExist()
             onNodeWithTag(CANCEL_BUTTON_TAG).assertDoesNotExist()
+
+            // Selecting M3 × 0.5 shows Number drill series and hides inapplicable Letter drill series.
+            presenter.onSize("M3 × 0.5")
+            waitForIdle()
+            onNodeWithTag("thread-drill-series-Metric").assertExists()
+            onNodeWithTag("thread-drill-series-Fractional").assertExists()
+            onNodeWithTag("thread-drill-series-Number").assertExists()
+            onNodeWithTag("thread-drill-series-Letter").assertDoesNotExist()
 
             presenter.close()
         } finally {
