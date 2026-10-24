@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
  * [ConnectionKeepAlive] gets each new value.
  *
  * - The summary is not null while one or more sessions are in `Connecting`, `AwaitingData`,
- *   `Connected`, `NoData`, `Reconnecting`, or `WaitingForDevice` ([SessionState.keepsAlive]).
+ *   `Connected`, `NoData`, `Reconnecting`, or `WaitingForDevice` ([SessionState.keepsAlive]), or
+ *   while the MCP server runs ([mcpServer] is not null).
  * - The controller removes repeated values.
  * - A change waits 300 ms (the debounce), so that a quick state change does not cause many
  *   notification updates.
@@ -32,6 +33,8 @@ import kotlinx.coroutines.launch
  * @param keepAlive The platform contract that gets each new value.
  * @param scope The scope of the collector.
  * @param debounceMs The wait before a change goes out.
+ * @param mcpServer The MCP server: null while it does not run. `core:connection` does not see
+ *   the runner, so the DI graph gives this flow. The default is a server that never runs.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class KeepAliveController(
@@ -39,6 +42,7 @@ class KeepAliveController(
     private val keepAlive: ConnectionKeepAlive,
     private val scope: CoroutineScope,
     val debounceMs: Long = DEBOUNCE_MS,
+    private val mcpServer: Flow<McpServerLine?> = flowOf(null),
 ) {
 
     /** Makes a controller for the sessions of [manager]. */
@@ -47,7 +51,8 @@ class KeepAliveController(
         keepAlive: ConnectionKeepAlive,
         scope: CoroutineScope,
         debounceMs: Long = DEBOUNCE_MS,
-    ) : this(manager.sessions, keepAlive, scope, debounceMs)
+        mcpServer: Flow<McpServerLine?> = flowOf(null),
+    ) : this(manager.sessions, keepAlive, scope, debounceMs, mcpServer)
 
     private val _summary = MutableStateFlow<KeepAliveSummary?>(null)
 
@@ -56,9 +61,8 @@ class KeepAliveController(
 
     init {
         scope.launch {
-            sessions
-                .flatMapLatest { map -> linesOf(map.values.toList()) }
-                .map { lines -> summaryOf(lines) }
+            val lines = sessions.flatMapLatest { map -> linesOf(map.values.toList()) }
+            combine(lines, mcpServer, ::summaryOf)
                 .debounce(debounceMs)
                 .distinctUntilChanged()
                 .collect { value ->
@@ -88,13 +92,20 @@ class KeepAliveController(
         const val DEBOUNCE_MS: Long = 300L
 
         /**
-         * Gives the summary of the sessions with their states: null when no session has
-         * [SessionState.keepsAlive]. The lines have the order of [lines].
+         * Gives the summary of the sessions with their states and of the MCP server: null when no
+         * session has [SessionState.keepsAlive] and the server does not run ([mcpServer] is
+         * null). The lines have the order of [lines]. [KeepAliveSummary.mcpAddress] is the first
+         * address of the server.
          */
-        fun summaryOf(lines: List<DeviceLine>): KeepAliveSummary? {
+        fun summaryOf(lines: List<DeviceLine>, mcpServer: McpServerLine? = null): KeepAliveSummary? {
             val kept = lines.filter { line -> line.state.keepsAlive }
-            if (kept.isEmpty()) return null
-            return KeepAliveSummary(kept, offlineRememberedCount = lines.count { line -> !line.state.isOnline })
+            if (kept.isEmpty() && mcpServer == null) return null
+            return KeepAliveSummary(
+                devices = kept,
+                offlineRememberedCount = lines.count { line -> !line.state.isOnline },
+                mcpServer = mcpServer != null,
+                mcpAddress = mcpServer?.addresses?.firstOrNull(),
+            )
         }
     }
 }
