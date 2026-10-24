@@ -20,7 +20,7 @@ The app code uses the Apache License 2.0 ([LICENSE](LICENSE)).
 | [docs/thread-cutting-spike.md](docs/thread-cutting-spike.md) | The research and the design for the thread cutting tools |
 | [docs/thread-cutting-plan.md](docs/thread-cutting-plan.md) | The multi-agent implementation plan for the thread cutting tools |
 | [docs/mcp-proposal.md](docs/mcp-proposal.md) | The research, the design, the final tool list, and the manual checks of the MCP server |
-| [docs/mcp-plan.md](docs/mcp-plan.md) | The multi-agent implementation plan for the MCP server |
+| [docs/mcp-plan.md](docs/mcp-plan.md) | The multi-agent implementation plan and the shared contracts of the MCP server |
 
 ## Status
 
