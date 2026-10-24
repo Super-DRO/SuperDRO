@@ -61,7 +61,7 @@ class AndroidConnectionKeepAlive(
         serviceState.onStartRequested()
         try {
             ContextCompat.startForegroundService(context, ConnectionService.intent(context, ConnectionServiceRules.ACTION_START))
-            log.i { "Start of the service for ${summary.devices.size} machines" }
+            log.i { "Start of the service for ${summary.devices.size} machines, MCP server ${summary.mcpServer}" }
         } catch (error: IllegalStateException) {
             // ForegroundServiceStartNotAllowedException (API 31 and higher) is an IllegalStateException.
             // API 26 to 30 throw an IllegalStateException for a background start of a service.
@@ -80,6 +80,8 @@ class AndroidConnectionKeepAlive(
             usbDeviceGranted = hasPermittedUsbDevice(),
             changeNetworkStateDeclared = isGranted(ForegroundPrerequisite.CHANGE_NETWORK_STATE),
             transports = summary.devices.map { line -> line.transport },
+            changeWifiMulticastStateDeclared = isGranted(ForegroundPrerequisite.CHANGE_WIFI_MULTICAST_STATE),
+            mcpServer = summary.mcpServer,
         )
 
     private fun isGranted(permission: String): Boolean =

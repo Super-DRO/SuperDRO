@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import org.superdro.core.connection.ConnectionRequestManager
@@ -27,16 +28,23 @@ class NetworkCapabilityMonitor(context: Context, scope: CoroutineScope) {
 
     private val context: Context = context.applicationContext
     private val tracker = NetworkTracker(this.context, scope)
-    private val localNetworkGranted = MutableStateFlow(isLocalNetworkGranted())
+    private val _localNetworkGranted = MutableStateFlow(isLocalNetworkGranted())
+
+    /**
+     * True while the local network permission is granted. Below API 37 the value is always true.
+     * The MCP runner gets this flow on API 37 and higher (`LocalNetworkPermission`), so the server
+     * waits for the grant.
+     */
+    val localNetworkGranted: StateFlow<Boolean> = _localNetworkGranted.asStateFlow()
 
     /** The capability of the TCP links now. */
     val capability: StateFlow<LinkCapability> =
-        combine(tracker.networks, localNetworkGranted, ::capabilityOf)
-            .stateIn(scope, SharingStarted.Eagerly, capabilityOf(tracker.networks.value, localNetworkGranted.value))
+        combine(tracker.networks, _localNetworkGranted, ::capabilityOf)
+            .stateIn(scope, SharingStarted.Eagerly, capabilityOf(tracker.networks.value, _localNetworkGranted.value))
 
     /** Reads the local network permission again. */
     fun refresh() {
-        localNetworkGranted.value = isLocalNetworkGranted()
+        _localNetworkGranted.value = isLocalNetworkGranted()
     }
 
     /**

@@ -15,7 +15,9 @@ class ForegroundPrerequisiteTest {
         usb: Boolean = false,
         changeNetwork: Boolean = true,
         transports: List<TransportKind> = listOf(TransportKind.BluetoothSpp),
-    ) = ForegroundPrerequisite.isMet(sdkInt, bluetooth, usb, changeNetwork, transports)
+        changeWifiMulticast: Boolean = true,
+        mcpServer: Boolean = false,
+    ) = ForegroundPrerequisite.isMet(sdkInt, bluetooth, usb, changeNetwork, transports, changeWifiMulticast, mcpServer)
 
     @Test
     fun beforeApi34ThereIsNoPrerequisite() {
@@ -42,8 +44,23 @@ class ForegroundPrerequisiteTest {
     }
 
     @Test
+    fun theMcpServerMeetsItWithTheDeclaredChangeWifiMulticastState() {
+        // The server with no machine: only the multicast permission meets the prerequisite.
+        assertTrue(met(transports = emptyList(), mcpServer = true))
+        assertFalse(met(transports = emptyList(), mcpServer = true, changeWifiMulticast = false))
+        assertFalse(met(transports = emptyList(), mcpServer = false))
+        // The server with a Bluetooth machine and no Bluetooth permission.
+        assertTrue(met(mcpServer = true))
+        assertFalse(met(mcpServer = true, changeWifiMulticast = false))
+        // The multicast permission alone does not meet it for a machine.
+        assertFalse(met(transports = listOf(TransportKind.Fake)))
+        assertTrue(met(sdkInt = 33, transports = emptyList(), mcpServer = true, changeWifiMulticast = false))
+    }
+
+    @Test
     fun thePermissionNamesAreTheManifestNames() {
         assertEquals("android.permission.CHANGE_NETWORK_STATE", ForegroundPrerequisite.CHANGE_NETWORK_STATE)
         assertEquals("android.permission.BLUETOOTH_CONNECT", ForegroundPrerequisite.BLUETOOTH_CONNECT)
+        assertEquals("android.permission.CHANGE_WIFI_MULTICAST_STATE", ForegroundPrerequisite.CHANGE_WIFI_MULTICAST_STATE)
     }
 }

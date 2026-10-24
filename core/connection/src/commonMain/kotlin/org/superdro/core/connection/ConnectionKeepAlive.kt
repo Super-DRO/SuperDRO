@@ -27,21 +27,36 @@ interface ConnectionKeepAlive {
 }
 
 /**
- * The content of the one notification for all machines. It is not null while one or more sessions
- * have [SessionState.keepsAlive].
+ * The content of the one notification for all machines and the MCP server. It is not null while
+ * one or more sessions have [SessionState.keepsAlive], or while the MCP server runs.
  *
  * @property devices One line for each session that has [SessionState.keepsAlive], in the order of
  *   the sessions. The notification shows the lines of the online machines.
  * @property offlineRememberedCount The number of sessions that are not online. The notification
  *   shows this number of offline remembered machines.
+ * @property mcpServer True while the MCP server runs. The service then runs also with no online
+ *   machine, and holds the Wi-Fi lock.
+ * @property mcpAddress The first bound address of the MCP server as `host:port`, for the
+ *   notification line "MCP server on <host:port>". Null while the server has no address.
  */
 data class KeepAliveSummary(
     val devices: List<DeviceLine>,
     val offlineRememberedCount: Int = 0,
+    val mcpServer: Boolean = false,
+    val mcpAddress: String? = null,
 ) {
     /** The number of devices that are online. */
     val onlineCount: Int get() = devices.count { line -> line.state.isOnline }
 }
+
+/**
+ * The MCP server as the keep-alive sees it. `KeepAliveController` takes a flow of this value:
+ * null while the server does not run.
+ *
+ * @property addresses The bound addresses as `host:port`. Empty while the server starts, or while
+ *   it waits for a free port.
+ */
+data class McpServerLine(val addresses: List<String> = emptyList())
 
 /** One line of the notification: the name, the link type, and the state of one device. */
 data class DeviceLine(

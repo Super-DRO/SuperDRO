@@ -14,6 +14,8 @@
     </plurals>
     <string name="service_device_line">%1$s: %2$s (%3$s)</string>
     <string name="service_boot_open_app">Abra SuperDRO para conectar sus máquinas</string>
+    <string name="service_mcp_server">Servidor MCP en %1$s</string>
+    <string name="service_mcp_server_no_address">Servidor MCP: sin dirección</string>
     <string name="service_battery_title">Optimización de batería</string>
     <string name="service_battery_reason">SuperDRO mantiene abiertos los enlaces con sus máquinas mientras la pantalla está apagada.</string>
     <string name="service_battery_continue">Continuar</string>

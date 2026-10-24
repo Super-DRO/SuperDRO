@@ -15,6 +15,9 @@ import org.superdro.core.model.TransportKind
  * 3. The app declares `CHANGE_NETWORK_STATE` (a normal permission), and one machine of the summary
  *    has a TCP link. Android accepts the declared permission for each machine. SuperDRO uses it
  *    only for a TCP machine, because a TCP machine has no Bluetooth or USB permission.
+ * 4. The app declares `CHANGE_WIFI_MULTICAST_STATE` (a normal permission), and the MCP server
+ *    runs. The server listens on the local network with no online machine, so the first three
+ *    prerequisites can be absent. SuperDRO uses this permission only for the server.
  */
 object ForegroundPrerequisite {
 
@@ -27,6 +30,9 @@ object ForegroundPrerequisite {
     /** The manifest name of `BLUETOOTH_CONNECT`. */
     const val BLUETOOTH_CONNECT: String = "android.permission.BLUETOOTH_CONNECT"
 
+    /** The manifest name of `CHANGE_WIFI_MULTICAST_STATE`. */
+    const val CHANGE_WIFI_MULTICAST_STATE: String = "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+
     /**
      * True when the service can start in the foreground.
      *
@@ -35,6 +41,8 @@ object ForegroundPrerequisite {
      * @param usbDeviceGranted True when one attached USB device has the USB permission.
      * @param changeNetworkStateDeclared True when the app has `CHANGE_NETWORK_STATE`.
      * @param transports The link types of the machines in the summary.
+     * @param changeWifiMulticastStateDeclared True when the app has `CHANGE_WIFI_MULTICAST_STATE`.
+     * @param mcpServer True when the MCP server runs (`KeepAliveSummary.mcpServer`).
      */
     fun isMet(
         sdkInt: Int,
@@ -42,9 +50,12 @@ object ForegroundPrerequisite {
         usbDeviceGranted: Boolean,
         changeNetworkStateDeclared: Boolean,
         transports: Collection<TransportKind>,
+        changeWifiMulticastStateDeclared: Boolean = false,
+        mcpServer: Boolean = false,
     ): Boolean =
         sdkInt < PREREQUISITE_API ||
             bluetoothConnectGranted ||
             usbDeviceGranted ||
-            (changeNetworkStateDeclared && TransportKind.Tcp in transports)
+            (changeNetworkStateDeclared && TransportKind.Tcp in transports) ||
+            (changeWifiMulticastStateDeclared && mcpServer)
 }

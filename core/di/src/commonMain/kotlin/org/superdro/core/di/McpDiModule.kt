@@ -2,16 +2,22 @@ package org.superdro.core.di
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import org.kodein.di.DI
 import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
 import org.kodein.di.instance
+import org.kodein.di.instanceOrNull
 import org.superdro.core.appversion.AppVersion
+import org.superdro.core.connection.LocalNetworkPermission
+import org.superdro.core.connection.McpServerLine
 import org.superdro.core.connection.NetworkInterfaces
 import org.superdro.core.dataoutput.DataOutputPlatform
 import org.superdro.core.dataoutput.WallClock
 import org.superdro.core.mcp.McpFileStore
 import org.superdro.core.mcp.McpSecrets
+import org.superdro.core.mcp.McpServerState
 import org.superdro.core.mcp.McpToolSet
 import org.superdro.core.mcp.WriteGate
 import org.superdro.core.store.files.StagingFiles
@@ -49,6 +55,9 @@ const val MCP_POPULATE_TOOL_SET: String = "mcpPopulateToolSet"
  * The tool sets are the binding `List<McpToolSet>` with the tag [MCP_TOOL_SETS]. It holds the
  * read set ([MCP_READ_TOOL_SET]) and the populate set ([MCP_POPULATE_TOOL_SET]). The server
  * offers the tools of a set only while its scope is on.
+ *
+ * The runner gets the local network permission from the optional binding [LocalNetworkPermission].
+ * The Android platform binds it on API 37 and higher. On the JVM the runner gets null.
  */
 internal val mcpDiModule = DI.Module("mcpDiModule") {
     bindSingleton { McpSecrets(store = instance()) }
@@ -118,6 +127,7 @@ internal val mcpDiModule = DI.Module("mcpDiModule") {
             wallClock = WallClock.System,
             ports = platform.ports,
             appVersion = AppVersion.NAME,
+            localNetworkGranted = instanceOrNull<LocalNetworkPermission>()?.granted,
         ).also { runner -> runner.start(appScope) }
     }
     bindBackgroundStart<McpRunner>()
@@ -133,6 +143,16 @@ internal val mcpDiModule = DI.Module("mcpDiModule") {
     }
     bindProvider { McpChipPresenter(runner = instance(), settings = instance(), requests = instance(), context = instance()) }
 }
+
+/**
+ * Gives the MCP server of [runner] as the keep-alive controller sees it: null while the server is
+ * stopped, else the bound addresses. A server that starts, or that waits for a free port, has no
+ * address and still keeps the service.
+ */
+internal fun mcpServerLine(runner: McpRunner): Flow<McpServerLine?> =
+    combine(runner.state, runner.listening) { state, listening ->
+        if (state == McpServerState.Stopped) null else McpServerLine(listening)
+    }
 
 /** The IDs of the profiles with an online session. */
 private fun Connections.onlineProfileIds(): Set<String> =

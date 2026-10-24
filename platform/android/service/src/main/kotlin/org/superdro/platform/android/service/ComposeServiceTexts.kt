@@ -24,6 +24,8 @@ import org.superdro.core.resources.service_boot_open_app
 import org.superdro.core.resources.service_channel_name
 import org.superdro.core.resources.service_device_line
 import org.superdro.core.resources.service_disconnect_all
+import org.superdro.core.resources.service_mcp_server
+import org.superdro.core.resources.service_mcp_server_no_address
 import org.superdro.core.resources.service_offline_remembered
 import org.superdro.core.resources.service_title_none_online
 import org.superdro.core.resources.service_title_online
@@ -65,6 +67,10 @@ object ComposeServiceTexts : ServiceTexts {
 
     override suspend fun bootOpenApp(): String = withContext(Dispatchers.IO) {
         getString(Res.string.service_boot_open_app)
+    }
+
+    override suspend fun mcpServer(address: String?): String = withContext(Dispatchers.IO) {
+        if (address == null) getString(Res.string.service_mcp_server_no_address) else getString(Res.string.service_mcp_server, address)
     }
 
     private suspend fun stateName(state: SessionState): String = when (state) {

@@ -30,15 +30,21 @@ interface ServiceTexts {
      * The text of the start at boot that Android refused: "Open SuperDRO to connect your machines".
      */
     suspend fun bootOpenApp(): String
+
+    /**
+     * The line of the MCP server, for example "MCP server on 192.168.1.5:5810". A null [address]
+     * gives the line of a server with no address.
+     */
+    suspend fun mcpServer(address: String?): String
 }
 
 /**
- * The content of the one notification for all machines: one line for each
- * online machine, and the number of the offline remembered machines.
+ * The content of the one notification for all machines and the MCP server: one line for each
+ * online machine, the number of the offline remembered machines, and the line of the server.
  *
  * @property title For example "2 machines online", or "No machine is online".
  * @property lines The line of each online machine, then the line of the offline machines when
- *   there are offline machines.
+ *   there are offline machines, then the line of the MCP server while it runs.
  * @property tapDevice The device of the tab that a tap on the notification opens: the first online
  *   device, else the first device of the summary.
  */
@@ -58,6 +64,7 @@ data class NotificationContent(
             val lines = buildList {
                 online.forEach { line -> add(texts.deviceLine(line.name, line.state, line.transport)) }
                 if (summary.offlineRememberedCount > 0) add(texts.offlineRemembered(summary.offlineRememberedCount))
+                if (summary.mcpServer) add(texts.mcpServer(summary.mcpAddress))
             }
             return NotificationContent(
                 title = texts.title(online.size),

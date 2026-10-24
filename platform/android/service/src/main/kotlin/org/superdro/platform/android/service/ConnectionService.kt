@@ -44,6 +44,9 @@ import org.superdro.core.connection.KeepAliveSummary
  * - The notification has one line for each online machine, the number of the offline remembered
  *   machines, the tap that opens `MainActivity` on the tab, and the action "Disconnect all".
  * - The service holds the partial wake lock while one or more links are open.
+ * - The service runs also while the MCP server runs with no online machine
+ *   (`KeepAliveSummary.mcpServer`). The notification then has the line of the server, and the
+ *   service holds the Wi-Fi lock ([WifiLockController]).
  * - The UI does not bind to the service: [onBind] gives null.
  *
  * The application object of the app must implement [DIAware]. The graph gives
@@ -62,6 +65,7 @@ class ConnectionService : Service() {
 
     private lateinit var scope: CoroutineScope
     private lateinit var wakeLock: WakeLockController
+    private lateinit var wifiLock: WifiLockController
     private var token = 0
     private var content: NotificationContent? = null
     private var fallbackTitle = ""
@@ -78,6 +82,7 @@ class ConnectionService : Service() {
         token = serviceState.onCreated()
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         wakeLock = WakeLockController(PowerManagerWakeLock(this))
+        wifiLock = WifiLockController(WifiManagerWifiLock(this))
         fallbackTitle = applicationInfo.loadLabel(packageManager).toString()
         // The first notification must go out at once in onStartCommand. Thus the channel and the
         // first notification use the label of the app, and the texts load in the background.
@@ -85,6 +90,7 @@ class ConnectionService : Service() {
         loadTexts()
         collectSummary()
         collectWakeLock()
+        collectWifiLock()
         log.i { "Service created" }
     }
 
@@ -127,6 +133,7 @@ class ConnectionService : Service() {
 
     override fun onDestroy() {
         wakeLock.release()
+        wifiLock.release()
         scope.cancel()
         serviceState.onDestroyed(token)
         log.i { "Service destroyed" }
@@ -173,6 +180,16 @@ class ConnectionService : Service() {
             ) { openLinks, settingOn -> openLinks to settingOn }
                 .distinctUntilChanged()
                 .collect { (openLinks, settingOn) -> wakeLock.update(openLinks, settingOn) }
+        }
+    }
+
+    /** The Wi-Fi lock follows the MCP server. The wake lock setting does not apply to it. */
+    private fun collectWifiLock() {
+        scope.launch {
+            keepAlive.summary
+                .map { summary -> summary?.mcpServer == true }
+                .distinctUntilChanged()
+                .collect { serverRuns -> wifiLock.update(serverRuns) }
         }
     }
 

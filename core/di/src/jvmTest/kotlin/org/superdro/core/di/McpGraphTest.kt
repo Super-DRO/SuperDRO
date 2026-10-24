@@ -14,6 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlinx.coroutines.delay
@@ -24,6 +25,10 @@ import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
 import org.kodein.di.direct
 import org.kodein.di.instance
+import org.kodein.di.instanceOrNull
+import org.superdro.core.connection.KeepAliveController
+import org.superdro.core.connection.KeepAliveSummary
+import org.superdro.core.connection.LocalNetworkPermission
 import org.superdro.core.connection.NetworkInterfaceInfo
 import org.superdro.core.connection.NetworkInterfaces
 import org.superdro.core.mcp.McpFileStore
@@ -136,6 +141,11 @@ class McpGraphTest {
             presenter.onEnabledChange(true)
             waitUntil("The server listens") { presenter.uiState.value.status.state == McpServerState.Ready }
             assertEquals(listOf("http://127.0.0.1:$port/mcp"), presenter.uiState.value.status.urls)
+            // The server keeps the connection service with no online machine.
+            val keepAlive = di.direct.instance<KeepAliveController>()
+            waitUntil("The keep-alive summary has the server") { keepAlive.summary.value?.mcpServer == true }
+            assertEquals(KeepAliveSummary(emptyList(), mcpServer = true, mcpAddress = "127.0.0.1:$port"), keepAlive.summary.value)
+            assertNull(di.direct.instanceOrNull<LocalNetworkPermission>(), "The JVM needs no local network permission")
             val token = assertNotNull(di.direct.instance<McpRunner>().token(create = false))
 
             val (unauthorized, _) = post(port, """{"jsonrpc":"2.0","id":1,"method":"ping"}""", token = null)
@@ -174,6 +184,7 @@ class McpGraphTest {
                     true
                 }
             }
+            waitUntil("The stop of the server releases the service") { keepAlive.summary.value == null }
         } finally {
             presenter.close()
         }
