@@ -1,6 +1,7 @@
 package org.superdro.platform.android.di
 
 import android.app.Application
+import android.os.Build
 import app.cash.sqldelight.db.SqlDriver
 import dev.bluefalcon.core.BlueFalcon
 import dev.bluefalcon.engine.android.AndroidEngine
@@ -24,6 +25,7 @@ import org.superdro.core.connection.ConnectionKeepAlive
 import org.superdro.core.connection.ConnectionRequest
 import org.superdro.core.connection.ConnectionRequestManager
 import org.superdro.core.connection.FileStreamRecorder
+import org.superdro.core.connection.LocalNetworkPermission
 import org.superdro.core.connection.NetworkInterfaces
 import org.superdro.core.connection.PermissionKind
 import org.superdro.core.connection.StreamRecorder
@@ -43,6 +45,7 @@ import org.superdro.platform.android.camera.AndroidUvcCameraBackend
 import org.superdro.platform.android.camera.CameraPermissionBridge
 import org.superdro.platform.android.network.AndroidNetworkInterfaces
 import org.superdro.platform.android.network.NetworkCapabilityMonitor
+import org.superdro.platform.android.network.NetworkRules
 import org.superdro.platform.android.service.AndroidBatteryOptimization
 import org.superdro.platform.android.service.AndroidConnectionKeepAlive
 import org.superdro.platform.android.service.ComposeServiceTexts
@@ -69,6 +72,7 @@ const val PLATFORM_SCOPE_TAG: String = "platformScope"
  *   debug build (`DebugAdapter.withFakeTransport`).
  * - `List<AdapterDiscovery>`: SPP, USB, BLE, and the fake adapters of a debug build.
  * - [CapabilitySource], [ConnectionKeepAlive] (`AndroidConnectionKeepAlive`).
+ * - [LocalNetworkPermission], only on API 37 and higher: the MCP server waits for the grant.
  * - [CoroutineDispatcher] with the tag `"linkIo"` ([LinkIoDispatcher]).
  * - [StreamRecorder]: one file for each recorded link in `<files>/streams`.
  * - [NetworkInterfaces], [SecretStore], [UvcCameraBackend], [SqlDriver].
@@ -100,6 +104,11 @@ val platformModule = DI.Module("platformModule") {
             usb = instance<UsbDeviceMonitor>().attached,
             scope = instance(tag = PLATFORM_SCOPE_TAG),
         )
+    }
+    // The local network permission of the MCP server. An older Android needs none: no binding,
+    // and the runner gets null.
+    if (NetworkRules.localNetworkPermissionNeeded(Build.VERSION.SDK_INT)) {
+        bindSingleton { LocalNetworkPermission(instance<NetworkCapabilityMonitor>().localNetworkGranted) }
     }
 
     // The one BlueFalcon client. Only a BLE link or the BLE discovery makes it.
