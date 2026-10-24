@@ -521,6 +521,23 @@ Run `:core:ui:jvmTestMcp` (after A3 merges, the task exists; before that, run `:
 with `--tests "org.superdro.core.ui.mcp.populate.*"`), `:validation:testMcp`, and
 `scripts/validate.sh`.
 
+### 5.0 The runner and the DI module as built by A3
+
+- `org.superdro.core.di.McpDiModule.kt` binds `List<McpToolSet>` with the tag `MCP_TOOL_SETS`
+  (`"mcpToolSets"`) as `listOf(instance<McpToolSet>(tag = MCP_READ_TOOL_SET))`. A6 adds
+  `populateToolSet(PopulateDeps(...))` to this list. The module also binds `McpSecrets`,
+  `McpGate` (also as `WriteGate`), `McpFiles` (also as `McpFileStore`), `McpCallRepository`,
+  `McpRunner` (singleton with a background start), and the two presenters.
+- `McpRunner` has `localNetworkGranted: StateFlow<Boolean>? = null`. Null means the platform
+  needs no local network permission. A5 gives the Android flow (API 37 and higher) through the DI
+  of the platform.
+- The entries and the chip register through `EntryRegistry.mcpEntries()`, after the data output
+  entries. The settings link "MCP server" is in the Machines group of the app settings. The
+  routes are `McpSettingsRoute` and `McpDiagnosticsRoute`.
+- `AppFrame` has the slot `dialogs: @Composable () -> Unit`; `App` passes `McpConfirmationHost()`.
+- The QR code encodes the Claude Code command (the URL and the token). `QrCode.kt` is an own
+  encoder in common code. The settings presenter writes each change at once into `AppSettings.mcp`.
+
 ### 5.1 The populate set as built by A4
 
 ```kotlin
