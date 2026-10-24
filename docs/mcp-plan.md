@@ -306,6 +306,25 @@ The JSON row keys are the CSV column names (`id`, `name`, `note`, `x`, `y`, `z`,
 row-to-record and the plan code of `SubDatumCsvImporter` and `ToolCsvImporter` into internal
 functions that both sources call. The CSV tests must pass with no change.
 
+As built by A2 (the differences from the text above):
+
+- `StagingFiles(io, folder, clock: kotlin.time.Clock = Clock.System, dispatcher = storeIoDispatcher)`.
+  `WallClock` is a type of `core:data-output`, not of `core:util`, so the store uses `kotlin.time.Clock`.
+- An ID has only `A-Z`, `a-z`, `0-9`, `-`, and `_`. Another ID throws `IllegalArgumentException`.
+  The upload ID generator of A3 gives such IDs (hex or a UUID).
+- `StagingFiles` keeps `<folder>/.index.json` next to the sidecars, so `expire` needs no folder
+  list. Nobody else writes in a staging folder.
+- `McpCallRepository.prune(olderThanMs)` deletes the rows with `at_ms < olderThanMs` (an absolute
+  cutoff). The caller gives `now - retention`. `insert` ignores `row.id` and gives the database ID.
+  There is also `count()`.
+- The sub-datum JSON source offers `UpdateMatching` (the default; match by `id`, then by name),
+  `AddAsNew`, `AddNewOnly`, `MergeMatching`, and `ReplaceAll`. The CSV source is unchanged.
+- JSON values: a string is text; a number keeps its literal text (the decimals give the match
+  tolerance); `true` and `false` are `yes` and `no`; an array joins its items with a space (`tags`);
+  `null` or a missing key is blank. `a` is in degrees at the importer boundary and is stored as
+  arc seconds. `x`, `y`, `z` are in the unit of the `metric` argument. The JSON importers emit no
+  units warning: the caller gives `metric`.
+
 ### 3.8 Units at the edge (track A4)
 
 ```kotlin
