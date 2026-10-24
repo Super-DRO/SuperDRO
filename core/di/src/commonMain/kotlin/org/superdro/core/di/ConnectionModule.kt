@@ -3,13 +3,16 @@ package org.superdro.core.di
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.kodein.di.DI
 import org.kodein.di.bindEagerSingleton
 import org.kodein.di.bindSingleton
 import org.kodein.di.instance
+import org.kodein.di.provider
 import org.superdro.core.connection.CapabilitySource
 import org.superdro.core.connection.ConnectionKeepAlive
 import org.superdro.core.connection.ConnectionManager
@@ -29,6 +32,7 @@ import org.superdro.core.store.json.TabStore
 import org.superdro.core.store.repository.AdapterRepository
 import org.superdro.core.store.repository.MachineRepository
 import org.superdro.core.store.wantedMachines
+import org.superdro.core.ui.mcp.McpRunner
 import org.superdro.core.ui.settings.logs.RecordedStreams
 
 /**
@@ -60,9 +64,17 @@ internal val connectionModule = DI.Module("connectionModule") {
         )
     }
     // The controller starts when the graph is made: it collects the sessions while the process
-    // lives, and starts or stops the connection service.
+    // lives, and starts or stops the connection service. The MCP server also keeps the service.
+    // The runner starts in the background (mcpDiModule), so the controller gets a flow that finds
+    // the runner at the first collection, in the app scope.
     bindEagerSingleton {
-        KeepAliveController(manager = instance<ConnectionManager>(), keepAlive = instance<ConnectionKeepAlive>(), scope = instance(tag = APP_SCOPE))
+        val runner = provider<McpRunner>()
+        KeepAliveController(
+            manager = instance<ConnectionManager>(),
+            keepAlive = instance<ConnectionKeepAlive>(),
+            scope = instance(tag = APP_SCOPE),
+            mcpServer = flow { emitAll(mcpServerLine(runner())) },
+        )
     }
 }
 
