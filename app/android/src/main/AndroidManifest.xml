@@ -43,6 +43,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- The connectedDevice prerequisite of a TCP-only machine. A normal permission. -->
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <!--
+      A normal permission with two uses: the connectedDevice prerequisite of the MCP server with
+      no online machine, and the later mDNS registration of the server.
+    -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <!-- The Wi-Fi TCP link and the data output. -->
     <uses-permission android:name="android.permission.INTERNET" />
