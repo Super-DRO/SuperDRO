@@ -70,12 +70,25 @@ val storeTestDeps = commonTestDeps + listOf<Any>(
     libs.bouncycastle.tls,
 )
 
+// The MCP acceptance tests run the real server through the full DI graph of core:di on a
+// loopback socket, with the database in memory and the fake adapter for an online machine.
 val mcpTestDeps = commonTestDeps + listOf<Any>(
     projects.core.connection,
     projects.core.dataOutput,
     projects.core.mcp,
+    projects.core.readout,
+    projects.core.drawing,
+    projects.core.store,
+    projects.core.ui,
+    projects.core.di,
+    projects.core.debugAdapter,
+    projects.core.fakeAdapter,
+    projects.core.appVersion,
     libs.kotlinx.serialization.json,
     libs.bouncycastle.tls,
+    libs.sqldelight.jdbc,
+    libs.sqlite.jdbc,
+    libs.kodein,
 )
 
 val projectTestDeps = commonTestDeps + listOf<Any>(
@@ -102,8 +115,9 @@ dependencies {
     testImplementation(projects.core.camera)
     testImplementation(projects.core.dataOutput)
     testImplementation(projects.core.connection)
-    // The validation of the MCP server (package mcp).
+    // The validation of the MCP server (package mcp). The version is in the server info.
     testImplementation(projects.core.mcp)
+    testImplementation(projects.core.appVersion)
     testImplementation(libs.sqldelight.jdbc)
     testImplementation(libs.sqlite.jdbc)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -252,7 +266,14 @@ val testMcp = registerDomainTest(
     runtimeClasspath = mcpRuntime,
 ) {
     inputs.files(
-        fileTree(root) { include("core/mcp/src/commonMain/**/*.kt", "core/model/src/commonMain/**/McpConfig.kt") },
+        fileTree(root) {
+            include(
+                "core/mcp/src/commonMain/**/*.kt",
+                "core/model/src/commonMain/**/McpConfig.kt",
+                "core/ui/src/commonMain/kotlin/org/superdro/core/ui/mcp/**/*.kt",
+                "core/di/src/commonMain/**/*.kt",
+            )
+        },
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("mcpSources")
 }
 
