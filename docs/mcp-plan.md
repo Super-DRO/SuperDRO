@@ -521,6 +521,32 @@ Run `:core:ui:jvmTestMcp` (after A3 merges, the task exists; before that, run `:
 with `--tests "org.superdro.core.ui.mcp.populate.*"`), `:validation:testMcp`, and
 `scripts/validate.sh`.
 
+### 5.1 The populate set as built by A4
+
+```kotlin
+package org.superdro.core.ui.mcp.populate
+
+class PopulateDeps(
+    val machines: MachineRepository,
+    val tools: ToolRepository,
+    val drawings: DrawingRepository,
+    val files: McpFileStore,
+    val gate: WriteGate,
+    val config: () -> McpConfig,
+    val onlineMachines: () -> Set<String>,                 // profile IDs with a connected adapter
+    val appVersion: String,
+    val clock: WallClock,                                  // org.superdro.core.dataoutput.WallClock
+    val storeIO: StoreIOProvider,                          // the image files images/<uuid>.jpg
+    val dxfLimits: () -> DxfImportLimits = { DxfImportLimits() },  // from AppSettings.dxfImportLimits
+)
+fun populateToolSet(deps: PopulateDeps): McpToolSet
+```
+
+A6 passes `dxfLimits = { appSettings.settings.value.dxfImportLimits }`. The DXF limits are an
+app setting, not a profile setting. `export_tools` and `export_profile_bundle` have
+`readOnlyHint = true`: they write only a download file. `put_profile_settings` refuses a
+`machineType` change; the app does that change.
+
 ## 6. Wave 3
 
 ### A5: `feat/mcp-android`
