@@ -314,6 +314,8 @@ val testProject = registerDomainTest(
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("projectSources")
 }
 
+// Each test class of the two screen tasks below runs on its own fork. The long tests are in
+// separate classes (ScreensOpen*, Screenshot*ValidationTest), so that the forks share the work.
 val uiRuntime = configurations.testRuntimeClasspath
 val uiHelperClasses = listOf(
     "org/superdro/validation/ui/AppGraph*",
@@ -330,10 +332,8 @@ val uiHelperClasses = listOf(
 val testUi = registerDomainTest(
     taskName = "testUi",
     classIncludes = listOf("org/superdro/validation/ui/**", "org/superdro/validation/Traceability*"),
-    classExcludes = listOf(
-        "org/superdro/validation/ui/ScreensValidationTest*",
-        "org/superdro/validation/ui/ScreenshotValidationTest*",
-    ),
+    // The screen table tests (Screens*) and the screenshot tests (Screenshot*) have their own tasks.
+    classExcludes = listOf("org/superdro/validation/ui/Screens*"),
     runtimeClasspath = uiRuntime.get(),
 ) {
     inputs.files(
@@ -349,9 +349,12 @@ val testUi = registerDomainTest(
 
 val testUiScreens = registerDomainTest(
     taskName = "testUiScreens",
-    classIncludes = listOf("org/superdro/validation/ui/ScreensValidationTest*") + uiHelperClasses,
+    classIncludes = listOf(
+        "org/superdro/validation/ui/ScreensValidationTest*",
+        "org/superdro/validation/ui/ScreensOpen*",
+        "org/superdro/validation/ui/ScreensEntries*",
+    ) + uiHelperClasses,
     runtimeClasspath = uiRuntime.get(),
-    forks = 1,
 ) {
     inputs.files(
         fileTree(root) { include("core/resources/src/commonMain/composeResources/**") },
@@ -360,9 +363,8 @@ val testUiScreens = registerDomainTest(
 
 val testUiScreenshots = registerDomainTest(
     taskName = "testUiScreenshots",
-    classIncludes = listOf("org/superdro/validation/ui/ScreenshotValidationTest*") + uiHelperClasses,
+    classIncludes = listOf("org/superdro/validation/ui/Screenshot*") + uiHelperClasses,
     runtimeClasspath = uiRuntime.get(),
-    forks = 1,
 ) {
     inputs.files(
         fileTree(root) { include("core/resources/src/commonMain/composeResources/**") },

@@ -30,8 +30,9 @@ object ScreenshotRenderer {
 
     /**
      * Draws [content] in a window of [widthDp] × [heightDp] at [density] and writes
-     * `<name>.png`. The function draws [frames] frames with a short wait between them, so that the
-     * fonts and the strings of the Compose resources can load.
+     * `<name>.png`. The function draws frames with a short wait between them, so that the fonts
+     * and the strings of the Compose resources can load. It stops after [QUIET_FRAMES] frames in
+     * a row with no invalidation, or after [frames] frames.
      *
      * @return The PNG file.
      */
@@ -50,7 +51,11 @@ object ScreenshotRenderer {
         return file
     }
 
-    /** Draws [content] and gives the last frame as an image. */
+    /**
+     * Draws [content] and gives the last frame as an image. A resource load runs on a different
+     * thread, and the scene has no invalidation while the load runs. Thus the function stops only
+     * after [QUIET_FRAMES] frames in a row with no invalidation. [frames] is the upper limit.
+     */
     fun renderImage(
         widthDp: Int = 1280,
         heightDp: Int = 800,
@@ -66,9 +71,12 @@ object ScreenshotRenderer {
         )
         try {
             var image = scene.render(0L)
+            var quietFrames = 0
             for (frame in 1..frames) {
                 Thread.sleep(FRAME_WAIT_MS)
+                quietFrames = if (scene.hasInvalidations()) 0 else quietFrames + 1
                 image = scene.render(frame * FRAME_NANOS)
+                if (quietFrames >= QUIET_FRAMES) break
             }
             return image
         } finally {
@@ -78,4 +86,7 @@ object ScreenshotRenderer {
 
     private const val FRAME_WAIT_MS = 25L
     private const val FRAME_NANOS = 16_000_000L
+
+    /** The number of frames with no invalidation that ends a render. */
+    private const val QUIET_FRAMES = 4
 }

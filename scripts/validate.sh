@@ -3,6 +3,10 @@
 # Usage:
 #   scripts/validate.sh            # release script tests, composite tests, and validateJvm
 #   scripts/validate.sh --android  # also runs validateAndroid
+#   scripts/validate.sh --rerun    # runs each test task again, also with a cached result
+#
+# The test tasks declare their inputs, so a cached test result is as valid as a new run. Thus the
+# default run uses the build cache, and only the tests of a changed module run again.
 
 set -euo pipefail
 
@@ -10,19 +14,19 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 RUN_ANDROID=false
-RERUN_FLAG="-PrerunTests=true"
+RERUN_FLAG=""
 
 for arg in "$@"; do
     case "$arg" in
         --android)
             RUN_ANDROID=true
             ;;
-        --cached)
-            RERUN_FLAG=""
+        --rerun)
+            RERUN_FLAG="-PrerunTests=true"
             ;;
         *)
             echo "Unknown option: $arg" >&2
-            echo "Usage: scripts/validate.sh [--android] [--cached]" >&2
+            echo "Usage: scripts/validate.sh [--android] [--rerun]" >&2
             exit 2
             ;;
     esac

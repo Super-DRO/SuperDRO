@@ -103,7 +103,10 @@ git describe --tags --match "v[0-9]*.[0-9]*.[0-9]*" --always --dirty
 
 The `ValueSource` keeps the configuration cache valid. `--match` makes git use only release tags.
 A tag of a different form on `main` does not change the version. The root `build.gradle.kts` sets
-the result on `allprojects`. `parseGitDescribe()` changes the `git describe` output as follows:
+the result on the root project only. The two Android apps, the desktop package, and
+`core:app-version` read `rootProject.version`. A library module has no version: the version
+changes at each commit, and it is an input of the test compile and of the lint analysis of a
+module. `parseGitDescribe()` changes the `git describe` output as follows:
 
 | `git describe` output | Version | Build type |
 |---|---|---|
@@ -121,7 +124,7 @@ metadata. The resolver changes a `+` in that part to a `.`.
 - **Android.** `versionName` is the full version, with the marker. `versionCode` is
   `projectVersionCode(version)` (section 3). The SuperDRO app and the adapter probe have the same
   values.
-- **Desktop.** `packageVersion` is `packagingVersion(project.version)`. This function removes all
+- **Desktop.** `packageVersion` is `packagingVersion(rootProject.version)`. This function removes all
   text from the first `-`, so `26.42.1-dev+7-gabc123` becomes `26.42.1`. The function is
   necessary, because jpackage refuses a suffix when Gradle configures the project. The DMG and MSI
   tools also refuse the major part 0. Thus a tree with no release tag packages as `1.0.0`.

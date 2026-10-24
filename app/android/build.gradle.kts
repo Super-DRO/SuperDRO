@@ -19,9 +19,9 @@ android {
         applicationId = "org.superdro"
         minSdk = AndroidSdk.MIN
         targetSdk = AndroidSdk.TARGET
-        // From the project version (composite, resolveProjectVersion()).
-        versionCode = projectVersionCode(project.version.toString())
-        versionName = project.version.toString()
+        // From the version of the root project (composite, resolveProjectVersion()).
+        versionCode = projectVersionCode(rootProject.version.toString())
+        versionName = rootProject.version.toString()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
