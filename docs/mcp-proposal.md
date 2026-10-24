@@ -19,9 +19,8 @@ tool list only. The final list comes with that request.
    the foreground service, and the permission flow of the data output (section 5).
 5. **No new Google library.** The server uses kotlinx-serialization and the socket code of the app.
    Section 4.3 gives the decision on the official Kotlin SDK.
-6. **LAN first, VPN second, relay later.** Phase 1 serves the local network. A VPN (for example
-   Tailscale) extends it to remote devices with no new code. A relay for cloud clients is a separate
-   proposal (section 8).
+6. **LAN first, relay later.** Phase 1 serves the local network. The server does not offer a VPN
+   interface. A relay for remote and cloud clients is a separate proposal (section 8).
 
 ## 2. Research: the MCP protocol
 
@@ -94,7 +93,7 @@ the stateless semantics when a request carries the modern `_meta` protocol versi
 
 ### 2.5 Reach of the clients
 
-| Client | Where it runs | Can reach a LAN or VPN address |
+| Client | Where it runs | Can reach a LAN address |
 |---|---|---|
 | Claude Code (CLI, IDE) | The computer of the user | Yes |
 | Cursor, VS Code Copilot | The computer of the user | Yes |
@@ -118,10 +117,9 @@ The facts come from `developer.android.com`, `source.android.com`, and the AOSP 
   API 36 or lower gets an implicit grant. SuperDRO already declares the permission, asks for it
   before a TCP link or a data output start (`OutputRunRule.localNetworkRequest`), and has the rule
   in `NetworkRules`.
-- "Local network" means a broadcast-capable interface: Wi-Fi, Ethernet, USB Ethernet. A VPN
-  interface and the cellular network are not local networks. Thus a bind on the VPN interface
-  (`BindInterface.Vpn`) does not need `ACCESS_LOCAL_NETWORK`. This is an inference from the
-  definition, not verified on a device.
+- "Local network" means a broadcast-capable interface: Wi-Fi, Ethernet, USB Ethernet. The MCP
+  server binds only to these interfaces and to localhost. Thus each LAN start on API 37 needs the
+  permission.
 - The outbound cleartext policy (`usesCleartextTraffic`) does not apply to a server socket.
 
 ### 3.2 Background limits
@@ -156,19 +154,18 @@ The facts come from `developer.android.com`, `source.android.com`, and the AOSP 
 - The MCP clients are Node.js (Claude Code), Python, and IDE processes. They trust the system CA
   store and a custom CA through `NODE_EXTRA_CA_CERTS` or an httpx context. None of them supports
   TLS with a pre-shared key. Thus the PSK mode of the data output (`PskTlsSecurity`) does not
-  protect the MCP link directly. It can protect a local bridge in a later phase (section 8.3).
+  protect the MCP link directly. It can protect a local bridge in a later phase (section 8.2).
 - A self-signed certificate for an IP address breaks when the IP changes, and each client needs a
   trust step. Similar LAN tools (Home Assistant, OctoPrint) serve plain HTTP by default and leave
-  TLS to a reverse proxy or a VPN.
+  TLS to a reverse proxy.
 - Decision: phase 1 serves plain HTTP with a bearer token on the LAN, after the same kind of warning
-  as the plain text mode of the data output. A VPN gives encryption for a remote link. An
-  app-generated certificate is an option for phase 3.
+  as the plain text mode of the data output. An app-generated certificate and the PSK bridge
+  (section 8.2) are the encryption options for phase 3.
 
 ### 3.5 Remote access
 
 | Option | Inbound to the tablet | Notes |
 |---|---|---|
-| Tailscale, ZeroTier, WireGuard app on the tablet | Yes, through the VPN interface | One VPN at a time on Android. No new code: `BindInterface.Vpn` exists. Not gated by `ACCESS_LOCAL_NETWORK`. Inbound delivery to a socket of another app is strong community evidence, not an official statement. |
 | Cloudflare Tunnel, ngrok | No Android daemon or SDK | Not an in-app option. |
 | Relay with a device-initiated WebSocket | Yes, with no inbound port | The tablet connects out to a relay that the user hosts. The relay terminates Streamable HTTP for the client. The specification has no reverse transport, so the relay is custom. Section 8. |
 
@@ -277,12 +274,11 @@ Phase 1 is plain HTTP on the LAN. The settings screen shows a warning before the
 the pattern of `data_output_warning_plain`:
 
 > Use only on trusted networks. The MCP link has no encryption. Each device on the network can read
-> the machine positions and, with the token, can call the tools that you turned on. Use a VPN for a
-> remote link.
+> the machine positions and, with the token, can call the tools that you turned on.
 
 The config has `plainHttpConfirmed`, and the server does not start while it is false. The UI sets
-it to false when the user selects a different bind interface than `Localhost` or `Vpn` after a
-confirmation on another interface.
+it to false when the user selects a different LAN interface after a confirmation on another
+interface. The interface `Localhost` needs no confirmation.
 
 ## 5. Reuse of the data output parts
 
@@ -291,8 +287,8 @@ confirmation on another interface.
 | `ListenSocketFactory`, `ListenSocket`, `ByteLink`, `systemListenSockets` | `core:data-output` | The sockets of `HttpListener`. |
 | `PortRegistry` | `core:data-output` | One owner for each port. The MCP server and a data output cannot share a port. |
 | `secureRandomBytes` | `core:data-output` | The token. |
-| `BindInterface`, `NetworkInterfaces`, `selectInterfaces` | `core:model`, `core:connection` | The bind hosts, with the same choices: Wi-Fi (default), Localhost, VPN, USB Ethernet, All. |
-| `OutputRunRule.localNetworkRequest` pattern | `core:data-output` | `McpRules.localNetworkRequest`: no request for Localhost or VPN. |
+| `BindInterface`, `NetworkInterfaces`, `selectInterfaces` | `core:model`, `core:connection` | The bind hosts. The MCP server offers Wi-Fi (default), Localhost, and USB Ethernet. It does not offer `Vpn` or `All`; `McpRules` rejects them. |
+| `OutputRunRule.localNetworkRequest` pattern | `core:data-output` | `McpRules.localNetworkRequest`: no request for Localhost. |
 | `SecretStore`, `DataOutputSecrets` pattern | `core:util` | `McpSecrets` with `mcp.token`. |
 | `ConnectionService`, `KeepAliveController` | `platform:android:service`, `core:connection` | The process stays with an online machine. Phase 2 adds an "MCP server on" line to `KeepAliveSummary` so that the service also runs with no online machine. |
 | `DataOutputRunner`, `DataOutputChipPresenter`, `DataOutputScreen` | `core:ui` | The patterns of `McpRunner`, `McpChipPresenter`, `McpSettingsScreen`. |
@@ -312,7 +308,7 @@ types to `core:connection` or a new `core:net`. The proposal does not need that 
 |---|---|---|
 | `enabled` | `false` | The master switch. Off: no server, no socket, no token use. |
 | `activation` | `OnDemand` | `OnDemand`: the server runs after a tap on the status chip. `AlwaysOn`: the server runs while the app runs. |
-| `bindInterface` | `WiFi` | The same enum as the data output. |
+| `bindInterface` | `WiFi` | The same enum as the data output, limited to `WiFi`, `Localhost`, and `UsbEthernet`. |
 | `port` | `5810` | 1024 to 65535. The data output has 5800. |
 | `plainHttpConfirmed` | `false` | The warning of section 4.6 was confirmed for a LAN interface. |
 | `access` | `ReadOnly` | `ReadOnly`: only read tools and resources. `ReadAndControl`: also the control tools. |
@@ -331,7 +327,7 @@ The server runs only when all of these are true:
 
 1. `enabled` is true.
 2. The activation is `AlwaysOn`, or the user tapped the chip (`OnDemand`).
-3. The bind interface is `Localhost` or `Vpn`, or `plainHttpConfirmed` is true.
+3. The bind interface is `Localhost`, or `plainHttpConfirmed` is true.
 4. On API 37 and higher with a LAN interface: `ACCESS_LOCAL_NETWORK` is granted. The start asks
    for it with the request bus, as the data output does.
 5. The token exists. The first start makes it.
@@ -468,20 +464,14 @@ service type is not a registered IANA name at the time of the research. The regi
 
 ## 8. Remote devices
 
-### 8.1 Phase 1: VPN
+Phase 1 and phase 2 serve the local network only. A remote device gets access through one of the
+two options below. Both are phase 3 and need their own proposal.
 
-The user installs Tailscale, ZeroTier, or WireGuard on the tablet and on the computer of the agent.
-The user selects the bind interface `VPN` in the MCP settings. The server then listens on the VPN
-address only, with no `ACCESS_LOCAL_NETWORK` request and no plain HTTP warning, because the VPN
-encrypts the link. The documentation of the app gives this path as the recommended remote path.
-
-The open point: the delivery of inbound tailnet traffic to a socket of another app has strong
-community evidence and no official statement. The spike tests it (section 9, step 4).
-
-### 8.2 Phase 3 option: a relay for the cloud clients
+### 8.1 Phase 3 option: a relay for the remote and cloud clients
 
 The cloud clients (Claude.ai, Claude Desktop connectors, mobile) reach only a public HTTPS URL. A
-relay solves this with no inbound port on the tablet:
+remote Claude Code also needs a reachable address. A relay solves both with no inbound port on the
+tablet:
 
 ```mermaid
 sequenceDiagram
@@ -499,12 +489,11 @@ The relay terminates Streamable HTTP and OAuth for the client, and forwards JSON
 over the WebSocket. The tablet code reuses `McpProtocol` with a different transport. The relay is
 a separate program and a separate proposal. It is not part of the app.
 
-### 8.3 Phase 3 option: a PSK bridge
+### 8.2 Phase 3 option: a PSK bridge
 
 A small stdio program on the computer of the agent connects to the tablet with TLS 1.3 PSK
 (the `PskTlsSecurity` mode of the data output) and forwards stdio JSON-RPC. The client then speaks
-stdio and gets an encrypted LAN link with no certificate. This option is for a user who cannot use
-a VPN. It is the lowest priority.
+stdio and gets an encrypted LAN link with no certificate. It is the lowest priority.
 
 ## 9. Spike and phases
 
@@ -519,9 +508,8 @@ a VPN. It is the lowest priority.
    Claude Code on the host connects to the emulator address through `adb forward`, then on a real
    LAN from a second computer. This step verifies the open point of section 2.3: a plain
    `http://<LAN IP>` URL with a static header.
-4. Tailscale on a test tablet: the bind interface `VPN`, a connection from a remote computer.
 
-Each step writes its result to this document, in a new section 10.
+Each step writes its result to this document, in a new section 12.
 
 ### 9.2 Phase 1: read-only server on the LAN
 
@@ -549,16 +537,14 @@ Each step writes its result to this document, in a new section 10.
 
 ### 9.4 Phase 3: remote
 
-- The VPN documentation and the tested result of the spike.
-- The relay proposal (section 8.2) as a separate document.
+- The relay proposal (section 8.1) as a separate document.
 - Options: an app-generated certificate, the PSK bridge.
 
 ## 10. Open points for a device test
 
 1. Claude Code with a plain `http://<LAN IP>:5810/mcp` URL and a static bearer header.
-2. Inbound tailnet traffic to the SuperDRO socket on the VPN interface of the tablet.
-3. `NsdManager.registerService()` and `ACCESS_LOCAL_NETWORK` on API 37.
-4. The behavior of a Kotlin SDK legacy server for a modern first request (only relevant for the
+2. `NsdManager.registerService()` and `ACCESS_LOCAL_NETWORK` on API 37.
+3. The behavior of a Kotlin SDK legacy server for a modern first request (only relevant for the
    fallback of section 4.3).
 5. The Wi-Fi power save with the screen on and no `WifiLock` on the test tablet.
 
@@ -581,5 +567,4 @@ Each step writes its result to this document, in a new section 10.
   `https://developer.android.com/develop/background-work/services/fgs/timeout`.
 - Wi-Fi low latency: `https://source.android.com/docs/core/connect/wifi-low-latency`.
 - NsdManager: `https://developer.android.com/reference/android/net/nsd/NsdManager`, AOSP `NsdService.java`.
-- Tailscale: `https://tailscale.com/kb/1072/incoming-connections`, `https://tailscale.com/kb/1223/funnel`.
 - Ktor engines: `https://ktor.io/docs/server-engines.html`, `https://ktor.io/docs/faq.html`.
