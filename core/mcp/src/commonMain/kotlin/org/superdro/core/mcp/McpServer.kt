@@ -92,8 +92,11 @@ enum class McpCallOutcome { Ok, Error, Refused, Timeout, Unauthorized }
  * One call for the audit log.
  *
  * @property atMs The start of the call on the clock of the server.
+ * @property client The caller. A request outside `/mcp`, or a request with no valid token, has
+ *   no era: the record then names [McpEra.Legacy].
  * @property tool The tool of a `tools/call`, or null.
- * @property method The JSON-RPC method, or the HTTP method and path for a request outside `/mcp`.
+ * @property method The JSON-RPC method, or the HTTP method and path for a request outside `/mcp`
+ *   (`POST /upload`, `GET /download/<fileId>`) and for a request with no valid token.
  * @property argumentsJson The arguments of a write tool, or null. A read tool is logged with its name only.
  */
 data class McpCallRecord(
