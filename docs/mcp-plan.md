@@ -269,6 +269,33 @@ class McpSecrets(store: SecretStore) {
 }
 ```
 
+### 3.6a The `core:mcp` contract as built by A1
+
+The names of sections 3.2 to 3.6 exist as written. The differences and the additions:
+
+- `tools/list`, `server/discover`, `resources/list`, and `resources/templates/list` carry
+  `ttlMs: 60000` and `cacheScope: "private"` in the modern era (the specification allows only
+  `public` or `private`). `resources/read` carries `ttlMs: 0`.
+- `McpServer` has the extra optional parameters `ports: PortRegistry? = null` (the claim with the
+  owner `"mcp"`), `appVersion: String = "dev"`, and `retryDelayMs = 5000`. `onCall` and `onError`
+  default to `{}`. Use named arguments.
+- `McpCallRecord.atMs` is on the monotonic `Clock` of the server. A3 writes the wall clock time
+  of the `onCall` moment into the audit table, not `atMs`.
+- `McpToolSpec` checks its name in `init`: 1 to 64 characters of `a-z`, `0-9`, and `_`.
+  `McpResourceSpec.matches(uri)` and `variables(uri)` serve a template. `ListToolSet(tools,
+  resources)` is a ready `McpToolSet`.
+- `GateTexts.REFUSED`, `GateTexts.TIMEOUT`, and `GateDecision.toolError()` give the standard
+  `ToolResult.Error` of a refused or timed out gate. Use them, so the server records
+  `McpCallOutcome.Refused` and `Timeout`.
+- `McpLimits` also has `AUTH_FAILURES = 10`, `AUTH_LOCK_MS = 60000`, `HEADER_BYTES` (16 KiB), and
+  `CLIENT_AGE_MS = 60000`. A locked address gets 429.
+- `McpConfig` has the companion constants `MIN_PORT`, `MAX_PORT`, `DEFAULT_LIVE_RATE_HZ`,
+  `MIN_LIVE_RATE_HZ`, and `MAX_LIVE_RATE_HZ`.
+- `McpSecrets(store, random = ::secureRandomBytes)`.
+- `Base64Text` (URL-safe token text) is in `core:mcp`.
+- A `Content-Type` other than `application/json` on `/mcp` gives 415. A body that is not JSON-RPC
+  gives 400 with `-32700` or `-32600`.
+
 ### 3.7 `core:store` additions (track A2; used by A3, A4)
 
 ```kotlin
