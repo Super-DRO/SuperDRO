@@ -16,12 +16,16 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                // The version of the app in the MCP server info (McpDiModule.kt).
+                implementation(projects.core.appVersion)
                 // The camera UI module binds the camera presenters with the UvcCameraBackend.
                 implementation(projects.core.camera)
                 implementation(projects.core.connection)
                 // The one DataOutputPlatform and the runner of the outputs (DataOutputDiModule.kt).
                 implementation(projects.core.dataOutput)
                 implementation(projects.core.debugAdapter)
+                // The MCP server: the secrets, the gate, the file store, and the tool sets (McpDiModule.kt).
+                implementation(projects.core.mcp)
                 implementation(projects.core.model)
                 implementation(projects.core.readout)
                 implementation(projects.core.store)
