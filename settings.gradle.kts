@@ -96,6 +96,7 @@ include(
     ":core:drawing",
     ":core:fake-adapter",
     ":core:functions",
+    ":core:mcp",
     ":core:model",
     ":core:protocol",
     ":core:readout",

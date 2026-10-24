@@ -59,6 +59,7 @@ The transport modules are an exception: `core:connection-ble` has the package `o
 | `core:connection-ble` | The BLE transport with BlueFalcon (the UI does not offer it yet) |
 | `core:connection-tcp` | The Wi-Fi TCP transport with Ktor sockets |
 | `core:data-output` | The live data output: TCP server, PSK mode, MQTT client |
+| `core:mcp` | The MCP server: JSON-RPC, Streamable HTTP in two eras, the tool contract, the rules, the token |
 | `core:drawing` | DXF import and export, drawings in nm. No coroutines, no Compose. |
 | `core:camera` | The models and the rules of the USB camera |
 | `core:debug-adapter` | The `DebugAdapter` seam and `NoDebugAdapter` |

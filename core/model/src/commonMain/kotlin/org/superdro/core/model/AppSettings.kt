@@ -138,6 +138,8 @@ data class AppSettings(
     val availableReleaseUrl: String? = null,
     /** The last release version whose notification the user already saw. */
     val notifiedReleaseVersion: String? = null,
+    /** The MCP server. Off by default. */
+    val mcp: McpConfig = McpConfig(),
 ) {
     companion object {
         const val SCHEMA_VERSION: Int = 1
