@@ -1,0 +1,18 @@
+-- Schema version 3 to version 4.
+--
+-- The audit log of the MCP server (McpCall.sq). A row of an older version has no MCP data, so
+-- the step only adds the table and its index.
+CREATE TABLE mcp_call (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    at_ms INTEGER NOT NULL,
+    client TEXT NOT NULL,
+    era TEXT NOT NULL,
+    tool TEXT,
+    method TEXT NOT NULL,
+    arguments_json TEXT,
+    result TEXT NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    previous_json TEXT
+);
+
+CREATE INDEX mcp_call_at_ms ON mcp_call(at_ms);
