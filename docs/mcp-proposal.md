@@ -19,8 +19,9 @@ tool list only. The final list comes with that request.
    the foreground service, and the permission flow of the data output (section 5).
 5. **No new Google library.** The server uses kotlinx-serialization and the socket code of the app.
    Section 4.3 gives the decision on the official Kotlin SDK.
-6. **LAN first, relay later.** Phase 1 serves the local network. The server does not offer a VPN
-   interface. A relay for remote and cloud clients is a separate proposal (section 8).
+6. **Local network only.** The server serves the devices on the same network as the tablet, for
+   example a workstation in another room. Access from outside the network is the responsibility of
+   the user and is out of scope (section 8).
 
 ## 2. Research: the MCP protocol
 
@@ -97,10 +98,10 @@ the stateless semantics when a request carries the modern `_meta` protocol versi
 |---|---|---|
 | Claude Code (CLI, IDE) | The computer of the user | Yes |
 | Cursor, VS Code Copilot | The computer of the user | Yes |
-| Claude.ai, Claude Desktop connectors, Cowork, mobile | The Anthropic cloud (`160.79.104.0/21`) | No. The server needs a public HTTPS URL. |
+| Claude.ai, Claude Desktop connectors, Cowork, mobile | The Anthropic cloud (`160.79.104.0/21`) | No. Out of scope (section 8). |
 | Claude Desktop `claude_desktop_config.json` | The computer of the user | stdio servers only. An `mcp-remote` bridge gives HTTP. |
 
-Thus phase 1 serves Claude Code and the IDE clients. The cloud clients need a relay (section 8).
+Thus the server serves Claude Code and the IDE clients on the network of the tablet.
 
 ## 3. Research: Android networking
 
@@ -154,20 +155,20 @@ The facts come from `developer.android.com`, `source.android.com`, and the AOSP 
 - The MCP clients are Node.js (Claude Code), Python, and IDE processes. They trust the system CA
   store and a custom CA through `NODE_EXTRA_CA_CERTS` or an httpx context. None of them supports
   TLS with a pre-shared key. Thus the PSK mode of the data output (`PskTlsSecurity`) does not
-  protect the MCP link directly. It can protect a local bridge in a later phase (section 8.2).
+  protect the MCP link directly. It can protect a local bridge in a later phase (section 8.3).
 - A self-signed certificate for an IP address breaks when the IP changes, and each client needs a
   trust step. Similar LAN tools (Home Assistant, OctoPrint) serve plain HTTP by default and leave
   TLS to a reverse proxy.
 - Decision: phase 1 serves plain HTTP with a bearer token on the LAN, after the same kind of warning
   as the plain text mode of the data output. An app-generated certificate and the PSK bridge
-  (section 8.2) are the encryption options for phase 3.
+  (section 8.3) are the encryption options for phase 3.
 
-### 3.5 Remote access
+### 3.5 Access from outside the network
 
-| Option | Inbound to the tablet | Notes |
-|---|---|---|
-| Cloudflare Tunnel, ngrok | No Android daemon or SDK | Not an in-app option. |
-| Relay with a device-initiated WebSocket | Yes, with no inbound port | The tablet connects out to a relay that the user hosts. The relay terminates Streamable HTTP for the client. The specification has no reverse transport, so the relay is custom. Section 8. |
+The research looked at tunnels (Cloudflare Tunnel, ngrok), at a relay with a device-initiated
+WebSocket, and at a VPN on the tablet. None of them is part of this proposal. The user who needs
+access from outside the network selects an own solution, and the solution must make the client a
+device on the local network of the tablet (section 8).
 
 ### 3.6 Libraries
 
@@ -462,34 +463,24 @@ Phase 2 option: `NsdManager` registration of `_mcp._tcp` with the TXT record `pa
 service type is not a registered IANA name at the time of the research. The registration needs
 `CHANGE_WIFI_MULTICAST_STATE` and a `MulticastLock` on Android 13 and lower.
 
-## 8. Remote devices
+## 8. Other devices on the network
 
-Phase 1 and phase 2 serve the local network only. A remote device gets access through one of the
-two options below. Both are phase 3 and need their own proposal.
+### 8.1 Scope
 
-### 8.1 Phase 3 option: a relay for the remote and cloud clients
+The client of the server is a device on the same network as the tablet: a workstation in another
+room, a laptop in the shop, a server in the house. Phase 1 serves these devices with no extra
+part. The server binds to the Wi-Fi interface, or to USB Ethernet, and the client connects to the
+shown URL.
 
-The cloud clients (Claude.ai, Claude Desktop connectors, mobile) reach only a public HTTPS URL. A
-remote Claude Code also needs a reachable address. A relay solves both with no inbound port on the
-tablet:
+### 8.2 Outside the network
 
-```mermaid
-sequenceDiagram
-    participant T as Tablet (SuperDRO)
-    participant R as Relay (user hosted, public HTTPS)
-    participant C as Claude.ai connector
-    T->>R: WebSocket connect (outbound), bearer token
-    C->>R: POST /mcp (OAuth or static header)
-    R->>T: JSON-RPC request over the WebSocket
-    T->>R: JSON-RPC response
-    R->>C: HTTP response (JSON or SSE)
-```
+Access from outside the network is out of scope. The app has no relay, no tunnel, and no VPN
+interface. The user who needs such access selects an own security and VPN solution. The solution
+must make the client a device on the local network of the tablet, for example a VPN that ends at
+the router of the shop. The server then sees a local client and needs no change. The app
+documentation states this scope in one paragraph and gives no instructions for a VPN product.
 
-The relay terminates Streamable HTTP and OAuth for the client, and forwards JSON-RPC to the tablet
-over the WebSocket. The tablet code reuses `McpProtocol` with a different transport. The relay is
-a separate program and a separate proposal. It is not part of the app.
-
-### 8.2 Phase 3 option: a PSK bridge
+### 8.3 Phase 3 option: a PSK bridge
 
 A small stdio program on the computer of the agent connects to the tablet with TLS 1.3 PSK
 (the `PskTlsSecurity` mode of the data output) and forwards stdio JSON-RPC. The client then speaks
@@ -535,10 +526,10 @@ Each step writes its result to this document, in a new section 12.
 - The `WifiLock` in low-latency mode while the server runs and the screen is on.
 - Option: `NsdManager` registration.
 
-### 9.4 Phase 3: remote
+### 9.4 Phase 3: encryption options
 
-- The relay proposal (section 8.1) as a separate document.
-- Options: an app-generated certificate, the PSK bridge.
+- An app-generated certificate for HTTPS on the LAN, with the trust step on each client.
+- The PSK bridge (section 8.3).
 
 ## 10. Open points for a device test
 
