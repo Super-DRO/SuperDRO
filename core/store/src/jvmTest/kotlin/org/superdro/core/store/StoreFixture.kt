@@ -11,6 +11,7 @@ import org.superdro.core.store.repository.AdapterRepository
 import org.superdro.core.store.repository.CameraRepository
 import org.superdro.core.store.repository.DrawingRepository
 import org.superdro.core.store.repository.MachineRepository
+import org.superdro.core.store.repository.McpCallRepository
 import org.superdro.core.store.repository.MeasurementLogRepository
 import org.superdro.core.store.repository.ProbeRepository
 import org.superdro.core.store.repository.ToolRepository
@@ -41,6 +42,7 @@ class StoreFixture(scope: TestScope, val driver: SqlDriver = inMemoryDriver()) {
     val drawings = DrawingRepository(writer)
     val logs = MeasurementLogRepository(writer, json, clock)
     val cameras = CameraRepository(writer)
+    val mcpCalls = McpCallRepository(writer)
 
     /** The number of rows of [table]. */
     fun count(table: String): Long = driver.executeQuery(

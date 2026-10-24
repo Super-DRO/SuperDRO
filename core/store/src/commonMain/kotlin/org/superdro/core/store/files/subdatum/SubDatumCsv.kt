@@ -10,7 +10,9 @@ import org.superdro.core.model.Guide
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
 import org.superdro.core.model.SubDatum
+import org.superdro.core.model.Units
 import org.superdro.core.model.newId
+import org.superdro.core.store.files.CsvRow
 import org.superdro.core.store.files.ExportContext
 import org.superdro.core.store.files.ExportFile
 import org.superdro.core.store.files.ExportFileNames
@@ -20,6 +22,7 @@ import org.superdro.core.store.files.ImportOperation
 import org.superdro.core.store.files.ImportPreview
 import org.superdro.core.store.files.ImportProblem
 import org.superdro.core.store.files.ImportReport
+import org.superdro.core.store.files.ImportRow
 import org.superdro.core.store.files.ImportText
 import org.superdro.core.store.files.MachineNames
 import org.superdro.core.store.files.MessageKey
@@ -28,19 +31,23 @@ import org.superdro.core.store.files.RowAction
 import org.superdro.core.store.files.Severity
 import org.superdro.core.store.files.csv.CsvMetadata
 import org.superdro.core.store.files.csv.CsvNumbers
-import org.superdro.core.store.files.csv.CsvRecord
 import org.superdro.core.store.files.csv.CsvTable
 import org.superdro.core.store.files.csv.CsvWriter
 import org.superdro.core.store.files.hasError
 
 /** The columns of the sub-datum CSV file. */
 object SubDatumColumns {
+    /** The stored ID of a point. Only a JSON source gives it. */
+    const val ID = "id"
     const val NAME = "name"
     const val NOTE = "note"
     const val TAGS = "tags"
     const val X = "x"
     const val Y = "y"
     const val Z = "z"
+
+    /** The angle of a point, in degrees. Only a JSON source gives it. */
+    const val A = "a"
 
     /** The export header `name,note,tags,x,y,z`: always six columns. */
     val HEADER: List<String> = listOf(NAME, NOTE, TAGS, X, Y, Z)
@@ -81,12 +88,18 @@ sealed interface SubDatumItem {
     data class Line(val guide: Guide, val toleranceUm: Double) : SubDatumItem
 }
 
-/** One row of the file. [item] is null when the row has an error. */
+/**
+ * One row of the file. [item] is null when the row has an error.
+ *
+ * @property id The `id` text of the row, or an empty text. [ImportOperation.UpdateMatching]
+ *   matches it with a stored point.
+ */
 data class SubDatumRow(
     val row: Int,
     val name: String,
     val item: SubDatumItem?,
     val problems: List<ImportProblem>,
+    val id: String = "",
 )
 
 /**
@@ -134,6 +147,7 @@ class SubDatumImportPreview internal constructor(
     fun plan(operation: ImportOperation = defaultOperation ?: ImportOperation.AddAsNew): SubDatumImportPlan {
         require(!usable || operation in operations) { "The operation $operation is not available." }
         val time = now()
+        if (operation == ImportOperation.UpdateMatching) return planUpdateMatching(time)
         val previewRows = mutableListOf<PreviewRow<SubDatumItem>>()
         val add = mutableListOf<SubDatum>()
         val updates = LinkedHashMap<String, SubDatum>()
@@ -203,6 +217,68 @@ class SubDatumImportPreview internal constructor(
                 }
             }
         }
+        return planOf(operation, previewRows, add, updates.values.toList(), addGuides)
+    }
+
+    /**
+     * The plan of [ImportOperation.UpdateMatching]: a point row whose `id` is a stored point
+     * updates that point. Else a row with the name of a stored point updates that point. Else the
+     * row adds a point. A second row for the same stored point is an error. An update replaces
+     * the name, the note, the tags, and the coordinates, and keeps the ID, the group, and the
+     * creation time. A guide row adds a guide, unless the same guide is there.
+     */
+    private fun planUpdateMatching(time: Instant): SubDatumImportPlan {
+        val previewRows = mutableListOf<PreviewRow<SubDatumItem>>()
+        val add = mutableListOf<SubDatum>()
+        val updates = mutableListOf<SubDatum>()
+        val addGuides = mutableListOf<Guide>()
+        val matchedIds = mutableSetOf<String>()
+        rows.forEach { row ->
+            val item = row.item
+            if (item == null) {
+                previewRows += PreviewRow(row.row, row.name, RowAction.Skip, null, row.problems)
+                return@forEach
+            }
+            when (item) {
+                is SubDatumItem.Point -> {
+                    val file = item.subDatum
+                    val byId = row.id.takeIf(String::isNotEmpty)?.let { id -> context.subDatums.firstOrNull { stored -> stored.id == id } }
+                    if (byId != null && byId.id in matchedIds) {
+                        val problems = row.problems + ImportProblem.error(MessageKey.ToolDuplicateId, row.id, row = row.row)
+                        previewRows += PreviewRow(row.row, row.name, RowAction.Skip, null, problems)
+                        return@forEach
+                    }
+                    val match = byId ?: context.subDatums.firstOrNull { stored -> stored.name == file.name && stored.id !in matchedIds }
+                    if (match == null) {
+                        add += file
+                        previewRows += PreviewRow(row.row, row.name, RowAction.Add, item, row.problems)
+                    } else {
+                        matchedIds += match.id
+                        val updated = match.copy(name = file.name, note = file.note, tags = file.tags, x = file.x, y = file.y, z = file.z, a = file.a, updatedOn = time)
+                        updates += updated
+                        previewRows += PreviewRow(row.row, row.name, RowAction.Update, SubDatumItem.Point(updated, item.tolerance), row.problems)
+                    }
+                }
+                is SubDatumItem.Line -> {
+                    if (context.guides.any { guide -> SubDatumMatch.sameGuide(item, guide) }) {
+                        previewRows += PreviewRow(row.row, row.name, RowAction.AlreadyHere, item, row.problems)
+                    } else {
+                        addGuides += item.guide
+                        previewRows += PreviewRow(row.row, row.name, RowAction.Add, item, row.problems)
+                    }
+                }
+            }
+        }
+        return planOf(ImportOperation.UpdateMatching, previewRows, add, updates, addGuides)
+    }
+
+    private fun planOf(
+        operation: ImportOperation,
+        previewRows: List<PreviewRow<SubDatumItem>>,
+        add: List<SubDatum>,
+        updates: List<SubDatum>,
+        addGuides: List<Guide>,
+    ): SubDatumImportPlan {
         val preview = ImportPreview.of(previewRows, problems)
         val skippedProblems = previewRows.filter { row -> row.action == RowAction.Skip }
             .flatMap { row -> row.problems.filter { problem -> problem.severity == Severity.Error } }
@@ -210,7 +286,7 @@ class SubDatumImportPreview internal constructor(
             operation = operation,
             preview = preview,
             addSubDatums = add,
-            updateSubDatums = updates.values.toList(),
+            updateSubDatums = updates,
             addGuides = addGuides,
             deleteAll = operation == ImportOperation.ReplaceAll,
             report = ImportReport(
@@ -420,6 +496,126 @@ internal class LineGrid(private val cellUm: Double) {
 }
 
 /**
+ * The row rules that the CSV source ([SubDatumCsvImporter]) and the JSON source
+ * ([SubDatumJsonImporter]) share.
+ *
+ * @param parseNumber The expression evaluator. It gives the number of a text in the file unit,
+ *   or null.
+ */
+internal class SubDatumRowReader(
+    private val parseNumber: (String) -> Double?,
+    private val now: () -> Instant,
+    private val ids: () -> String,
+) {
+
+    /**
+     * The problems of a header that stop the import: a tool file, or a missing required column.
+     * An empty list means that the rows can be read.
+     */
+    fun headerProblems(header: Collection<String>, lathe: Boolean): List<ImportProblem> {
+        if (header.any { column -> column in SubDatumColumns.TOOL_COLUMNS }) {
+            return listOf(ImportProblem.error(MessageKey.FileWrongKind, CsvMetadata.KIND_TOOLS, CsvMetadata.KIND_SUB_DATUMS))
+        }
+        val required = if (lathe) listOf(SubDatumColumns.NAME, SubDatumColumns.X, SubDatumColumns.Z) else listOf(SubDatumColumns.NAME, SubDatumColumns.X)
+        return required.filterNot(header::contains).map { column -> ImportProblem.error(MessageKey.ColumnMissing, column) }
+    }
+
+    /** True when a lathe source has a `y` value in a row. The import ignores the value. */
+    fun hasLatheY(header: Collection<String>, rows: List<ImportRow>, lathe: Boolean): Boolean =
+        lathe && SubDatumColumns.Y in header && rows.any { row -> row.value(SubDatumColumns.Y).isNotBlank() }
+
+    /** The file problem when no row can import. */
+    fun usableProblems(rows: List<SubDatumRow>): List<ImportProblem> =
+        if (rows.none { row -> row.item != null }) listOf(ImportProblem.error(MessageKey.NothingUsable)) else emptyList()
+
+    /**
+     * The operations of a source. [updateMatching] adds [ImportOperation.UpdateMatching] first.
+     * [ownFile] puts [ImportOperation.MergeMatching] first. [ImportOperation.ReplaceAll] is not
+     * available when a row has an error.
+     */
+    fun operations(rows: List<SubDatumRow>, ownFile: Boolean, updateMatching: Boolean): List<ImportOperation> = buildList {
+        if (updateMatching) add(ImportOperation.UpdateMatching)
+        if (ownFile) {
+            add(ImportOperation.MergeMatching)
+            add(ImportOperation.AddAsNew)
+            add(ImportOperation.AddNewOnly)
+        } else {
+            add(ImportOperation.AddAsNew)
+            add(ImportOperation.AddNewOnly)
+            add(ImportOperation.MergeMatching)
+        }
+        if (rows.none { row -> row.problems.hasError() }) add(ImportOperation.ReplaceAll)
+    }
+
+    /**
+     * Reads one row. `x`, `y`, and `z` are in the file unit ([metric]). `a` is in degrees. A lathe
+     * row has no `y`. A row with the name "Guide" and one coordinate is a guide.
+     */
+    fun readRow(values: ImportRow, metric: Boolean, lathe: Boolean): SubDatumRow {
+        val row = values.row
+        val problems = mutableListOf<ImportProblem>()
+        val id = values.value(SubDatumColumns.ID).trim()
+        val name = values.value(SubDatumColumns.NAME).trim()
+        val note = values.value(SubDatumColumns.NOTE)
+        val tags = values.value(SubDatumColumns.TAGS).split(WHITESPACE).filter(String::isNotEmpty)
+        val factor = CsvNumbers.unitFactor(metric)
+
+        fun number(column: String): Pair<Double?, String> {
+            val text = values.value(column).trim()
+            if (text.isEmpty()) return null to text
+            val number = parseNumber(text)
+            if (number == null || !number.isFinite()) {
+                problems += ImportProblem.error(MessageKey.ValueNotNumber, column, text, row = row)
+                return null to text
+            }
+            return number to text
+        }
+
+        fun coordinate(column: String): Pair<Double?, Double?> {
+            val (number, text) = number(column)
+            return if (number == null) null to null else number * factor to CsvNumbers.tolerance(text, metric)
+        }
+
+        val (x, toleranceX) = coordinate(SubDatumColumns.X)
+        val (y, toleranceY) = if (lathe) null to null else coordinate(SubDatumColumns.Y)
+        val (z, toleranceZ) = coordinate(SubDatumColumns.Z)
+        val a = number(SubDatumColumns.A).first?.let { degrees -> degrees * Units.ARCSEC_PER_DEGREE }
+        val count = listOfNotNull(x, y, z).size
+
+        if (name.isEmpty()) problems += ImportProblem.error(MessageKey.NameBlank, row = row)
+        val guide = name == SubDatumColumns.GUIDE_NAME && count == 1
+        if (!problems.hasError() && !guide) {
+            when {
+                count == 0 -> problems += ImportProblem.error(MessageKey.NoCoordinate, row = row)
+                x == null -> problems += ImportProblem.error(MessageKey.ValueBlank, SubDatumColumns.X, row = row)
+                lathe && z == null -> problems += ImportProblem.error(MessageKey.ValueBlank, SubDatumColumns.Z, row = row)
+            }
+        }
+        if (problems.hasError()) return SubDatumRow(row, name, null, problems, id)
+
+        val time = now()
+        val item = if (guide) {
+            val (axis, value, tolerance) = when {
+                x != null -> Triple(AxisId.X, x, toleranceX)
+                y != null -> Triple(AxisId.Y, y, toleranceY)
+                else -> Triple(AxisId.Z, z!!, toleranceZ)
+            }
+            SubDatumItem.Line(Guide(id = ids(), axis = axis, valueUm = value, createdOn = time), tolerance ?: 0.0)
+        } else {
+            SubDatumItem.Point(
+                SubDatum(id = ids(), name = name, note = note, tags = tags, x = x, y = y, z = z, a = a, createdOn = time, updatedOn = time),
+                PointTolerance(toleranceX, toleranceY, toleranceZ),
+            )
+        }
+        return SubDatumRow(row, name, item, problems, id)
+    }
+
+    private companion object {
+        val WHITESPACE = Regex("""\s+""")
+    }
+}
+
+/**
  * The sub-datum CSV import. It reads the files of
  * TouchDRO 3.25.03 (no metadata) and the format 2 of 3.32.00, and the SuperDRO export.
  *
@@ -427,10 +623,11 @@ internal class LineGrid(private val cellUm: Double) {
  *   unit, or null.
  */
 class SubDatumCsvImporter(
-    private val parseNumber: (String) -> Double? = CsvNumbers::parsePlain,
+    parseNumber: (String) -> Double? = CsvNumbers::parsePlain,
     private val now: () -> Instant = { Clock.System.now() },
-    private val ids: () -> String = ::newId,
+    ids: () -> String = ::newId,
 ) {
+    private val reader = SubDatumRowReader(parseNumber, now, ids)
 
     /** Reads the bytes of a file. Each exception gives a problem, not a crash. */
     fun read(bytes: ByteArray, context: SubDatumImportContext): SubDatumImportPreview =
@@ -461,12 +658,8 @@ class SubDatumCsvImporter(
         if (metadata.kind != null && metadata.kind != CsvMetadata.KIND_SUB_DATUMS) {
             return refused(listOf(ImportProblem.error(MessageKey.FileWrongKind, metadata.kind, CsvMetadata.KIND_SUB_DATUMS)), context, metadata)
         }
-        if (table.header.any { column -> column in SubDatumColumns.TOOL_COLUMNS }) {
-            return refused(listOf(ImportProblem.error(MessageKey.FileWrongKind, CsvMetadata.KIND_TOOLS, CsvMetadata.KIND_SUB_DATUMS)), context, metadata)
-        }
-        val required = if (lathe) listOf(SubDatumColumns.NAME, SubDatumColumns.X, SubDatumColumns.Z) else listOf(SubDatumColumns.NAME, SubDatumColumns.X)
-        required.filterNot(table::has).forEach { column -> problems += ImportProblem.error(MessageKey.ColumnMissing, column) }
-        if (problems.isNotEmpty()) return refused(problems, context, metadata)
+        val headerProblems = reader.headerProblems(table.header, lathe)
+        if (headerProblems.isNotEmpty()) return refused(headerProblems, context, metadata)
         if (table.records.isEmpty()) return refused(listOf(ImportProblem.error(MessageKey.NoRows)), context, metadata)
 
         val metric = context.unitsOverride ?: metadata.metric ?: context.metricDefault
@@ -481,85 +674,18 @@ class SubDatumCsvImporter(
         if (fileMachine != null && fileMachine.isLathe != lathe) {
             problems += ImportProblem.warning(MessageKey.MachineMismatch, MachineNames.name(fileMachine), MachineNames.name(context.machineType))
         }
-        if (lathe && table.has(SubDatumColumns.Y) && table.records.any { record -> table.value(record, SubDatumColumns.Y).isNotBlank() }) {
-            problems += ImportProblem.warning(MessageKey.LatheYIgnored)
-        }
+        val sourceRows = table.records.map { record -> CsvRow(table, record) }
+        if (reader.hasLatheY(table.header, sourceRows, lathe)) problems += ImportProblem.warning(MessageKey.LatheYIgnored)
 
-        val rows = table.records.map { record -> readRow(table, record, metric, lathe) }
-        if (rows.none { row -> row.item != null }) problems += ImportProblem.error(MessageKey.NothingUsable)
+        val rows = sourceRows.map { values -> reader.readRow(values, metric, lathe) }
+        problems += reader.usableProblems(rows)
 
         val ownFile = metadata.source == FileSource.SuperDro && metadata.profileId == context.profileId
-        val operations = buildList {
-            if (ownFile) {
-                add(ImportOperation.MergeMatching)
-                add(ImportOperation.AddAsNew)
-                add(ImportOperation.AddNewOnly)
-            } else {
-                add(ImportOperation.AddAsNew)
-                add(ImportOperation.AddNewOnly)
-                add(ImportOperation.MergeMatching)
-            }
-            // REPLACE_ALL is not available when a row has an error.
-            if (rows.none { row -> row.problems.hasError() }) add(ImportOperation.ReplaceAll)
-        }
+        val operations = reader.operations(rows, ownFile, updateMatching = false)
         return SubDatumImportPreview(metadata, metric, problems, rows, operations, context, now)
     }
 
-    private fun readRow(table: CsvTable, record: CsvRecord, metric: Boolean, lathe: Boolean): SubDatumRow {
-        val row = record.row
-        val problems = mutableListOf<ImportProblem>()
-        val name = table.value(record, SubDatumColumns.NAME).trim()
-        val note = table.value(record, SubDatumColumns.NOTE)
-        val tags = table.value(record, SubDatumColumns.TAGS).split(WHITESPACE).filter(String::isNotEmpty)
-        val factor = CsvNumbers.unitFactor(metric)
-
-        fun coordinate(column: String): Pair<Double?, Double?> {
-            val text = table.value(record, column).trim()
-            if (text.isEmpty()) return null to null
-            val number = parseNumber(text)
-            if (number == null || !number.isFinite()) {
-                problems += ImportProblem.error(MessageKey.ValueNotNumber, column, text, row = row)
-                return null to null
-            }
-            return number * factor to CsvNumbers.tolerance(text, metric)
-        }
-
-        val (x, toleranceX) = coordinate(SubDatumColumns.X)
-        val (y, toleranceY) = if (lathe) null to null else coordinate(SubDatumColumns.Y)
-        val (z, toleranceZ) = coordinate(SubDatumColumns.Z)
-        val count = listOfNotNull(x, y, z).size
-
-        if (name.isEmpty()) problems += ImportProblem.error(MessageKey.NameBlank, row = row)
-        val guide = name == SubDatumColumns.GUIDE_NAME && count == 1
-        if (!problems.hasError() && !guide) {
-            when {
-                count == 0 -> problems += ImportProblem.error(MessageKey.NoCoordinate, row = row)
-                x == null -> problems += ImportProblem.error(MessageKey.ValueBlank, SubDatumColumns.X, row = row)
-                lathe && z == null -> problems += ImportProblem.error(MessageKey.ValueBlank, SubDatumColumns.Z, row = row)
-            }
-        }
-        if (problems.hasError()) return SubDatumRow(row, name, null, problems)
-
-        val time = now()
-        val item = if (guide) {
-            val (axis, value, tolerance) = when {
-                x != null -> Triple(AxisId.X, x, toleranceX)
-                y != null -> Triple(AxisId.Y, y, toleranceY)
-                else -> Triple(AxisId.Z, z!!, toleranceZ)
-            }
-            SubDatumItem.Line(Guide(id = ids(), axis = axis, valueUm = value, createdOn = time), tolerance ?: 0.0)
-        } else {
-            SubDatumItem.Point(
-                SubDatum(id = ids(), name = name, note = note, tags = tags, x = x, y = y, z = z, createdOn = time, updatedOn = time),
-                PointTolerance(toleranceX, toleranceY, toleranceZ),
-            )
-        }
-        return SubDatumRow(row, name, item, problems)
-    }
-
     private companion object {
-        val WHITESPACE = Regex("""\s+""")
-
         fun unitName(metric: Boolean): String = if (metric) "mm" else "inch"
     }
 }
