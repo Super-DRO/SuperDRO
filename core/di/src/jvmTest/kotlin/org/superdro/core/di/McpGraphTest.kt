@@ -12,6 +12,7 @@ import java.util.Properties
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -36,6 +37,7 @@ import org.superdro.core.mcp.McpToolSet
 import org.superdro.core.mcp.WriteGate
 import org.superdro.core.model.BindInterface
 import org.superdro.core.model.McpActivation
+import org.superdro.core.model.McpScope
 import org.superdro.core.store.StoreIOProvider
 import org.superdro.core.store.StoreIOProviderJvm
 import org.superdro.core.store.json.AppSettingsStore
@@ -108,15 +110,21 @@ class McpGraphTest {
     }
 
     @Test
-    fun theGraphBindsTheMcpPartsAsSingletonsAndTheToolSetsHoldTheReadSet() {
+    fun theGraphBindsTheMcpPartsAsSingletonsAndTheToolSetsHoldTheReadSetAndThePopulateSet() {
         val direct = di.direct
         assertSame(direct.instance<McpRunner>(), direct.instance<McpRunner>())
         assertSame(direct.instance<McpGate>(), direct.instance<WriteGate>())
         assertSame(direct.instance<McpFiles>(), direct.instance<McpFileStore>())
         val sets = direct.instance<List<McpToolSet>>(tag = MCP_TOOL_SETS)
-        assertEquals(1, sets.size)
-        assertSame(direct.instance<McpToolSet>(tag = MCP_READ_TOOL_SET), sets.single())
-        assertEquals(listOf("list_machines", "list_workspaces", "get_workspace", "list_tools", "get_profile_settings", "get_app_info"), sets.single().tools.map { tool -> tool.spec.name })
+        assertEquals(2, sets.size)
+        assertSame(direct.instance<McpToolSet>(tag = MCP_READ_TOOL_SET), sets[0])
+        assertSame(direct.instance<McpToolSet>(tag = MCP_POPULATE_TOOL_SET), sets[1])
+        assertEquals(listOf("list_machines", "list_workspaces", "get_workspace", "list_tools", "get_profile_settings", "get_app_info"), sets[0].tools.map { tool -> tool.spec.name })
+        assertEquals(setOf(McpScope.Read), sets[0].tools.map { tool -> tool.spec.scope }.toSet())
+        assertEquals(setOf(McpScope.Populate), sets[1].tools.map { tool -> tool.spec.scope }.toSet())
+        assertTrue("put_sub_datums" in sets[1].tools.map { tool -> tool.spec.name })
+        val names = sets.flatMap { set -> set.tools }.map { tool -> tool.spec.name }
+        assertEquals(names.size, names.toSet().size, "Each tool has its own name: $names")
         direct.instance<McpSettingsPresenter>().close()
         direct.instance<McpChipPresenter>().close()
     }
@@ -149,6 +157,23 @@ class McpGraphTest {
             waitUntil("The audit log has the rows") { presenter.uiState.value.audit.size >= 2 }
             assertEquals(listOf("tools/list", "POST /mcp"), presenter.uiState.value.audit.take(2).map { line -> line.name }, "A request with no valid token is logged with its method and path.")
             assertEquals(listOf("ok", "unauthorized"), presenter.uiState.value.audit.take(2).map { line -> line.result })
+
+            // The populate tools are offered only while the Populate scope is on.
+            val (readOnly, readOnlyText) = post(port, """{"jsonrpc":"2.0","id":3,"method":"tools/list"}""", token)
+            assertEquals(200, readOnly, readOnlyText)
+            assertFalse("\"put_sub_datums\"" in readOnlyText, readOnlyText)
+            presenter.onScope(McpScope.Populate, on = true)
+            presenter.onConfirmDialog()
+            waitUntil("The Populate scope is on") { McpScope.Populate in presenter.uiState.value.config.scopes }
+            val (populate, populateText) = post(port, """{"jsonrpc":"2.0","id":4,"method":"tools/list"}""", token)
+            assertEquals(200, populate, populateText)
+            assertTrue("\"put_sub_datums\"" in populateText, populateText)
+            assertTrue("\"list_machines\"" in populateText, populateText)
+            presenter.onScope(McpScope.Populate, on = false)
+            waitUntil("The Populate scope is off") { McpScope.Populate !in presenter.uiState.value.config.scopes }
+            val (readAgain, readAgainText) = post(port, """{"jsonrpc":"2.0","id":5,"method":"tools/list"}""", token)
+            assertEquals(200, readAgain, readAgainText)
+            assertFalse("\"put_sub_datums\"" in readAgainText, readAgainText)
 
             presenter.onEnabledChange(false)
             waitUntil("The switch off closes the server at once") {

@@ -30,6 +30,8 @@ import org.superdro.core.ui.mcp.McpGate
 import org.superdro.core.ui.mcp.McpRunner
 import org.superdro.core.ui.mcp.McpSettingsPresenter
 import org.superdro.core.ui.mcp.ReadToolDeps
+import org.superdro.core.ui.mcp.populate.PopulateDeps
+import org.superdro.core.ui.mcp.populate.populateToolSet
 import org.superdro.core.ui.mcp.readToolSet
 import org.superdro.core.ui.session.Connections
 
@@ -38,6 +40,9 @@ const val MCP_TOOL_SETS: String = "mcpToolSets"
 
 /** The tag of the `McpToolSet` binding of the read tools. */
 const val MCP_READ_TOOL_SET: String = "mcpReadToolSet"
+
+/** The tag of the `McpToolSet` binding of the populate tools. */
+const val MCP_POPULATE_TOOL_SET: String = "mcpPopulateToolSet"
 
 /**
  * The bindings of the MCP server: the secrets, the file store, the write gate, the audit
@@ -48,7 +53,8 @@ const val MCP_READ_TOOL_SET: String = "mcpReadToolSet"
  * ([bindBackgroundStart]). The server itself runs only after the rules of `McpRules.runs`.
  *
  * The tool sets are the binding `List<McpToolSet>` with the tag [MCP_TOOL_SETS]. It holds the
- * read set ([MCP_READ_TOOL_SET]). The populate set of the issue goes into the same list.
+ * read set ([MCP_READ_TOOL_SET]) and the populate set ([MCP_POPULATE_TOOL_SET]). The server
+ * offers the tools of a set only while its scope is on.
  *
  * The runner gets the local network permission from the optional binding [LocalNetworkPermission].
  * The Android platform binds it on API 37 and higher. On the JVM the runner gets null.
@@ -74,14 +80,35 @@ internal val mcpDiModule = DI.Module("mcpDiModule") {
                 machines = instance(),
                 tools = instance(),
                 drawings = instance(),
-                onlineMachines = { connections.sessions.value.filterValues { session -> session.state.value.isOnline }.keys.map { id -> id.value }.toSet() },
+                onlineMachines = { connections.onlineProfileIds() },
                 selectedProfileId = { tabs.state.value.selectedProfileId },
                 config = { settings.settings.value.mcp },
                 appVersion = AppVersion.NAME,
             ),
         )
     }
-    bindSingleton<List<McpToolSet>>(tag = MCP_TOOL_SETS) { listOf(instance<McpToolSet>(tag = MCP_READ_TOOL_SET)) }
+    bindSingleton<McpToolSet>(tag = MCP_POPULATE_TOOL_SET) {
+        val connections = instance<Connections>()
+        val settings = instance<AppSettingsStore>()
+        populateToolSet(
+            PopulateDeps(
+                machines = instance(),
+                tools = instance(),
+                drawings = instance(),
+                files = instance<McpFileStore>(),
+                gate = instance<WriteGate>(),
+                config = { settings.settings.value.mcp },
+                onlineMachines = { connections.onlineProfileIds() },
+                appVersion = AppVersion.NAME,
+                clock = WallClock.System,
+                storeIO = instance(),
+                dxfLimits = { settings.settings.value.dxfImportLimits },
+            ),
+        )
+    }
+    bindSingleton<List<McpToolSet>>(tag = MCP_TOOL_SETS) {
+        listOf(instance<McpToolSet>(tag = MCP_READ_TOOL_SET), instance<McpToolSet>(tag = MCP_POPULATE_TOOL_SET))
+    }
     bindSingleton {
         val platform = instance<DataOutputPlatform>()
         val toolSets = instance<List<McpToolSet>>(tag = MCP_TOOL_SETS)
@@ -126,3 +153,7 @@ internal fun mcpServerLine(runner: McpRunner): Flow<McpServerLine?> =
     combine(runner.state, runner.listening) { state, listening ->
         if (state == McpServerState.Stopped) null else McpServerLine(listening)
     }
+
+/** The IDs of the profiles with an online session. */
+private fun Connections.onlineProfileIds(): Set<String> =
+    sessions.value.filterValues { session -> session.state.value.isOnline }.keys.map { id -> id.value }.toSet()
