@@ -70,6 +70,14 @@ val storeTestDeps = commonTestDeps + listOf<Any>(
     libs.bouncycastle.tls,
 )
 
+val mcpTestDeps = commonTestDeps + listOf<Any>(
+    projects.core.connection,
+    projects.core.dataOutput,
+    projects.core.mcp,
+    libs.kotlinx.serialization.json,
+    libs.bouncycastle.tls,
+)
+
 val projectTestDeps = commonTestDeps + listOf<Any>(
     projects.core.readout,
     projects.core.store,
@@ -94,6 +102,8 @@ dependencies {
     testImplementation(projects.core.camera)
     testImplementation(projects.core.dataOutput)
     testImplementation(projects.core.connection)
+    // The validation of the MCP server (package mcp).
+    testImplementation(projects.core.mcp)
     testImplementation(libs.sqldelight.jdbc)
     testImplementation(libs.sqlite.jdbc)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -139,6 +149,7 @@ val functionsRuntime = domainRuntimeClasspath("functions", functionsTestDeps)
 val protocolRuntime = domainRuntimeClasspath("protocol", protocolTestDeps)
 val readoutRuntime = domainRuntimeClasspath("readout", readoutTestDeps)
 val storeRuntime = domainRuntimeClasspath("store", storeTestDeps)
+val mcpRuntime = domainRuntimeClasspath("mcp", mcpTestDeps)
 val projectRuntime = domainRuntimeClasspath("project", projectTestDeps)
 
 val root = rootDir
@@ -233,6 +244,16 @@ val testStore = registerDomainTest(
             )
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("storeFiles")
+}
+
+val testMcp = registerDomainTest(
+    taskName = "testMcp",
+    classIncludes = listOf("org/superdro/validation/mcp/**", "org/superdro/validation/Traceability*"),
+    runtimeClasspath = mcpRuntime,
+) {
+    inputs.files(
+        fileTree(root) { include("core/mcp/src/commonMain/**/*.kt", "core/model/src/commonMain/**/McpConfig.kt") },
+    ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("mcpSources")
 }
 
 val testProject = registerDomainTest(
@@ -332,6 +353,7 @@ val domainTests = listOf(
     testProtocol,
     testReadout,
     testStore,
+    testMcp,
     testProject,
     testUi,
     testUiScreens,

@@ -62,7 +62,7 @@ class ArchitectureTest {
             "core:util", "core:model", "core:protocol", "core:readout", "core:functions", "core:connection",
             "core:connection-ble", "core:connection-tcp", "core:data-output", "core:drawing", "core:camera",
             "core:debug-adapter", "core:fake-adapter", "core:adapter-probe", "core:store", "core:resources", "core:ui",
-            "core:di", "core:app-version", "platform:android:bluetooth", "platform:android:usb",
+            "core:di", "core:app-version", "core:mcp", "platform:android:bluetooth", "platform:android:usb",
             "platform:android:service", "platform:android:network", "platform:android:camera", "platform:android:store",
             "platform:android:di", "app:android", "app:android:baseline", "app:adapter-probe",
         )
@@ -121,9 +121,21 @@ class ArchitectureTest {
     }
 
     @Test
-    fun theProbeAppHasNoUiStoreOrDataOutput() {
-        val found = transitiveDependencies("app:adapter-probe") intersect setOf("core:ui", "core:store", "core:data-output")
+    fun theProbeAppHasNoUiStoreDataOutputOrMcp() {
+        val found = transitiveDependencies("app:adapter-probe") intersect setOf("core:ui", "core:store", "core:data-output", "core:mcp")
         assertEquals(emptySet(), found)
+    }
+
+    @Test
+    fun theMcpModuleDependsOnlyOnConnectionModelUtilAndDataOutput() {
+        val allowed = setOf("core:connection", "core:model", "core:util", "core:data-output")
+        assertEquals(emptySet(), projectDependencies("core:mcp") - allowed)
+        val forbidden = setOf("core:store", "core:ui", "core:di", "core:readout")
+        assertEquals(emptySet(), projectDependencies("core:mcp") intersect forbidden)
+        val libraries = libraries("core:mcp").filterNot { name ->
+            name.startsWith("kotlinx.coroutines") || name.startsWith("kotlinx.serialization") || name.startsWith("kotlin.test")
+        }
+        assertEquals(emptyList(), libraries, "Libraries of core:mcp other than coroutines and serialization (no Compose, no Ktor server).")
     }
 
     private fun sources(): List<File> =
@@ -183,7 +195,7 @@ class ArchitectureTest {
         assertTrue("tasks.named(jvmTestCompilation.processResourcesTaskName)" in uiBuild, "core:ui domain tests depend on the test resources task.")
 
         val validationRoot = root.resolve("validation/src/test/kotlin/org/superdro/validation")
-        val allowedDomains = setOf("functions", "protocol", "readout", "store", "project", "ui")
+        val allowedDomains = setOf("functions", "protocol", "readout", "store", "mcp", "project", "ui")
         val unmappedTests = validationRoot.walkTopDown()
             .filter { file -> file.isFile && file.name.endsWith("Test.kt") }
             .filterNot { file ->
