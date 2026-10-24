@@ -389,10 +389,13 @@ calls in Diagnostics. A read tool call is logged with its name only. The log has
 
 ## 7. Design: tools and resources
 
-The list below is a candidate list for the request of the user. Each tool has a stable name in
+The request is [issue 59](https://github.com/Super-DRO/SuperDRO/issues/59): an agent populates
+workspaces, tool libraries, and machine profiles. The final tool list is in the solution comment of
+the issue, and the work division is in [docs/mcp-plan.md](mcp-plan.md). The list below is the
+earlier candidate list. Its read tools stay. Its control tools (section 7.2) are the `Control`
+scope, which comes after the `Populate` scope of the issue. Each tool has a stable name in
 `snake_case`, a title, a one-paragraph description, a JSON schema, and the annotations. Lengths in
-the JSON are in the unit of the machine, with the unit named in the result, and also in µm as
-`*_um` fields for an exact value. Angles are in degrees with an `_arcsec` field.
+the JSON are in the unit of the call (`mm`, `inch`, or `um`). Angles are in degrees.
 
 ### 7.1 Read tools (`readOnlyHint: true`, `openWorldHint: false`)
 
