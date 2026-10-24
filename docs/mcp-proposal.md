@@ -4,8 +4,8 @@ This document is a design proposal. It gives the research on the Model Context P
 limits of Android networking, and a design for an MCP server in SuperDRO. An AI agent on a different
 device can then read the readout and, after a second opt-in, control some functions of the app.
 
-The proposal waits for the request of the user that names the features. Section 7 gives a candidate
-tool list only. The final list comes with that request.
+The request of the user is [issue 59](https://github.com/Super-DRO/SuperDRO/issues/59). Section 7
+gives the final tool list, as built. Section 12 gives the implementation notes and the manual check.
 
 ## 1. Goals and rules
 
@@ -390,60 +390,78 @@ calls in Diagnostics. A read tool call is logged with its name only. The log has
 ## 7. Design: tools and resources
 
 The request is [issue 59](https://github.com/Super-DRO/SuperDRO/issues/59): an agent populates
-workspaces, tool libraries, and machine profiles. The final tool list is in the solution comment of
-the issue, and the work division is in [docs/mcp-plan.md](mcp-plan.md). The list below is the
-earlier candidate list. Its read tools stay. Its control tools (section 7.2) are the `Control`
-scope, which comes after the `Populate` scope of the issue. Each tool has a stable name in
-`snake_case`, a title, a one-paragraph description, a JSON schema, and the annotations. Lengths in
-the JSON are in the unit of the call (`mm`, `inch`, or `um`). Angles are in degrees.
+workspaces, tool libraries, and machine profiles. The tools below are the final list, as built.
+The read tools are in `core/ui/src/commonMain/kotlin/org/superdro/core/ui/mcp/ReadToolSet.kt`.
+The populate tools are in `core/ui/src/commonMain/kotlin/org/superdro/core/ui/mcp/populate/`.
+The work division is in [docs/mcp-plan.md](mcp-plan.md). The acceptance tests are in
+`validation/src/test/kotlin/org/superdro/validation/mcp/`.
 
-### 7.1 Read tools (`readOnlyHint: true`, `openWorldHint: false`)
+Each tool has a stable name in `snake_case`, a title, a one-paragraph description, a JSON schema,
+and the annotations. Lengths in the JSON are in the unit of the call (`mm`, `inch`, or `um`). The
+default is the unit of the profile. Angles are in degrees. A `machine` argument is a profile ID or
+a profile name. A `workspace` argument is a workspace ID or a workspace name. Each write tool has
+`preview: true`, which gives the plan and writes nothing. The server offers a tool only while its
+scope is on. A call of a tool of a scope that is off gives the JSON-RPC error `-32602`.
 
-| Tool | Result |
-|---|---|
-| `list_machines` | The machine profiles: id, name, type, link type, online state, selected tab. |
-| `get_readout` | For one machine: each axis with absolute and incremental values, units, mode, the sub-datum, the feed rate, the spindle RPM, the probe state, the time stamp. The same frame as the display (`DisplayFrames`). |
-| `get_workspace` | The datums, the sub-datums, the tool offset, the active tool, the guides, the drawing name. |
-| `list_tools` | The tool library of the machine or the shared library. |
-| `list_sub_datums` | The sub-datums with their groups (pattern, thread, measured). |
-| `get_measurement_log` | The last N entries of the measurement log. |
-| `list_thread_specs` | The stored thread specifications. |
-| `get_app_info` | The app version, the protocol eras, the enabled access level. |
+### 7.1 The tools
 
-### 7.2 Control tools (`readOnlyHint: false`, `destructiveHint: true`, `idempotentHint` as noted)
+The columns: the scope, the `readOnlyHint`, the `destructiveHint`, the `idempotentHint`, and the
+flag `_meta["anthropic/requiresUserInteraction"]` (UI). Each tool has `openWorldHint: false`.
 
-| Tool | Action | Idempotent |
-|---|---|---|
-| `zero_axis` | Zero one axis in the current mode. | Yes |
-| `set_axis` | Set one axis to a value. | Yes |
-| `zero_all` | Zero each axis. | Yes |
-| `set_mode` | Absolute or incremental. | Yes |
-| `set_units` | Metric or inch. | Yes |
-| `select_sub_datum` | Select a sub-datum by id or index. | Yes |
-| `add_sub_datum` | Add a sub-datum at given coordinates. | No |
-| `select_tool` | Select a tool from the library. | Yes |
-| `add_tool` | Add a tool to the library. | No |
-| `add_measurement_log_entry` | Add a note or a value to the measurement log. | No |
-| `select_machine_tab` | Change the selected tab. | Yes |
+| Tool | Scope | Read only | Destructive | Idempotent | UI | Action |
+|---|---|---|---|---|---|---|
+| `list_machines` | Read | yes | no | yes | no | The profiles: ID, name, type, link type, online state, selected tab. |
+| `list_workspaces` | Read | yes | no | yes | no | The workspaces of a machine with the counts. |
+| `get_workspace` | Read | yes | no | yes | no | One workspace: axis states, sub-datums, guides, drawing summary, image placement. |
+| `list_tools` | Read | yes | no | yes | no | The tool library of a machine (own or shared). |
+| `get_profile_settings` | Read | yes | no | yes | no | The settings object of the SuperDRO profile file. |
+| `get_app_info` | Read | yes | no | yes | no | The app version, the protocol versions, the scopes, the confirmation setting, the file limits. |
+| `create_workspace` | Populate | no | yes | no | no | A new workspace. Gives the ID. |
+| `update_workspace` | Populate | no | yes | yes | no | The name, the plane, the graphical switches, and the axis states. |
+| `delete_workspace` | Populate | no | yes | yes | yes | Deletes a workspace and its image file. The last workspace stays. |
+| `put_sub_datums` | Populate | no | yes | yes | yes | A list of points with the operations of the CSV import. `REPLACE_ALL` always asks the operator. |
+| `delete_sub_datums` | Populate | no | yes | yes | yes | Deletes points by ID. |
+| `put_guides` | Populate | no | yes | yes | yes | A list of guides, `REPLACE_ALL` or `ADD`. |
+| `set_drawing` | Populate | no | yes | yes | no | The drawing from an uploaded DXF or wireframe `fileId`, or an inline wireframe document. |
+| `clear_drawing` | Populate | no | yes | yes | yes | Removes the drawing. |
+| `set_reference_image` | Populate | no | yes | yes | no | The reference image from an uploaded JPEG or PNG, with the matrix or the reference pairs. |
+| `clear_reference_image` | Populate | no | yes | yes | yes | Removes the image and its file. |
+| `put_tools` | Populate | no | yes | yes | yes | A list of tools with the operations of the CSV import. |
+| `delete_tools` | Populate | no | yes | yes | yes | Deletes tools by ID. |
+| `set_tool_outline` | Populate | no | yes | yes | no | The cutter outline of a lathe tool from an uploaded DXF or wireframe `fileId`. |
+| `clear_tool_outline` | Populate | no | yes | yes | yes | Removes the outline. |
+| `export_tools` | Populate | yes | no | yes | no | The library as the SuperDRO tool CSV through `/download`. |
+| `put_profile_settings` | Populate | no | yes | yes | yes | Applies a settings object. Refused while the machine is online. The machine type cannot change. |
+| `create_profile` | Populate | no | yes | no | yes | A new profile from a name, a machine type, and an optional settings object. |
+| `export_profile_bundle` | Populate | yes | no | yes | no | One JSON bundle of a profile through `/download`. |
+| `import_profile_bundle` | Populate | no | yes | yes | yes | The reverse, from an uploaded `fileId`, into a new profile. |
 
-Each control tool maps to an existing presenter action. `KeyAction` of the hardware keys already
-names most of them (`ZeroAxis`, `SetAxis`, `ZeroAll`, `ToggleAbsoluteIncremental`, `ToggleUnits`,
-`NextSubDatum`). The tool handlers call the same code as the key handlers.
+The `Control` scope (the live readout actions: zero an axis, set a value, select a sub-datum) is
+not built. `McpScope.Control` exists in the model, so a later version can add the tools with no
+schema change.
 
-Not in the list, on purpose: connection changes, adapter configuration commands, machine profile
-edits, calibration, the error map, and file deletion. An agent that needs them gets a separate
-proposal.
+### 7.2 The confirmation on the tablet
+
+The gate of section 6.4 applies to the populate tools with the setting `confirmation` =
+`Risky` (default), `All`, or `Off`. With `Risky`, a write asks the operator when it is
+`REPLACE_ALL`, a delete, a `clear_*`, a profile change, or a change of the axis states, the
+active sub-datum, or the active tool of the active workspace of an online machine. A new
+workspace, a new tool, or a write to an offline machine does not ask. A refused request gives the
+tool error "The operator refused the call". A request with no answer in 60 s gives "No answer on
+the tablet".
 
 ### 7.3 Resources
 
 | URI | Content |
 |---|---|
 | `superdro://machines` | The same as `list_machines`, as JSON. |
-| `superdro://machines/{id}/readout` | The same as `get_readout`. A template resource. |
-| `superdro://machines/{id}/workspace` | The same as `get_workspace`. |
-| `superdro://machines/{id}/measurement-log` | The log as JSON lines. |
+| `superdro://machines/{machine}/profile-settings` | The same as `get_profile_settings`. A template resource. |
+| `superdro://machines/{machine}/workspaces` | The same as `list_workspaces`. |
+| `superdro://machines/{machine}/workspaces/{workspace}` | The same as `get_workspace`. |
+| `superdro://machines/{machine}/tools` | The same as `list_tools`. |
 
-Claude Code shows a resource as `@superdro:superdro://machines/...` in a prompt.
+`{machine}` is a profile ID or a profile name. `{workspace}` is a workspace ID or a name. Claude
+Code shows a resource as `@superdro:superdro://machines/...` in a prompt.
 
 ### 7.4 Live updates (phase 2, modern era)
 
@@ -562,3 +580,108 @@ Each step writes its result to this document, in a new section 12.
 - Wi-Fi low latency: `https://source.android.com/docs/core/connect/wifi-low-latency`.
 - NsdManager: `https://developer.android.com/reference/android/net/nsd/NsdManager`, AOSP `NsdService.java`.
 - Ktor engines: `https://ktor.io/docs/server-engines.html`, `https://ktor.io/docs/faq.html`.
+
+## 12. Implementation notes
+
+The implementation followed [docs/mcp-plan.md](mcp-plan.md) in three waves. This section gives the
+differences from the design text above and the result of the manual check of the spike step 2
+(section 9.1). The text of sections 4 to 6 is the design. The plan sections 3.6a, 3.7, 5.0, and
+5.1 give the code as built.
+
+### 12.1 Differences from the design
+
+- The configuration has three scopes (`Read`, `Populate`, `Control`) in `McpConfig.scopes`
+  instead of the two access levels of section 6.1, and one setting `confirmation` (`Risky`,
+  `All`, `Off`) instead of `controlConfirmation`. The `Control` scope has no tools yet.
+- The `/mcp` body limit is 2 MiB, not 1 MiB (issue comment section 2). The routes `POST /upload`
+  and `GET /download/{fileId}` exist with the limit of 8 MiB and a life of 60 minutes.
+- `tools/list`, `server/discover`, `resources/list`, and `resources/templates/list` carry
+  `ttlMs: 60000` and `cacheScope: "private"` in the modern era.
+- The QR code of the settings screen encodes the Claude Code command (the URL and the token), not
+  the URL alone.
+- The audit log (`McpCall` table) keeps 30 days. The settings screen shows the last 200 rows.
+- The acceptance tests in `validation/src/test/kotlin/org/superdro/validation/mcp/` run the real
+  server through the full DI graph on a loopback socket with raw HTTP. The task is
+  `:validation:testMcp`. The tests of the UI module are in `:core:ui:jvmTestMcp`.
+
+### 12.2 Manual check with the desktop app
+
+Date: 2026-10-24. Computer: Linux, Claude Code 2.1.310. The app ran on a virtual display with its
+own data folder. A settings file turned the server on before the start. The JSON below has only
+the MCP keys; the other settings keep their defaults.
+
+```bash
+mkdir -p "$DATA"
+echo '{"schemaVersion":1,"mcp":{"enabled":true,"activation":"AlwaysOn","bindInterface":"Localhost","port":5810}}' > "$DATA/app-settings.json"
+xvfb-run -a ./gradlew :app:desktop:run --args="--data-dir=$DATA"
+```
+
+The port 5810 was open 7 s after the start of the window. The first start made the token. The
+token is in `secrets.json` of the data folder, sealed with the key of `secrets.key` (AES-256-GCM,
+the name `mcp.token` as the associated data). The check read it with a small Python script and
+the `cryptography` module. The settings screen shows the same token after "New token".
+
+The root route and a request with no token:
+
+```bash
+curl -s -i http://127.0.0.1:5810/
+# HTTP/1.1 200 OK, text/plain: SuperDRO 26.43.3-dev MCP server
+curl -s -i -X POST http://127.0.0.1:5810/mcp -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"ping"}'
+# HTTP/1.1 401 Unauthorized, WWW-Authenticate: Bearer realm="SuperDRO"
+```
+
+The modern form (2026-07-28: the three headers and the `_meta` version):
+
+```bash
+curl -s -X POST http://127.0.0.1:5810/mcp -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" -H "MCP-Protocol-Version: 2026-07-28" -H "Mcp-Method: tools/list" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28"}}}'
+# 200. result.resultType = "complete", the six read tools, ttlMs 60000, cacheScope "private",
+# result._meta["io.modelcontextprotocol/serverInfo"] = {"name":"superdro","title":"SuperDRO","version":"26.43.3-dev"}
+curl -s -X POST http://127.0.0.1:5810/mcp -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" -H "MCP-Protocol-Version: 2026-07-28" -H "Mcp-Method: tools/call" -H "Mcp-Name: get_app_info" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_app_info","arguments":{},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28"}}}'
+# 200. content text "SuperDRO 26.43.3-dev. Scopes on: Read. Confirmation: Risky.", structuredContent with
+# the protocol versions, the scopes, the upload limit 8388608, and the file TTL 3600000.
+```
+
+A request with the header `Mcp-Method: ping` and the body method `tools/list` gave 400 with the
+error `-32020` "Header mismatch: Mcp-Method header value 'ping' does not match body value
+'tools/list'".
+
+The legacy form (2025-11-25: `initialize`, `notifications/initialized`, `tools/list`):
+
+```bash
+curl -s -X POST http://127.0.0.1:5810/mcp -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"curl","version":"1"}}}'
+# 200. result.protocolVersion = "2025-11-25", the capabilities tools and resources, serverInfo,
+# instructions. No Mcp-Session-Id header.
+curl -s -i -X POST http://127.0.0.1:5810/mcp -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+# HTTP/1.1 202 Accepted
+curl -s -X POST http://127.0.0.1:5810/mcp -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+# 200. result has only "tools" (no resultType, no cache hints): the same six read tools.
+curl -s -X POST http://127.0.0.1:5810/mcp -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_machines","arguments":{}}}'
+# 200. content text "No machine profile." (a new data folder), structuredContent {"machines":[]}.
+```
+
+Claude Code, in an empty folder:
+
+```bash
+claude mcp add --transport http superdro http://127.0.0.1:5810/mcp --header "Authorization: Bearer $TOKEN"
+# Added HTTP MCP server superdro with URL: http://127.0.0.1:5810/mcp to local config
+claude mcp list
+# superdro: http://127.0.0.1:5810/mcp (HTTP) - Connected
+claude mcp get superdro
+# Status: Connected, Type: http, URL: http://127.0.0.1:5810/mcp
+claude mcp remove superdro
+# Removed MCP server "superdro" from local config
+```
+
+Claude Code 2.1.310 connected to the plain `http://127.0.0.1` URL with the static bearer header.
+The step 3 of the spike (a LAN address from a second computer, and the Android app on an
+emulator) was not part of this check. The open point 1 of section 10 stays open for a LAN
+address. The loopback address works.
