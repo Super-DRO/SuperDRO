@@ -7,8 +7,9 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
 }
 
-// The version gets into common code only through generated source. `project.version` is a
-// Gradle value, and commonMain must stay free of platform code (no BuildConfig).
+// The version gets into common code only through generated source. `rootProject.version` is a
+// Gradle value, and commonMain must stay free of platform code (no BuildConfig). Only the root
+// project has the version (see the root build.gradle.kts).
 //
 // The stamp leaves out the build metadata after `+` (commits, sha, dirty). That part changes at
 // each commit, and a value that changes at each commit makes each dependent module compile
@@ -21,7 +22,7 @@ val stampBuildMetadata = providers.gradleProperty("superdro.stampBuildMetadata")
 
 val generateAppVersion by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/appVersion")
-    val fullVersion = project.version.toString()
+    val fullVersion = rootProject.version.toString()
     val versionName = if (stampBuildMetadata) fullVersion else fullVersion.substringBefore('+')
     val versionCode = projectVersionCode(fullVersion)
     outputs.dir(outputDir)

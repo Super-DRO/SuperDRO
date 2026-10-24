@@ -20,12 +20,17 @@ plugins {
 
 defaultTasks("validateJvm")
 
-// One calendar version for all modules, from `git describe` (composite, resolveProjectVersion()).
-// A build on a tag gets a clean `26.41.1`. Each other build gets a `-dev` marker.
-val projectVersion = resolveProjectVersion()
-allprojects {
-    version = projectVersion
-}
+// One calendar version, from `git describe` (composite, resolveProjectVersion()). A build on a
+// tag gets a clean `26.41.1`. Each other build gets a `-dev` marker and the commit count.
+//
+// Only the root project has the version. The modules that need it read `rootProject.version`:
+// the two Android apps, the desktop package, and core:app-version. A library module keeps the
+// default version "unspecified", on purpose. The version changes at each commit, and it is an
+// input of two cacheable tasks of each module: the Kotlin test compile has the jar of the main
+// compilation in its friend paths, and the jar name holds the version; the lint analysis has the
+// input `projectInputs.mavenVersion`. With the version on each module, each commit made all test
+// compiles and all lint tasks run again.
+version = resolveProjectVersion()
 
 // The Compose compiler options of each module with the Compose compiler plugin. No convention
 // plugin applies Compose, so the root script sets them in one place.

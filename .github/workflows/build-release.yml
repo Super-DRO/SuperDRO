@@ -185,6 +185,8 @@ jobs:
           # A tag is not main, so a release run only reads the caches. Only a run on main writes
           # them (validation.yml).
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          # The key of the configuration cache entries that validation.yml saves.
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Package the desktop installer
         run: |
@@ -245,6 +247,8 @@ jobs:
         with:
           # A tag is not main, so a release run only reads the caches.
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          # The key of the configuration cache entries that validation.yml saves.
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       # This step must come before the build. The release `signingConfig` exists only when
       # ANDROID_KEYSTORE_FILE names the decrypted keystore (section 7). gpg reads the passphrase

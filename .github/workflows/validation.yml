@@ -95,6 +95,11 @@ jobs:
           # User Home entry (the key holds the job name and the matrix values). The action
           # also saves the caches when the job fails.
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          # The action saves the configuration cache only with this key (a base64 AES key).
+          # scripts/set_gradle_encryption_key.sh makes the secret. Without it, each job calculates
+          # the task graph again, which takes 25 to 40 s. With no secret, the action only skips the
+          # configuration cache.
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           add-job-summary-as-pr-comment: 'on-failure'
 
       # composite is a separate Gradle build. No root task gets to it, so its tests run here.

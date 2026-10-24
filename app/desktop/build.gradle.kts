@@ -66,7 +66,7 @@ compose.desktop {
             // The installers accept only `major.minor.patch`: the `-dev` part goes away. A tree with
             // no tag has the version 0.0.0. The DMG and MSI checks refuse a major version 0 at the
             // configuration of the project, also on Linux. Thus a package of such a tree gets 1.0.0.
-            packageVersion = packagingVersion(project.version.toString()).let { version ->
+            packageVersion = packagingVersion(rootProject.version.toString()).let { version ->
                 if (version.substringBefore('.') == "0") "1.0.0" else version
             }
             description = "SuperDRO digital readout for TouchDRO compatible adapters"
