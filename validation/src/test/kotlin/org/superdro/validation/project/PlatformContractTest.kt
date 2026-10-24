@@ -45,6 +45,7 @@ class PlatformContractTest {
             "ServicePhase", "ConnectionServiceState", "ForegroundPrerequisite", "LinkIoDispatcher",
             "LinkThreadPriority", "ServiceTexts", "NotificationContent", "WakeLockHandle",
             "WakeLockController", "PowerManagerWakeLock", "WakeLockSetting",
+            "WifiLockController", "WifiLockRules", "WifiManagerWifiLock",
         ),
         "platform/android/store" to setOf(
             "AndroidKeystoreSecretStore", "AndroidKeystoreSecretCipher", "AndroidSqlDriverFactory",
