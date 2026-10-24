@@ -35,6 +35,7 @@ kotlin {
                 implementation(projects.core.debugAdapter)
                 implementation(projects.core.drawing)
                 implementation(projects.core.functions)
+                implementation(projects.core.mcp)
                 implementation(projects.core.model)
                 implementation(projects.core.readout)
                 implementation(projects.core.resources)
