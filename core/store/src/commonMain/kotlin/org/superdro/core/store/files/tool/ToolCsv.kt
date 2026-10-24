@@ -8,6 +8,7 @@ import org.superdro.core.model.MachineType
 import org.superdro.core.model.Tool
 import org.superdro.core.model.ToolKind
 import org.superdro.core.model.newId
+import org.superdro.core.store.files.CsvRow
 import org.superdro.core.store.files.ExportContext
 import org.superdro.core.store.files.ExportFile
 import org.superdro.core.store.files.ExportFileNames
@@ -16,6 +17,7 @@ import org.superdro.core.store.files.ImportOperation
 import org.superdro.core.store.files.ImportPreview
 import org.superdro.core.store.files.ImportProblem
 import org.superdro.core.store.files.ImportReport
+import org.superdro.core.store.files.ImportRow
 import org.superdro.core.store.files.ImportText
 import org.superdro.core.store.files.MachineNames
 import org.superdro.core.store.files.MessageKey
@@ -24,7 +26,6 @@ import org.superdro.core.store.files.RowAction
 import org.superdro.core.store.files.Severity
 import org.superdro.core.store.files.csv.CsvMetadata
 import org.superdro.core.store.files.csv.CsvNumbers
-import org.superdro.core.store.files.csv.CsvRecord
 import org.superdro.core.store.files.csv.CsvTable
 import org.superdro.core.store.files.csv.CsvWriter
 import org.superdro.core.store.files.hasError
@@ -180,88 +181,51 @@ class ToolImportPreview internal constructor(
 }
 
 /**
- * The tool CSV import. It reads the files of TouchDRO
- * 3.25.03, also the lathe files with 8 values, the format 2 of 3.32.00, and the SuperDRO
- * export.
- *
- * - `metric` and `internal`: `yes` or `no` in any case. The `metric` column of the row sets
- *   the units of the row.
- * - A second row with the same name is an error.
- * - `tooth_count`: a whole number. `2.0` gives 2.
- * - The import keeps `internal`.
+ * The row rules that the CSV source ([ToolCsvImporter]) and the JSON source ([ToolJsonImporter])
+ * share.
  *
  * @param parseNumber The expression evaluator.
  */
-class ToolCsvImporter(
-    private val parseNumber: (String) -> Double? = CsvNumbers::parsePlain,
-    private val now: () -> Instant = { Clock.System.now() },
-    private val ids: () -> String = ::newId,
+internal class ToolRowReader(
+    private val parseNumber: (String) -> Double?,
+    private val now: () -> Instant,
+    private val ids: () -> String,
 ) {
 
-    fun read(bytes: ByteArray, context: ToolImportContext): ToolImportPreview =
-        when (val decoded = ImportText.decode(bytes)) {
-            is ImportText.Decoded.Text -> read(decoded.text, context)
-            is ImportText.Decoded.Refused -> refused(listOf(decoded.problem), context)
-        }
-
-    /** Reads the text of a file. Each exception gives a problem, not a crash. */
-    fun read(text: String, context: ToolImportContext): ToolImportPreview = try {
-        readTable(text, context)
-    } catch (error: Exception) {
-        refused(listOf(ImportProblem.error(MessageKey.FileFailed, error.message ?: error.toString())), context)
-    }
-
-    private fun refused(problems: List<ImportProblem>, context: ToolImportContext, metadata: CsvMetadata = CsvMetadata()) =
-        ToolImportPreview(metadata, problems, emptyList(), emptyList(), context, now)
-
-    private fun readTable(text: String, context: ToolImportContext): ToolImportPreview {
-        val table = when (val read = CsvTable.read(text)) {
-            is CsvTable.Companion.Read.Refused -> return refused(listOf(read.problem), context)
-            is CsvTable.Companion.Read.Table -> read.table
-        }
-        val metadata = table.metadata
-        val lathe = context.machineType.isLathe
-        if (metadata.kind != null && metadata.kind != CsvMetadata.KIND_TOOLS) {
-            return refused(listOf(ImportProblem.error(MessageKey.FileWrongKind, metadata.kind, CsvMetadata.KIND_TOOLS)), context, metadata)
-        }
+    /**
+     * The problems of a header that stop the import: a sub-datum file, or a missing required
+     * column. An empty list means that the rows can be read.
+     */
+    fun headerProblems(header: Collection<String>, lathe: Boolean): List<ImportProblem> {
         // A header with `tags`, or with `x` and no `metric`, is a sub-datum file.
-        if (table.has("tags") || (table.has("x") && !table.has(ToolColumns.METRIC))) {
-            return refused(listOf(ImportProblem.error(MessageKey.FileWrongKind, CsvMetadata.KIND_SUB_DATUMS, CsvMetadata.KIND_TOOLS)), context, metadata)
+        if ("tags" in header || ("x" in header && ToolColumns.METRIC !in header)) {
+            return listOf(ImportProblem.error(MessageKey.FileWrongKind, CsvMetadata.KIND_SUB_DATUMS, CsvMetadata.KIND_TOOLS))
         }
-        val problems = mutableListOf<ImportProblem>()
         val required = if (lathe) ToolColumns.LATHE_REQUIRED else ToolColumns.MILL_REQUIRED
-        required.filterNot(table::has).forEach { column -> problems += ImportProblem.error(MessageKey.ColumnMissing, column) }
-        if (problems.isNotEmpty()) return refused(problems, context, metadata)
-        if (table.records.isEmpty()) return refused(listOf(ImportProblem.error(MessageKey.NoRows)), context, metadata)
-        val fileMachine = metadata.machine
-        if (fileMachine != null && fileMachine.isLathe != lathe) {
-            problems += ImportProblem.warning(MessageKey.MachineMismatch, MachineNames.name(fileMachine), MachineNames.name(context.machineType))
-        }
-
-        // A lathe row of TouchDRO 3.25.03 has 8 values for 7 header names.
-        val legacyLathe = lathe && !table.has(ToolColumns.TOOTH_COUNT)
-        if (legacyLathe && table.records.any { record -> record.values.size == table.header.size + 1 }) {
-            problems += ImportProblem.warning(MessageKey.LegacyLatheRows)
-        }
-
-        val names = mutableSetOf<String>()
-        val rows = table.records.map { record -> readRow(table, record, lathe, legacyLathe, names) }
-        if (rows.none { row -> row.tool != null }) problems += ImportProblem.error(MessageKey.NothingUsable)
-
-        val operations = buildList {
-            add(ImportOperation.UpdateMatching)
-            add(ImportOperation.AddAsNew)
-            if (rows.none { row -> row.problems.hasError() }) add(ImportOperation.ReplaceAll)
-        }
-        return ToolImportPreview(metadata, problems, rows, operations, context, now)
+        return required.filterNot(header::contains).map { column -> ImportProblem.error(MessageKey.ColumnMissing, column) }
     }
 
-    private fun readRow(table: CsvTable, record: CsvRecord, lathe: Boolean, legacyLathe: Boolean, names: MutableSet<String>): ToolRow {
-        val row = record.row
+    /** The file problem when no row can import. */
+    fun usableProblems(rows: List<ToolRow>): List<ImportProblem> =
+        if (rows.none { row -> row.tool != null }) listOf(ImportProblem.error(MessageKey.NothingUsable)) else emptyList()
+
+    /** The operations of a source. [ImportOperation.ReplaceAll] is not available when a row has an error. */
+    fun operations(rows: List<ToolRow>): List<ImportOperation> = buildList {
+        add(ImportOperation.UpdateMatching)
+        add(ImportOperation.AddAsNew)
+        if (rows.none { row -> row.problems.hasError() }) add(ImportOperation.ReplaceAll)
+    }
+
+    /**
+     * Reads one row. [names] holds the names of the earlier rows; a second row with the same name
+     * is an error. [zOverride] replaces the `z_offset` text of a lathe row with 8 values.
+     */
+    fun readRow(values: ImportRow, lathe: Boolean, names: MutableSet<String>, zOverride: String? = null): ToolRow {
+        val row = values.row
         val problems = mutableListOf<ImportProblem>()
-        val id = table.value(record, ToolColumns.ID).trim()
-        val name = table.value(record, ToolColumns.NAME).trim()
-        val description = table.value(record, ToolColumns.DESCRIPTION).trim()
+        val id = values.value(ToolColumns.ID).trim()
+        val name = values.value(ToolColumns.NAME).trim()
+        val description = values.value(ToolColumns.DESCRIPTION).trim()
 
         when {
             name.isEmpty() -> problems += ImportProblem.error(MessageKey.NameBlank, row = row)
@@ -274,7 +238,7 @@ class ToolCsvImporter(
         if (description.length > ToolColumns.MAX_DESCRIPTION_LENGTH) {
             problems += ImportProblem.error(MessageKey.DescriptionTooLong, description.length, ToolColumns.MAX_DESCRIPTION_LENGTH, row = row)
         }
-        val metric = yesNo(table.value(record, ToolColumns.METRIC), ToolColumns.METRIC, row, problems)
+        val metric = yesNo(values.value(ToolColumns.METRIC), ToolColumns.METRIC, row, problems)
         val factor = CsvNumbers.unitFactor(metric ?: false)
 
         fun number(column: String, text: String, required: Boolean): Double? {
@@ -293,12 +257,9 @@ class ToolCsvImporter(
 
         val time = now()
         val tool = if (lathe) {
-            val internal = yesNo(table.value(record, ToolColumns.INTERNAL), ToolColumns.INTERNAL, row, problems)
-            val xOffset = number(ToolColumns.X_OFFSET, table.value(record, ToolColumns.X_OFFSET), required = false) ?: 0.0
-            // With 8 values for 7 header names, the 8th value is the Z offset and the 7th
-            // value (the tooth count) is ignored.
-            val zText = if (legacyLathe && record.values.size == table.header.size + 1) record.values.last() else table.value(record, ToolColumns.Z_OFFSET)
-            val zOffset = number(ToolColumns.Z_OFFSET, zText, required = false) ?: 0.0
+            val internal = yesNo(values.value(ToolColumns.INTERNAL), ToolColumns.INTERNAL, row, problems)
+            val xOffset = number(ToolColumns.X_OFFSET, values.value(ToolColumns.X_OFFSET), required = false) ?: 0.0
+            val zOffset = number(ToolColumns.Z_OFFSET, zOverride ?: values.value(ToolColumns.Z_OFFSET), required = false) ?: 0.0
             if (problems.hasError() || metric == null || internal == null) {
                 null
             } else {
@@ -317,13 +278,13 @@ class ToolCsvImporter(
                 )
             }
         } else {
-            val diameter = number(ToolColumns.DIAMETER, table.value(record, ToolColumns.DIAMETER), required = true)
+            val diameter = number(ToolColumns.DIAMETER, values.value(ToolColumns.DIAMETER), required = true)
             if (diameter != null && diameter == 0.0) problems += ImportProblem.error(MessageKey.DiameterZero, row = row)
-            val toothText = table.value(record, ToolColumns.TOOTH_COUNT).trim()
+            val toothText = values.value(ToolColumns.TOOTH_COUNT).trim()
             val tooth = number(ToolColumns.TOOTH_COUNT, toothText, required = true)
             val toothCount = tooth?.let { value -> if (value >= 0.0 && value == floor(value) && value <= Int.MAX_VALUE) value.toInt() else null }
             if (tooth != null && toothCount == null) problems += ImportProblem.error(MessageKey.ToothCountNotWhole, toothText, row = row)
-            val zOffset = number(ToolColumns.Z_OFFSET, table.value(record, ToolColumns.Z_OFFSET), required = true)
+            val zOffset = number(ToolColumns.Z_OFFSET, values.value(ToolColumns.Z_OFFSET), required = true)
             if (problems.hasError() || metric == null || diameter == null || toothCount == null || zOffset == null) {
                 null
             } else {
@@ -358,6 +319,79 @@ class ToolCsvImporter(
                 null
             }
         }
+    }
+}
+
+/**
+ * The tool CSV import. It reads the files of TouchDRO
+ * 3.25.03, also the lathe files with 8 values, the format 2 of 3.32.00, and the SuperDRO
+ * export.
+ *
+ * - `metric` and `internal`: `yes` or `no` in any case. The `metric` column of the row sets
+ *   the units of the row.
+ * - A second row with the same name is an error.
+ * - `tooth_count`: a whole number. `2.0` gives 2.
+ * - The import keeps `internal`.
+ *
+ * @param parseNumber The expression evaluator.
+ */
+class ToolCsvImporter(
+    parseNumber: (String) -> Double? = CsvNumbers::parsePlain,
+    private val now: () -> Instant = { Clock.System.now() },
+    ids: () -> String = ::newId,
+) {
+    private val reader = ToolRowReader(parseNumber, now, ids)
+
+    fun read(bytes: ByteArray, context: ToolImportContext): ToolImportPreview =
+        when (val decoded = ImportText.decode(bytes)) {
+            is ImportText.Decoded.Text -> read(decoded.text, context)
+            is ImportText.Decoded.Refused -> refused(listOf(decoded.problem), context)
+        }
+
+    /** Reads the text of a file. Each exception gives a problem, not a crash. */
+    fun read(text: String, context: ToolImportContext): ToolImportPreview = try {
+        readTable(text, context)
+    } catch (error: Exception) {
+        refused(listOf(ImportProblem.error(MessageKey.FileFailed, error.message ?: error.toString())), context)
+    }
+
+    private fun refused(problems: List<ImportProblem>, context: ToolImportContext, metadata: CsvMetadata = CsvMetadata()) =
+        ToolImportPreview(metadata, problems, emptyList(), emptyList(), context, now)
+
+    private fun readTable(text: String, context: ToolImportContext): ToolImportPreview {
+        val table = when (val read = CsvTable.read(text)) {
+            is CsvTable.Companion.Read.Refused -> return refused(listOf(read.problem), context)
+            is CsvTable.Companion.Read.Table -> read.table
+        }
+        val metadata = table.metadata
+        val lathe = context.machineType.isLathe
+        if (metadata.kind != null && metadata.kind != CsvMetadata.KIND_TOOLS) {
+            return refused(listOf(ImportProblem.error(MessageKey.FileWrongKind, metadata.kind, CsvMetadata.KIND_TOOLS)), context, metadata)
+        }
+        val headerProblems = reader.headerProblems(table.header, lathe)
+        if (headerProblems.isNotEmpty()) return refused(headerProblems, context, metadata)
+        if (table.records.isEmpty()) return refused(listOf(ImportProblem.error(MessageKey.NoRows)), context, metadata)
+        val problems = mutableListOf<ImportProblem>()
+        val fileMachine = metadata.machine
+        if (fileMachine != null && fileMachine.isLathe != lathe) {
+            problems += ImportProblem.warning(MessageKey.MachineMismatch, MachineNames.name(fileMachine), MachineNames.name(context.machineType))
+        }
+
+        // A lathe row of TouchDRO 3.25.03 has 8 values for 7 header names.
+        val legacyLathe = lathe && !table.has(ToolColumns.TOOTH_COUNT)
+        if (legacyLathe && table.records.any { record -> record.values.size == table.header.size + 1 }) {
+            problems += ImportProblem.warning(MessageKey.LegacyLatheRows)
+        }
+
+        val names = mutableSetOf<String>()
+        val rows = table.records.map { record ->
+            // With 8 values for 7 header names, the 8th value is the Z offset and the 7th
+            // value (the tooth count) is ignored.
+            val zOverride = if (legacyLathe && record.values.size == table.header.size + 1) record.values.last() else null
+            reader.readRow(CsvRow(table, record), lathe, names, zOverride)
+        }
+        problems += reader.usableProblems(rows)
+        return ToolImportPreview(metadata, problems, rows, reader.operations(rows), context, now)
     }
 }
 
