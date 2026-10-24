@@ -14,6 +14,8 @@
     </plurals>
     <string name="service_device_line">%1$s: %2$s (%3$s)</string>
     <string name="service_boot_open_app">Open SuperDRO om uw machines te verbinden</string>
+    <string name="service_mcp_server">MCP-server op %1$s</string>
+    <string name="service_mcp_server_no_address">MCP-server: geen adres</string>
     <string name="service_battery_title">Batterijoptimalisatie</string>
     <string name="service_battery_reason">SuperDRO houdt de verbindingen met uw machines open terwijl het scherm uit is.</string>
     <string name="service_battery_continue">Doorgaan</string>

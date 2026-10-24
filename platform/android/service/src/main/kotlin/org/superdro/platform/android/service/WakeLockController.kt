@@ -5,7 +5,7 @@ import android.content.Context
 import android.os.PowerManager
 import com.toxicbakery.logging.Arbor
 
-/** One wake lock that the controller can take and release. */
+/** One lock that a controller can take and release: the partial wake lock, or the Wi-Fi lock. */
 interface WakeLockHandle {
     fun acquire()
     fun release()

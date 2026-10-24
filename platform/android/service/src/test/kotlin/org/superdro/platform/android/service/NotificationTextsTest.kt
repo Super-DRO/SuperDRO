@@ -28,6 +28,7 @@ class NotificationTextsTest {
         override suspend fun title(onlineCount: Int) = ""
         override suspend fun offlineRemembered(count: Int) = ""
         override suspend fun deviceLine(name: String, state: SessionState, transport: TransportKind) = ""
+        override suspend fun mcpServer(address: String?) = ""
         override suspend fun bootOpenApp() = ""
     }
 

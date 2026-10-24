@@ -8,6 +8,7 @@ import org.superdro.core.connection.DeviceId
 import org.superdro.core.connection.DeviceLine
 import org.superdro.core.connection.KeepAliveController
 import org.superdro.core.connection.LinkFailure
+import org.superdro.core.connection.McpServerLine
 import org.superdro.core.connection.SessionState
 import org.superdro.core.model.TransportKind
 
@@ -44,6 +45,7 @@ class NotificationContentTest {
             return "$name: $stateText ($link)"
         }
         override suspend fun bootOpenApp() = "Open SuperDRO to connect your machines"
+        override suspend fun mcpServer(address: String?) = if (address == null) "MCP server: no address" else "MCP server on $address"
     }
 
     private fun line(id: String, name: String, transport: TransportKind, state: SessionState) =
@@ -89,6 +91,31 @@ class NotificationContentTest {
         val content = NotificationContent.of(summary, EnglishTexts)
         assertEquals("1 machine online", content.title)
         assertEquals(listOf("Demo mill: Waiting for data (Demo)"), content.lines)
+    }
+
+    @Test
+    fun theMcpServerAloneGivesTheServerLineAndNoTapDevice() = runTest {
+        val summary = KeepAliveController.summaryOf(emptyList(), McpServerLine(listOf("192.168.1.5:5810", "[fd00::5]:5810")))!!
+        val content = NotificationContent.of(summary, EnglishTexts)
+        assertEquals("No machine is online", content.title)
+        assertEquals(listOf("MCP server on 192.168.1.5:5810"), content.lines)
+        assertEquals("MCP server on 192.168.1.5:5810", content.text)
+        assertNull(content.tapDevice)
+    }
+
+    @Test
+    fun theMcpServerLineComesAfterTheMachineLines() = runTest {
+        val summary = KeepAliveController.summaryOf(
+            listOf(
+                line("mill", "Mill", TransportKind.BluetoothSpp, SessionState.Connected(sinceMs = 10L)),
+                line("paused", "Paused mill", TransportKind.BluetoothSpp, SessionState.Disconnected),
+            ),
+            McpServerLine(),
+        )!!
+        val content = NotificationContent.of(summary, EnglishTexts)
+        assertEquals("1 machine online", content.title)
+        assertEquals(listOf("Mill: Connected (Bluetooth)", "1 remembered machine offline", "MCP server: no address"), content.lines)
+        assertEquals(DeviceId("mill"), content.tapDevice)
     }
 
     @Test
