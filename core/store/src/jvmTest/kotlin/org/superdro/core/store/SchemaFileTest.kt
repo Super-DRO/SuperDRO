@@ -44,8 +44,9 @@ class SchemaFileTest {
 
     @Test
     fun theSchemaFile1WithTheMigrationsGivesTheCurrentSchema() {
-        // 1.sqm adds the comments of the error map. 2.sqm writes the adapter identities in lower case.
-        assertEquals(3L, SuperDroDatabase.Schema.version)
+        // 1.sqm adds the comments of the error map. 2.sqm writes the adapter identities in lower
+        // case. 3.sqm adds the audit log of the MCP server.
+        assertEquals(4L, SuperDroDatabase.Schema.version)
         val copy = File(directory, "1.db")
         File("src/commonMain/sqldelight/databases/1.db").copyTo(copy)
         val fromFile = JdbcSqliteDriver("jdbc:sqlite:${copy.absolutePath}", jdbcProperties())

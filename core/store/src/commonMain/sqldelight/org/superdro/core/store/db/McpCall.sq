@@ -1,0 +1,35 @@
+-- The audit log of the MCP server. Each call of a tool, and each request of a resource, is one
+-- row. `previous_json` holds the record before a write, so that the user can see what the agent
+-- changed and can restore a deleted item. The ID grows with each row and never repeats.
+-- `at_ms` is a wall clock time in milliseconds since 1970-01-01 00:00 UTC.
+
+CREATE TABLE mcp_call (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    at_ms INTEGER NOT NULL,
+    client TEXT NOT NULL,
+    era TEXT NOT NULL,
+    tool TEXT,
+    method TEXT NOT NULL,
+    arguments_json TEXT,
+    result TEXT NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    previous_json TEXT
+);
+
+CREATE INDEX mcp_call_at_ms ON mcp_call(at_ms);
+
+last:
+SELECT * FROM mcp_call ORDER BY at_ms DESC, id DESC LIMIT ?;
+
+insert:
+INSERT INTO mcp_call (at_ms, client, era, tool, method, arguments_json, result, duration_ms, previous_json)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+lastInsertRowId:
+SELECT last_insert_rowid();
+
+count:
+SELECT count(*) FROM mcp_call;
+
+pruneBefore:
+DELETE FROM mcp_call WHERE at_ms < ?;
