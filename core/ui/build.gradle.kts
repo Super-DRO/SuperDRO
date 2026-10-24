@@ -35,6 +35,7 @@ kotlin {
                 implementation(projects.core.debugAdapter)
                 implementation(projects.core.drawing)
                 implementation(projects.core.functions)
+                // The MCP server: the runner, the read tools, and the settings screen (package mcp).
                 implementation(projects.core.mcp)
                 implementation(projects.core.model)
                 implementation(projects.core.readout)
@@ -127,6 +128,7 @@ val specificDomainPatterns = listOf(
     "org/superdro/core/ui/adapter/**/*Test*",
     "org/superdro/core/ui/functions/**/*Test*",
     "org/superdro/core/ui/graphics/**/*Test*",
+    "org/superdro/core/ui/mcp/**/*Test*",
     "org/superdro/core/ui/readout/**/*Test*",
     "org/superdro/core/ui/settings/**/*Test*",
 )
@@ -135,6 +137,7 @@ val jvmTestDomains = listOf(
     registerUiDomainTest("jvmTestAdapter", listOf("org/superdro/core/ui/adapter/**/*Test*"), listOf(screenshotTestPattern)),
     registerUiDomainTest("jvmTestFunctions", listOf("org/superdro/core/ui/functions/**/*Test*"), listOf(screenshotTestPattern)),
     registerUiDomainTest("jvmTestGraphics", listOf("org/superdro/core/ui/graphics/**/*Test*"), listOf(screenshotTestPattern)),
+    registerUiDomainTest("jvmTestMcp", listOf("org/superdro/core/ui/mcp/**/*Test*"), listOf(screenshotTestPattern)),
     registerUiDomainTest("jvmTestReadout", listOf("org/superdro/core/ui/readout/**/*Test*"), listOf(screenshotTestPattern)),
     registerUiDomainTest("jvmTestSettings", listOf("org/superdro/core/ui/settings/**/*Test*"), listOf(screenshotTestPattern)),
     registerUiDomainTest("jvmTestTabs", listOf("org/superdro/core/ui/**/*Test*"), specificDomainPatterns + screenshotTestPattern),

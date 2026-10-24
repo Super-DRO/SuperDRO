@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the MCP server (package org.superdro.core.ui.mcp). -->
+<resources>
+    <string name="mcp_title">MCP server</string>
+    <string name="mcp_settings_link_summary">Agent access to the workspaces, the tool libraries, and the profiles</string>
+
+    <string name="mcp_section_status">Status</string>
+    <string name="mcp_section_access">Access</string>
+    <string name="mcp_section_network">Network</string>
+    <string name="mcp_section_token">Token</string>
+    <string name="mcp_section_diagnostics">Diagnostics</string>
+
+    <string name="mcp_enable">Run the MCP server</string>
+    <string name="mcp_status_line">Status: %1$s</string>
+    <string name="mcp_status_stopped">Stopped</string>
+    <string name="mcp_status_starting">Starting</string>
+    <string name="mcp_status_ready">Ready</string>
+    <string name="mcp_status_active">Active</string>
+    <string name="mcp_status_failed">Problem</string>
+    <string name="mcp_block_off">The server is off. No socket is open.</string>
+    <string name="mcp_block_not_requested">Tap Start or the status chip to start the server.</string>
+    <string name="mcp_block_plain_http">Confirm the warning "Use only on trusted networks" in the Network section first.</string>
+    <string name="mcp_block_permission">The local network permission is not granted.</string>
+    <string name="mcp_block_interface">The selected interface is not available for the MCP server.</string>
+    <string name="mcp_addresses">Addresses</string>
+    <string name="mcp_no_address">No address</string>
+    <string name="mcp_clients_label">Clients</string>
+    <plurals name="mcp_clients">
+        <item quantity="one">%1$d client</item>
+        <item quantity="other">%1$d clients</item>
+    </plurals>
+    <string name="mcp_start">Start the server</string>
+    <string name="mcp_stop">Stop the server</string>
+    <string name="mcp_activation">Start</string>
+    <string name="mcp_activation_on_demand">On demand</string>
+    <string name="mcp_activation_always_on">Always on</string>
+    <string name="mcp_retry">A new start in %1$d s.</string>
+    <string name="mcp_error_bind">Cannot listen on %1$s: %2$s</string>
+    <string name="mcp_error_accept">The server stopped: %1$s</string>
+    <string name="mcp_error_no_address">The selected interface has no address.</string>
+    <string name="mcp_error_port_taken">The port %1$d is in use by %2$s.</string>
+    <string name="mcp_error_duplicate">Two tools have one name: %1$s</string>
+    <string name="mcp_no_detail">no detail</string>
+
+    <string name="mcp_scope_read">Read</string>
+    <string name="mcp_scope_read_summary">The read tools and the resources. Always on while the server is on.</string>
+    <string name="mcp_scope_populate">Populate</string>
+    <string name="mcp_scope_populate_summary">An agent can create and change the workspaces, the tool libraries, and the profiles.</string>
+    <string name="mcp_scope_control">Control</string>
+    <string name="mcp_scope_control_summary">An agent can zero and set the axes, and select the sub-datum and the tool.</string>
+    <string name="mcp_warning_populate_title">Allow writes?</string>
+    <string name="mcp_warning_populate">An agent can change the datums, the offsets, and the tool data of your machines. A wrong datum gives a wrong position on the readout. Check the readout before you cut. The agent cannot move the machine.</string>
+    <string name="mcp_warning_control_title">Allow control?</string>
+    <string name="mcp_warning_control">An agent can change the datums, the offsets, and the stored data of your machines. A wrong datum gives a wrong position on the readout. Check each change before you cut. The agent cannot move the machine.</string>
+    <string name="mcp_warning_confirm">Allow</string>
+    <string name="mcp_warning_cancel">Cancel</string>
+    <string name="mcp_confirmation">Confirmation on the tablet</string>
+    <string name="mcp_confirmation_summary">A risky call changes the active workspace of an online machine, replaces all items, deletes items, or changes a profile.</string>
+    <string name="mcp_confirmation_risky">Risky calls</string>
+    <string name="mcp_confirmation_all">All calls</string>
+    <string name="mcp_confirmation_off">Off</string>
+    <string name="mcp_warning_confirmation_off_title">Turn off the confirmation?</string>
+    <string name="mcp_warning_confirmation_off">Without the confirmation, an agent writes at once. No dialog shows on the tablet. The audit log keeps each write.</string>
+
+    <string name="mcp_interface">Network interface</string>
+    <string name="mcp_interface_wifi">Wi-Fi</string>
+    <string name="mcp_interface_localhost">Localhost (this tablet only)</string>
+    <string name="mcp_interface_usb_ethernet">USB Ethernet</string>
+    <string name="mcp_interface_addresses">%1$s: %2$s</string>
+    <string name="mcp_interface_no_address">%1$s: no address</string>
+    <string name="mcp_port">Port</string>
+    <string name="mcp_port_range">Enter a port from 1024 to 65535.</string>
+    <string name="mcp_warning_trusted">Use only on trusted networks</string>
+    <string name="mcp_warning_plain_http">The MCP link has no encryption. Each device on the network can read the machine positions and, with the token, can call the tools that you turned on.</string>
+    <string name="mcp_warning_plain_http_confirm">Use this network</string>
+    <string name="mcp_warning_plain_http_confirmed">You confirmed the warning for this interface.</string>
+
+    <string name="mcp_token_hint">The token stays on this tablet. Tap "New token" to make a token and to see it one time.</string>
+    <string name="mcp_token_shown">Give this token to your agent. It shows only now.</string>
+    <string name="mcp_token_copy">Copy the token</string>
+    <string name="mcp_token_new">New token</string>
+    <string name="mcp_token_new_title">Make a new token?</string>
+    <string name="mcp_token_new_warning">A new token stops the old token. Each client must get the new token.</string>
+    <string name="mcp_token_copied">The token is in the clipboard.</string>
+    <string name="mcp_token_new_done">The server has a new token.</string>
+    <string name="mcp_token_hide">Hide the token</string>
+    <string name="mcp_token_caution">Keep the token secret. Each device with the token can read the machine positions and call the tools that you turned on.</string>
+    <string name="mcp_token_error">Cannot read or write the token.</string>
+    <string name="mcp_url">URL</string>
+    <string name="mcp_command">Claude Code command</string>
+    <string name="mcp_command_copy">Copy the command</string>
+    <string name="mcp_command_copied">The command is in the clipboard.</string>
+    <string name="mcp_qr_description">QR code of the Claude Code command</string>
+    <string name="mcp_qr_too_long">The command is too long for a QR code. Copy the text.</string>
+
+    <string name="mcp_diagnostics_show">Show the audit log</string>
+    <string name="mcp_diagnostics_hide">Hide the audit log</string>
+    <string name="mcp_diagnostics_hint">The last 200 calls. The log has no token.</string>
+    <string name="mcp_diagnostics_empty">No call yet.</string>
+    <string name="mcp_diagnostics_duration">%1$d ms</string>
+
+    <string name="mcp_chip">MCP: %1$s</string>
+    <string name="mcp_chip_description">MCP server %1$s. Tap to start or stop the server.</string>
+    <string name="mcp_chip_always_description">MCP server %1$s. Tap for the diagnostics.</string>
+
+    <string name="mcp_confirm_title">Allow the MCP call?</string>
+    <string name="mcp_confirm_client">Client: %1$s</string>
+    <plurals name="mcp_confirm_waiting">
+        <item quantity="one">%1$d more call waits.</item>
+        <item quantity="other">%1$d more calls wait.</item>
+    </plurals>
+    <string name="mcp_confirm_allow">Allow</string>
+    <string name="mcp_confirm_refuse">Refuse</string>
+</resources>

@@ -62,6 +62,7 @@ val coreDiModule = DI.Module("coreDiModule") {
     import(graphicsUiModule)
     import(adapterUiModule)
     import(dataOutputDiModule)
+    import(mcpDiModule)
     import(cameraUiModule)
     import(functionsUiModule)
 

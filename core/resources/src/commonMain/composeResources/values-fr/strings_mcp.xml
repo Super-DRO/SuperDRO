@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the MCP server. The file values/strings_mcp.xml has the same names. -->
+<resources>
+    <string name="mcp_title">Serveur MCP</string>
+    <string name="mcp_settings_link_summary">Accès de l'agent aux espaces de travail, aux bibliothèques d'outils et aux profils</string>
+
+    <string name="mcp_section_status">État</string>
+    <string name="mcp_section_access">Accès</string>
+    <string name="mcp_section_network">Réseau</string>
+    <string name="mcp_section_token">Jeton</string>
+    <string name="mcp_section_diagnostics">Diagnostic</string>
+
+    <string name="mcp_enable">Exécuter le serveur MCP</string>
+    <string name="mcp_status_line">État : %1$s</string>
+    <string name="mcp_status_stopped">Arrêté</string>
+    <string name="mcp_status_starting">Démarrage</string>
+    <string name="mcp_status_ready">Prêt</string>
+    <string name="mcp_status_active">Actif</string>
+    <string name="mcp_status_failed">Problème</string>
+    <string name="mcp_block_off">Le serveur est éteint. Aucun socket n'est ouvert.</string>
+    <string name="mcp_block_not_requested">Touchez Démarrer ou la puce d'état pour démarrer le serveur.</string>
+    <string name="mcp_block_plain_http">Confirmez d'abord l'avertissement "À utiliser uniquement sur des réseaux de confiance" dans la section Réseau.</string>
+    <string name="mcp_block_permission">L'autorisation du réseau local n'est pas accordée.</string>
+    <string name="mcp_block_interface">L'interface sélectionnée n'est pas disponible pour le serveur MCP.</string>
+    <string name="mcp_addresses">Adresses</string>
+    <string name="mcp_no_address">Aucune adresse</string>
+    <string name="mcp_clients_label">Clients</string>
+    <plurals name="mcp_clients">
+        <item quantity="one">%1$d client</item>
+        <item quantity="other">%1$d clients</item>
+    </plurals>
+    <string name="mcp_start">Démarrer le serveur</string>
+    <string name="mcp_stop">Arrêter le serveur</string>
+    <string name="mcp_activation">Démarrage</string>
+    <string name="mcp_activation_on_demand">À la demande</string>
+    <string name="mcp_activation_always_on">Toujours actif</string>
+    <string name="mcp_retry">Un nouveau démarrage dans %1$d s.</string>
+    <string name="mcp_error_bind">Impossible d'écouter sur %1$s : %2$s</string>
+    <string name="mcp_error_accept">Le serveur s'est arrêté : %1$s</string>
+    <string name="mcp_error_no_address">L'interface sélectionnée n'a pas d'adresse.</string>
+    <string name="mcp_error_port_taken">Le port %1$d est utilisé par %2$s.</string>
+    <string name="mcp_error_duplicate">Deux outils ont un même nom : %1$s</string>
+    <string name="mcp_no_detail">aucun détail</string>
+
+    <string name="mcp_scope_read">Lecture</string>
+    <string name="mcp_scope_read_summary">Les outils de lecture et les ressources. Toujours actif tant que le serveur est actif.</string>
+    <string name="mcp_scope_populate">Remplir</string>
+    <string name="mcp_scope_populate_summary">Un agent peut créer et modifier les espaces de travail, les bibliothèques d'outils et les profils.</string>
+    <string name="mcp_scope_control">Contrôle</string>
+    <string name="mcp_scope_control_summary">Un agent peut remettre à zéro et régler les axes, et sélectionner le sous-datum et l'outil.</string>
+    <string name="mcp_warning_populate_title">Autoriser les écritures ?</string>
+    <string name="mcp_warning_populate">Un agent peut modifier les datums, les décalages et les données d'outils de vos machines. Un datum erroné donne une position erronée sur l'affichage. Vérifiez l'affichage avant de couper. L'agent ne peut pas déplacer la machine.</string>
+    <string name="mcp_warning_control_title">Autoriser le contrôle ?</string>
+    <string name="mcp_warning_control">Un agent peut modifier les datums, les décalages et les données enregistrées de vos machines. Un datum erroné donne une position erronée sur l'affichage. Vérifiez chaque modification avant de couper. L'agent ne peut pas déplacer la machine.</string>
+    <string name="mcp_warning_confirm">Autoriser</string>
+    <string name="mcp_warning_cancel">Annuler</string>
+    <string name="mcp_confirmation">Confirmation sur la tablette</string>
+    <string name="mcp_confirmation_summary">Un appel risqué modifie l'espace de travail actif d'une machine en ligne, remplace tous les éléments, supprime des éléments ou modifie un profil.</string>
+    <string name="mcp_confirmation_risky">Appels risqués</string>
+    <string name="mcp_confirmation_all">Tous les appels</string>
+    <string name="mcp_confirmation_off">Désactivée</string>
+    <string name="mcp_warning_confirmation_off_title">Désactiver la confirmation ?</string>
+    <string name="mcp_warning_confirmation_off">Sans la confirmation, un agent écrit immédiatement. Aucune boîte de dialogue ne s'affiche sur la tablette. Le journal d'audit conserve chaque écriture.</string>
+
+    <string name="mcp_interface">Interface réseau</string>
+    <string name="mcp_interface_wifi">Wi-Fi</string>
+    <string name="mcp_interface_localhost">Localhost (cette tablette uniquement)</string>
+    <string name="mcp_interface_usb_ethernet">Ethernet USB</string>
+    <string name="mcp_interface_addresses">%1$s : %2$s</string>
+    <string name="mcp_interface_no_address">%1$s : aucune adresse</string>
+    <string name="mcp_port">Port</string>
+    <string name="mcp_port_range">Saisissez un port de 1024 à 65535.</string>
+    <string name="mcp_warning_trusted">À utiliser uniquement sur des réseaux de confiance</string>
+    <string name="mcp_warning_plain_http">La liaison MCP n'a pas de chiffrement. Chaque appareil du réseau peut lire les positions de la machine et, avec le jeton, peut appeler les outils que vous avez activés.</string>
+    <string name="mcp_warning_plain_http_confirm">Utiliser ce réseau</string>
+    <string name="mcp_warning_plain_http_confirmed">Vous avez confirmé l'avertissement pour cette interface.</string>
+
+    <string name="mcp_token_hint">Le jeton reste sur cette tablette. Touchez "Nouveau jeton" pour créer un jeton et le voir une fois.</string>
+    <string name="mcp_token_shown">Donnez ce jeton à votre agent. Il ne s'affiche que maintenant.</string>
+    <string name="mcp_token_copy">Copier le jeton</string>
+    <string name="mcp_token_new">Nouveau jeton</string>
+    <string name="mcp_token_new_title">Créer un nouveau jeton ?</string>
+    <string name="mcp_token_new_warning">Un nouveau jeton arrête l'ancien jeton. Chaque client doit recevoir le nouveau jeton.</string>
+    <string name="mcp_token_copied">Le jeton est dans le presse-papiers.</string>
+    <string name="mcp_token_new_done">Le serveur a un nouveau jeton.</string>
+    <string name="mcp_token_hide">Masquer le jeton</string>
+    <string name="mcp_token_caution">Gardez le jeton secret. Chaque appareil avec le jeton peut lire les positions de la machine et appeler les outils que vous avez activés.</string>
+    <string name="mcp_token_error">Impossible de lire ou d'écrire le jeton.</string>
+    <string name="mcp_url">URL</string>
+    <string name="mcp_command">Commande Claude Code</string>
+    <string name="mcp_command_copy">Copier la commande</string>
+    <string name="mcp_command_copied">La commande est dans le presse-papiers.</string>
+    <string name="mcp_qr_description">Code QR de la commande Claude Code</string>
+    <string name="mcp_qr_too_long">La commande est trop longue pour un code QR. Copiez le texte.</string>
+
+    <string name="mcp_diagnostics_show">Afficher le journal d'audit</string>
+    <string name="mcp_diagnostics_hide">Masquer le journal d'audit</string>
+    <string name="mcp_diagnostics_hint">Les 200 derniers appels. Le journal ne contient pas de jeton.</string>
+    <string name="mcp_diagnostics_empty">Aucun appel pour l'instant.</string>
+    <string name="mcp_diagnostics_duration">%1$d ms</string>
+
+    <string name="mcp_chip">MCP : %1$s</string>
+    <string name="mcp_chip_description">Serveur MCP %1$s. Touchez pour démarrer ou arrêter le serveur.</string>
+    <string name="mcp_chip_always_description">Serveur MCP %1$s. Touchez pour le diagnostic.</string>
+
+    <string name="mcp_confirm_title">Autoriser l'appel MCP ?</string>
+    <string name="mcp_confirm_client">Client : %1$s</string>
+    <plurals name="mcp_confirm_waiting">
+        <item quantity="one">%1$d autre appel attend.</item>
+        <item quantity="other">%1$d autres appels attendent.</item>
+    </plurals>
+    <string name="mcp_confirm_allow">Autoriser</string>
+    <string name="mcp_confirm_refuse">Refuser</string>
+</resources>

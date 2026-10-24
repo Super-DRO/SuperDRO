@@ -19,6 +19,7 @@ import org.superdro.core.model.ThemeMode
 import org.superdro.core.store.json.AppSettingsStore
 import org.superdro.core.store.json.TabStore
 import org.superdro.core.ui.adaptive.LocalWindowLayout
+import org.superdro.core.ui.mcp.McpConfirmationHost
 import org.superdro.core.ui.adaptive.currentWindowLayout
 import org.superdro.core.ui.navigation.AddDeviceRoute
 import org.superdro.core.ui.navigation.EntryRegistry
@@ -80,7 +81,7 @@ fun App(modifier: Modifier = Modifier) {
         ) {
             val state by tabs.uiState.collectAsState()
             MessageEffect(messages, snackbar)
-            AppFrame(state = state, events = tabs, navigation = holder, modifier = modifier) { contentModifier ->
+            AppFrame(state = state, events = tabs, navigation = holder, modifier = modifier, dialogs = { McpConfirmationHost() }) { contentModifier ->
                 NavigationHost(
                     holder = holder,
                     registry = registry,
