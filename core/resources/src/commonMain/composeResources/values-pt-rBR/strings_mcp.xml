@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the MCP server. The file values/strings_mcp.xml has the same names. -->
+<resources>
+    <string name="mcp_title">Servidor MCP</string>
+    <string name="mcp_settings_link_summary">Acesso do agente aos espaços de trabalho, às bibliotecas de ferramentas e aos perfis</string>
+
+    <string name="mcp_section_status">Status</string>
+    <string name="mcp_section_access">Acesso</string>
+    <string name="mcp_section_network">Rede</string>
+    <string name="mcp_section_token">Token</string>
+    <string name="mcp_section_diagnostics">Diagnóstico</string>
+
+    <string name="mcp_enable">Executar o servidor MCP</string>
+    <string name="mcp_status_line">Status: %1$s</string>
+    <string name="mcp_status_stopped">Parado</string>
+    <string name="mcp_status_starting">Iniciando</string>
+    <string name="mcp_status_ready">Pronto</string>
+    <string name="mcp_status_active">Ativo</string>
+    <string name="mcp_status_failed">Problema</string>
+    <string name="mcp_block_off">O servidor está desligado. Nenhum socket está aberto.</string>
+    <string name="mcp_block_not_requested">Toque em Iniciar ou no chip de status para iniciar o servidor.</string>
+    <string name="mcp_block_plain_http">Confirme primeiro o aviso "Use apenas em redes confiáveis" na seção Rede.</string>
+    <string name="mcp_block_permission">A permissão de rede local não foi concedida.</string>
+    <string name="mcp_block_interface">A interface selecionada não está disponível para o servidor MCP.</string>
+    <string name="mcp_addresses">Endereços</string>
+    <string name="mcp_no_address">Sem endereço</string>
+    <string name="mcp_clients_label">Clientes</string>
+    <plurals name="mcp_clients">
+        <item quantity="one">%1$d cliente</item>
+        <item quantity="other">%1$d clientes</item>
+    </plurals>
+    <string name="mcp_start">Iniciar o servidor</string>
+    <string name="mcp_stop">Parar o servidor</string>
+    <string name="mcp_activation">Início</string>
+    <string name="mcp_activation_on_demand">Sob demanda</string>
+    <string name="mcp_activation_always_on">Sempre ativo</string>
+    <string name="mcp_retry">Um novo início em %1$d s.</string>
+    <string name="mcp_error_bind">Não é possível escutar em %1$s: %2$s</string>
+    <string name="mcp_error_accept">O servidor parou: %1$s</string>
+    <string name="mcp_error_no_address">A interface selecionada não tem endereço.</string>
+    <string name="mcp_error_port_taken">A porta %1$d está em uso por %2$s.</string>
+    <string name="mcp_error_duplicate">Duas ferramentas têm um mesmo nome: %1$s</string>
+    <string name="mcp_no_detail">sem detalhe</string>
+
+    <string name="mcp_scope_read">Leitura</string>
+    <string name="mcp_scope_read_summary">As ferramentas de leitura e os recursos. Sempre ativo enquanto o servidor está ativo.</string>
+    <string name="mcp_scope_populate">Preencher</string>
+    <string name="mcp_scope_populate_summary">Um agente pode criar e alterar os espaços de trabalho, as bibliotecas de ferramentas e os perfis.</string>
+    <string name="mcp_scope_control">Controle</string>
+    <string name="mcp_scope_control_summary">Um agente pode zerar e definir os eixos, e selecionar o subdatum e a ferramenta.</string>
+    <string name="mcp_warning_populate_title">Permitir gravações?</string>
+    <string name="mcp_warning_populate">Um agente pode alterar os datums, os deslocamentos e os dados de ferramentas das suas máquinas. Um datum errado dá uma posição errada na leitura. Verifique a leitura antes de cortar. O agente não pode mover a máquina.</string>
+    <string name="mcp_warning_control_title">Permitir o controle?</string>
+    <string name="mcp_warning_control">Um agente pode alterar os datums, os deslocamentos e os dados armazenados das suas máquinas. Um datum errado dá uma posição errada na leitura. Verifique cada alteração antes de cortar. O agente não pode mover a máquina.</string>
+    <string name="mcp_warning_confirm">Permitir</string>
+    <string name="mcp_warning_cancel">Cancelar</string>
+    <string name="mcp_confirmation">Confirmação no tablet</string>
+    <string name="mcp_confirmation_summary">Uma chamada arriscada altera o espaço de trabalho ativo de uma máquina online, substitui todos os itens, exclui itens ou altera um perfil.</string>
+    <string name="mcp_confirmation_risky">Chamadas arriscadas</string>
+    <string name="mcp_confirmation_all">Todas as chamadas</string>
+    <string name="mcp_confirmation_off">Desligada</string>
+    <string name="mcp_warning_confirmation_off_title">Desligar a confirmação?</string>
+    <string name="mcp_warning_confirmation_off">Sem a confirmação, um agente grava imediatamente. Nenhum diálogo aparece no tablet. O registro de auditoria mantém cada gravação.</string>
+
+    <string name="mcp_interface">Interface de rede</string>
+    <string name="mcp_interface_wifi">Wi-Fi</string>
+    <string name="mcp_interface_localhost">Localhost (apenas este tablet)</string>
+    <string name="mcp_interface_usb_ethernet">Ethernet USB</string>
+    <string name="mcp_interface_addresses">%1$s: %2$s</string>
+    <string name="mcp_interface_no_address">%1$s: sem endereço</string>
+    <string name="mcp_port">Porta</string>
+    <string name="mcp_port_range">Digite uma porta de 1024 a 65535.</string>
+    <string name="mcp_warning_trusted">Use apenas em redes confiáveis</string>
+    <string name="mcp_warning_plain_http">O link MCP não tem criptografia. Cada dispositivo na rede pode ler as posições da máquina e, com o token, pode chamar as ferramentas que você ativou.</string>
+    <string name="mcp_warning_plain_http_confirm">Usar esta rede</string>
+    <string name="mcp_warning_plain_http_confirmed">Você confirmou o aviso para esta interface.</string>
+
+    <string name="mcp_token_hint">O token fica neste tablet. Toque em "Novo token" para criar um token e vê-lo uma vez.</string>
+    <string name="mcp_token_shown">Dê este token ao seu agente. Ele aparece apenas agora.</string>
+    <string name="mcp_token_copy">Copiar o token</string>
+    <string name="mcp_token_new">Novo token</string>
+    <string name="mcp_token_new_title">Criar um novo token?</string>
+    <string name="mcp_token_new_warning">Um novo token para o token antigo. Cada cliente deve receber o novo token.</string>
+    <string name="mcp_token_copied">O token está na área de transferência.</string>
+    <string name="mcp_token_new_done">O servidor tem um novo token.</string>
+    <string name="mcp_token_hide">Ocultar o token</string>
+    <string name="mcp_token_caution">Mantenha o token em segredo. Cada dispositivo com o token pode ler as posições da máquina e chamar as ferramentas que você ativou.</string>
+    <string name="mcp_token_error">Não é possível ler ou gravar o token.</string>
+    <string name="mcp_url">URL</string>
+    <string name="mcp_command">Comando do Claude Code</string>
+    <string name="mcp_command_copy">Copiar o comando</string>
+    <string name="mcp_command_copied">O comando está na área de transferência.</string>
+    <string name="mcp_qr_description">Código QR do comando do Claude Code</string>
+    <string name="mcp_qr_too_long">O comando é longo demais para um código QR. Copie o texto.</string>
+
+    <string name="mcp_diagnostics_show">Mostrar o registro de auditoria</string>
+    <string name="mcp_diagnostics_hide">Ocultar o registro de auditoria</string>
+    <string name="mcp_diagnostics_hint">As últimas 200 chamadas. O registro não tem token.</string>
+    <string name="mcp_diagnostics_empty">Nenhuma chamada ainda.</string>
+    <string name="mcp_diagnostics_duration">%1$d ms</string>
+
+    <string name="mcp_chip">MCP: %1$s</string>
+    <string name="mcp_chip_description">Servidor MCP %1$s. Toque para iniciar ou parar o servidor.</string>
+    <string name="mcp_chip_always_description">Servidor MCP %1$s. Toque para o diagnóstico.</string>
+
+    <string name="mcp_confirm_title">Permitir a chamada MCP?</string>
+    <string name="mcp_confirm_client">Cliente: %1$s</string>
+    <plurals name="mcp_confirm_waiting">
+        <item quantity="one">%1$d chamada a mais aguarda.</item>
+        <item quantity="other">%1$d chamadas a mais aguardam.</item>
+    </plurals>
+    <string name="mcp_confirm_allow">Permitir</string>
+    <string name="mcp_confirm_refuse">Recusar</string>
+</resources>

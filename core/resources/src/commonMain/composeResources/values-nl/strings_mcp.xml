@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The strings of the MCP server. The file values/strings_mcp.xml has the same names. -->
+<resources>
+    <string name="mcp_title">MCP-server</string>
+    <string name="mcp_settings_link_summary">Agenttoegang tot de werkruimten, de gereedschapsbibliotheken en de profielen</string>
+
+    <string name="mcp_section_status">Status</string>
+    <string name="mcp_section_access">Toegang</string>
+    <string name="mcp_section_network">Netwerk</string>
+    <string name="mcp_section_token">Token</string>
+    <string name="mcp_section_diagnostics">Diagnose</string>
+
+    <string name="mcp_enable">MCP-server uitvoeren</string>
+    <string name="mcp_status_line">Status: %1$s</string>
+    <string name="mcp_status_stopped">Gestopt</string>
+    <string name="mcp_status_starting">Starten</string>
+    <string name="mcp_status_ready">Gereed</string>
+    <string name="mcp_status_active">Actief</string>
+    <string name="mcp_status_failed">Probleem</string>
+    <string name="mcp_block_off">De server is uit. Er is geen socket open.</string>
+    <string name="mcp_block_not_requested">Tik op Starten of op de statuschip om de server te starten.</string>
+    <string name="mcp_block_plain_http">Bevestig eerst de waarschuwing "Alleen gebruiken op vertrouwde netwerken" in de sectie Netwerk.</string>
+    <string name="mcp_block_permission">De toestemming voor het lokale netwerk is niet verleend.</string>
+    <string name="mcp_block_interface">De gekozen interface is niet beschikbaar voor de MCP-server.</string>
+    <string name="mcp_addresses">Adressen</string>
+    <string name="mcp_no_address">Geen adres</string>
+    <string name="mcp_clients_label">Clients</string>
+    <plurals name="mcp_clients">
+        <item quantity="one">%1$d client</item>
+        <item quantity="other">%1$d clients</item>
+    </plurals>
+    <string name="mcp_start">Server starten</string>
+    <string name="mcp_stop">Server stoppen</string>
+    <string name="mcp_activation">Start</string>
+    <string name="mcp_activation_on_demand">Op verzoek</string>
+    <string name="mcp_activation_always_on">Altijd aan</string>
+    <string name="mcp_retry">Een nieuwe start in %1$d s.</string>
+    <string name="mcp_error_bind">Kan niet luisteren op %1$s: %2$s</string>
+    <string name="mcp_error_accept">De server is gestopt: %1$s</string>
+    <string name="mcp_error_no_address">De gekozen interface heeft geen adres.</string>
+    <string name="mcp_error_port_taken">Poort %1$d is in gebruik door %2$s.</string>
+    <string name="mcp_error_duplicate">Twee gereedschappen hebben één naam: %1$s</string>
+    <string name="mcp_no_detail">geen detail</string>
+
+    <string name="mcp_scope_read">Lezen</string>
+    <string name="mcp_scope_read_summary">De leesgereedschappen en de bronnen. Altijd aan zolang de server aan is.</string>
+    <string name="mcp_scope_populate">Vullen</string>
+    <string name="mcp_scope_populate_summary">Een agent kan de werkruimten, de gereedschapsbibliotheken en de profielen maken en wijzigen.</string>
+    <string name="mcp_scope_control">Besturen</string>
+    <string name="mcp_scope_control_summary">Een agent kan de assen nullen en instellen, en het subdatum en het gereedschap kiezen.</string>
+    <string name="mcp_warning_populate_title">Schrijven toestaan?</string>
+    <string name="mcp_warning_populate">Een agent kan de datums, de offsets en de gereedschapsgegevens van uw machines wijzigen. Een verkeerd datum geeft een verkeerde positie op de uitlezing. Controleer de uitlezing voordat u snijdt. De agent kan de machine niet bewegen.</string>
+    <string name="mcp_warning_control_title">Besturen toestaan?</string>
+    <string name="mcp_warning_control">Een agent kan de datums, de offsets en de opgeslagen gegevens van uw machines wijzigen. Een verkeerd datum geeft een verkeerde positie op de uitlezing. Controleer elke wijziging voordat u snijdt. De agent kan de machine niet bewegen.</string>
+    <string name="mcp_warning_confirm">Toestaan</string>
+    <string name="mcp_warning_cancel">Annuleren</string>
+    <string name="mcp_confirmation">Bevestiging op de tablet</string>
+    <string name="mcp_confirmation_summary">Een riskante aanroep wijzigt de actieve werkruimte van een online machine, vervangt alle items, verwijdert items of wijzigt een profiel.</string>
+    <string name="mcp_confirmation_risky">Riskante aanroepen</string>
+    <string name="mcp_confirmation_all">Alle aanroepen</string>
+    <string name="mcp_confirmation_off">Uit</string>
+    <string name="mcp_warning_confirmation_off_title">Bevestiging uitschakelen?</string>
+    <string name="mcp_warning_confirmation_off">Zonder de bevestiging schrijft een agent direct. Er verschijnt geen dialoog op de tablet. Het auditlogboek bewaart elke schrijfactie.</string>
+
+    <string name="mcp_interface">Netwerkinterface</string>
+    <string name="mcp_interface_wifi">Wi-Fi</string>
+    <string name="mcp_interface_localhost">Localhost (alleen deze tablet)</string>
+    <string name="mcp_interface_usb_ethernet">USB-ethernet</string>
+    <string name="mcp_interface_addresses">%1$s: %2$s</string>
+    <string name="mcp_interface_no_address">%1$s: geen adres</string>
+    <string name="mcp_port">Poort</string>
+    <string name="mcp_port_range">Voer een poort van 1024 tot 65535 in.</string>
+    <string name="mcp_warning_trusted">Alleen gebruiken op vertrouwde netwerken</string>
+    <string name="mcp_warning_plain_http">De MCP-verbinding heeft geen versleuteling. Elk apparaat in het netwerk kan de machineposities lezen en met het token de gereedschappen aanroepen die u hebt ingeschakeld.</string>
+    <string name="mcp_warning_plain_http_confirm">Dit netwerk gebruiken</string>
+    <string name="mcp_warning_plain_http_confirmed">U hebt de waarschuwing voor deze interface bevestigd.</string>
+
+    <string name="mcp_token_hint">Het token blijft op deze tablet. Tik op "Nieuw token" om een token te maken en het één keer te zien.</string>
+    <string name="mcp_token_shown">Geef dit token aan uw agent. Het wordt alleen nu getoond.</string>
+    <string name="mcp_token_copy">Token kopiëren</string>
+    <string name="mcp_token_new">Nieuw token</string>
+    <string name="mcp_token_new_title">Een nieuw token maken?</string>
+    <string name="mcp_token_new_warning">Een nieuw token stopt het oude token. Elke client moet het nieuwe token krijgen.</string>
+    <string name="mcp_token_copied">Het token staat op het klembord.</string>
+    <string name="mcp_token_new_done">De server heeft een nieuw token.</string>
+    <string name="mcp_token_hide">Token verbergen</string>
+    <string name="mcp_token_caution">Houd het token geheim. Elk apparaat met het token kan de machineposities lezen en de gereedschappen aanroepen die u hebt ingeschakeld.</string>
+    <string name="mcp_token_error">Het token kan niet worden gelezen of geschreven.</string>
+    <string name="mcp_url">URL</string>
+    <string name="mcp_command">Claude Code-opdracht</string>
+    <string name="mcp_command_copy">Opdracht kopiëren</string>
+    <string name="mcp_command_copied">De opdracht staat op het klembord.</string>
+    <string name="mcp_qr_description">QR-code van de Claude Code-opdracht</string>
+    <string name="mcp_qr_too_long">De opdracht is te lang voor een QR-code. Kopieer de tekst.</string>
+
+    <string name="mcp_diagnostics_show">Auditlogboek tonen</string>
+    <string name="mcp_diagnostics_hide">Auditlogboek verbergen</string>
+    <string name="mcp_diagnostics_hint">De laatste 200 aanroepen. Het logboek bevat geen token.</string>
+    <string name="mcp_diagnostics_empty">Nog geen aanroep.</string>
+    <string name="mcp_diagnostics_duration">%1$d ms</string>
+
+    <string name="mcp_chip">MCP: %1$s</string>
+    <string name="mcp_chip_description">MCP-server %1$s. Tik om de server te starten of te stoppen.</string>
+    <string name="mcp_chip_always_description">MCP-server %1$s. Tik voor de diagnose.</string>
+
+    <string name="mcp_confirm_title">De MCP-aanroep toestaan?</string>
+    <string name="mcp_confirm_client">Client: %1$s</string>
+    <plurals name="mcp_confirm_waiting">
+        <item quantity="one">%1$d andere aanroep wacht.</item>
+        <item quantity="other">%1$d andere aanroepen wachten.</item>
+    </plurals>
+    <string name="mcp_confirm_allow">Toestaan</string>
+    <string name="mcp_confirm_refuse">Weigeren</string>
+</resources>

@@ -136,6 +136,8 @@ const val ADD_MACHINE_TAG: String = "add-machine"
  * - The frame keeps out of the system bars and the display cutout (`WindowInsets.safeDrawing`).
  *
  * @param navigation The back stacks: the frame opens the routes of the menus.
+ * @param dialogs The dialogs of the app that show over each screen, for example the confirmation
+ *   of an MCP write (`McpConfirmationHost`). A test gives none.
  * @param content The content below the tab row, for example the navigation host. It gets the
  *   modifier of the content area.
  */
@@ -145,6 +147,7 @@ fun AppFrame(
     events: DeviceTabsEvents,
     navigation: NavigationHolder,
     modifier: Modifier = Modifier,
+    dialogs: @Composable () -> Unit = {},
     content: @Composable (Modifier) -> Unit,
 ) {
     FrameLayout(
@@ -179,6 +182,7 @@ fun AppFrame(
         },
         content = content,
     )
+    dialogs()
 }
 
 /** The items of the tab menu. */

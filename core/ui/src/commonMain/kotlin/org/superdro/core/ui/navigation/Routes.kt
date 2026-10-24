@@ -120,6 +120,15 @@ data object DataOutputDetailsRoute : GlobalRoute
 /** Screen, settings: the key mapping settings. */
 data object KeyMappingRoute : GlobalRoute
 
+/** Screen, settings: the MCP server (`Settings > MCP server`). */
+data object McpSettingsRoute : GlobalRoute
+
+/**
+ * Screen, settings: the MCP server screen with the audit log open in its diagnostics section.
+ * A tap on the status chip opens it in the problem state or with "Always on".
+ */
+data object McpDiagnosticsRoute : GlobalRoute
+
 // ---------------------------------------------------------------------------------------------
 // Adapter area
 

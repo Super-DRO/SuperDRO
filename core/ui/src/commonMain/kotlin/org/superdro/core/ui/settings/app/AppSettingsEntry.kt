@@ -14,6 +14,7 @@ import org.superdro.core.ui.navigation.AppSettingsRoute
 import org.superdro.core.ui.navigation.GlobalEntryScope
 import org.superdro.core.ui.navigation.KeyMappingRoute
 import org.superdro.core.ui.navigation.LogsRoute
+import org.superdro.core.ui.navigation.McpSettingsRoute
 import org.superdro.core.ui.navigation.MachineProfilesRoute
 import org.superdro.core.ui.navigation.RememberedMachinesRoute
 import org.superdro.core.ui.presenter.rememberPresenter
@@ -44,6 +45,7 @@ fun AppSettingsEntry(scope: GlobalEntryScope, route: AppSettingsRoute) {
             onRememberedMachines = { scope.navigator.push(RememberedMachinesRoute) },
             onMachineProfiles = { scope.navigator.push(MachineProfilesRoute) },
             onKeyMapping = { scope.navigator.push(KeyMappingRoute) },
+            onMcpServer = { scope.navigator.push(McpSettingsRoute) },
             onLogs = { scope.navigator.push(LogsRoute) },
             onAbout = { scope.navigator.push(AboutRoute) },
         )

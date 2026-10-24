@@ -18,6 +18,8 @@ import org.superdro.core.model.PaneSizeScope
 import org.superdro.core.model.ThemeMode
 import org.superdro.core.resources.Res
 import org.superdro.core.resources.readout_unit_mm
+import org.superdro.core.resources.mcp_settings_link_summary
+import org.superdro.core.resources.mcp_title
 import org.superdro.core.resources.route_about
 import org.superdro.core.resources.route_app_settings
 import org.superdro.core.resources.route_key_mapping
@@ -133,6 +135,7 @@ class AppSettingsLinks(
     val onRememberedMachines: () -> Unit = {},
     val onMachineProfiles: () -> Unit = {},
     val onKeyMapping: () -> Unit = {},
+    val onMcpServer: () -> Unit = {},
     val onLogs: () -> Unit = {},
     val onAbout: () -> Unit = {},
 )
@@ -359,6 +362,12 @@ private fun ColumnScope.MachinesGroup(links: AppSettingsLinks) {
             summary = stringResource(Res.string.settings_app_keys_summary),
             onClick = links.onKeyMapping,
             tag = "app-link-keys",
+        )
+        SettingsLink(
+            title = stringResource(Res.string.mcp_title),
+            summary = stringResource(Res.string.mcp_settings_link_summary),
+            onClick = links.onMcpServer,
+            tag = "app-link-mcp",
         )
         SettingsLink(
             title = stringResource(Res.string.route_logs),
