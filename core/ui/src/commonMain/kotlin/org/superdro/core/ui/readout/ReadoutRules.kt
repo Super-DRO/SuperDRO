@@ -1,5 +1,6 @@
 package org.superdro.core.ui.readout
 
+import androidx.compose.runtime.Immutable
 import kotlin.math.max
 import kotlin.math.min
 import org.superdro.core.functions.compensation.ToolCompensation
@@ -13,6 +14,9 @@ import org.superdro.core.model.MachineMode
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.AdapterProfile
 import org.superdro.core.model.Workspace
+import org.superdro.core.model.ReadoutFormat
+import org.superdro.core.readout.DisplayUnit
+import org.superdro.core.readout.ReadoutPatterns
 import org.superdro.core.readout.operations.ActionButtons
 import org.superdro.core.ui.navigation.AlignAxesRoute
 import org.superdro.core.ui.navigation.AngleMeasureRoute
@@ -100,6 +104,76 @@ object ReadoutRows {
 
     /** The number of enabled outputs of X, Y, Z, Angular, and Tachometer (the `count` of the row height rule). */
     fun count(profile: MachineProfile): Int = order(profile).count { axis -> enabled(profile, axis) }
+}
+
+/**
+ * The space of the action buttons of one readout row.
+ *
+ * @property width The width of all the buttons with the gaps between them, in px.
+ * @property count The number of buttons.
+ * @property height The height of the highest button, in px.
+ */
+@Immutable
+data class ButtonGroup(val width: Int, val count: Int, val height: Int) {
+
+    /** Gives the group that has the largest width, count, and height of this group and [other]. */
+    fun max(other: ButtonGroup): ButtonGroup =
+        ButtonGroup(max(width, other.width), max(count, other.count), max(height, other.height))
+}
+
+/**
+ * The rules that align the values of the readout rows. All rows of a readout keep the same space
+ * for the buttons, the decimals, and the unit. Thus the decimal marks and the units of all rows
+ * are in one column, and a tap on a button does not move a value.
+ */
+object ReadoutAlignment {
+
+    /** Gives the units that a row of [kind] can show. */
+    fun units(kind: RowKind): List<DisplayUnit> = when (kind) {
+        RowKind.Linear -> listOf(DisplayUnit.Inch, DisplayUnit.Millimeter)
+        RowKind.Angular -> listOf(DisplayUnit.Degrees, DisplayUnit.Divisions)
+        RowKind.Tachometer -> listOf(DisplayUnit.Rpm, DisplayUnit.SurfaceFeetPerMinute, DisplayUnit.MetersPerMinute)
+    }
+
+    /** Gives the kind of the row that shows [unit]. */
+    fun kind(unit: DisplayUnit): RowKind = when (unit) {
+        DisplayUnit.Inch, DisplayUnit.Millimeter -> RowKind.Linear
+        DisplayUnit.Degrees, DisplayUnit.Divisions -> RowKind.Angular
+        DisplayUnit.Rpm, DisplayUnit.SurfaceFeetPerMinute, DisplayUnit.MetersPerMinute -> RowKind.Tachometer
+    }
+
+    /** Gives the largest number of decimals that a row of [kind] can show with [format]. */
+    fun decimals(kind: RowKind, format: ReadoutFormat): Int = when (kind) {
+        RowKind.Linear -> max(ReadoutPatterns.linear(format, metric = true).decimals, ReadoutPatterns.linear(format, metric = false).decimals)
+        RowKind.Angular -> ReadoutPatterns.ANGULAR.decimals
+        RowKind.Tachometer -> max(ReadoutPatterns.RPM.decimals, ReadoutPatterns.SURFACE_SPEED.decimals)
+    }
+
+    /** Gives the largest number of decimals of the rows of [kinds] with [format]. */
+    fun decimals(kinds: Collection<RowKind>, format: ReadoutFormat): Int =
+        kinds.maxOfOrNull { kind -> decimals(kind, format) } ?: 0
+
+    /** Gives the number of digits after the decimal mark of the value [text]. */
+    fun decimals(text: String): Int {
+        val mark = text.indexOf(DECIMAL_MARK)
+        return if (mark < 0) 0 else text.length - mark - 1
+    }
+
+    /**
+     * Gives the empty width after the digits of [text], so that its decimal mark is in the same
+     * column as the mark of a text with [reservedDecimals] decimals.
+     *
+     * @param digitWidth The width of one digit. The readout font has digits of one width.
+     * @param markWidth The width of the decimal mark.
+     */
+    fun trailingSpace(text: String, reservedDecimals: Int, digitWidth: Float, markWidth: Float): Float {
+        val missing = (reservedDecimals - decimals(text)).coerceAtLeast(0)
+        val noMark = reservedDecimals > 0 && DECIMAL_MARK !in text
+        return missing * digitWidth + if (noMark) markWidth else 0f
+    }
+
+    /** The decimal mark of the readout patterns. */
+    const val DECIMAL_MARK: Char = '.'
 }
 
 /**

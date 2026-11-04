@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
+import org.superdro.core.ui.components.CheckIconSlot
 import org.superdro.core.ui.presenter.collectLiveState
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
@@ -538,11 +539,7 @@ fun ToggleChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: 
         onClick = onClick,
         colors = FilterChipDefaults.filterChipColors(containerColor = overlayContainer()),
         label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        leadingIcon = if (selected) {
-            { Icon(painterResource(Res.drawable.ic_check), contentDescription = null, modifier = Modifier.size(18.dp)) }
-        } else {
-            null
-        },
+        leadingIcon = { CheckIconSlot(selected) },
         modifier = modifier.heightIn(min = 48.dp).semantics {
             stateDescription = state
             if (description != null) contentDescription = description
@@ -550,17 +547,19 @@ fun ToggleChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: 
     )
 }
 
+/**
+ * A chip of an action.
+ *
+ * @param active The "on" state of an action with a state, or null for an action with no state.
+ *   A chip with a state keeps the space of its check icon.
+ */
 @Composable
-private fun ActionChip(label: String, onClick: () -> Unit, active: Boolean = false) {
+private fun ActionChip(label: String, onClick: () -> Unit, active: Boolean? = null) {
     AssistChip(
         onClick = onClick,
         colors = AssistChipDefaults.assistChipColors(containerColor = overlayContainer()),
         label = { Text(label, maxLines = 1) },
-        leadingIcon = if (active) {
-            { Icon(painterResource(Res.drawable.ic_check), contentDescription = null, modifier = Modifier.size(18.dp)) }
-        } else {
-            null
-        },
+        leadingIcon = active?.let { on -> { CheckIconSlot(on) } },
         modifier = Modifier.heightIn(min = 48.dp),
     )
 }

@@ -126,6 +126,7 @@ import org.superdro.core.resources.mcp_warning_plain_http_confirmed
 import org.superdro.core.resources.mcp_warning_populate
 import org.superdro.core.resources.mcp_warning_populate_title
 import org.superdro.core.resources.mcp_warning_trusted
+import org.superdro.core.ui.components.StableText
 import org.superdro.core.ui.components.InfoPanel
 import org.superdro.core.ui.components.OpenCloseIcon
 import org.superdro.core.ui.components.openState
@@ -249,7 +250,7 @@ private fun StatusCard(state: McpSettingsUiState, events: McpSettingsEvents) {
             FilledTonalButton(onClick = events::onStartStop, modifier = Modifier.padding(top = 8.dp).heightIn(min = LocalTouchTargets.current.button)) {
                 Icon(painterResource(if (status.running) Res.drawable.ic_pause else Res.drawable.ic_play_arrow), contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(if (status.running) Res.string.mcp_stop else Res.string.mcp_start))
+                StableText(stringResource(if (status.running) Res.string.mcp_stop else Res.string.mcp_start), listOf(stringResource(Res.string.mcp_stop), stringResource(Res.string.mcp_start)))
             }
         }
     }
@@ -438,7 +439,7 @@ private fun DiagnosticsCard(state: McpSettingsUiState, events: McpSettingsEvents
             onClick = if (open) events::onHideAudit else events::onShowAudit,
             modifier = Modifier.heightIn(min = LocalTouchTargets.current.button).openState(open).testTag(MCP_AUDIT_BUTTON_TAG),
         ) {
-            Text(stringResource(if (open) Res.string.mcp_diagnostics_hide else Res.string.mcp_diagnostics_show))
+            StableText(stringResource(if (open) Res.string.mcp_diagnostics_hide else Res.string.mcp_diagnostics_show), listOf(stringResource(Res.string.mcp_diagnostics_hide), stringResource(Res.string.mcp_diagnostics_show)))
             Spacer(Modifier.width(8.dp))
             OpenCloseIcon(open)
         }

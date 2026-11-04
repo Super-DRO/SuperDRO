@@ -178,6 +178,7 @@ import org.superdro.core.resources.ic_lock
 import org.superdro.core.resources.ic_pause
 import org.superdro.core.resources.ic_play_arrow
 import org.superdro.core.resources.ic_warning
+import org.superdro.core.ui.components.StableText
 import org.superdro.core.ui.components.OpenCloseIcon
 import org.superdro.core.ui.components.openState
 import org.superdro.core.ui.navigation.ScreenScaffold
@@ -376,7 +377,7 @@ private fun StatusCard(state: DataOutputUiState, events: DataOutputEvents) {
                 FilledTonalButton(onClick = events::onStartStop, modifier = Modifier.heightIn(min = LocalTouchTargets.current.button)) {
                     Icon(painterResource(if (status.running) Res.drawable.ic_dataoutput_stop else Res.drawable.ic_play_arrow), contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(if (status.running) Res.string.data_output_stop else Res.string.data_output_start))
+                    StableText(stringResource(if (status.running) Res.string.data_output_stop else Res.string.data_output_start), listOf(stringResource(Res.string.data_output_stop), stringResource(Res.string.data_output_start)))
                 }
             }
             // The dialog rule: the diagnostics show in this section, not in a dialog.
@@ -388,7 +389,7 @@ private fun StatusCard(state: DataOutputUiState, events: DataOutputEvents) {
                     onClick = if (open) events::onDismissDialog else events::onShowDiagnostics,
                     modifier = Modifier.heightIn(min = LocalTouchTargets.current.button).openState(open).testTag(DATA_OUTPUT_DETAILS_TAG),
                 ) {
-                    Text(stringResource(if (open) Res.string.dataoutput_details_hide else Res.string.dataoutput_details))
+                    StableText(stringResource(if (open) Res.string.dataoutput_details_hide else Res.string.dataoutput_details), listOf(stringResource(Res.string.dataoutput_details_hide), stringResource(Res.string.dataoutput_details)))
                     Spacer(Modifier.width(8.dp))
                     OpenCloseIcon(open)
                 }

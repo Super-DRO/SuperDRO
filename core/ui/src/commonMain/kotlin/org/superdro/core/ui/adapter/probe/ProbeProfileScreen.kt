@@ -41,7 +41,6 @@ import org.superdro.core.resources.Res
 import org.superdro.core.resources.frame_cancel
 import org.superdro.core.resources.frame_done
 import org.superdro.core.resources.frame_save
-import org.superdro.core.resources.ic_check
 import org.superdro.core.resources.ic_info
 import org.superdro.core.resources.ic_science
 import org.superdro.core.resources.ic_sync
@@ -87,6 +86,7 @@ import org.superdro.core.resources.probelib_standard_tip_read_only
 import org.superdro.core.resources.probelib_sync
 import org.superdro.core.resources.probelib_title_new
 import org.superdro.core.resources.route_probe_profile
+import org.superdro.core.ui.components.CheckIconSlot
 import org.superdro.core.ui.adapter.common.ChoiceRow
 import org.superdro.core.ui.adapter.common.NumberField
 import org.superdro.core.ui.adapter.common.SectionTitle
@@ -360,11 +360,7 @@ private fun TypeChips(selected: ProbeType, onSelect: (ProbeType) -> Unit) {
                     selected = type == selected,
                     onClick = { onSelect(type) },
                     label = { Text(stringResource(ProbeTypeRules.label(type))) },
-                    leadingIcon = if (type == selected) {
-                        { Icon(painterResource(Res.drawable.ic_check), contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    } else {
-                        null
-                    },
+                    leadingIcon = { CheckIconSlot(type == selected) },
                     modifier = Modifier.heightIn(min = 48.dp).testTag("probe-type-${type.name}"),
                 )
             }

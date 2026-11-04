@@ -77,6 +77,7 @@ import org.superdro.core.resources.ic_check
 import org.superdro.core.resources.ic_hourglass
 import org.superdro.core.resources.ic_info
 import org.superdro.core.resources.ic_radio_unchecked
+import org.superdro.core.ui.components.StableText
 import org.superdro.core.ui.graphics.common.ValueField
 import org.superdro.core.ui.graphics.common.unitText
 import org.superdro.core.ui.navigation.ScreenScaffold
@@ -324,7 +325,13 @@ private fun OriginControls(state: EdgeFinderUiState, events: EdgeFinderEvents) {
                 stateDescription = stringResource(if (state.zArmed) Res.string.edgefinder_on else Res.string.edgefinder_off),
                 style = if (state.zArmed) DroButtonStyle.Active else DroButtonStyle.Neutral,
                 modifier = Modifier.testTag(EDGE_FINDER_Z_ARM_TAG),
-            ) { Text(arm, style = MaterialTheme.typography.labelLarge) }
+            ) {
+                StableText(
+                    arm,
+                    listOf(stringResource(Res.string.edgefinder_armed), stringResource(Res.string.edgefinder_z_arm)),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
         }
     }
     Choice(

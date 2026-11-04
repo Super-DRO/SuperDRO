@@ -69,6 +69,10 @@ import org.superdro.core.resources.readout_status_measurement
 import org.superdro.core.resources.readout_status_no_tool
 import org.superdro.core.resources.readout_status_rpm
 import org.superdro.core.resources.readout_status_tool
+import androidx.compose.ui.unit.Dp
+import org.superdro.core.resources.strip_mixed
+import org.superdro.core.ui.components.rememberMaxTextWidth
+import org.superdro.core.ui.components.minWidthPx
 import org.superdro.core.ui.text.UiText
 import org.superdro.core.ui.text.resolve
 import org.superdro.core.ui.theme.AccentButtons
@@ -115,8 +119,18 @@ fun StatusStrip(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val mixedUnits = state.units == GlobalUnitsState.Mixed
-        StatusChip(stringResource(ReadoutTexts.unitsText(state.units)), ReadoutTexts.mixedIcon(mixedUnits))
-        StatusChip(stringResource(ReadoutTexts.modeText(state.mode)), ReadoutTexts.mixedIcon(state.mode == GlobalModeState.Mixed))
+        // A tap on a units or mode button changes the text of these chips. Each chip keeps the
+        // width of its widest state, so that the next chips do not move.
+        val mixedText = stringResource(Res.string.strip_mixed)
+        val unitsTexts = GlobalUnitsState.entries.filter { it != GlobalUnitsState.Mixed }.map { stringResource(ReadoutTexts.unitsText(it)) }
+        val modeTexts = GlobalModeState.entries.filter { it != GlobalModeState.Mixed }.map { stringResource(ReadoutTexts.modeText(it)) }
+        StatusChip(stringResource(ReadoutTexts.unitsText(state.units)), ReadoutTexts.mixedIcon(mixedUnits), stableTexts = unitsTexts, stableIconText = mixedText)
+        StatusChip(
+            stringResource(ReadoutTexts.modeText(state.mode)),
+            ReadoutTexts.mixedIcon(state.mode == GlobalModeState.Mixed),
+            stableTexts = modeTexts,
+            stableIconText = mixedText,
+        )
         StatusChip(state.toolName?.let { name -> stringResource(Res.string.readout_status_tool, name) } ?: stringResource(Res.string.readout_status_no_tool))
         state.subDatumName?.let { name -> StatusChip(stringResource(Res.string.readout_status_datum, name)) }
         RpmChip(rpmText)
@@ -130,6 +144,12 @@ fun StatusStrip(
     }
 }
 
+/** The size of the icon of a status chip. */
+private val StatusIconSize: Dp = 16.dp
+
+/** The gap between the icon and the text of a status chip. */
+private val StatusIconGap: Dp = 6.dp
+
 /** The RPM chip: the only reader of the RPM text. No chip shows when the text is null. */
 @Composable
 private fun RpmChip(rpmText: StateFlow<String?>) {
@@ -137,20 +157,39 @@ private fun RpmChip(rpmText: StateFlow<String?>) {
     rpm?.let { text -> StatusChip(stringResource(Res.string.readout_status_rpm, text)) }
 }
 
+/**
+ * A chip of the status strip.
+ *
+ * @param stableTexts The texts without an icon that the chip can show. The chip keeps the width of
+ *   the widest of these texts and of [stableIconText] with its icon.
+ * @param stableIconText The text that the chip shows with the icon, or null.
+ */
 @Composable
 private fun StatusChip(
     text: String,
     icon: DrawableResource? = null,
     container: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
     content: Color = MaterialTheme.colorScheme.onSurface,
+    stableTexts: List<String> = emptyList(),
+    stableIconText: String? = null,
 ) {
+    val style = MaterialTheme.typography.labelLarge
+    val density = LocalDensity.current
+    val textWidthPx = rememberMaxTextWidth(stableTexts, style)
+    val iconTextWidthPx = rememberMaxTextWidth(listOfNotNull(stableIconText), style)
+    val iconWidthPx = with(density) { (StatusIconSize + StatusIconGap).roundToPx() }
+    val minContentPx = maxOf(textWidthPx, if (stableIconText != null) iconTextWidthPx + iconWidthPx else 0)
     Surface(color = container, contentColor = content, shape = MaterialTheme.shapes.small) {
-        Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(horizontal = 10.dp, vertical = 6.dp).minWidthPx(minContentPx),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             if (icon != null) {
-                Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
+                Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(StatusIconSize))
+                Spacer(Modifier.width(StatusIconGap))
             }
-            Text(text, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+            Text(text, style = style, maxLines = 1)
         }
     }
 }
