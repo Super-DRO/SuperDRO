@@ -76,6 +76,8 @@ import org.superdro.core.resources.ic_drawing_rotate_left
 import org.superdro.core.resources.ic_drawing_rotate_right
 import org.superdro.core.resources.ic_radio_unchecked
 import org.superdro.core.resources.ic_warning
+import org.superdro.core.ui.components.StableText
+import org.superdro.core.ui.components.CheckIconSlot
 import org.superdro.core.ui.adaptive.LocalWindowLayout
 import org.superdro.core.ui.graphics.common.ValueField
 import org.superdro.core.ui.graphics.common.unitText
@@ -333,7 +335,12 @@ private fun ReferenceCard(state: DrawingSetupUiState, card: ReferenceCardUiState
                     onClick = { events.onCardSet(card.index) },
                     enabled = !state.busy,
                     modifier = Modifier.heightIn(min = targets.button).testTag(drawingCardSetTag(card.index)),
-                ) { Text(stringResource(if (card.set) Res.string.drawingui_clear else Res.string.drawingui_set)) }
+                ) {
+                    StableText(
+                        stringResource(if (card.set) Res.string.drawingui_clear else Res.string.drawingui_set),
+                        listOf(stringResource(Res.string.drawingui_clear), stringResource(Res.string.drawingui_set)),
+                    )
+                }
             }
         }
     }
@@ -354,11 +361,7 @@ private fun ColumnScope.SnapGroups(state: DrawingSetupUiState, events: DrawingSe
                     selected = group.shown,
                     onClick = { events.onGroupShown(index, !group.shown) },
                     label = { Text(stringResource(Res.string.drawingui_show_on_drawing)) },
-                    leadingIcon = if (group.shown) {
-                        { Icon(painterResource(Res.drawable.ic_check), contentDescription = null, tint = accent, modifier = Modifier.size(18.dp)) }
-                    } else {
-                        null
-                    },
+                    leadingIcon = { CheckIconSlot(group.shown, tint = accent) },
                     colors = chipColors,
                     modifier = Modifier.heightIn(min = 48.dp),
                 )
@@ -366,11 +369,7 @@ private fun ColumnScope.SnapGroups(state: DrawingSetupUiState, events: DrawingSe
                     selected = group.create,
                     onClick = { events.onGroupCreate(index, !group.create) },
                     label = { Text(stringResource(Res.string.drawingui_create_sub_datums)) },
-                    leadingIcon = if (group.create) {
-                        { Icon(painterResource(Res.drawable.ic_check), contentDescription = null, tint = accent, modifier = Modifier.size(18.dp)) }
-                    } else {
-                        null
-                    },
+                    leadingIcon = { CheckIconSlot(group.create, tint = accent) },
                     colors = chipColors,
                     modifier = Modifier.heightIn(min = 48.dp).testTag(drawingGroupCreateTag(index)),
                 )

@@ -83,10 +83,9 @@ import org.superdro.core.resources.readout_button_units
 import org.superdro.core.resources.readout_button_zero
 import org.superdro.core.resources.readout_label_semantics
 import org.superdro.core.resources.readout_state_semantics
-import org.superdro.core.resources.readout_unit_degrees
-import org.superdro.core.resources.readout_unit_divisions
 import org.superdro.core.resources.readout_value_semantics
 import org.superdro.core.resources.readout_value_state_semantics
+import org.superdro.core.ui.components.StableText
 import org.superdro.core.ui.presenter.collectLiveState
 import org.superdro.core.ui.theme.LocalReadoutTypography
 import org.superdro.core.ui.theme.LocalTouchTargets
@@ -127,6 +126,32 @@ private const val STATE_LINE_FRACTION: Float = 0.12f
  */
 private val LocalRowTextSizes = staticCompositionLocalOf<SnapshotStateMap<AxisId, Float>?> { null }
 
+/**
+ * The button space of each row. All rows keep the space of the largest group, so that the
+ * value boxes of all rows have the same width. [ReadoutRows] gives the map.
+ */
+private val LocalRowButtonGroups = staticCompositionLocalOf<SnapshotStateMap<AxisId, ButtonGroup>?> { null }
+
+/**
+ * The space after the digits of a value: the decimals and the unit texts that each row keeps.
+ *
+ * @property decimals The number of decimals that the value keeps space for.
+ * @property units The unit texts that the value keeps space for.
+ */
+@Immutable
+private data class ValueSlot(val decimals: Int, val units: List<String>)
+
+/**
+ * The value slot of all rows, so that the decimal marks and the units of all rows are in one
+ * column. [ReadoutRows] gives it.
+ */
+private val LocalRowValueSlot = staticCompositionLocalOf<ValueSlot?> { null }
+
+/** Gives the unit symbol texts of all the display units. */
+@Composable
+private fun unitSymbols(): Map<DisplayUnit, String> =
+    DisplayUnit.entries.associateWith { unit -> stringResource(ReadoutTexts.unitSymbol(unit)) }
+
 @Immutable
 private data class ReadoutRowItems(val entries: List<ReadoutRowUiState>)
 
@@ -147,6 +172,15 @@ fun ReadoutRows(
     modifier: Modifier = Modifier,
 ) {
     val sizes = remember { mutableStateMapOf<AxisId, Float>() }
+    val groups = remember { mutableStateMapOf<AxisId, ButtonGroup>() }
+    val symbols = unitSymbols()
+    val slot = remember(rows, format, symbols) {
+        val kinds = rows.map { row -> row.kind }.distinct()
+        ValueSlot(
+            decimals = ReadoutAlignment.decimals(kinds, format),
+            units = kinds.flatMap(ReadoutAlignment::units).map { unit -> symbols.getValue(unit) },
+        )
+    }
     val rowItems = remember(rows) { ReadoutRowItems(rows) }
     val minRow = LocalTouchTargets.current.button + 8.dp
     val density = LocalDensity.current
@@ -159,7 +193,12 @@ fun ReadoutRows(
             scrollable = next
         }
     }
-    CompositionLocalProvider(LocalRowTextSizes provides if (rows.size <= 1) null else sizes) {
+    val shared = rows.size > 1
+    CompositionLocalProvider(
+        LocalRowTextSizes provides if (shared) sizes else null,
+        LocalRowButtonGroups provides if (shared) groups else null,
+        LocalRowValueSlot provides if (shared) slot else null,
+    ) {
         if (!scrollable) {
             Layout(
                 content = {
@@ -254,6 +293,10 @@ private fun ReadoutRowContent(
 ) {
     val hasSlider = row.kind == RowKind.Linear && row.slider
     val buttons = if (collapsed) row.collapsedButtons else row.buttons
+    val groups = LocalRowButtonGroups.current
+    if (groups != null) {
+        DisposableEffect(row.axis) { onDispose { groups.remove(row.axis) } }
+    }
     Layout(
         content = {
             AxisLabel(row, onClick = { events.onLabelTap(row.axis) })
@@ -318,8 +361,15 @@ private fun ReadoutRowContent(
             }
             if (i > 0) buttonsTotalWidth += gapPx
         }
+        // Each row keeps the button space of the largest group of all rows. Thus the value boxes,
+        // the decimal marks, and the units of all rows are in one column.
+        val own = ButtonGroup(buttonsTotalWidth, buttonCount, buttonsMaxHeight)
+        if (groups != null && groups[row.axis] != own) {
+            groups[row.axis] = own
+        }
+        val group = groups?.values?.fold(own, ButtonGroup::max) ?: own
         val fullRightWidth = (rowWidth - hPadPx * 2 - labelPlaceable.width - sectionGapPx).coerceAtLeast(0)
-        val rightSectionWidth = if (buttonPlaceables.isNotEmpty()) sectionGapPx + buttonsTotalWidth else 0
+        val rightSectionWidth = if (group.width > 0) sectionGapPx + group.width else 0
         val sideCenterWidth = (fullRightWidth - rightSectionWidth).coerceAtLeast(0)
 
         val rowHeightDp = rowHeight.toDp()
@@ -328,9 +378,9 @@ private fun ReadoutRowContent(
         } else {
             0
         }
-        val bottomBandHeight = maxOf(buttonsMaxHeight, sliderHeightPx) + 4.dp.roundToPx()
+        val bottomBandHeight = maxOf(group.height, sliderHeightPx) + 4.dp.roundToPx()
         val stackedValueBoxHeight = (innerHeight - bottomBandHeight).coerceAtLeast(0)
-        val stackButtons = buttonCount > 1 &&
+        val stackButtons = group.count > 1 &&
             (stackedValueBoxHeight - MinStateLineHeight.roundToPx()) * DIGIT_HEIGHT_FRACTION >
             (sideCenterWidth - SliderUnitInset.roundToPx()) * 0.20f
 
@@ -362,7 +412,7 @@ private fun ReadoutRowContent(
                     val sliderY = bandTop + (bandHeight - sliderPlaceable.height) / 2
                     sliderPlaceable.placeRelative(centerX, sliderY)
                 }
-                var buttonX = centerX + fullRightWidth - buttonsTotalWidth
+                var buttonX = centerX + fullRightWidth - group.width
                 for (buttonPlaceable in buttonPlaceables) {
                     val buttonY = bandTop + (bandHeight - buttonPlaceable.height) / 2
                     buttonPlaceable.placeRelative(buttonX, buttonY)
@@ -501,10 +551,23 @@ fun ValueBox(
     val reference = remember(style, referenceFontSize) { style.copy(fontSize = referenceFontSize) }
     val digitsStyle = remember(reference, color) { reference.copy(lineHeight = referenceFontSize, color = color) }
     val templateWidth = remember(reference, template) { measurer.measure(template, reference).size.width.toFloat() }
+    // The value keeps the space of the widest unit and of the most decimals of its row, or of all
+    // rows in a readout. Thus a tap on the units button does not move the digits.
+    val symbols = unitSymbols()
+    val ownKind = ReadoutAlignment.kind(value.unit)
+    val slot = LocalRowValueSlot.current ?: remember(ownKind, format, symbols) {
+        ValueSlot(ReadoutAlignment.decimals(ownKind, format), ReadoutAlignment.units(ownKind).map { u -> symbols.getValue(u) })
+    }
     val unitRefFontSize = with(density) { 20.dp.toSp() }
     val unitRefStyle = remember(unitBaseStyle, unitRefFontSize) { unitBaseStyle.copy(fontSize = unitRefFontSize) }
-    val sideUnitWidthPx = remember(measurer, unit, unitRefStyle, density) {
-        measurer.measure(unit, unitRefStyle).size.width.toFloat() + with(density) { 8.dp.toPx() }
+    val sideUnitWidthPx = remember(measurer, unit, slot, unitRefStyle, density) {
+        (slot.units + unit).maxOf { text -> measurer.measure(text, unitRefStyle).size.width }.toFloat() +
+            with(density) { 8.dp.toPx() }
+    }
+    val digitWidth = remember(reference) { measurer.measure(DIGIT_SAMPLE, reference).size.width.toFloat() / DIGIT_SAMPLE.length }
+    val markWidth = remember(reference) { measurer.measure(ReadoutAlignment.DECIMAL_MARK.toString(), reference).size.width.toFloat() }
+    val templateSpace = remember(template, slot, digitWidth, markWidth) {
+        ReadoutAlignment.trailingSpace(template, slot.decimals, digitWidth, markWidth)
     }
     val sizes = LocalRowTextSizes.current
     if (sizes != null) {
@@ -573,7 +636,8 @@ fun ValueBox(
 
         val unbounded = Constraints()
         val digitsPlaceable = measurables[0].measure(unbounded)
-        val effectiveTemplateWidth = maxOf(templateWidth, digitsPlaceable.width.toFloat())
+        val digitsSpace = ReadoutAlignment.trailingSpace(value.digits, slot.decimals, digitWidth, markWidth)
+        val effectiveTemplateWidth = maxOf(templateWidth + templateSpace, digitsPlaceable.width + digitsSpace)
         val fitted = ReadoutGeometry.textSize(heightPx, widthPx, effectiveTemplateWidth * heightPx / referencePx)
         if (sizes != null && sizes[value.axis] != fitted) {
             sizes[value.axis] = fitted
@@ -605,7 +669,7 @@ fun ValueBox(
                 val sideUnitW = if (!compactUnit) sideUnitWidthPx.roundToInt() else 0
                 val availW = (boxWidth - sideUnitW).coerceAtLeast(0)
                 val rowBottom = stateLineHeightPx + ((digitsHeightPx + scaledH) / 2f).roundToInt()
-                val digitsX = (availW - scaledW).roundToInt()
+                val digitsX = (availW - scaledW - digitsSpace * scale).roundToInt()
                 val digitsY = (rowBottom - scaledH).roundToInt()
                 digitsPlaceable.placeWithLayer(digitsX, digitsY) {
                     transformOrigin = TransformOrigin(0f, 0f)
@@ -661,22 +725,31 @@ fun ActionButton(
     val text: String
     val name: String
     var active = false
+    // The texts of all the states of a toggle button. The button keeps the width of the widest.
+    var alternatives = emptyList<String>()
     when (mode) {
         AxisButtonMode.SetZero -> {
             text = "0"
             name = stringResource(Res.string.readout_button_zero)
         }
         AxisButtonMode.ToggleIncremental -> {
-            text = stringResource(if (incremental) Res.string.readout_button_inc else Res.string.readout_button_abs)
+            val inc = stringResource(Res.string.readout_button_inc)
+            val abs = stringResource(Res.string.readout_button_abs)
+            text = if (incremental) inc else abs
             name = text
             active = incremental
+            alternatives = listOf(inc, abs)
         }
         AxisButtonMode.ToggleUnits -> {
-            text = when {
-                angular -> stringResource(if (divisions) Res.string.readout_unit_divisions else Res.string.readout_unit_degrees)
-                else -> stringResource(ReadoutTexts.unitSymbol(if (metric) DisplayUnit.Millimeter else DisplayUnit.Inch))
+            val symbols = unitSymbols()
+            val shown = when {
+                angular -> if (divisions) DisplayUnit.Divisions else DisplayUnit.Degrees
+                metric -> DisplayUnit.Millimeter
+                else -> DisplayUnit.Inch
             }
+            text = symbols.getValue(shown)
             name = "${stringResource(Res.string.readout_button_units)} $text"
+            alternatives = ReadoutAlignment.units(ReadoutAlignment.kind(shown)).map { unit -> symbols.getValue(unit) }
         }
         AxisButtonMode.SetCenter -> {
             text = "½"
@@ -708,7 +781,7 @@ fun ActionButton(
             Icon(painterResource(Res.drawable.ic_lock), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(4.dp))
         }
-        Text(text, style = MaterialTheme.typography.titleLarge, maxLines = 1)
+        StableText(text, alternatives, style = MaterialTheme.typography.titleLarge)
     }
 }
 
@@ -716,15 +789,23 @@ fun ActionButton(
 @Composable
 private fun TachometerButton(label: String, surfaceSpeed: Boolean, metric: Boolean, events: ReadoutEvents) {
     val other = if (surfaceSpeed) DisplayUnit.Rpm else if (metric) DisplayUnit.MetersPerMinute else DisplayUnit.SurfaceFeetPerMinute
+    val symbols = unitSymbols()
     DroButton(
         onClick = events::onTachometerToggle,
         contentDescription = stringResource(Res.string.readout_button_cd, label, stringResource(Res.string.readout_button_surface_speed)),
         style = if (surfaceSpeed) DroButtonStyle.Active else DroButtonStyle.Primary,
         modifier = Modifier.testTag("readout-tachometer-toggle"),
     ) {
-        Text(stringResource(ReadoutTexts.unitSymbol(other)), style = MaterialTheme.typography.titleMedium, maxLines = 1)
+        StableText(
+            symbols.getValue(other),
+            ReadoutAlignment.units(RowKind.Tachometer).map { unit -> symbols.getValue(unit) },
+            style = MaterialTheme.typography.titleMedium,
+        )
     }
 }
+
+/** The text that gives the width of one digit of the readout font. */
+private const val DIGIT_SAMPLE: String = "0000000000"
 
 /** The value of the template text of the size rule: the mm text of −90. */
 private const val TEMPLATE_VALUE: Double = -90.0

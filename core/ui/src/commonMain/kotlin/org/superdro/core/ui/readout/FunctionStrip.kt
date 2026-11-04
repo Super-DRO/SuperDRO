@@ -1,7 +1,10 @@
 package org.superdro.core.ui.readout
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -275,15 +278,37 @@ private fun FunctionButtonView(button: FunctionButtonUiState, events: ReadoutEve
         },
         modifier = modifier.testTag(functionTag(button.button)),
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(label, style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center, maxLines = 2)
-            if (button.active) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(ReadoutTexts.activeIcon), contentDescription = null, modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(2.dp))
-                    Text(activeText, style = MaterialTheme.typography.labelSmall)
-                }
+        // A button that can become active keeps the height of its active state, so that a tap
+        // does not change the height of the button. A hidden copy of the active label gives
+        // this height, and the visible label stays at the center.
+        Box(contentAlignment = Alignment.Center) {
+            if (!button.active && button.button in ActivatableButtons) {
+                FunctionLabel(label, activeText, active = true, Modifier.alpha(0f).clearAndSetSemantics {})
+            }
+            FunctionLabel(label, activeText, active = button.active)
+        }
+    }
+}
+
+@Composable
+private fun FunctionLabel(label: String, activeText: String, active: Boolean, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center, maxLines = 2)
+        if (active) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(painterResource(ReadoutTexts.activeIcon), contentDescription = null, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(2.dp))
+                Text(activeText, style = MaterialTheme.typography.labelSmall)
             }
         }
     }
 }
+
+/** The function buttons that can show the "Active" line (`FunctionStripRules.buttons`). */
+private val ActivatableButtons: Set<FunctionButton> = setOf(
+    FunctionButton.LatheToolOffset,
+    FunctionButton.HeightCompensation,
+    FunctionButton.RadiusCompensation,
+    FunctionButton.CompoundCompensation,
+    FunctionButton.HeadTiltCompensation,
+)

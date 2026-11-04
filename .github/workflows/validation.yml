@@ -77,6 +77,13 @@ jobs:
           distribution: 'jetbrains'
           java-version: '21'
 
+      # The CMake and the NDK of gradle/libs.versions.toml. A runner image update can remove the
+      # CMake or the NDK that the build asks for, and AGP does not install CMake.
+      - name: Find the Android SDK packages
+        if: matrix.target == 'android'
+        id: sdk
+        run: echo "packages=$(python3 scripts/android_sdk_packages.py)" >> "$GITHUB_OUTPUT"
+
       - name: Setup Android SDK
         if: matrix.target == 'android'
         uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
@@ -85,7 +92,7 @@ jobs:
           log-accepted-android-sdk-licenses: false
           # The default package list of the action asks for the old package 'tools', which the
           # SDK repository does not have. AGP installs the platform 37 and the build tools.
-          packages: 'platform-tools'
+          packages: ${{ steps.sdk.outputs.packages }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
