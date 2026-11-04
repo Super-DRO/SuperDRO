@@ -19,13 +19,17 @@ concurrency:
 permissions:
   contents: read
 
+# The runner images have a fixed Ubuntu release (not ubuntu-latest). A new Ubuntu release removed
+# the CMake of the build and broke CI for each pull request on the same day. A change of the
+# release is now a pull request of its own. scripts/tests/test_workflows.py checks this rule.
+
 jobs:
   # The release scripts under scripts/ have unit tests. release.yml runs them before it makes a
   # tag. This job runs them on each pull request too, so that a defect shows before the release
   # day. The tests need no Gradle and take a few seconds.
   scripts:
     name: Validate (release scripts)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -41,7 +45,7 @@ jobs:
 
   validate:
     name: Validate (${{ matrix.target }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       # setup-gradle writes a comment on a pull request when a job fails.

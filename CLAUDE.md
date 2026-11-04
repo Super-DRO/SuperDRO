@@ -31,13 +31,28 @@ adapters.
 A work item is done only when all of these conditions are true:
 
 - The JVM tests of the changed modules and the matching `:validation:test*` tasks pass.
-- Before a push or a pull request update, `scripts/validate.sh` passes (or `scripts/validate.sh --android` when the change touches Android code, build logic, or resources).
+- Before each push and each pull request update, `scripts/validate.sh --ci` passes on the committed
+  work tree. CI mode runs as CI runs: no display, the locale `C.UTF-8`, the time zone UTC, both
+  targets, and no cached test result. Then it runs the tests of the changed modules three times on
+  two CPUs, to find a test that depends on time. A local pass in the usual environment is not
+  sufficient.
+- The CI checks of the pull request pass for the last pushed commit. After each push, run
+  `scripts/wait_for_ci.sh` and wait until it ends. Do not report the work as done, and do not
+  start the next step, while a check runs or fails.
+- When a CI check fails, find the cause in the log. If the cause is a test that depends on time
+  or a difference of the environment, fix the cause. Do not run the check again until it passes
+  at random. If CI mode did not find the failure, also change CI mode or a rule test so that it
+  finds this type of failure locally.
 - The coordinator merged the branch of the work item into `main`.
 - The worktree of the work item does not exist. After the merge, the coordinator removes it with
   `git worktree remove <path>` and then runs `git worktree prune`.
 - The local branch of the work item does not exist. After the merge, the coordinator deletes it with
   `git branch -d <branch>`.
 - No empty worktree folder stays on the disk.
+
+Run `scripts/install_hooks.sh` one time for each clone. Then the `pre-push` hook refuses a push of a commit that
+`scripts/validate.sh --ci` did not validate. Never push with `--no-verify` or `SUPERDRO_SKIP_CI_GATE=1`. Only the
+user can use them, for example for a branch with only images.
 
 Use `git branch -d`, not `git branch -D`. The `-d` flag deletes only a merged branch. If `-d` fails, the branch
 has commits that are not in `main`. Merge these commits, or ask the user before you delete the branch.
@@ -96,7 +111,9 @@ builds do not use all the memory:
 - Run only the tasks of your modules, for example `:core:protocol:jvmTest` or `:core:protocol:allTests`.
 - For `:core:ui` and `:validation`, run the domain task of your area (`:core:ui:jvmTestAdapter`, `:core:ui:jvmTestFunctions`, `:core:ui:jvmTestGraphics`, `:core:ui:jvmTestMcp`, `:core:ui:jvmTestReadout`, `:core:ui:jvmTestSettings`, `:core:ui:jvmTestTabs`, `:core:ui:jvmTestScreenshots`; `:validation:testFunctions`, `:validation:testProtocol`, `:validation:testReadout`, `:validation:testStore`, `:validation:testMcp`, `:validation:testProject`, `:validation:testUi`, `:validation:testUiScreens`, `:validation:testUiScreenshots`).
 - The root task `validateJvm` (also the default task) runs all `jvmTest` tasks, `:validation:test`, `:core:resources:localizationCheck`, and `:core:store:verifySqlDelightMigration`. The root task `validateAndroid` runs the Android assemblies, test compile checks, and `lint`.
-- Before you push a branch, run `scripts/validate.sh`. The script runs the release script tests, the `composite` tests, and `validateJvm`. It uses the build cache, so only the tests of a changed module run again. `--rerun` runs each test task again.
+- During the work, run `scripts/validate.sh`. The script runs the release script tests, the `composite` tests, and `validateJvm`. It uses the build cache, so only the tests of a changed module run again. `--rerun` runs each test task again.
+- Before you push a branch, run `scripts/validate.sh --ci` (see "Definition of done"). `--repeat N` changes the number of slow runs of the changed modules.
+- The CI runners have a fixed Ubuntu release (`ubuntu-26.04`), not `ubuntu-latest`. The Android jobs install the CMake and the NDK of `gradle/libs.versions.toml` with `scripts/android_sdk_packages.py`. When you change a version of the SDK packages or the Ubuntu release, do it in a pull request of its own.
 - After a change under `composite/`, run `./gradlew -p composite clean test publish` and commit `composite/m2`.
 - Do not run `./gradlew clean` on the full project of a different worktree.
 

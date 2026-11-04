@@ -29,7 +29,7 @@ permissions:
 jobs:
   cut:
     name: Calculate, tag, and start the build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write   # push the annotated tag
       actions: write    # start build-release.yml
