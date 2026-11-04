@@ -56,7 +56,7 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   preflight:
     name: Preflight (version and secrets)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release   # reads the secrets of the signature to find them
     outputs:
       ref: ${{ steps.resolve.outputs.ref }}
@@ -144,7 +144,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest      # .deb
+          - os: ubuntu-26.04       # .deb
           - os: windows-latest     # .msi
           - os: macos-latest       # .dmg
     runs-on: ${{ matrix.os }}
@@ -215,7 +215,7 @@ jobs:
   android:
     name: Android (AAB and APK)
     needs: preflight
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release   # reads the upload keystore secrets
     steps:
       - name: Checkout repository
@@ -340,7 +340,7 @@ jobs:
   create-release:
     name: Publish the GitHub Release
     needs: [preflight, desktop, android]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
     permissions:
       contents: write   # make the GitHub Release and upload the assets
@@ -393,7 +393,7 @@ jobs:
     name: Publish to Google Play
     needs: [preflight, android]
     if: needs.preflight.outputs.has_play == 'true' && needs.preflight.outputs.has_android_signing == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
     steps:
       - name: Download the Android artifacts

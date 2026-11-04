@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Refuses to push a commit that `scripts/validate.sh --ci` did not validate (CLAUDE.md,
+# "Definition of done"). Turn the hooks on one time for each clone with scripts/install_hooks.sh.
+#
+# A person can push with SUPERDRO_SKIP_CI_GATE=1, for example for a branch with only images.
+# An agent must not use it.
+
+set -euo pipefail
+
+if [[ "${SUPERDRO_SKIP_CI_GATE:-}" == "1" ]]; then
+    echo "pre-push: SUPERDRO_SKIP_CI_GATE=1, no check." >&2
+    exit 0
+fi
+
+STAMP_FILE="$(git rev-parse --git-dir)/superdro-ci-validated"
+VALIDATED="$(cat "$STAMP_FILE" 2>/dev/null || true)"
+ZERO="0000000000000000000000000000000000000000"
+
+status=0
+# Git gives one line for each ref: <local ref> <local sha> <remote ref> <remote sha>.
+while read -r local_ref local_sha remote_ref _; do
+    if [[ "$local_sha" == "$ZERO" ]]; then
+        continue   # a delete of a remote branch
+    fi
+    if [[ "$local_sha" != "$VALIDATED" ]]; then
+        echo "pre-push: $local_ref ($local_sha) is not validated for $remote_ref." >&2
+        echo "pre-push: commit all changes, run scripts/validate.sh --ci, and push again." >&2
+        status=1
+    fi
+done
+exit $status
