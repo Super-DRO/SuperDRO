@@ -21,7 +21,7 @@
 #   1. runs Gradle with no display, LANG=C.UTF-8, and TZ=UTC, in a new daemon (--no-daemon),
 #   2. runs validateJvm and validateAndroid with no cached test result (-PrerunTests=true),
 #   3. runs the JVM tests of each module that the branch changes again --repeat times (default
-#      3) on 2 CPUs (scripts/changed_test_tasks.py).
+#      3) on 2 CPUs with a busy process on each CPU (scripts/changed_test_tasks.py).
 # CI mode does not find a change of the CI runner image. scripts/wait_for_ci.sh finds it after
 # the push.
 
@@ -142,12 +142,28 @@ if [[ " ${CHANGED[*]} " == *" validateJvm "* ]]; then
     exit 0
 fi
 
+# Two CPUs alone are not sufficient. The race of TcpTransportTest.theEndOfTheStreamFromTheAdapterIsLost
+# (fixed in 4eb0b51d) passed 5 of 5 runs on 2 idle CPUs, and failed 4 of 6 runs on 2 CPUs with one
+# busy process on each CPU. Thus a busy process runs on each of the 2 CPUs during the slow runs,
+# as the other jobs of a shared CI host do.
 LIMIT=()
+LOAD_PIDS=()
+stop_load() {
+    if [[ ${#LOAD_PIDS[@]} -gt 0 ]]; then
+        kill "${LOAD_PIDS[@]}" 2>/dev/null || true
+    fi
+}
+trap stop_load EXIT
 if command -v taskset >/dev/null 2>&1; then
-    CPUS="$(python3 -c 'import os, random; print(",".join(map(str, sorted(random.sample(sorted(os.sched_getaffinity(0)), 2)))))')"
-    LIMIT=(taskset -c "$CPUS")
+    CPU_LIST="$(python3 -c 'import os, random; print(" ".join(map(str, sorted(random.sample(sorted(os.sched_getaffinity(0)), 2)))))')"
+    read -r -a CPU_ARRAY <<< "$CPU_LIST"
+    LIMIT=(taskset -c "$(IFS=,; echo "${CPU_ARRAY[*]}")")
+    for cpu in "${CPU_ARRAY[@]}"; do
+        taskset -c "$cpu" yes > /dev/null &
+        LOAD_PIDS+=("$!")
+    done
 else
-    echo "WARNING: taskset is not available. The slow runs use all CPUs." >&2
+    echo "WARNING: taskset is not available. The slow runs use all CPUs and no load." >&2
 fi
 
 SLOW_ARGS=(
@@ -160,7 +176,8 @@ SLOW_ARGS=(
     -Dorg.gradle.console=plain
 )
 for run in $(seq 1 "$REPEAT"); do
-    echo "==> Slow run $run of $REPEAT (${LIMIT[*]:-all CPUs}): ${CHANGED[*]}"
+    echo "==> Slow run $run of $REPEAT (${LIMIT[*]:-all CPUs}, with load): ${CHANGED[*]}"
     "${CI_ENV[@]}" "${LIMIT[@]}" ./gradlew --no-daemon "${SLOW_ARGS[@]}" "${CHANGED[@]}"
 done
+stop_load
 write_stamp
