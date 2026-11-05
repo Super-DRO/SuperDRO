@@ -390,4 +390,76 @@ class SubDatumPanelTest {
         assertNull(panel.uiState.value.menu?.pairWithId)
         panel.close()
     }
+
+    @Test
+    fun rowExpansionIsIndependentAndClearsOnDeleteOrWorkspaceChange() = scope.runTest {
+        harness.start(mill())
+        points(
+            SubDatum(id = "a", name = "A", note = "Line 1\nLine 2", x = 1.0, y = 1.0),
+            SubDatum(id = "b", name = "B", note = "Other\nnote", x = 2.0, y = 2.0),
+            SubDatum(id = "c", name = "C", note = "Third", x = 3.0, y = 3.0),
+        )
+        val panel = panel()
+        advanceUntilIdle()
+        assertEquals(emptySet(), panel.uiState.value.expandedIds)
+        assertTrue(panel.uiState.value.rows.none { it.expanded })
+
+        // First toggle expands row "a".
+        panel.onToggleExpanded("a")
+        runCurrent()
+        assertEquals(setOf("a"), panel.uiState.value.expandedIds)
+        assertTrue(panel.uiState.value.rows.first { it.id == "a" }.expanded)
+        assertFalse(panel.uiState.value.rows.first { it.id == "b" }.expanded)
+
+        // Second toggle collapses row "a".
+        panel.onToggleExpanded("a")
+        runCurrent()
+        assertEquals(emptySet(), panel.uiState.value.expandedIds)
+        assertFalse(panel.uiState.value.rows.first { it.id == "a" }.expanded)
+
+        // Two rows can stay open at the same time.
+        panel.onToggleExpanded("a")
+        panel.onToggleExpanded("b")
+        runCurrent()
+        assertEquals(setOf("a", "b"), panel.uiState.value.expandedIds)
+        assertTrue(panel.uiState.value.rows.first { it.id == "a" }.expanded)
+        assertTrue(panel.uiState.value.rows.first { it.id == "b" }.expanded)
+
+        // A toggle on one row does not change the other.
+        panel.onToggleExpanded("a")
+        runCurrent()
+        assertEquals(setOf("b"), panel.uiState.value.expandedIds)
+        assertFalse(panel.uiState.value.rows.first { it.id == "a" }.expanded)
+        assertTrue(panel.uiState.value.rows.first { it.id == "b" }.expanded)
+
+        // onTap activates and does not change the expansion.
+        panel.onTap("a")
+        advanceUntilIdle()
+        assertEquals("a", panel.uiState.value.activeId)
+        assertEquals(setOf("b"), panel.uiState.value.expandedIds)
+        panel.onTap("b")
+        advanceUntilIdle()
+        assertEquals("b", panel.uiState.value.activeId)
+        assertEquals(setOf("b"), panel.uiState.value.expandedIds)
+
+        // A deleted point leaves the expanded set.
+        panel.onToggleExpanded("a")
+        panel.onToggleExpanded("c")
+        runCurrent()
+        assertEquals(setOf("b", "a", "c"), panel.uiState.value.expandedIds)
+        panel.onDelete("a")
+        advanceUntilIdle()
+        assertEquals(setOf("b", "c"), panel.uiState.value.expandedIds)
+        harness.store.machines.deleteSubDatums(workspaceId(), listOf("c"))
+        advanceUntilIdle()
+        assertEquals(setOf("b"), panel.uiState.value.expandedIds)
+
+        // A workspace change clears the expanded set.
+        val secondWorkspace = (harness.store.machines.createWorkspace(harness.profile.id, "Second") as org.superdro.core.store.StoreResult.Ok).value
+        harness.store.machines.updateProfile(harness.profile.id) { profile -> profile.copy(activeWorkspaceId = secondWorkspace.id) }
+        advanceUntilIdle()
+        assertEquals(secondWorkspace.id, panel.uiState.value.workspaceId)
+        assertEquals(emptySet(), panel.uiState.value.expandedIds)
+        panel.close()
+    }
 }

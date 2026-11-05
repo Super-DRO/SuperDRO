@@ -149,7 +149,14 @@ class MainScreenLayoutValidationTest {
         waitForIdle()
         mainClock.advanceTimeBy(1_000L)
         val side = onNodeWithTag(SAMPLE_SIDE_PANEL_TAG).assertIsDisplayed().rect()
-        assertTrue(near(1280f, side.bottom, 8f) && side.top > 1280f * 0.5f, "a sheet at the bottom: $side")
+        assertTrue(
+            near(1280f, side.bottom, 8f) &&
+                near(0f, side.left, 4f) &&
+                near(800f, side.right, 4f) &&
+                side.height >= 1280f * 0.6f &&
+                side.top > 1280f * 0.25f,
+            "a full-width sheet at the bottom: $side",
+        )
         // No supporting pane in portrait.
         assertEquals(0, onAllNodesWithTag(SUPPORTING_PANE_TAG).fetchSemanticsNodes().size)
     }

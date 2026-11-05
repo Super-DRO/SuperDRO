@@ -75,4 +75,6 @@
     <string name="sd_shape_arbitrary">Cercle de trous libre</string>
     <string name="sd_shape_grid">Grille de trous</string>
     <string name="sd_shape_equidistant">Trous équidistants</string>
+    <string name="sd_expand">Afficher les détails</string>
+    <string name="sd_collapse">Masquer les détails</string>
 </resources>

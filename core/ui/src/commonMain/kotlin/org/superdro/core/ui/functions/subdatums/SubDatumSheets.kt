@@ -125,7 +125,16 @@ fun SubDatumEditSheet(state: SubDatumEditUiState, events: SubDatumEditEvents) {
             tag = SubDatumSheetTags.NAME,
             placeholder = if (state.newPoint) stringResource(Res.string.sd_edit_name_hint) else null,
         )
-        TextInput(stringResource(Res.string.sd_edit_note), state.note, events::onNote, null, SubDatumSheetTags.NOTE)
+        TextInput(
+            label = stringResource(Res.string.sd_edit_note),
+            value = state.note,
+            onChange = events::onNote,
+            error = null,
+            tag = SubDatumSheetTags.NOTE,
+            singleLine = false,
+            minLines = 2,
+            maxLines = 6,
+        )
         TextInput(
             label = stringResource(Res.string.sd_edit_tags),
             value = state.tags,
@@ -198,7 +207,17 @@ fun SubDatumEditSheet(state: SubDatumEditUiState, events: SubDatumEditEvents) {
 }
 
 @Composable
-private fun TextInput(label: String, value: String, onChange: (String) -> Unit, error: UiText?, tag: String, placeholder: String? = null) {
+private fun TextInput(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit,
+    error: UiText?,
+    tag: String,
+    placeholder: String? = null,
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+) {
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
@@ -206,8 +225,10 @@ private fun TextInput(label: String, value: String, onChange: (String) -> Unit, 
         placeholder = placeholder?.let { text -> { Text(text) } },
         isError = error != null,
         supportingText = error?.let { text -> { Text(text.resolve()) } },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        singleLine = singleLine,
+        minLines = minLines,
+        maxLines = maxLines,
+        keyboardOptions = KeyboardOptions(imeAction = if (singleLine) ImeAction.Next else ImeAction.Default),
         colors = accentTextFieldColors(),
         modifier = Modifier.fillMaxWidth().heightIn(min = LocalTouchTargets.current.button).testTag(fieldTextTag(tag)),
     )

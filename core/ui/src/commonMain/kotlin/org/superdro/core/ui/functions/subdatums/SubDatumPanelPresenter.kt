@@ -67,6 +67,7 @@ data class SubDatumRowUi(
     val tags: List<TagMarkUi> = emptyList(),
     val active: Boolean = false,
     val selected: Boolean = false,
+    val expanded: Boolean = false,
     val guide: Boolean = false,
     val kind: SubDatumGroupKind? = null,
 )
@@ -93,6 +94,7 @@ data class SubDatumPanelUiState(
     val pointCount: Int = 0,
     val selecting: Boolean = false,
     val selectedIds: Set<String> = emptySet(),
+    val expandedIds: Set<String> = emptySet(),
     val activeId: String? = null,
     val use3d: Boolean = true,
     val filterOpen: Boolean = false,
@@ -142,7 +144,12 @@ class SubDatumPanelPresenter(
         .structure()
         .map { frame -> frame?.workspace?.id }
         .distinctUntilChanged()
-        .flatMapLatest { id -> if (id == null) flowOf(null) else services.machines.transformUndo(id) }
+        .flatMapLatest { id ->
+            local.update { state ->
+                if (state.workspaceId == id) state else state.copy(workspaceId = id, expanded = emptySet())
+            }
+            if (id == null) flowOf(null) else services.machines.transformUndo(id)
+        }
         .stateIn(scope, SharingStarted.Eagerly, null)
 
     /** The UI state of the panel. It runs only while a collector is present. */
@@ -174,6 +181,19 @@ class SubDatumPanelPresenter(
             readout.apply(SubDatumOperations.deactivate(frame), UiText.of(Res.string.sd_undo_deactivate, point.name))
         } else {
             readout.apply(SubDatumOperations.activate(frame, id), UiText.of(Res.string.sd_undo_activate, point.name))
+        }
+    }
+
+    /** Expands or collapses the row [id]. */
+    fun onToggleExpanded(id: String) {
+        val frame = readout.frame.value ?: return
+        val workspace = frame.workspace
+        val ids = workspace.subDatums.mapTo(HashSet()) { it.id }
+        if (id !in ids) return
+        local.update { state ->
+            val current = if (state.workspaceId == workspace.id) state.expanded.filterTo(LinkedHashSet()) { it in ids } else emptySet()
+            val next = if (id in current) current - id else current + id
+            state.copy(workspaceId = workspace.id, expanded = next)
         }
     }
 
@@ -244,20 +264,20 @@ class SubDatumPanelPresenter(
     fun onDeleteSelected() {
         val ids = selection()
         if (ids.isEmpty()) return
-        local.update { state -> state.copy(selecting = false, selected = emptySet()) }
+        local.update { state -> state.copy(selecting = false, selected = emptySet(), expanded = state.expanded - ids) }
         delete(ids)
     }
 
     /** Deletes the point or the guide [id], with undo for 10 s. */
     fun onDelete(id: String) {
-        local.update { state -> state.copy(menu = null, selected = state.selected - id) }
+        local.update { state -> state.copy(menu = null, selected = state.selected - id, expanded = state.expanded - id) }
         delete(setOf(id))
     }
 
     /** Deletes all points and guides of the workspace, with undo for 10 s. */
     fun onDeleteAll() {
         val frame = readout.frame.value ?: return
-        local.update { state -> state.copy(selecting = false, selected = emptySet()) }
+        local.update { state -> state.copy(selecting = false, selected = emptySet(), expanded = emptySet()) }
         delete(frame.workspace.subDatums.mapTo(LinkedHashSet()) { it.id } + frame.workspace.guides.map { it.id })
     }
 
@@ -454,8 +474,14 @@ class SubDatumPanelPresenter(
         val visible = workspace.subDatums.sortedBy { it.createdOn }.filter { point ->
             if (point.tags.isEmpty()) !ui.hideUntagged else point.tags.any { PatternTags.key(it) !in ui.hiddenTags }
         }
-        val ids = workspace.subDatums.mapTo(HashSet()) { it.id } + workspace.guides.map { it.id }
+        val pointIds = workspace.subDatums.mapTo(HashSet()) { it.id }
+        val ids = pointIds + workspace.guides.map { it.id }
         val selected = ui.selected.filterTo(LinkedHashSet()) { it in ids }
+        val expanded = if (ui.workspaceId == workspace.id) {
+            ui.expanded.filterTo(LinkedHashSet()) { it in pointIds }
+        } else {
+            emptySet()
+        }
         val pointRows = visible.map { point ->
             SubDatumRowUi(
                 id = point.id,
@@ -465,6 +491,7 @@ class SubDatumPanelPresenter(
                 tags = point.tags.map { tag -> TagMarkUi(tag, tagIndex[PatternTags.key(tag)] ?: 0) },
                 active = point.id == workspace.activeSubDatumId,
                 selected = point.id in selected,
+                expanded = point.id in expanded,
                 kind = point.groupKind,
             )
         }
@@ -486,6 +513,7 @@ class SubDatumPanelPresenter(
             pointCount = workspace.subDatums.size,
             selecting = ui.selecting,
             selectedIds = selected,
+            expandedIds = expanded,
             activeId = workspace.activeSubDatumId,
             use3d = frame.profile.use3dSubDatums,
             filterOpen = ui.filterOpen,
@@ -497,8 +525,10 @@ class SubDatumPanelPresenter(
     }
 
     private data class Local(
+        val workspaceId: String? = null,
         val selecting: Boolean = false,
         val selected: Set<String> = emptySet(),
+        val expanded: Set<String> = emptySet(),
         val filterOpen: Boolean = false,
         val hiddenTags: Set<String> = emptySet(),
         val hideUntagged: Boolean = false,

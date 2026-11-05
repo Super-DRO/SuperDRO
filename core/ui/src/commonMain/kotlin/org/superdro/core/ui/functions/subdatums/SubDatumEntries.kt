@@ -89,6 +89,7 @@ private class PanelEvents(
     }
 
     override fun onTap(id: String) = panel.onTap(id)
+    override fun onToggleExpanded(id: String) = panel.onToggleExpanded(id)
     override fun onLongPress(id: String) = panel.onLongPress(id)
     override fun onMenuDismiss() = panel.onMenuDismiss()
     override fun onEdit(id: String) = open(SubDatumEditRoute(id))

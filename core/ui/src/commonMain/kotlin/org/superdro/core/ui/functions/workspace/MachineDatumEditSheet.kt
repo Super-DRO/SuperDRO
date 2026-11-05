@@ -87,7 +87,10 @@ fun MachineDatumEditSheet(state: MachineDatumEditUiState, events: MachineDatumEd
             value = state.note,
             onValueChange = events::onNote,
             label = { Text(stringResource(Res.string.ws_datum_note)) },
-            singleLine = true,
+            singleLine = false,
+            minLines = 2,
+            maxLines = 6,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
             colors = accentTextFieldColors(),
             modifier = Modifier.fillMaxWidth().heightIn(min = LocalTouchTargets.current.button).testTag(fieldTextTag(MachineDatumEditTags.NOTE)),
         )

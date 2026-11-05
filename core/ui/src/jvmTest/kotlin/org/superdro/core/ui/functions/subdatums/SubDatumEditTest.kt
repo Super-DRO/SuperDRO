@@ -175,4 +175,19 @@ class SubDatumEditTest {
         assertTrue(SubDatumNames.valid("x"))
         assertFalse(SubDatumNames.valid("x".repeat(16)))
     }
+
+    @Test
+    fun aMultiLineNoteKeepsItsNewlinesOnSave() = scope.runTest {
+        harness.start(MachineProfile.create(MachineType.VerticalMill, "Mill").copy(metricDefault = true))
+        val presenter = edit(null)
+        presenter.onName("Setup 1")
+        presenter.onNote("  Line one: face end.\nLine two: bore to 20 mm.\nLine three: chamfer 0.5 mm.  ")
+        presenter.onText(SubDatumField.X, "10")
+        assertTrue(presenter.save())
+        advanceUntilIdle()
+        val saved = harness.readout.workspace().subDatums.single()
+        assertEquals("Setup 1", saved.name)
+        assertEquals("Line one: face end.\nLine two: bore to 20 mm.\nLine three: chamfer 0.5 mm.", saved.note)
+        presenter.close()
+    }
 }

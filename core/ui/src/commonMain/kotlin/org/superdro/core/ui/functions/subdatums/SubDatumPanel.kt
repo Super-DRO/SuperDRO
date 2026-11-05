@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -57,6 +58,8 @@ import org.superdro.core.resources.ic_chevron_left
 import org.superdro.core.resources.ic_chevron_right
 import org.superdro.core.resources.ic_content_copy
 import org.superdro.core.resources.ic_delete
+import org.superdro.core.resources.ic_expand_less
+import org.superdro.core.resources.ic_expand_more
 import org.superdro.core.resources.ic_filter_list
 import org.superdro.core.resources.ic_first_page
 import org.superdro.core.resources.ic_label
@@ -69,11 +72,13 @@ import org.superdro.core.resources.ic_straighten
 import org.superdro.core.resources.sd_3d
 import org.superdro.core.resources.sd_3d_cd
 import org.superdro.core.resources.sd_active
+import org.superdro.core.resources.sd_collapse
 import org.superdro.core.resources.sd_copy
 import org.superdro.core.resources.sd_delete_all
 import org.superdro.core.resources.sd_delete_selected
 import org.superdro.core.resources.sd_deselect
 import org.superdro.core.resources.sd_empty
+import org.superdro.core.resources.sd_expand
 import org.superdro.core.resources.sd_export
 import org.superdro.core.resources.sd_filter
 import org.superdro.core.resources.sd_filter_empty
@@ -125,6 +130,7 @@ object SubDatumPanelTags {
     const val LAST = "sd-last"
     const val DESELECT = "sd-deselect"
     fun row(id: String): String = "sd-row-$id"
+    fun expand(id: String): String = "sd-expand-$id"
     fun filterRow(tag: String?): String = "sd-filter-${tag ?: "untagged"}"
     const val MENU_EDIT = "sd-menu-edit"
     const val MENU_SELECT = "sd-menu-select"
@@ -138,6 +144,7 @@ object SubDatumPanelTags {
 /** The events of the sub-datum panel. */
 interface SubDatumPanelEvents {
     fun onTap(id: String)
+    fun onToggleExpanded(id: String)
     fun onLongPress(id: String)
     fun onMenuDismiss()
     fun onEdit(id: String)
@@ -389,6 +396,7 @@ private fun SelectionBar(state: SubDatumPanelUiState, events: SubDatumPanelEvent
 private fun PointRow(row: SubDatumRowUi, selecting: Boolean, surface: Color, events: SubDatumPanelEvents) {
     val activeText = stringResource(Res.string.sd_active)
     val colors = MaterialTheme.colorScheme
+    val minTouch = maxOf(LocalTouchTargets.current.button, 48.dp)
     ListItem(
         modifier = Modifier
             .fillMaxWidth()
@@ -402,6 +410,7 @@ private fun PointRow(row: SubDatumRowUi, selecting: Boolean, surface: Color, eve
                 headlineColor = colors.onTertiaryContainer,
                 supportingColor = colors.onTertiaryContainer,
                 leadingIconColor = colors.onTertiaryContainer,
+                trailingIconColor = colors.onTertiaryContainer,
             )
             row.selected -> ListItemDefaults.colors(containerColor = colors.secondaryContainer)
             else -> ListItemDefaults.colors(containerColor = surface)
@@ -418,11 +427,23 @@ private fun PointRow(row: SubDatumRowUi, selecting: Boolean, surface: Color, eve
                 else -> Icon(painterResource(Res.drawable.ic_place), contentDescription = null)
             }
         },
-        headlineContent = { Text(row.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        headlineContent = {
+            if (row.expanded) {
+                Text(row.name, style = MaterialTheme.typography.titleSmall)
+            } else {
+                Text(row.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(row.coordinates, style = MaterialTheme.typography.bodySmall)
-                if (row.note.isNotBlank()) Text(row.note, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (row.note.isNotBlank()) {
+                    if (row.expanded) {
+                        Text(row.note, style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Text(row.note, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
+                }
                 if (row.tags.isNotEmpty() || row.kind != null) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         row.kind?.let { kind -> KindMark(kind) }
@@ -430,6 +451,21 @@ private fun PointRow(row: SubDatumRowUi, selecting: Boolean, surface: Color, eve
                     }
                 }
             }
+        },
+        trailingContent = if (row.note.isNotBlank()) {
+            {
+                IconButton(
+                    onClick = { events.onToggleExpanded(row.id) },
+                    modifier = Modifier.sizeIn(minWidth = minTouch, minHeight = minTouch).testTag(SubDatumPanelTags.expand(row.id)),
+                ) {
+                    Icon(
+                        painter = painterResource(if (row.expanded) Res.drawable.ic_expand_less else Res.drawable.ic_expand_more),
+                        contentDescription = stringResource(if (row.expanded) Res.string.sd_collapse else Res.string.sd_expand),
+                    )
+                }
+            }
+        } else {
+            null
         },
     )
 }
