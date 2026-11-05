@@ -75,4 +75,6 @@
     <string name="sd_shape_arbitrary">Círculo de agujeros arbitrario</string>
     <string name="sd_shape_grid">Rejilla de agujeros</string>
     <string name="sd_shape_equidistant">Agujeros equidistantes</string>
+    <string name="sd_expand">Mostrar detalles</string>
+    <string name="sd_collapse">Ocultar detalles</string>
 </resources>

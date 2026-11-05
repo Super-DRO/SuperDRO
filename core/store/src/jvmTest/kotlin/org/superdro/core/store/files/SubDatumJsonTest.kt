@@ -252,4 +252,21 @@ class SubDatumJsonTest {
         val preview = importer.read(rows("""[{"name": "A", "x": {"value": 1}}]"""), metric = true, context = mill())
         assertEquals(listOf("Row 1: The value of “x” is not a number: “{\"value\":1}”."), preview.rows.flatMap { row -> row.problems.map { it.describe() } })
     }
+
+    @Test
+    fun aMultiLineNoteImportsFromJsonWithNewlinesKept() {
+        val multiLineNote = "Line 1: center drill.\nLine 2: 6.8 mm drill, 20 mm deep.\nLine 3: M8 x 1.25 tap."
+        val jsonRows = rows(
+            """
+            [
+              {"name": "Tap hole", "note": "Line 1: center drill.\nLine 2: 6.8 mm drill, 20 mm deep.\nLine 3: M8 x 1.25 tap.", "tags": ["tap"], "x": 10.0, "y": 20.0}
+            ]
+            """,
+        )
+        val preview = importer.read(jsonRows, metric = true, context = mill())
+        assertTrue(preview.problems.isEmpty(), preview.problems.toString())
+        val imported = preview.plan(ImportOperation.AddAsNew).addSubDatums.single()
+        assertEquals("Tap hole", imported.name)
+        assertEquals(multiLineNote, imported.note)
+    }
 }

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -71,6 +72,7 @@ class SubDatumScreensTest {
     private class RecordingEvents : SubDatumPanelEvents {
         val calls = mutableListOf<String>()
         override fun onTap(id: String) { calls += "tap $id" }
+        override fun onToggleExpanded(id: String) { calls += "expand $id" }
         override fun onLongPress(id: String) { calls += "long $id" }
         override fun onMenuDismiss() { calls += "dismiss" }
         override fun onEdit(id: String) { calls += "edit $id" }
@@ -125,6 +127,147 @@ class SubDatumScreensTest {
         onNodeWithText("Pair commands: Circle - 2 and Hole A").assertIsDisplayed()
         onNodeWithTag(SubDatumPanelTags.MENU_DELETE).performClick()
         assertEquals(listOf("delete 3"), events.calls)
+    }
+
+    @Test
+    fun theExpandControlShowsTheFullMultiLineNoteAndTwoRowsStayExpandedTogether() = runComposeUiTest {
+        val note1 = "Rough turn OD to 38.0 mm with CNMG insert.\nFinish pass 0.25 mm at 1200 RPM.\nHold shoulder at Z = -42.500 mm.\nDeburr edge before thread pass."
+        val note2 = "Bore ID to 19.8 mm, then finish to 20.00 mm H7.\nCheck depth 28.0 mm from front face.\nUse boring bar T4 with coolant."
+        val baseRows = listOf(
+            SubDatumRowUi("1", "OD Shoulder", note1, "X 38.000 • Z -42.500", listOf(TagMarkUi("turn", 0))),
+            SubDatumRowUi("2", "Main Bore", note2, "X 20.000 • Z -28.000", listOf(TagMarkUi("bore", 1))),
+            SubDatumRowUi("3", "No Note Point", "", "X 0.000 • Z 0.000"),
+        )
+        val expandedIds = androidx.compose.runtime.mutableStateOf(emptySet<String>())
+        val events = object : SubDatumPanelEvents by RecordingEvents() {
+            override fun onToggleExpanded(id: String) {
+                expandedIds.value = if (id in expandedIds.value) expandedIds.value - id else expandedIds.value + id
+            }
+        }
+        setContent {
+            AppTheme {
+                val currentExpanded = expandedIds.value
+                val currentState = state.copy(
+                    expandedIds = currentExpanded,
+                    rows = baseRows.map { row -> row.copy(expanded = row.id in currentExpanded) },
+                )
+                Box(Modifier.width(360.dp).height(800.dp)) {
+                    SubDatumPanel(currentState, events)
+                }
+            }
+        }
+        waitForIdle()
+        // Row 3 has a blank note: no expand control.
+        assertEquals(0, onAllNodes(androidx.compose.ui.test.hasTestTag(SubDatumPanelTags.expand("3"))).fetchSemanticsNodes().size)
+        // Collapsed row 1 truncates the 4-line note at 2 lines.
+        val collapsedHeight1 = onNodeWithTag(SubDatumPanelTags.row("1")).fetchSemanticsNode().boundsInRoot.height
+        val collapsedHeight2 = onNodeWithTag(SubDatumPanelTags.row("2")).fetchSemanticsNode().boundsInRoot.height
+
+        // Click expand on row 1: row 1 grows and shows the full multi-line note.
+        onNodeWithTag(SubDatumPanelTags.expand("1")).performClick()
+        waitForIdle()
+        assertEquals(setOf("1"), expandedIds.value)
+        onNodeWithText(note1).assertIsDisplayed()
+        val expandedHeight1 = onNodeWithTag(SubDatumPanelTags.row("1")).fetchSemanticsNode().boundsInRoot.height
+        assertTrue(expandedHeight1 > collapsedHeight1, "Expanded row 1 height ($expandedHeight1) must exceed collapsed ($collapsedHeight1)")
+
+        // Click expand on row 2: both row 1 and row 2 stay expanded together.
+        onNodeWithTag(SubDatumPanelTags.expand("2")).performClick()
+        waitForIdle()
+        assertEquals(setOf("1", "2"), expandedIds.value)
+        onNodeWithText(note1).assertIsDisplayed()
+        onNodeWithText(note2).assertIsDisplayed()
+        val bothExpandedHeight1 = onNodeWithTag(SubDatumPanelTags.row("1")).fetchSemanticsNode().boundsInRoot.height
+        val expandedHeight2 = onNodeWithTag(SubDatumPanelTags.row("2")).fetchSemanticsNode().boundsInRoot.height
+        assertEquals(expandedHeight1, bothExpandedHeight1)
+        assertTrue(expandedHeight2 > collapsedHeight2, "Expanded row 2 height ($expandedHeight2) must exceed collapsed ($collapsedHeight2)")
+
+        // Second click on row 1 collapses row 1 while row 2 stays expanded.
+        onNodeWithTag(SubDatumPanelTags.expand("1")).performClick()
+        waitForIdle()
+        assertEquals(setOf("2"), expandedIds.value)
+        val recollapsedHeight1 = onNodeWithTag(SubDatumPanelTags.row("1")).fetchSemanticsNode().boundsInRoot.height
+        assertEquals(collapsedHeight1, recollapsedHeight1)
+        assertEquals(expandedHeight2, onNodeWithTag(SubDatumPanelTags.row("2")).fetchSemanticsNode().boundsInRoot.height)
+    }
+
+    @Test
+    fun chevronAndRowBodyTouchesDispatchToSeparateEvents() = runComposeUiTest {
+        val note1 = "Rough turn OD to 38.0 mm with CNMG insert.\nFinish pass 0.25 mm at 1200 RPM.\nHold shoulder at Z = -42.500 mm.\nDeburr edge before thread pass."
+        val baseRow = SubDatumRowUi("1", "OD Shoulder", note1, "X 38.000 • Z -42.500", listOf(TagMarkUi("turn", 0)))
+        val events = RecordingEvents()
+        val expanded = androidx.compose.runtime.mutableStateOf(false)
+        val selecting = androidx.compose.runtime.mutableStateOf(false)
+        setContent {
+            AppTheme {
+                val currentState = state.copy(
+                    selecting = selecting.value,
+                    expandedIds = if (expanded.value) setOf("1") else emptySet(),
+                    rows = listOf(baseRow.copy(expanded = expanded.value)),
+                )
+                Box(Modifier.width(400.dp).height(800.dp)) {
+                    SubDatumPanel(currentState, events)
+                }
+            }
+        }
+        waitForIdle()
+
+        // A click on the chevron of a collapsed row records only "expand 1".
+        onNodeWithTag(SubDatumPanelTags.expand("1")).performClick()
+        waitForIdle()
+        assertEquals(listOf("expand 1"), events.calls)
+        events.calls.clear()
+
+        // A click on the chevron of an expanded row records only "expand 1".
+        expanded.value = true
+        waitForIdle()
+        onNodeWithTag(SubDatumPanelTags.expand("1")).performClick()
+        waitForIdle()
+        assertEquals(listOf("expand 1"), events.calls)
+        events.calls.clear()
+
+        // A click on the expanded note text records only "tap 1".
+        onNodeWithText("Hold shoulder at Z = -42.500 mm.", substring = true, useUnmergedTree = true).performClick()
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // A click on the name text records only "tap 1".
+        onNodeWithText("OD Shoulder", useUnmergedTree = true).performClick()
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // A click on a tag text records only "tap 1".
+        onNodeWithText("turn", useUnmergedTree = true).performClick()
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // A click near the bottom of the expanded row records only "tap 1".
+        onNodeWithTag(SubDatumPanelTags.row("1")).performTouchInput {
+            click(androidx.compose.ui.geometry.Offset(width * 0.5f, height - 6f))
+        }
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // In select mode, a click on the expanded note text records only "tap 1".
+        selecting.value = true
+        waitForIdle()
+        onNodeWithText("Hold shoulder at Z = -42.500 mm.", substring = true, useUnmergedTree = true).performClick()
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // A long press on the expanded note text records "long 1".
+        selecting.value = false
+        waitForIdle()
+        onNodeWithText("Hold shoulder at Z = -42.500 mm.", substring = true, useUnmergedTree = true).performTouchInput {
+            longClick()
+        }
+        waitForIdle()
+        assertEquals(listOf("long 1"), events.calls)
     }
 
     @Test

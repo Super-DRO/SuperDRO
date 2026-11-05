@@ -75,4 +75,6 @@
     <string name="sd_shape_arbitrary">Vrije gatencirkel</string>
     <string name="sd_shape_grid">Gatenraster</string>
     <string name="sd_shape_equidistant">Gelijk verdeelde gaten</string>
+    <string name="sd_expand">Details tonen</string>
+    <string name="sd_collapse">Details verbergen</string>
 </resources>

@@ -75,4 +75,6 @@
     <string name="sd_shape_arbitrary">Freier Lochkreis</string>
     <string name="sd_shape_grid">Lochraster</string>
     <string name="sd_shape_equidistant">Gleichabständige Löcher</string>
+    <string name="sd_expand">Details anzeigen</string>
+    <string name="sd_collapse">Details ausblenden</string>
 </resources>

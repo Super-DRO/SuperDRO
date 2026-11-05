@@ -75,4 +75,6 @@
     <string name="sd_shape_arbitrary">Arbitrary hole circle</string>
     <string name="sd_shape_grid">Hole grid</string>
     <string name="sd_shape_equidistant">Equidistant holes</string>
+    <string name="sd_expand">Show details</string>
+    <string name="sd_collapse">Hide details</string>
 </resources>

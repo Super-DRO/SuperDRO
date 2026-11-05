@@ -75,4 +75,6 @@
     <string name="sd_shape_arbitrary">Círculo de furos livre</string>
     <string name="sd_shape_grid">Grade de furos</string>
     <string name="sd_shape_equidistant">Furos equidistantes</string>
+    <string name="sd_expand">Mostrar detalhes</string>
+    <string name="sd_collapse">Ocultar detalhes</string>
 </resources>

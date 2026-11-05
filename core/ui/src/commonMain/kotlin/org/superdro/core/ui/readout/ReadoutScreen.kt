@@ -528,9 +528,11 @@ private fun PortraitBody(
         }
     }
     if (state.sidePanel.mode != SidePanelMode.Off) {
-        ModalBottomSheet(onDismissRequest = events::onSidePanelClose, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-            Box(Modifier.fillMaxWidth().height(SidePanelSheetHeight)) { sidePanelContent(state.sidePanel.mode) }
-        }
+        SidePanelBottomSheet(
+            mode = state.sidePanel.mode,
+            onDismissRequest = events::onSidePanelClose,
+            sidePanelContent = sidePanelContent,
+        )
     }
     if (compact && state.functionSheetOpen) {
         ModalBottomSheet(onDismissRequest = { events.onFunctionSheet(false) }) {
@@ -633,9 +635,11 @@ private fun ShortLandscapeBody(
         FunctionStrip(state.globalButtons, state.functions, events, StripForm.Rail, Modifier.width(railWidth).fillMaxHeight())
     }
     if (state.sidePanel.mode != SidePanelMode.Off) {
-        ModalBottomSheet(onDismissRequest = events::onSidePanelClose, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-            Box(Modifier.fillMaxWidth().height(SidePanelSheetHeight)) { sidePanelContent(state.sidePanel.mode) }
-        }
+        SidePanelBottomSheet(
+            mode = state.sidePanel.mode,
+            onDismissRequest = events::onSidePanelClose,
+            sidePanelContent = sidePanelContent,
+        )
     }
 }
 
@@ -644,8 +648,30 @@ private fun GraphicalPane(pane: @Composable () -> Unit, modifier: Modifier) {
     Box(modifier.fillMaxWidth().testTag(GRAPHICAL_PANE_TAG)) { pane() }
 }
 
-/** The height of the side panel in its bottom sheet (portrait). */
-private val SidePanelSheetHeight: Dp = 420.dp
+@Composable
+private fun SidePanelBottomSheet(
+    mode: SidePanelMode,
+    onDismissRequest: () -> Unit,
+    sidePanelContent: @Composable (SidePanelMode) -> Unit,
+) {
+    val density = LocalDensity.current
+    val containerHeightPx = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.height
+    val windowHeight = if (containerHeightPx > 0) with(density) { containerHeightPx.toDp() } else 0.dp
+    val sheetHeight = (windowHeight * SIDE_PANEL_SHEET_FRACTION).coerceAtLeast(SidePanelSheetMinHeight)
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetMaxWidth = Dp.Unspecified,
+    ) {
+        Box(Modifier.fillMaxWidth().height(sheetHeight)) { sidePanelContent(mode) }
+    }
+}
+
+/** The fraction of the window height that the side panel uses in its bottom sheet. */
+const val SIDE_PANEL_SHEET_FRACTION: Float = 0.65f
+
+/** The minimum height of the side panel in its bottom sheet. */
+val SidePanelSheetMinHeight: Dp = 420.dp
 
 private val SplitHandleTouchThickness: Dp = 48.dp
 private val SplitHandleTouchLength: Dp = 88.dp

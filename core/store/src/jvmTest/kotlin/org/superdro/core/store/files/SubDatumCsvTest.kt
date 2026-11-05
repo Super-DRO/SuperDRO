@@ -253,4 +253,26 @@ class SubDatumCsvTest {
         assertEquals(exported.map { listOf(it.name, it.note, it.tags, it.x, it.y, it.z) }, plan.addSubDatums.map { listOf(it.name, it.note, it.tags, it.x, it.y, it.z) })
         assertEquals(exportedGuides.map { it.axis to it.valueUm }, plan.addGuides.map { it.axis to it.valueUm })
     }
+
+    @Test
+    fun aMultiLineNoteWithCommasAndQuotesRoundTripsThroughCsv() {
+        val multiLineNote = "Rough turn OD to 25.4 mm.\nFinish pass: 0.2 mm, \"carbide\" insert.\nCheck shoulder at Z = -30.0 mm."
+        val point = SubDatum(
+            id = "s-multi",
+            name = "Bore 1",
+            note = multiLineNote,
+            tags = listOf("setup", "lathe"),
+            x = 25400.0,
+            y = 12700.0,
+            z = -6350.0,
+        )
+        val file = SubDatumCsvExporter.export(profile, listOf(point), emptyList(), CONTEXT)
+        assertTrue("\"Rough turn OD to 25.4 mm.\nFinish pass: 0.2 mm, \"\"carbide\"\" insert.\nCheck shoulder at Z = -30.0 mm.\"" in file.text)
+        val preview = importer.read(file.bytes(), mill())
+        assertTrue(preview.problems.isEmpty(), preview.problems.toString())
+        val imported = preview.plan(ImportOperation.AddAsNew).addSubDatums.single()
+        assertEquals("Bore 1", imported.name)
+        assertEquals(multiLineNote, imported.note)
+        assertEquals(listOf("setup", "lathe"), imported.tags)
+    }
 }
