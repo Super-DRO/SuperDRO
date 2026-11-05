@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -188,6 +189,85 @@ class SubDatumScreensTest {
         val recollapsedHeight1 = onNodeWithTag(SubDatumPanelTags.row("1")).fetchSemanticsNode().boundsInRoot.height
         assertEquals(collapsedHeight1, recollapsedHeight1)
         assertEquals(expandedHeight2, onNodeWithTag(SubDatumPanelTags.row("2")).fetchSemanticsNode().boundsInRoot.height)
+    }
+
+    @Test
+    fun chevronAndRowBodyTouchesDispatchToSeparateEvents() = runComposeUiTest {
+        val note1 = "Rough turn OD to 38.0 mm with CNMG insert.\nFinish pass 0.25 mm at 1200 RPM.\nHold shoulder at Z = -42.500 mm.\nDeburr edge before thread pass."
+        val baseRow = SubDatumRowUi("1", "OD Shoulder", note1, "X 38.000 • Z -42.500", listOf(TagMarkUi("turn", 0)))
+        val events = RecordingEvents()
+        val expanded = androidx.compose.runtime.mutableStateOf(false)
+        val selecting = androidx.compose.runtime.mutableStateOf(false)
+        setContent {
+            AppTheme {
+                val currentState = state.copy(
+                    selecting = selecting.value,
+                    expandedIds = if (expanded.value) setOf("1") else emptySet(),
+                    rows = listOf(baseRow.copy(expanded = expanded.value)),
+                )
+                Box(Modifier.width(400.dp).height(800.dp)) {
+                    SubDatumPanel(currentState, events)
+                }
+            }
+        }
+        waitForIdle()
+
+        // A click on the chevron of a collapsed row records only "expand 1".
+        onNodeWithTag(SubDatumPanelTags.expand("1")).performClick()
+        waitForIdle()
+        assertEquals(listOf("expand 1"), events.calls)
+        events.calls.clear()
+
+        // A click on the chevron of an expanded row records only "expand 1".
+        expanded.value = true
+        waitForIdle()
+        onNodeWithTag(SubDatumPanelTags.expand("1")).performClick()
+        waitForIdle()
+        assertEquals(listOf("expand 1"), events.calls)
+        events.calls.clear()
+
+        // A click on the expanded note text records only "tap 1".
+        onNodeWithText("Hold shoulder at Z = -42.500 mm.", substring = true, useUnmergedTree = true).performClick()
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // A click on the name text records only "tap 1".
+        onNodeWithText("OD Shoulder", useUnmergedTree = true).performClick()
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // A click on a tag text records only "tap 1".
+        onNodeWithText("turn", useUnmergedTree = true).performClick()
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // A click near the bottom of the expanded row records only "tap 1".
+        onNodeWithTag(SubDatumPanelTags.row("1")).performTouchInput {
+            click(androidx.compose.ui.geometry.Offset(width * 0.5f, height - 6f))
+        }
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // In select mode, a click on the expanded note text records only "tap 1".
+        selecting.value = true
+        waitForIdle()
+        onNodeWithText("Hold shoulder at Z = -42.500 mm.", substring = true, useUnmergedTree = true).performClick()
+        waitForIdle()
+        assertEquals(listOf("tap 1"), events.calls)
+        events.calls.clear()
+
+        // A long press on the expanded note text records "long 1".
+        selecting.value = false
+        waitForIdle()
+        onNodeWithText("Hold shoulder at Z = -42.500 mm.", substring = true, useUnmergedTree = true).performTouchInput {
+            longClick()
+        }
+        waitForIdle()
+        assertEquals(listOf("long 1"), events.calls)
     }
 
     @Test
