@@ -53,6 +53,7 @@ import org.superdro.core.resources.strip_functions
 import org.superdro.core.ui.adaptive.LocalWindowLayout
 import org.superdro.core.ui.adaptive.WidthClass
 import org.superdro.core.ui.adaptive.WindowLayout
+import org.superdro.core.ui.keepClearOfSnackbar
 import org.superdro.core.ui.theme.LocalReadoutTypography
 import org.superdro.core.ui.theme.LocalTouchTargets
 import org.superdro.core.ui.theme.readoutTypography
@@ -514,7 +515,7 @@ private fun PortraitBody(
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            Modifier.fillMaxWidth().keepClearOfSnackbar().padding(horizontal = 8.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(targets.gap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -623,7 +624,7 @@ private fun ShortLandscapeBody(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                Modifier.fillMaxWidth().keepClearOfSnackbar().padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(targets.gap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

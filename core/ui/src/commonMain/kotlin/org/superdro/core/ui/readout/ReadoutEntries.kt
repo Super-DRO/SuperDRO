@@ -124,7 +124,7 @@ internal fun UndoSnackbar(undo: UndoUiState?, host: SnackbarHostState, presenter
     val action = stringResource(Res.string.readout_undo)
     LaunchedEffect(undo?.id, label) {
         if (undo == null || label == null) return@LaunchedEffect
-        val result = host.showSnackbar(message = label, actionLabel = action, withDismissAction = false, duration = SnackbarDuration.Indefinite)
+        val result = host.showSnackbar(message = label, actionLabel = action, withDismissAction = true, duration = SnackbarDuration.Indefinite)
         if (result == SnackbarResult.ActionPerformed) presenter.onUndo(undo.id) else presenter.onUndoDismissed(undo.id)
     }
 }

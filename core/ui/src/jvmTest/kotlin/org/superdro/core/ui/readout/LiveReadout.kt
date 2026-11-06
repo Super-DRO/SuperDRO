@@ -46,7 +46,7 @@ class LiveReadout(machine: MachineProfile, states: Map<AxisId, AxisState> = empt
     private val wallClock = FixedWallClock()
     val machines = MachineRepository(writer, storeIO, SuperDroJson, wallClock)
     private val adapters = AdapterRepository(writer, storeIO, SuperDroJson, wallClock, fileDispatcher = dispatcher)
-    private val tools = ToolRepository(writer, SuperDroJson, wallClock)
+    val tools = ToolRepository(writer, SuperDroJson, wallClock)
     val appSettings = AppSettingsStore(storeIO, SuperDroJson, dispatcher, wallClock)
     val connections = FakeConnections()
     val sounds = RecordingSounds()

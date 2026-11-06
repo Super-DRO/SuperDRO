@@ -33,6 +33,7 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +43,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -230,9 +234,16 @@ fun FrameLayout(
                 onOpenUpdate = onOpenUpdate,
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Box(Modifier.fillMaxSize()) {
-                content(Modifier.fillMaxSize().testTag(FRAME_CONTENT_TAG))
-                SnackbarHost(snackbarHost, Modifier.align(Alignment.BottomCenter).padding(16.dp))
+            val clearance = remember { SnackbarClearance() }
+            var contentBottom by remember { mutableStateOf(0f) }
+            val density = LocalDensity.current
+            // The snackbar stays above the bottom controls of the content (issue 73).
+            val lift = clearance.top?.let { top -> with(density) { (contentBottom - top).coerceAtLeast(0f).toDp() } } ?: 0.dp
+            Box(Modifier.fillMaxSize().onGloballyPositioned { coordinates -> contentBottom = coordinates.boundsInRoot().bottom }) {
+                CompositionLocalProvider(LocalSnackbarClearance provides clearance) {
+                    content(Modifier.fillMaxSize().testTag(FRAME_CONTENT_TAG))
+                }
+                SnackbarHost(snackbarHost, Modifier.align(Alignment.BottomCenter).padding(16.dp).padding(bottom = lift))
             }
         }
     }
