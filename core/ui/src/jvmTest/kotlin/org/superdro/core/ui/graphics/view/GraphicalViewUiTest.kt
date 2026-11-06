@@ -3,13 +3,18 @@ package org.superdro.core.ui.graphics.view
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.test.runComposeUiTest
 import kotlin.test.Test
@@ -36,11 +41,77 @@ class GraphicalViewUiTest {
                 GraphicalView(view = view, controls = controls, metrics = ViewStates.metrics, events = events)
             }
         }
+        onNodeWithTag(GRAPHICAL_SWITCH_MENU_TAG).performClick()
         onNodeWithTag(graphicalSwitchTag(GraphicalSwitch.SnapToGuide)).performClick()
+        onNodeWithTag(GRAPHICAL_SWITCH_MENU_TAG).performClick()
         onNodeWithTag(graphicalSwitchTag(GraphicalSwitch.SnapToPoint)).performClick()
         onNodeWithTag(graphicalPlaneTag(Plane.XZ)).performClick()
         onNodeWithText("1:5").performClick()
         assertEquals(listOf("switch SnapToGuide true", "switch SnapToPoint false", "plane XZ", "zoom 1:5"), events.calls)
+    }
+
+    @Test
+    fun theSwitchMenuOpensAndClosesInLandscape() = runComposeUiTest {
+        checkSwitchMenu(widthDp = 1280, heightDp = 800)
+    }
+
+    @Test
+    fun theSwitchMenuOpensAndClosesInPortrait() = runComposeUiTest {
+        checkSwitchMenu(widthDp = 800, heightDp = 1200)
+    }
+
+    private fun ComposeUiTest.checkSwitchMenu(widthDp: Int, heightDp: Int) {
+        val events = RecordingViewEvents()
+        val (view, initialControls) = ViewStates.millView(widthDp.toDouble(), heightDp.toDouble())
+        var controls by androidx.compose.runtime.mutableStateOf(initialControls)
+        setContent {
+            ViewThemed(dark = true, widthDp = widthDp, heightDp = heightDp) {
+                GraphicalView(view = view, controls = controls, metrics = ViewStates.metrics, events = events)
+            }
+        }
+        onNodeWithTag(GRAPHICAL_SWITCH_MENU_TAG).assertIsDisplayed()
+        onNodeWithText("Automatic functions (2)").assertIsDisplayed()
+        GraphicalSwitch.entries.forEach { switch ->
+            onNodeWithTag(graphicalSwitchTag(switch)).assertDoesNotExist()
+        }
+
+        onNodeWithTag(GRAPHICAL_SWITCH_MENU_TAG).performClick()
+        controls.switches.forEach { (switch, on) ->
+            val item = onNodeWithTag(graphicalSwitchTag(switch)).assertIsDisplayed()
+            if (on) item.assertIsOn() else item.assertIsOff()
+        }
+
+        onNodeWithTag(graphicalSwitchTag(GraphicalSwitch.SnapToGuide)).performClick()
+        assertEquals(listOf("switch SnapToGuide true"), events.calls)
+        GraphicalSwitch.entries.forEach { switch ->
+            onNodeWithTag(graphicalSwitchTag(switch)).assertDoesNotExist()
+        }
+
+        onNodeWithTag(GRAPHICAL_SWITCH_MENU_TAG).performClick()
+        GraphicalSwitch.entries.forEach { switch ->
+            onNodeWithTag(graphicalSwitchTag(switch)).assertIsDisplayed()
+        }
+        onNodeWithTag(GRAPHICAL_SWITCH_MENU_TAG).performClick()
+        GraphicalSwitch.entries.forEach { switch ->
+            onNodeWithTag(graphicalSwitchTag(switch)).assertDoesNotExist()
+        }
+
+        onNodeWithTag(GRAPHICAL_SWITCH_MENU_TAG).performTouchInput { click() }
+        GraphicalSwitch.entries.forEach { switch ->
+            onNodeWithTag(graphicalSwitchTag(switch)).assertIsDisplayed()
+        }
+        onNodeWithTag(GRAPHICAL_SWITCH_MENU_TAG).performTouchInput { click() }
+        GraphicalSwitch.entries.forEach { switch ->
+            onNodeWithTag(graphicalSwitchTag(switch)).assertDoesNotExist()
+        }
+
+        controls = controls.copy(
+            switches = controls.switches.map { (switch, on) ->
+                switch to (on || switch == GraphicalSwitch.SnapToGuide)
+            },
+        )
+        waitForIdle()
+        onNodeWithText("Automatic functions (3)").assertIsDisplayed()
     }
 
     @Test

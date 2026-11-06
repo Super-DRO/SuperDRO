@@ -1,6 +1,8 @@
 package org.superdro.core.ui.graphics.view
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -38,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -47,12 +50,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.expand
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
@@ -125,7 +136,7 @@ import androidx.compose.foundation.layout.FlowRow
 /** The test tag of the top strip of the graphical view. */
 const val GRAPHICAL_TOP_STRIP_TAG: String = "graphical-top-strip"
 
-/** The test tag of a switch chip: `graphical-switch-<name>`. */
+/** The test tag of a switch menu item: `graphical-switch-<name>`. */
 fun graphicalSwitchTag(switch: GraphicalSwitch): String = "graphical-switch-${switch.name}"
 
 /** The test tag of the plane button of [plane]. */
@@ -344,11 +355,11 @@ private fun GraphicalChromeOverlay(
                 ) {
                     // A panel can scroll by itself (the measurement pane), so it gets a bounded height.
                     if (leftPanel != null) Box(Modifier.weight(1f, fill = false)) { leftPanel() }
-                    if (!switchesAtRight) SwitchArea(controls, events, threadPanel, menu = short || narrow || leftPanel != null, narrow = narrow)
+                    if (!switchesAtRight) SwitchArea(controls, events, threadPanel, narrow = narrow)
                 }
                 Spacer(Modifier.weight(1f))
                 if (switchesAtRight) {
-                    Column(Modifier.padding(8.dp)) { SwitchArea(controls, events, threadPanel, menu = true, narrow = narrow) }
+                    Column(Modifier.padding(8.dp)) { SwitchArea(controls, events, threadPanel, narrow = narrow) }
                 }
                 // A short or compact-width view opens the display pane as a sheet (see below), because an
                 // overlay in the view shows only the first rows or leaves no room for the canvas.
@@ -397,19 +408,17 @@ private fun GraphicalChromeOverlay(
 }
 
 /**
- * The automatic functions (a column of chips, or one chip with a menu when [menu] is true) and
- * the thread cut panel. The area scrolls when it does not fit.
+ * The automatic functions menu and the thread cut panel. The area scrolls when it does not fit.
  */
 @Composable
 private fun SwitchArea(
     controls: GraphicalControlsUiState,
     events: GraphicalViewEvents,
     threadPanel: ThreadPanelUiState?,
-    menu: Boolean,
     narrow: Boolean,
 ) {
     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (menu) SwitchMenu(controls, events) else SwitchColumn(controls, events)
+        SwitchMenu(controls, events)
         if (threadPanel != null) ThreadPanel(threadPanel, events, Modifier.width(if (narrow) 220.dp else 280.dp))
     }
 }
@@ -465,48 +474,70 @@ private fun PlaneSelector(controls: GraphicalControlsUiState, events: GraphicalV
     }
 }
 
-@Composable
-private fun SwitchColumn(controls: GraphicalControlsUiState, events: GraphicalViewEvents) {
-    controls.switches.forEach { (switch, on) ->
-        ToggleChip(
-            label = stringResource(switchLabel(switch)),
-            selected = on,
-            onClick = { events.onSwitch(switch, !on) },
-            modifier = Modifier.testTag(graphicalSwitchTag(switch)),
-        )
-    }
-}
-
-/** The test tag of the chip of the automatic functions in a short view. */
+/** The test tag of the chip of the automatic functions menu. */
 const val GRAPHICAL_SWITCH_MENU_TAG: String = "graphical-switch-menu"
 
 /**
- * The automatic functions in a short view, for example the pane below the readout: one chip that
- * opens a menu. Each item shows its state with a check icon.
+ * The automatic functions menu: one chip that opens a dropdown window. Each item shows its state
+ * with a check icon.
  */
 @Composable
 private fun SwitchMenu(controls: GraphicalControlsUiState, events: GraphicalViewEvents) {
     var open by remember { mutableStateOf(false) }
+    var wasOpen by remember { mutableStateOf(false) }
+    var closingOnPress by remember { mutableStateOf(false) }
+    SideEffect { wasOpen = open }
     val count = controls.switches.count { (_, on) -> on }
     Box {
         ToggleChip(
             label = stringResource(Res.string.graphics_automatic_functions, count),
             selected = count > 0,
-            onClick = { open = true },
-            modifier = Modifier.testTag(GRAPHICAL_SWITCH_MENU_TAG),
+            onClick = {
+                if (open || closingOnPress) {
+                    open = false
+                    closingOnPress = false
+                } else {
+                    open = true
+                }
+            },
+            modifier = Modifier
+                .testTag(GRAPHICAL_SWITCH_MENU_TAG)
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(pass = PointerEventPass.Initial)
+                        closingOnPress = open || wasOpen
+                    }
+                }
+                .semantics {
+                    if (open) {
+                        collapse { open = false; true }
+                    } else {
+                        expand { open = true; true }
+                    }
+                },
         )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             controls.switches.forEach { (switch, on) ->
+                val itemState = stringResource(if (on) Res.string.graphics_switch_on else Res.string.graphics_switch_off)
                 DropdownMenuItem(
                     text = { Text(stringResource(switchLabel(switch))) },
                     leadingIcon = {
                         Icon(
                             painterResource(if (on) Res.drawable.ic_check else Res.drawable.ic_radio_unchecked),
-                            contentDescription = stringResource(if (on) Res.string.graphics_switch_on else Res.string.graphics_switch_off),
+                            contentDescription = itemState,
                         )
                     },
-                    onClick = { events.onSwitch(switch, !on) },
-                    modifier = Modifier.testTag(graphicalSwitchTag(switch)),
+                    onClick = {
+                        open = false
+                        events.onSwitch(switch, !on)
+                    },
+                    modifier = Modifier
+                        .testTag(graphicalSwitchTag(switch))
+                        .semantics {
+                            role = Role.Switch
+                            toggleableState = ToggleableState(on)
+                            stateDescription = itemState
+                        },
                 )
             }
         }
@@ -744,7 +775,7 @@ internal fun twoDecimals(value: Double): String {
 private const val PANEL_ALPHA: Float = 0.92f
 
 /**
- * A view lower than this is short: it shows the automatic functions in a menu, and it opens the
- * display pane as a sheet.
+ * A view lower than this is short: it puts the automatic functions at the right edge when the
+ * left panel is open, and it opens the display pane as a sheet.
  */
 private val SHORT_VIEW_HEIGHT = 560.dp
