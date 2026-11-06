@@ -4,6 +4,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -15,37 +16,43 @@ import kotlinx.coroutines.test.runTest
 import org.superdro.core.connection.LinkFailure
 import org.superdro.core.connection.SessionState
 import org.superdro.core.model.AngularAxisConfig
+import org.superdro.core.model.AuxiliaryConfig
+import org.superdro.core.model.AuxiliaryType
 import org.superdro.core.model.AxisButtonMode
 import org.superdro.core.model.AxisId
 import org.superdro.core.model.AxisState
+import org.superdro.core.model.Channels
+import org.superdro.core.model.CompoundProjection
 import org.superdro.core.model.DisplaySettings
+import org.superdro.core.model.HeadTilt
+import org.superdro.core.model.InputConfig
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
+import org.superdro.core.model.SubDatum
 import org.superdro.core.model.TachometerConfig
 import org.superdro.core.model.TachometerMode
+import org.superdro.core.model.Tool
 import org.superdro.core.readout.DisplayUnit
 import org.superdro.core.readout.ReadoutText
 import org.superdro.core.readout.input.AxisValueStatus
+import org.superdro.core.readout.operations.SubDatumOperations
 import org.superdro.core.resources.Res
+import org.superdro.core.resources.fns_undo_compound_clear
+import org.superdro.core.resources.fns_undo_head_tilt_clear
 import org.superdro.core.resources.readout_no_adapter
 import org.superdro.core.resources.readout_undo_all_zero
 import org.superdro.core.resources.readout_undo_compensation
 import org.superdro.core.resources.readout_undo_zero
 import org.superdro.core.resources.readout_waiting_for_adapter
+import org.superdro.core.resources.sd_undo_activate
+import org.superdro.core.resources.tools_undo_activate
+import org.superdro.core.ui.functions.tools.ToolActivation
 import org.superdro.core.ui.navigation.AxisDetailsRoute
 import org.superdro.core.ui.navigation.DivisionsRoute
 import org.superdro.core.ui.navigation.EncoderSettingsRoute
 import org.superdro.core.ui.navigation.KeypadRoute
 import org.superdro.core.ui.navigation.TachometerPresetRoute
 import org.superdro.core.ui.text.UiText
-import org.superdro.core.model.AuxiliaryConfig
-import org.superdro.core.model.AuxiliaryType
-import org.superdro.core.model.Channels
-import org.superdro.core.model.CompoundProjection
-import org.superdro.core.model.HeadTilt
-import org.superdro.core.model.InputConfig
-import org.superdro.core.resources.fns_undo_compound_clear
-import org.superdro.core.resources.fns_undo_head_tilt_clear
 
 /** The readout presenter with a real database in memory, a fake session, and virtual time. */
 class ReadoutPresenterTest {
@@ -293,6 +300,63 @@ class ReadoutPresenterTest {
         advanceUntilIdle()
         before.forEach { (axis, state) -> assertEquals(state, harness.axisState(axis), "$axis") }
         assertEquals("10.000", harness.text(AxisId.X))
+    }
+
+    @Test
+    fun onUndoDismissedKeepsTheSubDatumActivation() = scope.runTest {
+        val point = SubDatum(id = "s1", name = "S1", x = 25_000.0, y = 10_000.0)
+        val base = MachineProfile.create(MachineType.VerticalMill, "Mill").copy(metricDefault = true)
+        val profile = base.copy(workspaces = base.workspaces.map { workspace -> workspace.copy(subDatums = listOf(point)) })
+        harness.start(profile)
+        harness.inputs(AxisId.X to 30_000.0, AxisId.Y to 15_000.0)
+        val frame = assertNotNull(harness.presenter.frame.value)
+        harness.presenter.apply(SubDatumOperations.activate(frame, point.id), UiText.of(Res.string.sd_undo_activate, point.name))
+        runCurrent()
+        val undo = assertNotNull(harness.presenter.uiState.value.undo)
+        assertEquals(point.id, harness.presenter.frame.value!!.workspace.activeSubDatumId)
+        assertEquals("5.000", harness.text(AxisId.X))
+        assertEquals("5.000", harness.text(AxisId.Y))
+        harness.presenter.onUndoDismissed(undo.id)
+        advanceUntilIdle()
+        assertNull(harness.presenter.uiState.value.undo)
+        assertEquals(point.id, harness.workspace().activeSubDatumId)
+        assertTrue(harness.axisState(AxisId.X).relative)
+        assertTrue(harness.axisState(AxisId.Y).relative)
+        assertEquals("5.000", harness.text(AxisId.X))
+        assertEquals("5.000", harness.text(AxisId.Y))
+    }
+
+    @Test
+    fun aToolActivationWithin10SecondsGivesANewUndoIdAndRestoresOnlyTheTool() = scope.runTest {
+        val point = SubDatum(id = "s1", name = "S1", x = 25_000.0, y = 10_000.0)
+        val tool = Tool(id = "t1", name = "T1", diameterUm = 6_000.0, zOffsetUm = 5_000.0, metric = true)
+        val base = MachineProfile.create(MachineType.VerticalMill, "Mill").copy(metricDefault = true)
+        val profile = base.copy(workspaces = base.workspaces.map { workspace -> workspace.copy(subDatums = listOf(point)) })
+        harness.start(profile)
+        harness.inputs(AxisId.X to 30_000.0, AxisId.Y to 15_000.0, AxisId.Z to 20_000.0)
+        val frame = assertNotNull(harness.presenter.frame.value)
+        harness.presenter.apply(SubDatumOperations.activate(frame, point.id), UiText.of(Res.string.sd_undo_activate, point.name))
+        runCurrent()
+        val firstUndo = assertNotNull(harness.presenter.uiState.value.undo)
+        advanceTimeBy(3_000)
+        runCurrent()
+        harness.presenter.applyWorkspace(UiText.of(Res.string.tools_undo_activate, tool.name)) { workspace ->
+            ToolActivation.toggle(workspace, tool, MachineType.VerticalMill)
+        }
+        runCurrent()
+        val secondUndo = assertNotNull(harness.presenter.uiState.value.undo)
+        assertNotEquals(firstUndo.id, secondUndo.id)
+        assertEquals(point.id, harness.presenter.frame.value!!.workspace.activeSubDatumId)
+        assertEquals(tool.id, harness.presenter.frame.value!!.workspace.activeToolId)
+        assertEquals("25.000", harness.text(AxisId.Z))
+        harness.presenter.onUndo(secondUndo.id)
+        advanceUntilIdle()
+        assertNull(harness.presenter.uiState.value.undo)
+        assertEquals(point.id, harness.workspace().activeSubDatumId)
+        assertNull(harness.workspace().activeToolId)
+        assertFalse(harness.axisState(AxisId.Z).toolOffsetActive)
+        assertEquals("5.000", harness.text(AxisId.X))
+        assertEquals("20.000", harness.text(AxisId.Z))
     }
 
     @Test

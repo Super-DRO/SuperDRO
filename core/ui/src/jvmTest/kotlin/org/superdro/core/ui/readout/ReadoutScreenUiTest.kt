@@ -15,25 +15,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.runSkikoComposeUiTest
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.superdro.core.connection.DeviceId
 import org.superdro.core.model.AxisButtonConfig
@@ -42,7 +49,11 @@ import org.superdro.core.model.AxisId
 import org.superdro.core.model.AxisState
 import org.superdro.core.model.MachineProfile
 import org.superdro.core.model.MachineType
+import org.superdro.core.model.SidePanelMode
 import org.superdro.core.model.ThemeMode
+import org.superdro.core.model.Tool
+import org.superdro.core.ui.FrameLayout
+import org.superdro.core.ui.LocalAppSnackbarHostState
 import org.superdro.core.ui.adaptive.LocalWindowLayout
 import org.superdro.core.ui.adaptive.WindowLayout
 import org.superdro.core.ui.navigation.KeypadRoute
@@ -54,6 +65,8 @@ import org.superdro.core.ui.readout.keypad.KeypadKey
 import org.superdro.core.ui.readout.keypad.KeypadPresenter
 import org.superdro.core.ui.readout.keypad.KeypadSheet
 import org.superdro.core.ui.readout.keypad.keyTag
+import org.superdro.core.ui.tabs.DeviceTabsEvents
+import org.superdro.core.ui.tabs.DeviceTabsUiState
 import org.superdro.core.ui.theme.AppTheme
 
 /** The Compose UI tests of the readout screen. */
@@ -73,6 +86,17 @@ class ReadoutScreenUiTest {
         override fun pop(route: TabRoute) = Unit
         override fun replaceTop(route: TabRoute) = Unit
         override fun popToRoot() = Unit
+    }
+
+    private object NoFrameTabEvents : DeviceTabsEvents {
+        override fun onSelect(id: DeviceId) = Unit
+        override fun onOpenMenu(id: DeviceId) = Unit
+        override fun onCloseMenu() = Unit
+        override fun onPause(id: DeviceId) = Unit
+        override fun onOpenOverflow() = Unit
+        override fun onCloseOverflow() = Unit
+        override fun onDisconnectAll() = Unit
+        override fun onMessageShown(id: Long) = Unit
     }
 
     @Composable
@@ -221,6 +245,78 @@ class ReadoutScreenUiTest {
         onNodeWithText("Undo").performClick()
         waitForIdle()
         assertEquals(-10_000.0, live.workspace().axisStates.getValue(AxisId.X).incrementalOffset, "The undo restores the offset before the action.")
+        live.close()
+    }
+
+    @Test
+    fun theUndoSnackbarInPortraitStaysAboveTheSidePanelTabsAndClosesWithDismiss() = runSkikoComposeUiTest(
+        size = Size(800f, 1200f),
+        density = Density(1f),
+    ) {
+        val portrait = WindowLayout.of(800.dp, 1200.dp)
+        val live = LiveReadout(MachineProfile.create().copy(metricDefault = true))
+        kotlinx.coroutines.runBlocking { live.tools.addTool(live.profile.id, Tool(name = "T1")) }
+        live.scheduler.runCurrent()
+        live.inputs(AxisId.X to 10_000.0)
+        val sidePanelTabs = mutableListOf<SidePanelMode>()
+        val baseEvents = PresenterReadoutEvents(live.presenter, RecordingNavigator())
+        val events = object : ReadoutEvents by baseEvents {
+            override fun onSidePanelTab(mode: SidePanelMode) {
+                sidePanelTabs += mode
+            }
+        }
+        setContent {
+            Themed(portrait) {
+                val host = remember { SnackbarHostState() }
+                val state by live.presenter.uiState.collectAsState()
+                CompositionLocalProvider(LocalAppSnackbarHostState provides host) {
+                    FrameLayout(
+                        state = DeviceTabsUiState(rememberedCount = 1),
+                        events = NoFrameTabEvents,
+                        onAddMachine = {},
+                        onOpenSettings = {},
+                        onOverflowAction = {},
+                        onTabMenuAction = { _, _ -> },
+                    ) { modifier ->
+                        ReadoutScreen(
+                            state = state,
+                            axisValue = live.presenter::axisValue,
+                            events = events,
+                            modifier = modifier,
+                            layout = portrait,
+                        )
+                    }
+                    UndoSnackbar(state.undo, host, live.presenter)
+                }
+            }
+        }
+        onNodeWithTag(actionTag(AxisId.X, AxisButtonMode.SetZero)).performClick()
+        waitForIdle()
+        assertNotNull(live.presenter.uiState.value.undo)
+        assertEquals(-10_000.0, live.workspace().axisStates.getValue(AxisId.X).incrementalOffset)
+
+        val snackbarBounds = onNodeWithText("X: zero set").onParent().getBoundsInRoot()
+        val toolsBounds = onNodeWithTag(sidePanelTag(SidePanelMode.Tools)).assertExists().getBoundsInRoot()
+        val overlaps = snackbarBounds.left < toolsBounds.right &&
+            snackbarBounds.right > toolsBounds.left &&
+            snackbarBounds.top < toolsBounds.bottom &&
+            snackbarBounds.bottom > toolsBounds.top
+        assertFalse(overlaps)
+        assertTrue(snackbarBounds.bottom <= toolsBounds.top)
+
+        onNodeWithTag(sidePanelTag(SidePanelMode.Tools)).performClick()
+        waitForIdle()
+        assertEquals(listOf(SidePanelMode.Tools), sidePanelTabs)
+        onNodeWithText("X: zero set").assertExists()
+
+        onNodeWithContentDescription("Dismiss").performClick()
+        waitForIdle()
+        live.scheduler.runCurrent()
+        waitForIdle()
+        onNodeWithText("X: zero set").assertDoesNotExist()
+        assertNull(live.presenter.uiState.value.undo)
+        assertEquals(-10_000.0, live.workspace().axisStates.getValue(AxisId.X).incrementalOffset)
+        assertTrue(live.workspace().axisStates.getValue(AxisId.X).relative)
         live.close()
     }
 

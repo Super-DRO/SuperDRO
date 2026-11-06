@@ -115,6 +115,7 @@ import org.superdro.core.ui.adaptive.AdaptiveSheet
 import org.superdro.core.ui.graphics.thread.ThreadPanel
 import org.superdro.core.ui.graphics.thread.ThreadPanelEvents
 import org.superdro.core.ui.graphics.thread.ThreadPanelUiState
+import org.superdro.core.ui.keepClearOfSnackbar
 import org.superdro.core.ui.theme.AccentButtons
 import org.superdro.core.ui.theme.accentColor
 import kotlin.math.roundToInt
@@ -373,10 +374,10 @@ private fun GraphicalChromeOverlay(
             if (showRecenter) {
                 FilledTonalButton(
                     onClick = events::onRecenter,
-                    modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).heightIn(min = 48.dp).testTag(GRAPHICAL_RECENTER_TAG),
+                    modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).heightIn(min = 48.dp).keepClearOfSnackbar().testTag(GRAPHICAL_RECENTER_TAG),
                 ) { Text(stringResource(Res.string.graphics_recenter)) }
             }
-            ZoomPresets(events, Modifier.align(Alignment.BottomEnd).padding(8.dp))
+            ZoomPresets(events, Modifier.align(Alignment.BottomEnd).padding(8.dp).keepClearOfSnackbar())
         } else {
             Column(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(8.dp),
@@ -386,10 +387,10 @@ private fun GraphicalChromeOverlay(
                 if (showRecenter) {
                     FilledTonalButton(
                         onClick = events::onRecenter,
-                        modifier = Modifier.align(Alignment.Start).heightIn(min = 48.dp).testTag(GRAPHICAL_RECENTER_TAG),
+                        modifier = Modifier.align(Alignment.Start).heightIn(min = 48.dp).keepClearOfSnackbar().testTag(GRAPHICAL_RECENTER_TAG),
                     ) { Text(stringResource(Res.string.graphics_recenter)) }
                 }
-                ZoomPresets(events, Modifier.align(Alignment.End), wrap = true)
+                ZoomPresets(events, Modifier.align(Alignment.End).keepClearOfSnackbar(), wrap = true)
             }
         }
         Overlays(overlay, events, deleteShapeDialog)
